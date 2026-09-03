@@ -1,0 +1,26 @@
+@if (moment(); as moment) {
+  <div class="scrim" (cbBackdrop)="dismiss()">
+    <cb-panel
+      class="doc"
+      [heading]="moment.heading"
+      [subheading]="moment.subheading"
+    >
+      <span panel-meta class="chip accent">{{ moment.chip }}</span>
+
+      <img class="plate" [src]="moment.art" alt="" aria-hidden="true" />
+
+      <section class="doc-sections">
+        @for (part of moment.sections; track part.title) {
+          <h4>{{ part.title }}</h4>
+          <p>{{ part.body }}</p>
+        }
+      </section>
+
+      <div class="doc-actions">
+        <button type="button" class="btn primary" (click)="dismiss()">
+          {{ moment.action }}
+        </button>
+      </div>
+    </cb-panel>
+  </div>
+}

@@ -1,0 +1,49 @@
+import type {
+  Board,
+  CloseFloat,
+  Harvest,
+  SprintSlot,
+} from '../../game/model/board.model';
+import type { HazardId } from '../../game/model/hazard.model';
+import type { TicketTypeId } from '../../game/model/ticket.model';
+import type { CrewKind } from '../../game/model/crew.model';
+import type { SkillView } from './skill-view.model';
+
+export interface HazardNotice {
+  readonly id: HazardId;
+  readonly landed: boolean;
+  readonly msLeft: number;
+}
+
+export interface SceneDeps {
+  text(key: string, params?: Record<string, string | number>): string;
+  board(): Board;
+  radius(): number;
+  showClickRing(): boolean;
+  slots(): number;
+  filled(): number;
+  sprint(): readonly SprintSlot[];
+  pending(): number;
+  escalated(): boolean;
+  tier(): number;
+  relabelTarget(type: TicketTypeId): TicketTypeId | null;
+  crewCeiling(crew: CrewKind): TicketTypeId | null;
+  hazardNotice(): HazardNotice | null;
+  promoted(): boolean;
+  seniorPoolSeat(seat: number): number;
+
+  escalationMultiplier(): number;
+  womanEvery(crew: CrewKind): number;
+
+  harvest(ids: readonly number[]): Harvest;
+  running(): boolean;
+  roundLeftMs(): number;
+  roundLengthMs(): number;
+  takePayout(): number;
+  takeCloseFloats(): readonly CloseFloat[];
+  unlockSecret(): void;
+
+  skillView(): SkillView;
+  buySkill(id: string): boolean;
+  takeFocus(): string | null;
+}

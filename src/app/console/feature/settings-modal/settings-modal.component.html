@@ -1,0 +1,104 @@
+@if (shown()) {
+  <div class="scrim" (cbBackdrop)="dismiss()">
+    <cb-panel
+      class="doc"
+      [heading]="'settings.heading' | translate"
+      [subheading]="'settings.subheading' | translate"
+    >
+      <ul class="slate">
+        <li>
+          <button
+            type="button"
+            class="line"
+            [attr.aria-pressed]="showClickRadius()"
+            (click)="setShowClickRadius(!showClickRadius())"
+          >
+            <span class="what">
+              <span class="label">{{ 'settings.ring.label' | translate }}</span>
+              <span class="muted small">{{
+                'settings.ring.blurb' | translate
+              }}</span>
+            </span>
+            <span class="state">{{
+              (showClickRadius() ? 'settings.on' : 'settings.off') | translate
+            }}</span>
+          </button>
+        </li>
+
+        <li>
+          <button
+            type="button"
+            class="line"
+            [attr.aria-pressed]="!muted()"
+            (click)="toggleMuted()"
+          >
+            <span class="what">
+              <span class="label">{{
+                'settings.sound.label' | translate
+              }}</span>
+              <span class="muted small">{{
+                'settings.sound.blurb' | translate
+              }}</span>
+            </span>
+            <span class="state">{{
+              (muted() ? 'settings.off' : 'settings.on') | translate
+            }}</span>
+          </button>
+        </li>
+
+        @if (canFullscreen) {
+          <li>
+            <button
+              type="button"
+              class="line"
+              [attr.aria-pressed]="fullscreen()"
+              (click)="toggleFullscreen()"
+            >
+              <span class="what">
+                <span class="label">{{
+                  'settings.fullscreen.label' | translate
+                }}</span>
+                <span class="muted small">{{
+                  'settings.fullscreen.blurb' | translate
+                }}</span>
+              </span>
+              <span class="state">{{
+                (fullscreen() ? 'settings.on' : 'settings.off') | translate
+              }}</span>
+            </button>
+          </li>
+        }
+
+        <li class="row">
+          <div class="what">
+            <span class="label">{{
+              'settings.language.label' | translate
+            }}</span>
+            <span class="muted small">{{
+              'settings.language.blurb' | translate
+            }}</span>
+          </div>
+          <div class="languages">
+            @for (option of languages; track option) {
+              <button
+                type="button"
+                class="btn ghost small"
+                [class.on]="option === language"
+                [attr.aria-current]="option === language"
+                (click)="choose(option)"
+              >
+                {{ 'language.' + option | translate }}
+              </button>
+            }
+          </div>
+        </li>
+      </ul>
+
+      <div class="actions">
+        <button type="button" class="btn" (click)="dismiss()">
+          {{ 'settings.close' | translate }}
+        </button>
+      </div>
+    </cb-panel>
+  </div>
+}

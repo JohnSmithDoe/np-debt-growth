@@ -1,0 +1,10 @@
+/* The project vitest compiles under. `@analogjs/vite-plugin-angular` looks for
+   this path by name. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src/**/*.spec.ts", "src/test-setup.ts", "src/**/*.d.ts"]
+}

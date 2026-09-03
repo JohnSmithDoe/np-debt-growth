@@ -1,0 +1,14 @@
+/* To learn more about this file see: https://angular.dev/reference/configs/tsconfig. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    // No `types`: the renderer is a browser bundle with no Node in it.
+    "types": []
+  },
+  // One root, not a glob: only what `src/main.ts` actually pulls in is compiled,
+  // so dead code cannot gate the build. `pnpm run typecheck` is the counterpart
+  // that DOES glob src/**.
+  "files": ["src/main.ts"],
+  "include": ["src/**/*.d.ts"]
+}

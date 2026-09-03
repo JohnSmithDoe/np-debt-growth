@@ -1,0 +1,13 @@
+<header>
+  <div class="titles">
+    <h2>{{ heading() }}</h2>
+    @if (subheading()) {
+      <p class="muted small">{{ subheading() }}</p>
+    }
+  </div>
+  <ng-content select="[panel-meta]" />
+</header>
+
+<div class="body">
+  <ng-content />
+</div>

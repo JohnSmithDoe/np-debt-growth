@@ -1,0 +1,10 @@
+@for (spark of sparks(); track $index) {
+  <span
+    class="spark"
+    [style.left]="spark.left"
+    [style.width]="spark.size"
+    [style.height]="spark.size"
+    [style.animation-delay]="spark.delay"
+    [style.animation-duration]="spark.duration"
+  ></span>
+}

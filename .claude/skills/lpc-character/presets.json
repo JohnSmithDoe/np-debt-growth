@@ -1,0 +1,261 @@
+{
+  "note": "Debt Growth's cast. Every hash passes catalog.mjs check and carries no weapon, so every sheet is 13 columns. Regenerate one with export.mjs --preset <name> --out art/characters, then re-run pack-sheets.mjs.",
+  "presets": {
+    "junior-f-01": {
+      "note": "Junior dev — female build (candidate #3)",
+      "hash": "sex=female&body=Body_Color_amber&head=Human_Female_amber&eyes=Eye_Color_green&expression=Neutral&hair=Bangs_dark_brown&clothes=TShirt_orange&legs=Pants_black&shoes=Revised_Boots_walnut&facial_eyes=Shades_brown"
+    },
+    "junior-f-02": {
+      "note": "Junior dev — female build (candidate #5)",
+      "hash": "sex=female&body=Body_Color_lpcr.brown&head=Human_Female_lpcr.brown&eyes=Eye_Color_gray&expression=Neutral&hair=Braid_blonde&clothes=TShirt_Buttoned_orange&legs=Shorts_tan&shoes=Revised_Boots_black"
+    },
+    "junior-f-03": {
+      "note": "Junior dev — female build (candidate #19)",
+      "hash": "sex=female&body=Body_Color_light&head=Human_Female_Small_light&eyes=Eye_Color_gray&expression=Neutral&hair=Cowlick_black&clothes=TShirt_VNeck_all.lpcr.coral&legs=Striped_Formal_Pants_bluegray&shoes=Sandals_gray"
+    },
+    "junior-f-04": {
+      "note": "Junior dev — female build (candidate #21)",
+      "hash": "sex=female&body=Body_Color_lpcr.peach&head=Human_Female_lpcr.peach&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Lob_ginger&clothes=TShirt_Buttoned_all.lpcr.cerise&legs=Hose_bluegray&shoes=Revised_Boots_gray"
+    },
+    "junior-f-05": {
+      "note": "Junior dev — female build (candidate #22)",
+      "hash": "sex=female&body=Body_Color_lpcr.peach&head=Human_Female_lpcr.peach&eyes=Eye_Color_green&expression=Neutral&hair=Jewfro_blonde&clothes=Shortsleeve_green&legs=Striped_Formal_Pants_tan&shoes=Rimmed_Boots_brown&facial_eyes=Nerd_Glasses_brown"
+    },
+    "junior-f-06": {
+      "note": "Junior dev — female build (candidate #28)",
+      "hash": "sex=female&body=Body_Color_taupe&head=Human_Female_Small_taupe&eyes=Eye_Color_green&expression=Neutral&hair=Bob_side_part_ginger&clothes=TShirt_all.lpcr.apricot&legs=Pants_brown&shoes=Revised_Shoes_brown"
+    },
+    "junior-f-07": {
+      "note": "Junior dev — female build (candidate #35)",
+      "hash": "sex=female&body=Body_Color_light&head=Human_Female_Small_light&eyes=Eye_Color_brown&expression=Neutral&hair=Braid_raven&clothes=Shortsleeve_Polo_all.lpcr.spring&legs=Leggings_gray&shoes=Folded_Rim_Boots_white"
+    },
+    "junior-f-08": {
+      "note": "Junior dev — female build (candidate #41)",
+      "hash": "sex=female&body=Body_Color_lpcr.coffee&head=Human_Female_lpcr.coffee&eyes=Eye_Color_green&expression=Neutral&hair=Buzzcut_black&clothes=TShirt_red&legs=Cuffed_Pants_navy&shoes=Revised_Shoes_charcoal"
+    },
+    "junior-f-09": {
+      "note": "Junior dev — female build (candidate #51)",
+      "hash": "sex=female&body=Body_Color_lpcr.tawny&head=Human_Female_lpcr.tawny&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Dreadlocks_long_dark_brown&clothes=TShirt_Buttoned_green&legs=Leggings_2_forest&shoes=Folded_Rim_Boots_brown"
+    },
+    "junior-f-10": {
+      "note": "Junior dev — female build (candidate #57)",
+      "hash": "sex=female&body=Body_Color_lpcr.tawny&head=Human_Female_lpcr.tawny&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Curly_long_black&clothes=TShirt_VNeck_all.lpcr.mint&legs=Pants_black&shoes=Revised_Shoes_charcoal&facial_eyes=Shades_navy"
+    },
+    "junior-f-11": {
+      "note": "Junior dev — female build (candidate #60)",
+      "hash": "sex=female&body=Body_Color_lpcr.tawny&head=Human_Female_lpcr.tawny&eyes=Eye_Color_brown&expression=Neutral&hair=Ponytail2_gold&clothes=TShirt_Buttoned_teal&legs=Formal_Pants_navy&shoes=Basic_Shoes_black&wrinkles=Wrinkles_lpcr.tawny"
+    },
+    "junior-f-12": {
+      "note": "Junior dev — female build (candidate #61)",
+      "hash": "sex=female&body=Body_Color_olive&head=Human_Female_Small_olive&eyes=Eye_Color_blue&expression=Neutral&hair=High_ponytail_sandy&clothes=Shortsleeve_rose&legs=Hose_gray&shoes=Folded_Rim_Boots_white&facial_eyes=Shades_black&wrinkles=Wrinkles_olive"
+    },
+    "junior-f-13": {
+      "note": "Junior dev — female build (candidate #63)",
+      "hash": "sex=female&body=Body_Color_amber&head=Human_Female_Small_amber&eyes=Eye_Color_brown&expression=Neutral&hair=Page_raven&clothes=TShirt_VNeck_all.lpcr.lemon&legs=Leggings_2_black&shoes=Revised_Shoes_gray"
+    },
+    "junior-m-01": {
+      "note": "Junior dev — male build (candidate #1)",
+      "hash": "sex=male&body=Body_Color_taupe&head=Human_Male_Plump_taupe&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Long_white&clothes=TShirt_VNeck_pink&legs=Hose_slate&shoes=Sandals_navy&facial_eyes=Sunglasses_gray"
+    },
+    "junior-m-02": {
+      "note": "Junior dev — male build (candidate #2)",
+      "hash": "sex=teen&body=Body_Color_lpcr.bronze&head=Human_Male_lpcr.bronze&eyes=Eye_Color_gray&expression=Neutral&hair=Dreadlocks_long_dark_gray&clothes=TShirt_pink&legs=Leggings_2_walnut&shoes=Basic_Shoes_leather&wrinkles=Wrinkles_lpcr.bronze"
+    },
+    "junior-m-03": {
+      "note": "Junior dev — male build (candidate #4)",
+      "hash": "sex=teen&body=Body_Color_lpcr.tan&head=Human_Male_Small_lpcr.tan&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Curly_long_dark_brown&clothes=TShirt_Scoop_all.lpcr.cyan&legs=Leggings_brown&shoes=Folded_Rim_Boots_black&facial_eyes=Round_Glasses_black"
+    },
+    "junior-m-04": {
+      "note": "Junior dev — male build (candidate #7)",
+      "hash": "sex=teen&body=Body_Color_taupe&head=Human_Male_Plump_taupe&eyes=Eye_Color_gray&expression=Neutral&hair=Dreadlocks_long_light_brown&clothes=TShirt_VNeck_orange&legs=Shorts_charcoal&shoes=Sandals_black&facial_eyes=Sunglasses_navy"
+    },
+    "junior-m-05": {
+      "note": "Junior dev — male build (candidate #10)",
+      "hash": "sex=teen&body=Body_Color_taupe&head=Human_Male_Small_taupe&eyes=Eye_Color_brown&expression=Neutral&hair=Dreadlocks_short_redhead&clothes=TShirt_Buttoned_sky&legs=Shorts_blue&shoes=Basic_Boots_leather"
+    },
+    "junior-m-06": {
+      "note": "Junior dev — male build (candidate #12)",
+      "hash": "sex=teen&body=Body_Color_lpcr.ivory&head=Human_Male_lpcr.ivory&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Bedhead_platinum&clothes=Shortsleeve_all.lpcr.coral&legs=Pants_navy&shoes=Slippers_black&facial_eyes=Shades_navy"
+    },
+    "junior-m-07": {
+      "note": "Junior dev — male build (candidate #14)",
+      "hash": "sex=teen&body=Body_Color_amber&head=Human_Male_Gaunt_amber&eyes=Eye_Color_gray&expression=Neutral&hair=Jewfro_raven&clothes=Shortsleeve_all.lpcr.cerise&legs=Pants_bluegray&shoes=Rimmed_Boots_brown&facial_eyes=Secretary_Glasses_charcoal&wrinkles=Wrinkles_amber"
+    },
+    "junior-m-08": {
+      "note": "Junior dev — male build (candidate #15)",
+      "hash": "sex=male&body=Body_Color_lpcr.tan&head=Human_Male_Plump_lpcr.tan&eyes=Eye_Color_brown&expression=Neutral&hair=Plain_dark_gray&clothes=Shortsleeve_Polo_green&legs=Leggings_gray&shoes=Sandals_gray&mustache=Chevron_Mustache_dark_gray"
+    },
+    "junior-m-09": {
+      "note": "Junior dev — male build (candidate #16)",
+      "hash": "sex=male&body=Body_Color_taupe&head=Human_Male_Small_taupe&eyes=Eye_Color_brown&expression=Neutral&hair=Bob_side_part_light_brown&clothes=TShirt_all.lpcr.apricot&legs=Long_Pants_walnut&shoes=Basic_Boots_navy&facial_eyes=Round_Glasses_walnut"
+    },
+    "junior-m-10": {
+      "note": "Junior dev — male build (candidate #18)",
+      "hash": "sex=teen&body=Body_Color_olive&head=Human_Male_Gaunt_olive&eyes=Eye_Color_brown&expression=Neutral&hair=Page2_sandy&clothes=TShirt_Scoop_all.lpcr.spring&legs=Cuffed_Pants_navy&shoes=Revised_Boots_brown"
+    },
+    "junior-m-11": {
+      "note": "Junior dev — male build (candidate #20)",
+      "hash": "sex=male&body=Body_Color_lpcr.porcelain&head=Human_Male_Plump_lpcr.porcelain&eyes=Eye_Color_brown&expression=Neutral&hair=Long_carrot&clothes=TShirt_VNeck_red&legs=Formal_Pants_charcoal&shoes=Basic_Shoes_navy&facial_eyes=Round_Glasses_black&beard=Basic_Beard_carrot"
+    },
+    "junior-m-12": {
+      "note": "Junior dev — male build (candidate #23)",
+      "hash": "sex=male&body=Body_Color_lpcr.bronze&head=Human_Male_Gaunt_lpcr.bronze&eyes=Eye_Color_brown&expression=Neutral&hair=Curly_short_2_light_brown&clothes=TShirt_Buttoned_all.lpcr.apple&legs=Long_Pants_tan&shoes=Folded_Rim_Boots_charcoal&facial_eyes=Round_Glasses_navy&beard=Medium_Beard_light_brown"
+    },
+    "junior-m-13": {
+      "note": "Junior dev — male build (candidate #27)",
+      "hash": "sex=male&body=Body_Color_light&head=Human_Male_light&eyes=Eye_Color_green&expression=Neutral&hair=Parted_3_dark_brown&clothes=Shortsleeve_all.lpcr.mint&legs=Pants_walnut&shoes=Basic_Shoes_leather"
+    },
+    "junior-m-14": {
+      "note": "Junior dev — male build (candidate #30)",
+      "hash": "sex=male&body=Body_Color_amber&head=Human_Male_Small_amber&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Curly_short_strawberry&clothes=TShirt_Scoop_teal&legs=Pants_black&shoes=Slippers_navy&mustache=Big_Mustache_strawberry"
+    },
+    "junior-m-15": {
+      "note": "Junior dev — male build (candidate #31)",
+      "hash": "sex=teen&body=Body_Color_lpcr.tawny&head=Human_Male_Gaunt_lpcr.tawny&eyes=Eye_Color_gray&expression=Neutral&hair=Relm_Short_ginger&clothes=Shortsleeve_Polo_rose&legs=Formal_Pants_walnut&shoes=Folded_Rim_Boots_charcoal"
+    },
+    "junior-m-16": {
+      "note": "Junior dev — male build (candidate #34)",
+      "hash": "sex=teen&body=Body_Color_lpcr.porcelain&head=Human_Male_lpcr.porcelain&eyes=Eye_Color_blue&expression=Neutral&hair=Jewfro_red&clothes=TShirt_all.lpcr.lemon&legs=Striped_Formal_Pants_forest&shoes=Revised_Shoes_walnut&facial_eyes=Nerd_Glasses_brown"
+    },
+    "junior-m-17": {
+      "note": "Junior dev — male build (candidate #37)",
+      "hash": "sex=male&body=Body_Color_light&head=Human_Male_light&eyes=Eye_Color_gray&expression=Neutral&hair=High_and_tight_ginger&clothes=TShirt_Scoop_yellow&legs=Leggings_2_leather&shoes=Basic_Shoes_charcoal&facial_eyes=Sunglasses_gray&beard=Trimmed_Beard_ginger"
+    },
+    "junior-m-18": {
+      "note": "Junior dev — male build (candidate #38)",
+      "hash": "sex=teen&body=Body_Color_lpcr.honey&head=Human_Male_Small_lpcr.honey&eyes=Eye_Color_green&expression=Neutral&hair=Bedhead_red&clothes=TShirt_VNeck_pink&legs=Hose_navy&shoes=Slippers_black&facial_eyes=Halfmoon_Glasses_gray"
+    },
+    "junior-m-19": {
+      "note": "Junior dev — male build (candidate #40)",
+      "hash": "sex=male&body=Body_Color_black&head=Human_Male_Gaunt_black&eyes=Eye_Color_brown&expression=Neutral&hair=Lob_red&clothes=TShirt_Buttoned_all.lpcr.cyan&legs=Long_Pants_walnut&shoes=Slippers_leather&beard=Basic_Beard_red"
+    },
+    "junior-m-20": {
+      "note": "Junior dev — male build (candidate #43)",
+      "hash": "sex=teen&body=Body_Color_lpcr.brown&head=Human_Male_lpcr.brown&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Curly_short_2_red&clothes=Shortsleeve_orange&legs=Striped_Formal_Pants_forest&shoes=Revised_Boots_walnut"
+    },
+    "junior-m-21": {
+      "note": "Junior dev — male build (candidate #45)",
+      "hash": "sex=male&body=Body_Color_brown&head=Human_Male_Small_brown&eyes=Eye_Color_brown&expression=Neutral&hair=Parted_3_strawberry&clothes=TShirt_Buttoned_sky&legs=Pants_tan&shoes=Revised_Boots_charcoal&beard=Medium_Beard_strawberry"
+    },
+    "junior-m-22": {
+      "note": "Junior dev — male build (candidate #46)",
+      "hash": "sex=teen&body=Body_Color_amber&head=Human_Male_Gaunt_amber&eyes=Eye_Color_green&expression=Neutral&hair=Page_chestnut&clothes=Shortsleeve_all.lpcr.coral&legs=Pants_forest&shoes=Basic_Boots_gray"
+    },
+    "junior-m-23": {
+      "note": "Junior dev — male build (candidate #48)",
+      "hash": "sex=teen&body=Body_Color_bronze&head=Human_Male_Plump_bronze&eyes=Eye_Color_green&expression=Neutral&hair=Balding_gray&clothes=TShirt_all.lpcr.cerise&legs=Cuffed_Pants_black&shoes=Slippers_white&facial_eyes=Round_Glasses_navy"
+    },
+    "junior-m-24": {
+      "note": "Junior dev — male build (candidate #49)",
+      "hash": "sex=teen&body=Body_Color_taupe&head=Human_Male_Gaunt_taupe&eyes=Eye_Color_brown&expression=Neutral&hair=Long_messy_dark_brown&clothes=TShirt_Scoop_green&legs=Leggings_2_black&shoes=Basic_Boots_leather&facial_eyes=Sunglasses_navy"
+    },
+    "junior-m-25": {
+      "note": "Junior dev — male build (candidate #50)",
+      "hash": "sex=male&body=Body_Color_olive&head=Human_Male_Gaunt_olive&eyes=Eye_Color_brown&expression=Neutral&hair=Dreadlocks_short_black&clothes=TShirt_VNeck_all.lpcr.apricot&legs=Formal_Pants_brown&shoes=Sandals_black&facial_eyes=Sunglasses_gray"
+    },
+    "junior-m-26": {
+      "note": "Junior dev — male build (candidate #52)",
+      "hash": "sex=teen&body=Body_Color_lpcr.tawny&head=Human_Male_Small_lpcr.tawny&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Page_light_brown&clothes=Shortsleeve_rose&legs=Cuffed_Pants_leather&shoes=Rimmed_Boots_brown&wrinkles=Wrinkles_lpcr.tawny"
+    },
+    "junior-m-27": {
+      "note": "Junior dev — male build (candidate #53)",
+      "hash": "sex=teen&body=Body_Color_lpcr.peach&head=Human_Male_lpcr.peach&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Curly_short_ash&clothes=Shortsleeve_green&legs=Striped_Formal_Pants_forest&shoes=Revised_Boots_navy"
+    },
+    "junior-m-28": {
+      "note": "Junior dev — male build (candidate #56)",
+      "hash": "sex=male&body=Body_Color_olive&head=Human_Male_Small_olive&eyes=Eye_Color_brown&expression=Neutral&hair=Bangslong_blonde&clothes=TShirt_all.lpcr.apple&legs=Hose_black&shoes=Revised_Boots_gray&facial_eyes=Secretary_Glasses_walnut"
+    },
+    "junior-m-29": {
+      "note": "Junior dev — male build (candidate #58)",
+      "hash": "sex=male&body=Body_Color_brown&head=Human_Male_Gaunt_brown&eyes=Eye_Color_brown&expression=Neutral&hair=Braid_black&clothes=Shortsleeve_Polo_all.lpcr.mint&legs=Striped_Formal_Pants_walnut&shoes=Sandals_leather&facial_eyes=Sunglasses_gray&mustache=Handlebar_Mustache_black"
+    },
+    "junior-m-30": {
+      "note": "Junior dev — male build (candidate #62)",
+      "hash": "sex=teen&body=Body_Color_lpcr.tan&head=Human_Male_lpcr.tan&eyes=Eye_Color_green&expression=Neutral&hair=Short_Topknot_dark_brown&clothes=TShirt_Scoop_all.lpcr.mint&legs=Pants_black&shoes=Basic_Boots_navy&facial_eyes=Shades_brown&wrinkles=Wrinkles_lpcr.tan"
+    },
+    "junior-m-31": {
+      "note": "Junior dev — male build (candidate #64)",
+      "hash": "sex=male&body=Body_Color_bronze&head=Human_Male_Gaunt_bronze&eyes=Eye_Color_green&expression=Neutral&hair=Curly_long_sandy&clothes=TShirt_Buttoned_rose&legs=Long_Pants_navy&shoes=Folded_Rim_Boots_leather&wrinkles=Wrinkles_bronze"
+    },
+    "senior-f-01": {
+      "note": "Senior dev — female build (candidate #6)",
+      "hash": "sex=female&body=Body_Color_black&head=Human_Female_Elderly_black&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Half_up_ash&clothes=Cardigan_navy&legs=Hose_gray&shoes=Sandals_gray"
+    },
+    "senior-f-02": {
+      "note": "Senior dev — female build (candidate #9)",
+      "hash": "sex=female&body=Body_Color_amber&head=Human_Female_Elderly_amber&eyes=Eye_Color_gray&expression=Neutral&hair=Curly_short_dark_gray&clothes=Longsleeve_2_Scoop_all.lpcr.midnight&legs=Shorts_brown&shoes=Rimmed_Boots_brown&facial_eyes=Nerd_Glasses_walnut"
+    },
+    "senior-f-03": {
+      "note": "Senior dev — female build (candidate #24)",
+      "hash": "sex=female&body=Body_Color_olive&head=Human_Female_olive&eyes=Eye_Color_blue&expression=Neutral&hair=Bunches_carrot&clothes=Longsleeve_2_Buttoned_all.lpcr.shadow&legs=Leggings_2_blue&shoes=Revised_Shoes_gray&wrinkles=Wrinkles_olive"
+    },
+    "senior-f-04": {
+      "note": "Senior dev — female build (candidate #25)",
+      "hash": "sex=female&body=Body_Color_bronze&head=Human_Female_bronze&eyes=Eye_Color_blue&expression=Neutral&hair=Balding_gold&clothes=Cardigan_navy&legs=Shorts_slate&shoes=Basic_Shoes_charcoal"
+    },
+    "senior-f-05": {
+      "note": "Senior dev — female build (candidate #54)",
+      "hash": "sex=female&body=Body_Color_lpcr.bronze&head=Human_Female_lpcr.bronze&eyes=Eye_Color_gray&expression=Neutral&hair=Page_strawberry&clothes=Longsleeve_Polo_charcoal&legs=Long_Pants_walnut&shoes=Sandals_leather&facial_eyes=Secretary_Glasses_brown&wrinkles=Wrinkles_lpcr.bronze"
+    },
+    "senior-f-06": {
+      "note": "Senior dev — female build (candidate #59)",
+      "hash": "sex=female&body=Body_Color_bronze&head=Human_Female_bronze&eyes=Eye_Color_brown&expression=Neutral&hair=High_ponytail_black&clothes=Longsleeve_all.lpcr.soot&legs=Hose_walnut&shoes=Revised_Shoes_leather&wrinkles=Wrinkles_bronze"
+    },
+    "senior-m-01": {
+      "note": "Senior dev — male build (candidate #8)",
+      "hash": "sex=male&body=Body_Color_taupe&head=Human_Male_Elderly_taupe&eyes=Eye_Color_green&expression=Neutral&hair=Bob_gold&clothes=Longsleeve_2_all.lpcr.plum&legs=Cuffed_Pants_blue&shoes=Folded_Rim_Boots_black&facial_eyes=Secretary_Glasses_navy&beard=5_O'clock_Shadow_gold&wrinkles=Wrinkles_taupe"
+    },
+    "senior-m-02": {
+      "note": "Senior dev — male build (candidate #11)",
+      "hash": "sex=male&body=Body_Color_lpcr.brown&head=Human_Male_Elderly_lpcr.brown&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Curtains_platinum&clothes=Longsleeve_2_Buttoned_slate&legs=Long_Pants_blue&shoes=Revised_Shoes_brown&facial_eyes=Shades_gray&beard=Winter_Beard_platinum"
+    },
+    "senior-m-03": {
+      "note": "Senior dev — male build (candidate #13)",
+      "hash": "sex=male&body=Body_Color_lpcr.brown&head=Human_Male_Small_lpcr.brown&eyes=Eye_Color_green&expression=Neutral&hair=Lob_strawberry&clothes=Cardigan_charcoal&legs=Leggings_2_walnut&shoes=Revised_Boots_leather&mustache=French_Mustache_strawberry&wrinkles=Wrinkles_lpcr.brown"
+    },
+    "senior-m-04": {
+      "note": "Senior dev — male build (candidate #17)",
+      "hash": "sex=male&body=Body_Color_amber&head=Human_Male_Elderly_amber&eyes=Eye_Color_green&expression=Neutral&hair=Bob_carrot&clothes=Longsleeve_Polo_navy&legs=Hose_gray&shoes=Sandals_walnut&facial_eyes=Glasses_black"
+    },
+    "senior-m-05": {
+      "note": "Senior dev — male build (candidate #26)",
+      "hash": "sex=male&body=Body_Color_lpcr.honey&head=Human_Male_Elderly_lpcr.honey&eyes=Eye_Color_brown&expression=Neutral&hair=Curtains_strawberry&clothes=Longsleeve_2_slate&legs=Cuffed_Pants_gray&shoes=Rimmed_Boots_walnut&wrinkles=Wrinkles_lpcr.honey"
+    },
+    "senior-m-06": {
+      "note": "Senior dev — male build (candidate #29)",
+      "hash": "sex=male&body=Body_Color_lpcr.brown&head=Human_Male_Plump_lpcr.brown&eyes=Eye_Color_lpcr.hazel&expression=Neutral&hair=Bunches_dark_brown&clothes=Cardigan_black&legs=Pants_black&shoes=Sandals_charcoal&beard=Trimmed_Beard_dark_brown"
+    },
+    "senior-m-07": {
+      "note": "Senior dev — male build (candidate #32)",
+      "hash": "sex=male&body=Body_Color_bronze&head=Human_Male_Small_bronze&eyes=Eye_Color_brown&expression=Neutral&hair=Large_Curls_sandy&clothes=Longsleeve_2_Buttoned_navy&legs=Cuffed_Pants_navy&shoes=Rimmed_Boots_brown&beard=Winter_Beard_sandy"
+    },
+    "senior-m-08": {
+      "note": "Senior dev — male build (candidate #33)",
+      "hash": "sex=male&body=Body_Color_lpcr.honey&head=Human_Male_lpcr.honey&eyes=Eye_Color_gray&expression=Neutral&hair=Cornrows_white&clothes=Longsleeve_2_all.lpcr.midnight&legs=Leggings_2_walnut&shoes=Revised_Shoes_white&facial_eyes=Secretary_Glasses_walnut"
+    },
+    "senior-m-09": {
+      "note": "Senior dev — male build (candidate #36)",
+      "hash": "sex=male&body=Body_Color_lpcr.brown&head=Human_Male_Elderly_lpcr.brown&eyes=Eye_Color_gray&expression=Neutral&hair=Afro_raven&clothes=Longsleeve_2_Buttoned_all.lpcr.denim&legs=Shorts_blue&shoes=Rimmed_Boots_charcoal"
+    },
+    "senior-m-10": {
+      "note": "Senior dev — male build (candidate #39)",
+      "hash": "sex=male&body=Body_Color_brown&head=Human_Male_Gaunt_brown&eyes=Eye_Color_green&expression=Neutral&hair=Balding_carrot&clothes=Longsleeve_2_VNeck_navy&legs=Long_Pants_gray&shoes=Basic_Shoes_walnut&beard=5_O'clock_Shadow_carrot&wrinkles=Wrinkles_brown"
+    },
+    "senior-m-11": {
+      "note": "Senior dev — male build (candidate #42)",
+      "hash": "sex=male&body=Body_Color_brown&head=Human_Male_Elderly_brown&eyes=Eye_Color_gray&expression=Neutral&hair=Bob_side_part_gold&clothes=Longsleeve_all.lpcr.shadow&legs=Striped_Formal_Pants_tan&shoes=Sandals_black&beard=Basic_Beard_gold&wrinkles=Wrinkles_brown"
+    },
+    "senior-m-12": {
+      "note": "Senior dev — male build (candidate #44)",
+      "hash": "sex=male&body=Body_Color_lpcr.tawny&head=Human_Male_Elderly_lpcr.tawny&eyes=Eye_Color_blue&expression=Neutral&hair=Long_gold&clothes=Cardigan_black&legs=Hose_brown&shoes=Basic_Shoes_black&facial_eyes=Glasses_brown"
+    },
+    "senior-m-13": {
+      "note": "Senior dev — male build (candidate #47)",
+      "hash": "sex=male&body=Body_Color_lpcr.tan&head=Human_Male_Elderly_lpcr.tan&eyes=Eye_Color_gray&expression=Neutral&hair=Curly_short_2_platinum&clothes=Longsleeve_2_Scoop_black&legs=Leggings_2_navy&shoes=Basic_Shoes_black&facial_eyes=Round_Glasses_navy&beard=Winter_Beard_platinum"
+    },
+    "senior-m-14": {
+      "note": "Senior dev — male build (candidate #55)",
+      "hash": "sex=male&body=Body_Color_lpcr.bronze&head=Human_Male_Gaunt_lpcr.bronze&eyes=Eye_Color_blue&expression=Neutral&hair=Page2_gold&clothes=Longsleeve_all.lpcr.soot&legs=Hose_brown&shoes=Slippers_black&wrinkles=Wrinkles_lpcr.bronze"
+    }
+  }
+}

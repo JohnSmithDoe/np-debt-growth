@@ -1,0 +1,18 @@
+@if (shown()) {
+  <div class="bar">
+    <span class="chip warn">Debug</span>
+    @for (grant of grants; track grant.label) {
+      <button type="button" class="btn small" (click)="apply(grant)">
+        {{ grant.label }}
+      </button>
+    }
+    <button
+      type="button"
+      class="btn small danger"
+      [class.primary]="armed()"
+      (click)="reset()"
+    >
+      {{ armed() ? 'Wipe it — sure?' : 'Reset' }}
+    </button>
+  </div>
+}

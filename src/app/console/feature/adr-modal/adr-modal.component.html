@@ -1,0 +1,80 @@
+@if (record(); as adr) {
+  <div
+    class="scrim chapter"
+    [class.offer]="!adr.signed"
+    [class.leaving]="leaving()"
+    [style.--leave]="leaveMs"
+    (cbBackdrop)="back()"
+  >
+    <div
+      class="room"
+      [style.background-image]="'url(' + adr.office + ')'"
+      aria-hidden="true"
+    ></div>
+
+    <cb-panel
+      class="doc"
+      heading="ADR-{{ adr.tier.index }} — {{
+        tierNameKey(adr.tier.index) | translate
+      }}"
+      subheading="Architecture Decision Record"
+    >
+      @if (adr.signed) {
+        <span panel-meta class="chip accent">Approved</span>
+      } @else {
+        <span panel-meta class="chip warn">In refinement</span>
+      }
+
+      @if (adr.signed) {
+        <img class="plate" [src]="adr.art" alt="" aria-hidden="true" />
+      } @else {
+        <button
+          type="button"
+          class="sign"
+          [disabled]="!adr.affordable"
+          (click)="approve()"
+        >
+          <img class="plate" [src]="adr.art" alt="" aria-hidden="true" />
+          <span class="seal">
+            <span class="verb">Approve</span>
+            <span class="cost">{{ adr.cost }}</span>
+          </span>
+        </button>
+      }
+
+      <section class="doc-sections">
+        <h4>Context</h4>
+        <p>{{ adr.copy.context }}</p>
+        <h4>Decision</h4>
+        <p>{{ adr.copy.decision }}</p>
+        <h4>Consequences</h4>
+        <p>{{ adr.copy.consequences }}</p>
+      </section>
+
+      <dl class="approval">
+        <dt>Approved</dt>
+        @if (adr.approval; as signed) {
+          <dd>{{ signed.name }}, {{ signed.role }}, {{ client }}</dd>
+        } @else {
+          <dd class="unsigned">—</dd>
+        }
+        <dt>Date</dt>
+        <dd>{{ adr.approval?.date ?? '—' }}</dd>
+        <dt>Comments</dt>
+        <dd>—</dd>
+      </dl>
+
+      <div class="doc-actions">
+        @if (adr.signed) {
+          <button type="button" class="btn primary" (click)="back()">
+            Acknowledge
+          </button>
+        } @else {
+          <button type="button" class="btn ghost" (click)="back()">
+            Not yet
+          </button>
+        }
+      </div>
+    </cb-panel>
+  </div>
+}

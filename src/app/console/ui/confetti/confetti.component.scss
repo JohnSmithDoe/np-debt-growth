@@ -1,0 +1,47 @@
+:host {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.spark {
+  display: block;
+  position: absolute;
+  top: 0;
+  background: var(--np-cb-money);
+  opacity: 0;
+  animation: confetti-fall 2.2s linear infinite;
+
+  &:nth-child(even) {
+    background: var(--np-cb-points);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-24px) rotate(0deg);
+      opacity: 0;
+    }
+
+    12% {
+      opacity: 1;
+    }
+
+    85% {
+      opacity: 1;
+    }
+
+    100% {
+      transform: translateY(var(--confetti-distance, 210px)) rotate(220deg);
+      opacity: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spark {
+    display: none;
+  }
+}

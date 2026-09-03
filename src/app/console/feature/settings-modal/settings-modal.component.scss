@@ -1,0 +1,100 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: var(--np-cb-scrim);
+}
+
+.doc {
+  max-width: 30rem;
+  width: 100%;
+  box-shadow: var(--np-cb-lift);
+  cursor: default;
+}
+
+.slate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0 0.85rem;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--np-cb-surface-2);
+  border: 1px solid var(--np-cb-rule);
+  border-radius: var(--np-cb-radius);
+}
+
+.slate .line {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'what state';
+  column-gap: 0.9rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--np-cb-surface-2);
+  border: 1px solid var(--np-cb-rule);
+  border-radius: var(--np-cb-radius);
+
+  &:hover:not(:disabled) {
+    background: var(--np-cb-surface-3);
+    border-color: var(--np-cb-ink-3);
+  }
+  &:active:not(:disabled) {
+    background: var(--np-cb-surface-3);
+  }
+}
+
+.what {
+  grid-area: what;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.state {
+  grid-area: state;
+  min-width: 2.75rem;
+  text-align: right;
+  font-family: var(--np-cb-font-util);
+  font-size: 0.72rem;
+  color: var(--np-cb-ink-3);
+}
+
+.line[aria-pressed='true'] .state {
+  color: var(--np-cb-ink);
+}
+
+.label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.small {
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.row > .btn {
+  min-width: 2.75rem;
+}
+
+.languages {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 0.85rem 0.1rem;
+}

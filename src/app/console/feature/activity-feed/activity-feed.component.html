@@ -1,0 +1,45 @@
+<cb-panel
+  heading="Recent Activity"
+  [subheading]="'A sample — ' + closed() + ' closed so far'"
+>
+  <button
+    panel-meta
+    type="button"
+    class="btn ghost small"
+    [class.primary]="newsOnly()"
+    [attr.aria-pressed]="newsOnly()"
+    (click)="toggleNewsOnly()"
+  >
+    {{ newsOnly() ? 'News' : 'All' }}
+  </button>
+
+  @if (rows().length === 0) {
+    <p class="muted small empty">{{ empty() }}</p>
+  } @else {
+    <ul class="rows">
+      @for (row of rows(); track row.seq) {
+        @if (row.kind === 'close') {
+          <li class="close" [class.rare]="row.rare">
+            <span class="who">{{ row.who }}</span>
+            <span class="key num">{{ row.key }}</span>
+            <span class="value num">{{ row.value }}</span>
+            <span class="title">{{ row.title }}</span>
+          </li>
+        } @else {
+          <li
+            class="news"
+            [class.alert]="row.kind === 'alert'"
+            [class.award]="row.kind === 'award'"
+            [class.landed]="row.seq > inherited"
+          >
+            <span class="mark" aria-hidden="true">{{ row.mark }}</span>
+            <span class="text">{{ row.text }}</span>
+            @if (row.detailKey) {
+              <span class="detail">{{ row.detailKey | translate }}</span>
+            }
+          </li>
+        }
+      }
+    </ul>
+  }
+</cb-panel>

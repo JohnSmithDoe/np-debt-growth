@@ -1,0 +1,24 @@
+[package]
+name = "np-clickbait"
+version = "0.1.0"
+description = "Debt Growth — an idle game about a consultancy that bills to fix the mess it is paid to make."
+authors = ["leto the c0dem0nkey"]
+edition = "2021"
+rust-version = "1.82"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+# No plugins. Tauri is packaging here: the save lives in the webview's
+# localStorage, so there is no filesystem, dialog or store plugin to reach for.
+# Adding one means adding its permission to capabilities/default.json too.
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

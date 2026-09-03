@@ -1,0 +1,11 @@
+/* Typecheck-only project: globs all of `src/**` so nothing escapes review,
+   including files no import chain reaches yet. Never used to build. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/check",
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"]
+}

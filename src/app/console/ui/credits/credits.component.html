@@ -1,0 +1,34 @@
+<p class="line">
+  <span>{{ copyright }} · free software under the</span>
+  <a [href]="licenseUrl" target="_blank" rel="noopener">AGPL-3.0</a>
+  <span>·</span>
+  <span>source at</span>
+  <a [href]="sourceUrl" target="_blank" rel="noopener">{{ sourceLabel }}</a>
+  <span>·</span>
+  <button type="button" (click)="toggle()" [attr.aria-expanded]="open()">
+    {{ open() ? 'Hide credits' : 'Credits' }}
+  </button>
+</p>
+
+@if (open()) {
+  <dl class="list">
+    @for (credit of credits; track credit.what) {
+      <div class="entry">
+        <dt>
+          @if (credit.url) {
+            <a [href]="credit.url" target="_blank" rel="noopener">
+              {{ credit.what }}
+            </a>
+          } @else {
+            {{ credit.what }}
+          }
+        </dt>
+        <dd>{{ credit.who }} — {{ credit.license }}</dd>
+      </div>
+    }
+  </dl>
+  <p class="line">
+    <span>The crew art carries its own copyleft:</span>
+    <a [href]="artLicenseUrl" target="_blank" rel="noopener">GPL-3.0</a>
+  </p>
+}

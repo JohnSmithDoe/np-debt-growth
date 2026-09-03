@@ -1,0 +1,113 @@
+.perch {
+  position: fixed;
+  inset-block-start: 4.5rem;
+  inset-inline: 0;
+  z-index: 60;
+
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.award {
+  pointer-events: auto;
+  cursor: pointer;
+  text-align: center;
+
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  max-width: 26rem;
+  padding: 0.85rem 1.4rem;
+  --confetti-distance: 150px;
+
+  background: var(--np-cb-surface);
+  border: 1px solid var(--np-cb-points);
+  border-radius: var(--np-cb-radius);
+  box-shadow: var(--np-cb-lift);
+
+  isolation: isolate;
+
+  animation: award-land 260ms ease-out;
+}
+
+cb-confetti {
+  z-index: -1;
+}
+
+.pokal {
+  font-size: 1.7rem;
+}
+
+.label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--np-cb-ink);
+}
+
+.blurb {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--np-cb-ink-2);
+}
+
+.sp {
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--np-cb-points);
+  font-variant-numeric: tabular-nums;
+}
+
+.award.medium {
+  padding: 1.1rem 1.8rem;
+  border-width: 2px;
+  --confetti-distance: 190px;
+}
+
+.award.medium .label {
+  font-size: 1.15rem;
+}
+
+.award.medium .pokal {
+  font-size: 2.3rem;
+}
+
+.award.large {
+  padding: 1.4rem 2.2rem;
+  border-width: 2px;
+  box-shadow:
+    var(--np-cb-lift),
+    0 0 2.5rem -0.5rem var(--np-cb-points);
+  --confetti-distance: 240px;
+}
+
+.award.large .label {
+  font-size: 1.45rem;
+}
+
+.award.large .sp {
+  font-size: 1rem;
+}
+
+.award.large .pokal {
+  font-size: 3.1rem;
+  filter: drop-shadow(
+    0 0 0.5rem color-mix(in srgb, var(--np-cb-money) 55%, transparent)
+  );
+}
+
+@keyframes award-land {
+  from {
+    opacity: 0;
+    transform: translateY(-0.6rem) scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .award {
+    animation: none;
+  }
+}

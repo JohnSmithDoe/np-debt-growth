@@ -1,0 +1,27 @@
+<cb-panel
+  [heading]="'step.heading' | translate"
+  [subheading]="'step.subheading' | translate"
+>
+  <ul class="lines">
+    @for (row of rows(); track row.id) {
+      <li [class.teaches]="row.teaches" [class.acts]="row.acts">
+        @if (row.does) {
+          <button type="button" class="line" (click)="open(row)">
+            <span class="head">
+              <span class="label">{{ row.title }}</span>
+              <span class="chip" [class.ok]="row.acts">{{ row.does }}</span>
+            </span>
+            <span class="blurb muted">{{ row.detail }}</span>
+          </button>
+        } @else {
+          <span class="line inert">
+            <span class="head">
+              <span class="label">{{ row.title }}</span>
+            </span>
+            <span class="blurb muted">{{ row.detail }}</span>
+          </span>
+        }
+      </li>
+    }
+  </ul>
+</cb-panel>

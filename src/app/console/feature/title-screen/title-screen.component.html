@@ -1,0 +1,43 @@
+@if (shown()) {
+  <div class="title" [style.background-image]="'url(' + art() + ')'">
+    <div class="card">
+      <h1>{{ 'title.name' | translate }}</h1>
+      <p class="strap">{{ 'title.strap' | translate }}</p>
+      <p class="premise">{{ 'title.premise' | translate }}</p>
+      <button type="button" class="btn primary" (click)="open()">
+        {{ action() | translate }}
+      </button>
+
+      <div class="languages">
+        @for (option of languages; track option) {
+          <button
+            type="button"
+            class="lang"
+            [class.active]="option === language"
+            [attr.aria-current]="option === language"
+            (click)="choose(option)"
+          >
+            {{ 'language.' + option | translate }}
+          </button>
+        }
+      </div>
+
+      @if (canFullscreen) {
+        <div class="screen">
+          <button
+            type="button"
+            class="lang"
+            [attr.aria-pressed]="fullscreen()"
+            (click)="toggleFullscreen()"
+          >
+            {{
+              (fullscreen() ? 'title.windowed' : 'title.fullscreen') | translate
+            }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <cb-credits class="legal" />
+  </div>
+}

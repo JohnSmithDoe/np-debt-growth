@@ -1,0 +1,35 @@
+<cb-panel heading="Engagement Summary" subheading="Lifetime, this engagement">
+  <span panel-meta class="chip">Unaudited</span>
+
+  @if (rung(); as rung) {
+    <div class="rung">
+      <p class="rung-head">
+        @if (rung.done) {
+          <span class="label"
+            >Ladder complete · {{ rung.nameKey | translate }}</span
+          >
+          <span class="num money">Closed</span>
+        } @else {
+          <span class="label">
+            Next · ADR {{ rung.index }} · {{ rung.nameKey | translate }}
+          </span>
+          <span class="num money">{{ rung.cost }}</span>
+        }
+      </p>
+      <span class="gauge" aria-hidden="true">
+        <span class="fill" [style.width.%]="rung.pct"></span>
+      </span>
+    </div>
+  }
+
+  <dl>
+    @for (stat of stats(); track stat.label) {
+      <div>
+        <dt>{{ stat.label }}</dt>
+        <dd class="num" [class.money]="stat.tone === 'money'">
+          {{ stat.value }}
+        </dd>
+      </div>
+    }
+  </dl>
+</cb-panel>

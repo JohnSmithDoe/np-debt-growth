@@ -1,0 +1,47 @@
+<cb-panel
+  heading="Achievements"
+  subheading="Recognition register — Story Points awarded on confirmation, not on effort."
+>
+  <span panel-meta class="chip points"
+    >{{ confirmed().length }}/{{ total }} confirmed</span
+  >
+
+  <table class="rows">
+    <thead>
+      <tr>
+        <th scope="col">Achievement</th>
+        <th scope="col" class="right">Grants</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (row of pending(); track row.id) {
+        <tr>
+          <td>
+            <p class="small">{{ row.blurb }}</p>
+          </td>
+          <td class="right"><span class="chip locked">Unconfirmed</span></td>
+        </tr>
+      }
+    </tbody>
+
+    @if (confirmed().length) {
+      <tbody class="done">
+        <tr class="split">
+          <td colspan="2">Confirmed</td>
+        </tr>
+        @for (row of confirmed(); track row.id) {
+          <tr>
+            <td>
+              <cb-trophy />
+              <span class="label">{{ row.label }}</span>
+            </td>
+            <td class="right">
+              <span class="chip">+{{ row.sp }} SP</span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    }
+  </table>
+</cb-panel>

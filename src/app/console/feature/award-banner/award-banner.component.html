@@ -1,0 +1,20 @@
+<div class="perch" role="status" aria-live="polite">
+  @if (showing(); as award) {
+    <button
+      type="button"
+      class="award"
+      [class]="award.weight"
+      (click)="dismiss()"
+    >
+      <cb-confetti [pieces]="award.pieces" />
+      <cb-trophy class="pokal" />
+      <span class="kind chip">{{
+        award.milestone ? 'Milestone' : 'Achievement'
+      }}</span>
+      <span class="label">{{ award.label }}</span>
+      <span class="blurb">{{ award.blurb }}</span>
+      <span class="sp">+{{ award.sp }} SP</span>
+      <span class="offscreen">Dismiss</span>
+    </button>
+  }
+</div>

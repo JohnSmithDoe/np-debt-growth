@@ -1,0 +1,117 @@
+<header class="masthead">
+  <div class="brand">
+    <span class="wordmark">Debt&nbsp;Growth</span>
+    <span class="engagement">{{ client }} · {{ engagement }}</span>
+  </div>
+  <dl class="readout">
+    <div>
+      <dt>Budget</dt>
+      <dd class="money" [title]="exactMoney()">{{ money(budget()) }}</dd>
+    </div>
+    <div>
+      <dt>Story Points</dt>
+      <dd
+        class="points"
+        [class.paid]="awardPaid()"
+        [title]="exactPoints()"
+        (animationend)="awardPaid.set(false)"
+      >
+        {{ points(storyPoints()) }}
+      </dd>
+    </div>
+    <div class="round">
+      <dt>Round</dt>
+      <dd>{{ roundSeq() }} · {{ roundLabel() }}</dd>
+    </div>
+    <div class="sprint">
+      <dt>Sprint</dt>
+      <dd>
+        @if (running()) {
+          {{ sprintCount() }}/{{ sprintSlots() }}
+          <span class="pending">{{ money(sprintValue()) }}</span>
+          @if (roundTarget(); as target) {
+            <span class="chip" [class.ok]="onTarget()"
+              >of {{ money(target) }}</span
+            >
+          }
+          @if (sprintOver() > 0) {
+            <span class="chip sev0"
+              >{{ sprintOver() }} over · reduced rate</span
+            >
+          }
+          @if (escalated()) {
+            <span class="chip sev0">Escalated ×{{ escalation() }}</span>
+          }
+          @if (hotfixRemaining() > 0) {
+            <span class="chip warn">Hotfix ×2 · {{ hotfixLabel() }}</span>
+          }
+          @if (escalationRemaining() > 0) {
+            <span class="chip sev0">Escalation in {{ escalationLabel() }}</span>
+          }
+        } @else {
+          <span class="muted">—</span>
+        }
+      </dd>
+      <span class="gauge" [class.full]="sprintFull()" aria-hidden="true">
+        <span class="fill" [style.width.%]="sprintFill()"></span>
+      </span>
+    </div>
+  </dl>
+  <div class="controls">
+    <button
+      type="button"
+      class="btn ghost small settings"
+      title="Settings"
+      aria-label="Settings"
+      (click)="openSettings()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.4" />
+        <path
+          d="M18.2 12h2.3M15.4 15.4l1.63 1.63M12 18.2v2.3M8.6 15.4l-1.63 1.63M5.8 12H3.5M8.6 8.6L6.97 6.97M12 5.8V3.5M15.4 8.6l1.63-1.63"
+        />
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main class="workspace">
+  <div class="primary">
+    <div class="pane">
+      <router-outlet />
+    </div>
+
+    @if (onTree()) {
+      <div class="interval-bar">
+        <button type="button" class="btn ghost small" (click)="toReview()">
+          Back to the review
+        </button>
+        <button type="button" class="btn primary" (click)="startNextRound()">
+          Start sprint {{ nextRound() }}
+        </button>
+      </div>
+    }
+
+    @if (!running() && !ended() && !onTree()) {
+      <cb-sprint-review (startRound)="startNextRound()" (openTree)="toTree()" />
+    }
+  </div>
+
+  <aside class="rail">
+    @if (onTree()) {
+      <cb-next-steps (go)="goTo($event)" />
+      <cb-achievements-panel />
+    } @else {
+      <cb-lifetime-stats />
+      <cb-activity-feed />
+    }
+  </aside>
+</main>
+
+<cb-award-banner />
+<cb-title-screen />
+<cb-adr-modal />
+<cb-settings-modal [muted]="muted()" (mutedChange)="toggleMuted()" />
+<cb-moment-modal />
+<cb-post-mortem />
+<cb-debug-bar />

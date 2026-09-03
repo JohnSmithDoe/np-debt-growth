@@ -1,0 +1,57 @@
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+
+  cb-panel {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.label {
+  font-weight: 600;
+}
+
+.rows p {
+  max-width: 26rem;
+  margin-top: 0.15rem;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+  width: 7rem;
+}
+
+.split td {
+  padding-block: 0.7rem 0.35rem;
+  border-top: 1px solid var(--np-cb-rule);
+  border-bottom: 0;
+  font-family: var(--np-cb-font-util);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--np-cb-ink-3);
+}
+
+.done {
+  color: var(--np-cb-ink-3);
+
+  .label {
+    font-weight: 500;
+  }
+
+  td:first-child {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+}
+
+cb-trophy {
+  flex: none;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}

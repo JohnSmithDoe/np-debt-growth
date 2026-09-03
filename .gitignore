@@ -1,0 +1,40 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+.angular
+/.angular/cache
+
+# compiled output
+/dist
+/out-tsc
+/release
+
+# Cargo's build cache, and the permission schemas tauri-build regenerates from
+# the installed plugins on every build — both are derived, both are large.
+/src-tauri/target
+/src-tauri/gen/schemas
+
+# dependencies
+node_modules
+
+# IDEs and editors
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/coverage
+npm-debug.log
+/tmp
+
+# eslint writes this on every run
+.eslintcache
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# locally generated image takes — staged art is not shipped art
+/image-staging/
+
+# demo-only floor candidates — harness art, not shipped art
+/src/assets/board/demo/

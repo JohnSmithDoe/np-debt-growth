@@ -1,0 +1,117 @@
+.title {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background-color: var(--np-cb-ground);
+  background-size: cover;
+  background-position: center;
+  image-rendering: pixelated;
+}
+
+.title::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 44% 36% at 50% 46%,
+      rgb(6 8 11 / 0.58),
+      rgb(6 8 11 / 0) 72%
+    ),
+    linear-gradient(to bottom, rgb(6 8 11 / 0.08), rgb(6 8 11 / 0.3));
+}
+
+.legal {
+  position: absolute;
+  inset: auto 1rem 1rem;
+  max-width: 42rem;
+  margin: 0 auto;
+  text-align: center;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
+}
+
+.title:has(cb-credits.open) .card {
+  visibility: hidden;
+}
+
+.card {
+  position: relative;
+  max-width: 34rem;
+  padding: 0 2rem;
+  text-align: center;
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--np-cb-font-pixel);
+  font-size: clamp(2.4rem, 7vw, 4.2rem);
+  letter-spacing: 0.04em;
+  color: var(--np-cb-ink);
+  text-shadow: 0 3px 0 rgb(0 0 0 / 0.8);
+}
+
+.strap {
+  margin: 0.5rem 0 0;
+  font-family: var(--np-cb-font-util);
+  font-size: 0.86rem;
+  color: var(--np-cb-money);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
+}
+
+.premise {
+  margin: 1.4rem auto 1.8rem;
+  max-width: 26rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--np-cb-ink-2);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
+}
+
+.languages,
+.screen {
+  display: flex;
+  gap: var(--np-cb-space-2, 0.5rem);
+  justify-content: center;
+  margin-top: var(--np-cb-space-4, 1rem);
+}
+
+.screen {
+  margin-top: var(--np-cb-space-4, 1rem);
+}
+
+.lang {
+  position: relative;
+  background: none;
+  border: 1px solid var(--np-cb-line, currentcolor);
+  border-radius: var(--np-cb-radius, 2px);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  opacity: 0.55;
+  min-height: 1.9rem;
+  padding: 0.25rem 0.7rem;
+  touch-action: manipulation;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: max(100%, 2.75rem);
+    transform: translateY(-50%);
+  }
+
+  &:hover,
+  &:focus-visible {
+    opacity: 0.85;
+  }
+
+  &.active {
+    opacity: 1;
+    border-color: currentcolor;
+  }
+}

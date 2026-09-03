@@ -1,0 +1,12 @@
+# Not a monorepo — the app is the only package. The file exists for `allowBuilds`,
+# which pnpm reads from here rather than from package.json.
+packages:
+  - .
+
+# Dependency lifecycle scripts are deny-by-default in pnpm; only these need to run.
+allowBuilds:
+  esbuild: true # fetches its platform binary
+  '@angular/cli': false # only an interactive analytics prompt
+  '@parcel/watcher': false
+  lmdb: false
+  msgpackr-extract: false
