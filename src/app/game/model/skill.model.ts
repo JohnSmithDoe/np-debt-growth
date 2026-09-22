@@ -794,6 +794,14 @@ export const SKILL_NODES: readonly SkillNode[] = [
   },
 
   {
+    id: 'signoff',
+    track: 'G',
+    requires: 'goldenCrew',
+    gate: 'tier8',
+    levels: [{ cost: 5_000_000, effects: [{ kind: 'none' }] }],
+  },
+
+  {
     id: 'secret',
     track: 'secret',
     requires: null,
@@ -807,6 +815,9 @@ export const SKILL_BY_ID: ReadonlyMap<string, SkillNode> = new Map(
 );
 
 export const SECRET_SKILL_ID = 'secret';
+
+/** Buying this closes the engagement — it is the run's last purchase. */
+export const FINAL_SKILL_ID = 'signoff';
 
 export const isSkillHeading = (id: string): boolean =>
   SKILL_BY_ID.get(id)?.heading === true;

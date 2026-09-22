@@ -203,6 +203,9 @@ export const DE: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'Keiner freigegeben',
   'skill.golden.1.label': 'Partnersache',
   'skill.golden.2.label': 'Mehr davon',
+  'skill.signoff.blurb':
+    'Das Mandat ist beendet. Alles, was abrechenbar war, ist abgerechnet. Kauf das und du gehst nach Hause.',
+  'skill.signoff.1.label': 'Abschluss unterschreiben',
   'skill.golden.blurb':
     'Manche Arbeit kommt als Partnersache herein. Sie zahlt ein Vermögen, und das Team fasst sie nicht an.',
   'skill.goldenCrew.1.label': 'Delegierte Vollmacht',

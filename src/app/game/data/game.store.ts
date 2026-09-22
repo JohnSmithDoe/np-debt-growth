@@ -43,13 +43,14 @@ import type { RoundOutcome } from '../model/round.model';
 import type { SkillGate } from '../model/skill.model';
 import type { SkillLock } from '../model/skill.model';
 import {
+  FINAL_SKILL_ID,
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_NODES,
   skillLabelKey,
   skillParent,
 } from '../model/skill.model';
-import { MAX_TIER, tierAt } from '../model/tier.model';
+import { tierAt } from '../model/tier.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
@@ -333,9 +334,10 @@ export class GameStore {
 
   readonly ended = computed(() => this.#state().endedAt > 0);
 
+  /** The run ends when the last upgrade on the tree is bought. */
   canEndRun(): boolean {
     const state = this.#state();
-    return state.endedAt === 0 && state.tier >= MAX_TIER;
+    return state.endedAt === 0 && economy.skillRank(state, FINAL_SKILL_ID) > 0;
   }
 
   endRun(now: number): boolean {
@@ -1154,6 +1156,7 @@ export class GameStore {
       levels,
       roster,
       skills: { ...state.skills, [id]: economy.skillRank(state, id) + 1 },
+      endedAt: id === FINAL_SKILL_ID ? state.lastTick : state.endedAt,
     });
     return true;
   }

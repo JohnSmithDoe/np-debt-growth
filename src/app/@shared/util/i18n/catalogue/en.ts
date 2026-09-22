@@ -199,6 +199,9 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'None approved',
   'skill.golden.1.label': 'Partner-Only Work',
   'skill.golden.2.label': 'More Of It',
+  'skill.signoff.blurb':
+    'The engagement is complete. Everything that could be billed has been billed. Buy this and you go home.',
+  'skill.signoff.1.label': 'Sign the Closeout',
   'skill.golden.blurb':
     'Some work arrives flagged partner-only. It pays a fortune, and the crew will not go near it.',
   'skill.goldenCrew.1.label': 'Delegated Authority',

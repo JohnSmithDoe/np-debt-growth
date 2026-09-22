@@ -194,9 +194,15 @@ describe('the ending (D2)', () => {
   });
 
   it('closes once, and stays closed', () => {
-    const store = storeWith({ tier: MAX_TIER });
+    const store = storeWith({ tier: MAX_TIER, skills: { signoff: 1 } });
     expect(store.endRun(1_000)).toBe(true);
     expect(store.ended()).toBe(true);
     expect(store.endRun(2_000)).toBe(false);
+  });
+
+  it('will not close before the last upgrade is signed', () => {
+    const store = storeWith({ tier: MAX_TIER });
+    expect(store.canEndRun()).toBe(false);
+    expect(store.endRun(1_000)).toBe(false);
   });
 });
