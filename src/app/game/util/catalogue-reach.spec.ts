@@ -69,9 +69,11 @@ const BUILT: readonly { readonly owns: RegExp; readonly keys: string[] }[] = [
   {
     owns: /^purchase\.[a-z]+\.(?:label|blurb|effect|category|initials)$/,
     keys: [
-      ...PURCHASE_IDS.map((line) => `purchase.${line}.effect`),
-      'purchase.junior.label',
-      'purchase.manager.label',
+      // The rail names every line now, so every line owes a label.
+      ...PURCHASE_IDS.flatMap((line) => [
+        `purchase.${line}.effect`,
+        `purchase.${line}.label`,
+      ]),
     ],
   },
   {

@@ -1,3 +1,27 @@
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 8px;
+
+  button {
+    flex: 1;
+    padding: 5px 8px;
+    border: 1px solid var(--np-cb-line, #232a34);
+    border-radius: 3px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.85em;
+    cursor: pointer;
+    opacity: 0.6;
+
+    &.on {
+      border-color: var(--np-cb-gold, #d8a53a);
+      opacity: 1;
+    }
+  }
+}
+
 .lines {
   display: flex;
   flex-direction: column;

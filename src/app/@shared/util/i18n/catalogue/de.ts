@@ -95,6 +95,10 @@ export const DE: Readonly<Record<string, string>> = {
   'ticket.type.slop': 'Halluzinierter Import',
   'ticket.type.swarm': 'Autonomer PR',
   'ticket.type.zombie': '3-Uhr-Alarm',
+  'purchase.copilot.label': 'Copilot-Platz',
+  'purchase.velocity.label': 'Velocity-Abschöpfung',
+  'purchase.kit.label': 'Schreibtisch-Ausstattung',
+  'purchase.senior.label': 'Senior-Entwickler',
   'purchase.copilot.effect': '+{{sp}} SP pro Abschluss',
   'purchase.junior.effect': 'ein Abschluss alle {{seconds}}s, plus Laufweg',
   'purchase.kit.effect': 'das nächste Stück Ausstattung am Schreibtisch',
@@ -202,7 +206,6 @@ export const DE: Readonly<Record<string, string>> = {
   'title.windowed': 'Fenstermodus',
   'postmortem.no-tier': 'Keiner freigegeben',
   'skill.golden.1.label': 'Partnersache',
-  'skill.golden.2.label': 'Mehr davon',
   'skill.signoff.blurb':
     'Das Mandat ist beendet. Alles, was abrechenbar war, ist abgerechnet. Kauf das und du gehst nach Hause.',
   'skill.signoff.1.label': 'Abschluss unterschreiben',
@@ -272,10 +275,6 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.capacity.blurb': 'Mehr Slots pro Sprint, bevor er Arbeit ablehnt.',
   'skill.client.1.label': 'Der Kunde',
   'skill.copilot.1.label': 'Copilot-Seat',
-  'skill.copilot.2.label': 'Teamlizenz',
-  'skill.copilot.3.label': 'Enterprise Agreement',
-  'skill.copilot.4.label': 'Agentenflotte',
-  'skill.copilot.5.label': 'Autonomes Squad',
   'skill.copilot.blurb':
     'Ein Copilot-Seat mehr. Macht aus Closes Story Points.',
   'skill.copilotYield.1.label': 'Copilot-Kontext',
@@ -311,10 +310,6 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.income.5.label': 'Neue Preisliste',
   'skill.income.blurb': 'Alles rechnet etwas besser ab.',
   'skill.junior.1.label': 'Junior Dev',
-  'skill.junior.2.label': 'Absolventenjahrgang',
-  'skill.junior.3.label': 'Bootcamp-Kohorte',
-  'skill.junior.4.label': 'Offshore-Squad',
-  'skill.junior.5.label': 'Body-Shop-Vertrag',
   'skill.junior.blurb':
     'Ein Junior mehr auf der Fläche. Sie laufen, nehmen, schließen.',
   'skill.juniorPresence.1.label': 'Standup-Aura',
@@ -331,21 +326,12 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.juniorSpeed.blurb':
     'Juniors schließen schneller und laufen schneller.',
   'skill.kit.1.label': 'Stehpulte',
-  'skill.kit.2.label': 'Mechanische Tastaturen',
-  'skill.kit.3.label': 'IDE-Lizenzen',
-  'skill.kit.4.label': 'Zweite Monitore',
-  'skill.kit.5.label': 'CI-Stufe: Enterprise',
-  'skill.kit.6.label': 'Observability-Anbieter',
   'skill.kit.blurb':
     'Die Schreibtische ausgestattet. Jedes Teil zählt auf der Wertseite.',
   'skill.lineOfSight.1.label': 'Sichtlinie',
   'skill.lineOfSight.blurb':
     'Das Team nimmt das nächste Ticket statt irgendeins.',
   'skill.manager.1.label': 'Account Manager',
-  'skill.manager.2.label': 'Delivery Manager',
-  'skill.manager.3.label': 'Programm-Manager',
-  'skill.manager.4.label': 'Engagement Director',
-  'skill.manager.5.label': 'Partner',
   'skill.manager.blurb':
     'Ein Account Manager mehr. Schließt nichts, kostet am meisten.',
   'skill.managerSpeed.1.label': 'Account Management',
@@ -384,10 +370,6 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.secret.blurb':
     'Du hast nachgesehen. Alles rechnet besser ab, und niemand hat es abgezeichnet.',
   'skill.senior.1.label': 'Senior Dev',
-  'skill.senior.2.label': 'Tech Lead',
-  'skill.senior.3.label': 'Staff Engineer',
-  'skill.senior.4.label': 'Principal Engineer',
-  'skill.senior.5.label': 'CTO auf Stundenbasis',
   'skill.senior.blurb':
     'Ein Senior mehr. Teurer, schneller — und sie räumen ab.',
   'skill.seniorPresence.1.label': 'Batch-Review',
@@ -453,10 +435,6 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.valueZombie.1.label': 'Follow the Sun',
   'skill.valueZombie.blurb': 'Zombie-Tickets rechnen mehr ab.',
   'skill.velocity.1.label': 'Velocity-Buchhaltung',
-  'skill.velocity.2.label': 'Burndown-Massage',
-  'skill.velocity.3.label': 'Kapazitätsprognose',
-  'skill.velocity.4.label': 'Vorhersagbarkeitsindex',
-  'skill.velocity.5.label': 'Delivery Assurance',
   'skill.velocity.blurb':
     'Story Points für Geld — und der Kurs verfällt, je mehr du ihn nutzt.',
 };

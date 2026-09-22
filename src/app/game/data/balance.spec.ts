@@ -16,11 +16,13 @@ import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import { DEBT_TIERS } from '../model/tier.model';
 import type { PurchaseId } from '../model/balance/progression';
+import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPAWNERS } from '../model/spawner.model';
 import { TRAIT_IDS } from '../model/senior.model';
 
 /** Design bound: no single trait may make a senior worth more than this many. */
 const TRAIT_D21_CEILING = 1.25;
+import { HAUL_MIN_MS, HAUL_MS } from '../model/balance/round';
 import { pickWithin } from '../util/board';
 import * as economy from '../util/economy';
 
@@ -46,8 +48,11 @@ function everySkill(): Record<string, number> {
 }
 
 const MILESTONES = [
-  ['first junior', (s: Consultancy) => s.levels.junior >= 1],
+  // ADR-1 comes first now: it hands over the free copilot, and copilots are
+  // the only source of SP before velocity, so nothing on the tree is
+  // reachable until it lands.
   ['tier 1', (s: Consultancy) => s.tier >= 1],
+  ['first junior', (s: Consultancy) => s.levels.junior >= 1],
   ['tier 2', (s: Consultancy) => s.tier >= 2],
   ['tier 3', (s: Consultancy) => s.tier >= 3],
   ['tier 4', (s: Consultancy) => s.tier >= 4],
@@ -58,7 +63,7 @@ const MILESTONES = [
 ] as const;
 
 const UNORDERED_MILESTONES = [
-  ['longer rounds', (s: Consultancy) => (s.skills['duration'] ?? 0) >= 1],
+  ['faster truck', (s: Consultancy) => (s.skills['duration'] ?? 0) >= 1],
   [
     'tree opened',
     (s: Consultancy) =>
@@ -239,7 +244,22 @@ class Playthrough {
     this.#promote();
     this.#buySkills();
     while (this.store.unlockNextTier());
+    this.#buyLines();
     this.#buySpawners();
+  }
+
+  /** Headcount is a rail purchase now, not a tree one. */
+  #buyLines(): void {
+    for (;;) {
+      const state = this.store.snapshot();
+      const next = PURCHASE_IDS.filter(
+        (line) =>
+          this.store.canBuyLine(line) &&
+          this.#wants(state, line) &&
+          this.store.lineCost(line) <= state.budget * PURCHASE_SPEND_FRACTION
+      ).sort((a, b) => this.store.lineCost(a) - this.store.lineCost(b))[0];
+      if (!next || !this.store.buyLine(next)) return;
+    }
   }
 
   /** Supply first: an empty path produces nothing to bill for. */
@@ -705,10 +725,10 @@ describe('the session arc', () => {
     }
   });
 
-  it('lengthens the round only once there is a crew to fill it', () => {
-    expect(run.reached.get('longer rounds')).toBeGreaterThan(
-      run.reached.get('first junior')!
-    );
+  it('never hurries the truck away entirely', () => {
+    const hurried = { ...fullyLevelled(40, 4, 8), skills: everySkill() };
+    expect(economy.haulMs(hurried)).toBeGreaterThanOrEqual(HAUL_MIN_MS);
+    expect(economy.haulMs(hurried)).toBeLessThan(HAUL_MS);
   });
 
   it.runIf(process.env['CB_CLOCK'])('reports the clock it measured', () => {

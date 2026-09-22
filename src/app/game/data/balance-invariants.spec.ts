@@ -2,11 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { consultancy } from '../model/consultancy.fixture';
 import { KIT_ITEMS, KIT_PLAN } from '../model/kit.model';
-import { SKILL_BY_ID } from '../model/skill.model';
 import { RETYPE_LADDER, TICKET_TYPES } from '../model/ticket.model';
 import { DEBT_TIERS } from '../model/tier.model';
 import { CREW_KINDS, CREW_STATS } from '../model/balance/crew';
-import { PURCHASE_IDS } from '../model/balance/progression';
+import { LINE_PLAN, PURCHASE_IDS } from '../model/balance/progression';
 import * as economy from '../util/economy';
 
 /**
@@ -102,9 +101,8 @@ describe('the crew table', () => {
 });
 
 describe('the kit ladder', () => {
-  it('sells exactly as many items as the tree has levels to sell', () => {
-    const node = SKILL_BY_ID.get('kit');
-    expect(node?.levels.length).toBe(KIT_ITEMS);
+  it('sells exactly as many items as the rail has heads to sell', () => {
+    expect(KIT_PLAN.length).toBe(LINE_PLAN.kit.cap);
   });
 
   it('names every item once', () => {

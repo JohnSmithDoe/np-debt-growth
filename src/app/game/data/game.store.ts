@@ -997,6 +997,40 @@ export class GameStore {
     return true;
   }
 
+  lineCost(line: PurchaseId): number {
+    return economy.lineCost(this.#state(), line);
+  }
+
+  lineCap(line: PurchaseId): number {
+    return economy.lineCap(line);
+  }
+
+  lineUnlocked(line: PurchaseId): boolean {
+    return economy.lineUnlocked(this.#state(), line);
+  }
+
+  canBuyLine(line: PurchaseId): boolean {
+    return economy.canBuyLine(this.#state(), line);
+  }
+
+  /** Another head on an already-open line, bought live from the rail. */
+  buyLine(line: PurchaseId): boolean {
+    const state = this.#state();
+    if (!economy.canBuyLine(state, line)) return false;
+    const cost = economy.lineCost(state, line);
+    const levels = { ...state.levels, [line]: state.levels[line] + 1 };
+    this.#state.set({
+      ...state,
+      budget: state.budget - cost,
+      levels,
+      roster:
+        line === 'senior'
+          ? [...state.roster, economy.nextSeniorHire(state)]
+          : state.roster,
+    });
+    return true;
+  }
+
   spawnerCount(adr: number): number {
     return economy.spawnerCount(this.#state(), adr);
   }

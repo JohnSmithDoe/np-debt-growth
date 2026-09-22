@@ -1,28 +1,74 @@
-<cb-panel heading="Pollution" subheading="Hire developers. They make the debt.">
-  <span panel-meta class="chip accent">Supply</span>
+<cb-panel heading="The Practice" subheading="Bought while the board fills.">
+  <span panel-meta class="chip accent">Shop</span>
 
-  <ul class="lines">
-    @for (row of rows(); track row.adr) {
-      <li>
-        <button
-          type="button"
-          class="line"
-          [class.maxed]="row.maxed"
-          [disabled]="!row.affordable"
-          (click)="buy(row.adr)"
-        >
-          <span class="head">
-            <span class="name">{{ row.name }}</span>
-            <span class="cost" [class.max]="row.maxed">{{ row.cost }}</span>
-          </span>
-          <span class="blurb">{{ row.blurb }}</span>
-          <span class="held">{{ row.held }}/{{ row.cap }}</span>
-        </button>
-      </li>
+  <div class="tabs" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      [class.on]="tab() === 'supply'"
+      [attr.aria-selected]="tab() === 'supply'"
+      (click)="show('supply')"
+    >
+      Pollution
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [class.on]="tab() === 'crew'"
+      [attr.aria-selected]="tab() === 'crew'"
+      (click)="show('crew')"
+    >
+      Crew
+    </button>
+  </div>
+
+  @if (tab() === 'supply') {
+    <ul class="lines">
+      @for (row of rows(); track row.adr) {
+        <li>
+          <button
+            type="button"
+            class="line"
+            [class.maxed]="row.maxed"
+            [disabled]="!row.affordable"
+            (click)="buy(row.adr)"
+          >
+            <span class="head">
+              <span class="name">{{ row.name }}</span>
+              <span class="cost" [class.max]="row.maxed">{{ row.cost }}</span>
+            </span>
+            <span class="blurb">{{ row.blurb }}</span>
+            <span class="held">{{ row.held }}/{{ row.cap }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (locked() > 0) {
+      <p class="locked">{{ locked() }} more behind the next ADR.</p>
     }
-  </ul>
-
-  @if (locked() > 0) {
-    <p class="locked">{{ locked() }} more behind the next ADR.</p>
+  } @else {
+    @if (crew().length === 0) {
+      <p class="locked">Nothing hired yet. The tree opens the lines.</p>
+    }
+    <ul class="lines">
+      @for (row of crew(); track row.line) {
+        <li>
+          <button
+            type="button"
+            class="line"
+            [class.maxed]="row.maxed"
+            [disabled]="!row.affordable"
+            (click)="hire(row.line)"
+          >
+            <span class="head">
+              <span class="name">{{ row.name }}</span>
+              <span class="cost" [class.max]="row.maxed">{{ row.cost }}</span>
+            </span>
+            <span class="held">{{ row.held }}/{{ row.cap }}</span>
+          </button>
+        </li>
+      }
+    </ul>
   }
 </cb-panel>

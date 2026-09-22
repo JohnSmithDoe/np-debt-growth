@@ -45,6 +45,8 @@ import {
 } from '../model/balance/flow';
 import {
   COPILOT_SP_PER_CLOSE,
+  LINE_COST_STEP,
+  LINE_PLAN,
   SENIOR_BUYOUT_STEPS,
   VELOCITY_SKIM_CAP,
   VELOCITY_SKIM_DECAY,
@@ -229,12 +231,14 @@ export function retainerPerSec(state: Consultancy): number {
 }
 
 /**
- * The truck, and the only forced wait in the game. Deliberately not
- * purchasable yet: letting the old `roundLength` nodes shave it drove the
- * haul straight to its floor and the cadence stopped meaning anything.
+ * The truck, and the only forced wait in the game. `roundLength` effects
+ * hurry it, floored by `HAUL_MIN_MS` so the cadence stays a real gate.
  */
-export function haulMs(_state: Consultancy): number {
-  return Math.max(HAUL_MIN_MS, HAUL_MS);
+export function haulMs(state: Consultancy): number {
+  const shaved = sumOf(state, (e) =>
+    e.kind === 'roundLength' ? e.seconds : null
+  );
+  return Math.max(HAUL_MIN_MS, HAUL_MS - shaved * 1_000);
 }
 
 /**
@@ -290,6 +294,31 @@ export function ticketValue(
     tierScale *
     globalMultiplier(state) *
     hotfixMultiplier(state, now)
+  );
+}
+
+/** A line is open once the tree has unlocked it — the rail sells the rest. */
+export function lineUnlocked(state: Consultancy, line: PurchaseId): boolean {
+  return state.levels[line] > 0;
+}
+
+export function lineCost(state: Consultancy, line: PurchaseId): number {
+  const plan = LINE_PLAN[line];
+  const held = state.levels[line];
+  if (held >= plan.cap) return Number.POSITIVE_INFINITY;
+  return Math.ceil(plan.cost * LINE_COST_STEP ** Math.max(0, held - 1));
+}
+
+export function lineCap(line: PurchaseId): number {
+  return LINE_PLAN[line].cap;
+}
+
+export function canBuyLine(state: Consultancy, line: PurchaseId): boolean {
+  return (
+    lineUnlocked(state, line) &&
+    state.levels[line] < LINE_PLAN[line].cap &&
+    !deskLimited(state, line) &&
+    state.budget >= lineCost(state, line)
   );
 }
 

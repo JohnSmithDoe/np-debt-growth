@@ -305,6 +305,8 @@ export function work(
       continue;
     }
 
+    // Reaching the card files it there and then; the time is spent
+    // recovering afterwards, which reads as working rather than idling.
     if (worker.phase === 'toTicket') {
       const target = board.byId.get(worker.target);
       if (!target) {
@@ -312,32 +314,23 @@ export function work(
         continue;
       }
       if (!stepToward(worker, target, (pace.speed * dtMs) / 1000)) continue;
+      // The can is full: wait at the card rather than overfilling it.
+      if (closed.length >= room) continue;
+
+      const seat = rules.seatOf(index, pace);
       pickUp(board, rules, pace, worker, target);
+      const took = deliverClose(rules, worker, board, seat, rand);
+      closed.push(...took.closed);
+      byWomen += took.byWomen;
       worker.phase = 'closing';
-      if (worker.leftMs <= 0) {
-        worker.leftMs = rules.seatOf(index, pace).closeMs;
-      }
+      worker.leftMs = seat.closeMs;
       continue;
     }
 
     worker.leftMs -= dtMs;
     if (worker.leftMs > 0) continue;
-    // The can is full: hold the finished work rather than overfilling it.
-    if (closed.length >= room) continue;
-
-    const took = deliverClose(
-      rules,
-      worker,
-      board,
-      rules.seatOf(index, pace),
-      rand
-    );
-    closed.push(...took.closed);
-    byWomen += took.byWomen;
-    if (worker.carrying.length === 0) {
-      worker.phase = 'idle';
-      worker.leftMs = 0;
-    }
+    worker.phase = 'idle';
+    worker.leftMs = 0;
   }
   return { closed, byWomen };
 }

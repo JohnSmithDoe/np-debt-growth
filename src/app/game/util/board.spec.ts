@@ -124,22 +124,29 @@ function settle(
 }
 
 describe('a junior closing a ticket', () => {
-  it('takes its close time plus a walk, and takes exactly one ticket', () => {
+  it('files on arrival, then recovers before the next one', () => {
     const board = emptyBoard();
     const state = stateWith({ levels: { ...BARE, junior: 1 } });
     for (let n = 0; n < 5; n++) addTicket(board, 'lint');
 
-    let elapsed = 0;
-    let closed: string[] = [];
-    while (closed.length === 0 && elapsed < juniorCloseMs(state) + WALK_MS) {
-      closed = run(board, state, STEP_MS);
-      elapsed += STEP_MS;
-    }
+    const until = (want: number): number => {
+      let elapsed = 0;
+      let seen = 0;
+      while (seen < want && elapsed < 4 * (juniorCloseMs(state) + WALK_MS)) {
+        seen += run(board, state, STEP_MS).length;
+        elapsed += STEP_MS;
+      }
+      return elapsed;
+    };
 
-    expect(closed).toEqual(['lint']);
-    expect(elapsed).toBeGreaterThan(juniorCloseMs(state));
-    expect(elapsed).toBeLessThan(juniorCloseMs(state) + WALK_MS);
+    // The card goes the moment it is reached — no standing over it first.
+    const first = until(1);
+    expect(first).toBeLessThan(juniorCloseMs(state));
     expect(board.tickets.length).toBe(4);
+
+    // The pace is unchanged: the close time is spent recovering afterwards.
+    const second = until(2) - first;
+    expect(second).toBeGreaterThanOrEqual(juniorCloseMs(state));
   });
 
   it('never takes a hand-only rare — those are yours (C2)', () => {
@@ -308,18 +315,20 @@ describe('a click takes the card, never the work', () => {
     return { board, state };
   };
 
-  it('cannot reach a card a worker has already picked up', () => {
+  it('takes the card off the board the moment it is reached', () => {
     const { board, state } = soloJunior();
     const rand = cycling();
-    const step = (): void => void workCrews(board, state, STEP_MS, rand);
+    const step = (): number =>
+      workCrews(board, state, STEP_MS, rand).closed.length;
 
     step();
     const worker = board.juniors[0]!;
     const before = board.tickets.length;
-    while (worker.carrying.length === 0) step();
+    while (worker.phase !== 'closing') step();
 
     expect(board.tickets.length).toBe(before - 1);
     expect(worker.target).toBe(NO_TICKET);
+    expect(worker.carrying.length).toBe(0);
     expect(board.tickets.some((t) => t.claimedBy === worker.id)).toBe(false);
   });
 
@@ -330,7 +339,7 @@ describe('a click takes the card, never the work', () => {
 
     step();
     const worker = board.juniors[0]!;
-    while (worker.carrying.length === 0) step();
+    while (worker.phase !== 'closing') step();
 
     const room = addTicket(board, 'lint', cycling());
     expect(room).not.toBeNull();

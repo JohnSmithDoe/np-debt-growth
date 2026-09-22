@@ -2,7 +2,6 @@ import type { TicketTypeId } from './ticket.model';
 import type { PurchaseId } from './balance/progression';
 import type { CrewKind } from './crew.model';
 import { DEBT_INTEREST_PER_RANK } from './balance/flow';
-import { KIT_PLAN } from './kit.model';
 
 export type SkillEffect =
   | { readonly kind: 'none' }
@@ -132,14 +131,13 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'capacity',
     track: 'A',
-    currency: 'eur',
     requires: 'radius',
     levels: [
-      { cost: 40, effects: [{ kind: 'slots', mult: 1.6 }] },
-      { cost: 200, effects: [{ kind: 'slots', mult: 1.55 }] },
-      { cost: 1_200, effects: [{ kind: 'slots', mult: 1.5 }] },
-      { cost: 7_000, effects: [{ kind: 'slots', mult: 1.45 }] },
-      { cost: 40_000, effects: [{ kind: 'slots', mult: 1.4 }] },
+      { cost: 12, effects: [{ kind: 'slots', mult: 1.6 }] },
+      { cost: 48, effects: [{ kind: 'slots', mult: 1.55 }] },
+      { cost: 190, effects: [{ kind: 'slots', mult: 1.5 }] },
+      { cost: 760, effects: [{ kind: 'slots', mult: 1.45 }] },
+      { cost: 3_000, effects: [{ kind: 'slots', mult: 1.4 }] },
     ],
   },
   {
@@ -164,15 +162,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'junior',
     track: 'B',
-    currency: 'eur',
     requires: 'crew',
-    levels: [
-      { cost: 20, effects: [{ kind: 'line', line: 'junior' }] },
-      { cost: 80, effects: [{ kind: 'line', line: 'junior' }] },
-      { cost: 350, effects: [{ kind: 'line', line: 'junior' }] },
-      { cost: 1_500, effects: [{ kind: 'line', line: 'junior' }] },
-      { cost: 7_000, effects: [{ kind: 'line', line: 'junior' }] },
-    ],
+    levels: [{ cost: 6, effects: [{ kind: 'line', line: 'junior' }] }],
   },
   {
     id: 'juniorSpeed',
@@ -249,15 +240,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'senior',
     track: 'E',
-    currency: 'eur',
     requires: 'junior',
-    levels: [
-      { cost: 1_200, effects: [{ kind: 'line', line: 'senior' }] },
-      { cost: 4_500, effects: [{ kind: 'line', line: 'senior' }] },
-      { cost: 18_000, effects: [{ kind: 'line', line: 'senior' }] },
-      { cost: 70_000, effects: [{ kind: 'line', line: 'senior' }] },
-      { cost: 260_000, effects: [{ kind: 'line', line: 'senior' }] },
-    ],
+    levels: [{ cost: 60, effects: [{ kind: 'line', line: 'senior' }] }],
   },
   {
     id: 'seniorSpeed',
@@ -314,15 +298,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'manager',
     track: 'H',
-    currency: 'eur',
     requires: 'senior',
-    levels: [
-      { cost: 28_000, effects: [{ kind: 'line', line: 'manager' }] },
-      { cost: 80_000, effects: [{ kind: 'line', line: 'manager' }] },
-      { cost: 95_000, effects: [{ kind: 'line', line: 'manager' }] },
-      { cost: 320_000, effects: [{ kind: 'line', line: 'manager' }] },
-      { cost: 1_000_000, effects: [{ kind: 'line', line: 'manager' }] },
-    ],
+    levels: [{ cost: 900, effects: [{ kind: 'line', line: 'manager' }] }],
   },
   {
     id: 'managerSpeed',
@@ -368,15 +345,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'copilot',
     track: 'F',
-    currency: 'eur',
     requires: 'tooling',
-    levels: [
-      { cost: 150, effects: [{ kind: 'line', line: 'copilot' }] },
-      { cost: 600, effects: [{ kind: 'line', line: 'copilot' }] },
-      { cost: 2_500, effects: [{ kind: 'line', line: 'copilot' }] },
-      { cost: 10_000, effects: [{ kind: 'line', line: 'copilot' }] },
-      { cost: 40_000, effects: [{ kind: 'line', line: 'copilot' }] },
-    ],
+    levels: [{ cost: 20, effects: [{ kind: 'line', line: 'copilot' }] }],
   },
   {
     id: 'copilotYield',
@@ -439,14 +409,13 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'supply',
     track: 'D',
-    currency: 'eur',
     requires: 'debt',
     levels: [
-      { cost: 25, effects: [{ kind: 'spawnRate', mult: 1.3 }] },
-      { cost: 100, effects: [{ kind: 'spawnRate', mult: 1.28 }] },
-      { cost: 450, effects: [{ kind: 'spawnRate', mult: 1.25 }] },
-      { cost: 2_000, effects: [{ kind: 'spawnRate', mult: 1.22 }] },
-      { cost: 9_000, effects: [{ kind: 'spawnRate', mult: 1.2 }] },
+      { cost: 3, effects: [{ kind: 'spawnRate', mult: 1.3 }] },
+      { cost: 11, effects: [{ kind: 'spawnRate', mult: 1.28 }] },
+      { cost: 40, effects: [{ kind: 'spawnRate', mult: 1.25 }] },
+      { cost: 50, effects: [{ kind: 'spawnRate', mult: 1.22 }] },
+      { cost: 225, effects: [{ kind: 'spawnRate', mult: 1.2 }] },
     ],
   },
   {
@@ -585,16 +554,9 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'velocity',
     track: 'C',
-    currency: 'eur',
     requires: 'income',
     gate: 'tier2',
-    levels: [
-      { cost: 25_000, effects: [{ kind: 'line', line: 'velocity' }] },
-      { cost: 80_000, effects: [{ kind: 'line', line: 'velocity' }] },
-      { cost: 250_000, effects: [{ kind: 'line', line: 'velocity' }] },
-      { cost: 700_000, effects: [{ kind: 'line', line: 'velocity' }] },
-      { cost: 1_800_000, effects: [{ kind: 'line', line: 'velocity' }] },
-    ],
+    levels: [{ cost: 400, effects: [{ kind: 'line', line: 'velocity' }] }],
   },
   {
     id: 'valueLint',
@@ -707,61 +669,50 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'o1',
     track: 'O',
-    currency: 'eur',
     requires: 'office',
-    levels: [{ cost: 300, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 8, effects: [{ kind: 'none' }] }],
   },
   {
     id: 'o2',
     track: 'O',
-    currency: 'eur',
     requires: 'o1',
-    levels: [{ cost: 1_500, effects: [{ kind: 'slots', mult: 1.1 }] }],
+    levels: [{ cost: 38, effects: [{ kind: 'slots', mult: 1.1 }] }],
   },
   {
     id: 'o3',
     track: 'O',
-    currency: 'eur',
     requires: 'o1',
-    levels: [{ cost: 4_000, effects: [{ kind: 'juniorWalk', mult: 1.2 }] }],
+    levels: [{ cost: 100, effects: [{ kind: 'juniorWalk', mult: 1.2 }] }],
   },
   {
     id: 'o4',
     track: 'O',
-    currency: 'eur',
     requires: 'o1',
-    levels: [{ cost: 15_000, effects: [{ kind: 'spawnRate', mult: 1.1 }] }],
+    levels: [{ cost: 375, effects: [{ kind: 'spawnRate', mult: 1.1 }] }],
   },
   {
     id: 'o5',
     track: 'O',
-    currency: 'eur',
     requires: 'o1',
-    levels: [{ cost: 60_000, effects: [{ kind: 'seniorSweep', mult: 1.2 }] }],
+    levels: [{ cost: 1500, effects: [{ kind: 'seniorSweep', mult: 1.2 }] }],
   },
   {
     id: 'o6',
     track: 'O',
-    currency: 'eur',
     requires: 'o1',
-    levels: [{ cost: 200_000, effects: [{ kind: 'global', mult: 1.05 }] }],
+    levels: [{ cost: 5000, effects: [{ kind: 'global', mult: 1.05 }] }],
   },
   {
     id: 'o7',
     track: 'O',
-    currency: 'eur',
     requires: 'o1',
-    levels: [{ cost: 700_000, effects: [{ kind: 'escalation', mult: 1.25 }] }],
+    levels: [{ cost: 17500, effects: [{ kind: 'escalation', mult: 1.25 }] }],
   },
   {
     id: 'kit',
     track: 'O',
-    currency: 'eur',
     requires: 'o1',
-    levels: KIT_PLAN.map((item) => ({
-      cost: item.cost,
-      effects: [{ kind: 'line', line: 'kit' }],
-    })),
+    levels: [{ cost: 40, effects: [{ kind: 'line', line: 'kit' }] }],
   },
 
   {
@@ -769,20 +720,17 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'A',
     requires: 'radius',
     gate: 'tier2',
-    levels: [
-      { cost: 900, effects: [{ kind: 'goldenChance', add: 0.02 }] },
-      { cost: 6_000, effects: [{ kind: 'goldenChance', add: 0.02 }] },
-    ],
+    levels: [{ cost: 90, effects: [{ kind: 'goldenChance', add: 0.02 }] }],
   },
   {
     id: 'goldenValue',
     track: 'A',
     requires: 'golden',
     levels: [
-      { cost: 4_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
-      { cost: 22_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
-      { cost: 120_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
-      { cost: 650_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
+      { cost: 320, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
+      { cost: 1_400, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
+      { cost: 6_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
+      { cost: 26_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
     ],
   },
   {
@@ -790,7 +738,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'A',
     requires: 'goldenValue',
     gate: 'tier6',
-    levels: [{ cost: 900_000, effects: [{ kind: 'goldenCrew' }] }],
+    levels: [{ cost: 40_000, effects: [{ kind: 'goldenCrew' }] }],
   },
 
   {
@@ -798,7 +746,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'G',
     requires: 'goldenCrew',
     gate: 'tier8',
-    levels: [{ cost: 5_000_000, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 250_000, effects: [{ kind: 'none' }] }],
   },
 
   {

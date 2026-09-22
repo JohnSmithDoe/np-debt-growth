@@ -159,17 +159,21 @@ describe('the sprint (C4, D20, D23)', () => {
 });
 
 describe('purchases', () => {
-  it('charges the ladder and refuses what the budget cannot cover', () => {
+  it('unlocks a line on the tree and sells the rest from the rail', () => {
     const node = SKILL_BY_ID.get('junior')!;
     const store = storeWith({
-      budget: node.levels[0]!.cost,
-      skills: { root: 1 },
+      storyPoints: node.levels[0]!.cost,
+      skills: { root: 1, crew: 1 },
     });
     expect(store.buySkill('junior')).toBe(true);
     expect(store.levels().junior).toBe(1);
-    expect(store.budget()).toBe(0);
     expect(store.buySkill('junior')).toBe(false);
-    expect(store.levels().junior).toBe(1);
+
+    expect(store.canBuyLine('junior')).toBe(false);
+    store.grant(store.lineCost('junior'), 0);
+    expect(store.buyLine('junior')).toBe(true);
+    expect(store.levels().junior).toBe(2);
+    expect(store.buyLine('junior')).toBe(false);
   });
 
   it('holds a skill behind its prerequisite and its gate', () => {
@@ -329,7 +333,7 @@ describe('rooms gate the crew (D36, D56)', () => {
       skills: { root: 1, radius: 1, capacity: 1, o1: 1, junior: 1 },
       levels: { junior: DESKS_PER_PLATE },
     });
-    expect(store.buySkill('junior')).toBe(true);
+    expect(store.buyLine('junior')).toBe(true);
     expect(store.levels().junior).toBe(DESKS_PER_PLATE + 1);
   });
 
@@ -440,11 +444,12 @@ describe('the senior hire (D34)', () => {
   const ready = (): GameStore =>
     storeWith({
       budget: 1e6,
+      storyPoints: 1e6,
       levels: { junior: 1 },
-      skills: { ...rooms(4), root: 1, junior: 1 },
+      skills: { ...rooms(4), root: 1, crew: 1, junior: 1 },
     });
 
-  it('seats somebody the moment the square is bought', () => {
+  it('seats somebody the moment the line is opened', () => {
     const store = ready();
     expect(store.buySkill('senior')).toBe(true);
 
@@ -456,25 +461,27 @@ describe('the senior hire (D34)', () => {
 
   it('seats a different person for every desk', () => {
     const store = ready();
-    for (let at = 0; at < 4; at += 1)
-      expect(store.buySkill('senior')).toBe(true);
+    expect(store.buySkill('senior')).toBe(true);
+    for (let at = 0; at < 3; at += 1)
+      expect(store.buyLine('senior')).toBe(true);
 
     const { roster } = store.snapshot();
     expect(roster.length).toBe(4);
     expect(new Set(roster.map((hire) => hire.traits[0])).size).toBe(4);
   });
 
-  it('leaves the roster alone for a square that seats nobody', () => {
+  it('leaves the roster alone for a line that seats nobody', () => {
     const store = ready();
-    expect(store.buySkill('junior')).toBe(true);
+    expect(store.buyLine('junior')).toBe(true);
     expect(store.snapshot().roster).toEqual([]);
   });
 
   it('gives a promoted senior no traits, and no code says so (D33)', () => {
     const store = storeWith({
       budget: 1e7,
+      storyPoints: 1e6,
       levels: { junior: 4 },
-      skills: { ...rooms(8), junior: 1 },
+      skills: { ...rooms(8), root: 1, crew: 1, junior: 1 },
     });
     expect(store.buySkill('senior')).toBe(true);
     expect(store.promote()).toBe(true);
