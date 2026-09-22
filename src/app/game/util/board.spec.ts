@@ -14,18 +14,15 @@ import { freshConsultancy } from '../model/consultancy.model';
 import { SAVE_VERSION } from '../model/game.consts';
 import { CALM } from '../model/hazard.model';
 import type { PurchaseId } from '../model/balance/progression';
-import {
-  JUNIOR_HOME_Y,
-  JUNIOR_WALK_SPEED,
-  SENIOR_WALK_SPEED,
-} from '../model/balance/crew';
+import { CREW_STATS } from '../model/balance/crew';
 import { AUTO_CLOSE_MS } from '../model/balance/flow';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPRINT_SLOTS_BASE } from '../model/balance/round';
 import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
 
-const WALK_MS = (LOGICAL_BOARD.width / JUNIOR_WALK_SPEED) * 1000 * 2;
-const SENIOR_WALK_MS = (LOGICAL_BOARD.width / SENIOR_WALK_SPEED) * 1000 * 2;
+const WALK_MS = (LOGICAL_BOARD.width / CREW_STATS.juniors.walkSpeed) * 1000 * 2;
+const SENIOR_WALK_MS =
+  (LOGICAL_BOARD.width / CREW_STATS.seniors.walkSpeed) * 1000 * 2;
 const WALK_AND_CLOSE_LIMIT_MS = 120_000;
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
@@ -347,7 +344,7 @@ describe('a click takes the card, never the work', () => {
       closed += workCrews(board, state, STEP_MS, rand).closed.length;
     }
     expect(closed).toBeGreaterThan(0);
-    expect(board.juniors[0]!.y).not.toBe(JUNIOR_HOME_Y);
+    expect(board.juniors[0]!.y).not.toBe(CREW_STATS.juniors.homeY);
   });
 
   it('still loses the work when the worker is taken off the job', () => {

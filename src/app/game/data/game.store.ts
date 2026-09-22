@@ -1120,7 +1120,7 @@ export class GameStore {
 
   unlockSecret(): boolean {
     const state = this.#state();
-    if ((state.skills[SECRET_SKILL_ID] ?? 0) > 0) return false;
+    if (economy.skillRank(state, SECRET_SKILL_ID) > 0) return false;
     this.#state.set({
       ...state,
       skills: { ...state.skills, [SECRET_SKILL_ID]: 1 },

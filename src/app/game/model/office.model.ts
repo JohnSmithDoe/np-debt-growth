@@ -1,46 +1,19 @@
-import type { SkillEffect } from './skill.model';
-
 export interface OfficePlate {
   readonly id: string;
-  readonly effect: SkillEffect | null;
 }
 
 export const officeLabelKey = (id: string): string => `office.${id}.label`;
 export const officeBlurbKey = (id: string): string => `office.${id}.blurb`;
 
 export const OFFICE_PLAN: readonly OfficePlate[] = [
-  {
-    id: 'bullpen-a',
-    effect: null,
-  },
-  {
-    id: 'bullpen-b',
-    effect: null,
-  },
-  {
-    id: 'meeting',
-    effect: { kind: 'slots', mult: 1.1 },
-  },
-  {
-    id: 'kitchen',
-    effect: { kind: 'juniorWalk', mult: 1.2 },
-  },
-  {
-    id: 'server',
-    effect: { kind: 'spawnRate', mult: 1.1 },
-  },
-  {
-    id: 'war-room',
-    effect: { kind: 'seniorSweep', mult: 1.2 },
-  },
-  {
-    id: 'archive',
-    effect: { kind: 'global', mult: 1.05 },
-  },
-  {
-    id: 'corner-office',
-    effect: { kind: 'escalation', mult: 1.25 },
-  },
+  { id: 'bullpen-a' },
+  { id: 'bullpen-b' },
+  { id: 'meeting' },
+  { id: 'kitchen' },
+  { id: 'server' },
+  { id: 'war-room' },
+  { id: 'archive' },
+  { id: 'corner-office' },
 ];
 
 export const OFFICE_GRID = { cols: 4, rows: 2 } as const;

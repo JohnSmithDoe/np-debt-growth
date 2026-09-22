@@ -1,31 +1,147 @@
-import type { CrewKind } from '../crew.model';
+import type { CrewKind, CrewMode } from '../crew.model';
+import type { SkillEffect } from '../skill.model';
+import type { PurchaseId } from './progression';
 
-export const JUNIOR_CLOSE_MS = 5_000;
-export const JUNIOR_BATCH_BASE = 1;
-export const JUNIOR_SWEEP_RADIUS = 40;
-export const JUNIOR_WALK_SPEED = 90;
-export const JUNIOR_HOME_Y = 440;
+/**
+ * Claim priority: earlier kinds pick tickets off the board first. Reordering
+ * this retunes who gets the dearest work, so it is a balance knob in itself.
+ */
+export const CREW_KINDS = [
+  'offshore',
+  'seniors',
+  'juniors',
+  'managers',
+] as const satisfies readonly CrewKind[];
 
-export const SENIOR_CLOSE_MS = 10_000;
-export const SENIOR_BATCH_BASE = 3;
-export const SENIOR_SWEEP_RADIUS = 70;
-export const SENIOR_WALK_SPEED = 70;
-export const SENIOR_HOME_Y = 424;
-export const TRAIT_D21_CEILING = 1.25;
+export interface CrewBand {
+  readonly from: number;
+  readonly to: number;
+}
 
-export const MANAGER_CLOSE_MS = 24_000;
-export const MANAGER_WALK_SPEED = 110;
-export const MANAGER_HOME_Y = 408;
+/** Which `SkillEffect` kind tunes each pace field; `null` = no skill reaches it. */
+export interface CrewPaceEffects {
+  readonly close: SkillEffect['kind'] | null;
+  readonly walk: SkillEffect['kind'] | null;
+  readonly batch: SkillEffect['kind'] | null;
+  readonly sweep: SkillEffect['kind'] | null;
+}
 
-export const JUNIOR_BAND_TOP = 3;
-export const SENIOR_BAND_FROM = 2;
+export interface CrewStats {
+  readonly closeMs: number;
+  readonly walkSpeed: number;
+  readonly homeY: number;
+  readonly batchBase: number;
+  readonly sweepRadius: number;
+  readonly womanEvery: number;
+  readonly band: CrewBand;
+  readonly takesRares: boolean;
+  readonly mode: CrewMode;
+  /** `null` = headcount comes from the weather, not a bought line. */
+  readonly levelKey: PurchaseId | null;
+  readonly retainer: number;
+  readonly effects: CrewPaceEffects;
+  readonly leaves: number;
+  /** Meetings pull this crew off the board. */
+  readonly interruptible: boolean;
+  /** Junior-only: standup aura scales with headcount. */
+  readonly aura: boolean;
+  /** Seniors carry per-seat traits, so each seat gets its own pace. */
+  readonly perSeat: boolean;
+}
 
-export const CREW_WOMAN_EVERY = {
-  juniors: 4,
-  seniors: 6,
-  managers: 3,
-  offshore: 4,
-} as const satisfies Record<CrewKind, number>;
+export const CREW_STATS = {
+  juniors: {
+    closeMs: 5_000,
+    walkSpeed: 90,
+    homeY: 440,
+    batchBase: 1,
+    sweepRadius: 40,
+    womanEvery: 4,
+    band: { from: 0, to: 3 },
+    takesRares: false,
+    mode: 'closer',
+    levelKey: 'junior',
+    retainer: 20,
+    effects: {
+      close: 'junior',
+      walk: 'juniorWalk',
+      batch: 'juniorBatch',
+      sweep: 'juniorSweep',
+    },
+    leaves: 0,
+    interruptible: true,
+    aura: true,
+    perSeat: false,
+  },
+  seniors: {
+    closeMs: 10_000,
+    walkSpeed: 70,
+    homeY: 424,
+    batchBase: 3,
+    sweepRadius: 70,
+    womanEvery: 6,
+    band: { from: 2, to: Infinity },
+    takesRares: false,
+    mode: 'closer',
+    levelKey: 'senior',
+    retainer: 280,
+    effects: {
+      close: 'senior',
+      walk: 'seniorWalk',
+      batch: 'seniorBatch',
+      sweep: 'seniorSweep',
+    },
+    leaves: 0,
+    interruptible: true,
+    aura: false,
+    perSeat: true,
+  },
+  managers: {
+    closeMs: 24_000,
+    walkSpeed: 110,
+    homeY: 408,
+    batchBase: 1,
+    sweepRadius: 0,
+    womanEvery: 3,
+    band: { from: 0, to: Infinity },
+    takesRares: false,
+    mode: 'refiler',
+    levelKey: 'manager',
+    retainer: 420,
+    effects: {
+      close: 'manager',
+      walk: 'managerWalk',
+      batch: null,
+      sweep: null,
+    },
+    leaves: 0,
+    interruptible: false,
+    aura: false,
+    perSeat: false,
+  },
+  offshore: {
+    closeMs: 4_000,
+    walkSpeed: 130,
+    homeY: 392,
+    batchBase: 1,
+    sweepRadius: 0,
+    womanEvery: 4,
+    band: { from: 0, to: Infinity },
+    takesRares: true,
+    mode: 'closer',
+    levelKey: null,
+    retainer: 0,
+    effects: { close: null, walk: null, batch: null, sweep: null },
+    leaves: 1,
+    interruptible: false,
+    aura: false,
+    perSeat: false,
+  },
+} as const satisfies Record<CrewKind, CrewStats>;
+
+export const DESK_LINES: readonly PurchaseId[] = CREW_KINDS.flatMap(
+  (kind) => CREW_STATS[kind].levelKey ?? []
+);
 
 export const WOMAN_CLOSE_RATE = 2;
 

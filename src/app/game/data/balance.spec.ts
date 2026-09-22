@@ -17,7 +17,9 @@ import { TICKET_TYPES } from '../model/ticket.model';
 import { DEBT_TIERS } from '../model/tier.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { TRAIT_IDS } from '../model/senior.model';
-import { TRAIT_D21_CEILING } from '../model/balance/crew';
+
+/** Design bound: no single trait may make a senior worth more than this many. */
+const TRAIT_D21_CEILING = 1.25;
 import { ROUND_TARGET_OF_BASELINE } from '../model/balance/round';
 import { pickWithin } from '../util/board';
 import * as economy from '../util/economy';

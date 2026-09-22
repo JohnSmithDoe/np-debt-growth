@@ -1,16 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Consultancy } from '../model/consultancy.model';
-import { freshConsultancy } from '../model/consultancy.model';
-import { SAVE_VERSION } from '../model/game.consts';
+import { consultancy } from '../model/consultancy.fixture';
 import { castPoolSize, crewName } from '../model/cast.model';
 import { SKILL_BY_ID } from '../model/skill.model';
 import { TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
-import type { PurchaseId } from '../model/balance/progression';
 import type { CrewKind } from '../model/crew.model';
 import {
-  CREW_WOMAN_EVERY,
-  JUNIOR_CLOSE_MS,
+  CREW_KINDS,
+  CREW_STATS,
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
 import { SENIOR_BUYOUT_STEPS } from '../model/balance/progression';
@@ -27,6 +25,7 @@ import {
   seniorCloseMs,
   crewCeiling,
   crewClaims,
+  crewWomanEvery,
   hireIsWoman,
   hirePoolSeat,
   juniorBatch,
@@ -39,19 +38,6 @@ import {
   sprintSlots,
   totalSpawnRate,
 } from './economy';
-
-function consultancy(
-  overrides: Partial<Omit<Consultancy, 'levels'>> & {
-    readonly levels?: Partial<Record<PurchaseId, number>>;
-  } = {}
-): Consultancy {
-  const fresh = freshConsultancy(0, SAVE_VERSION);
-  return {
-    ...fresh,
-    ...overrides,
-    levels: { ...fresh.levels, ...overrides.levels },
-  };
-}
 
 const LADDER_MIN_RATIO = 1.15;
 
@@ -148,7 +134,7 @@ describe('what the crew can close', () => {
 
   const heads = (
     n: number,
-    every: number = CREW_WOMAN_EVERY.juniors
+    every: number = CREW_STATS.juniors.womanEvery
   ): number => {
     const women = Math.floor(n / every);
     return n - women + women * WOMAN_CLOSE_RATE;
@@ -168,7 +154,7 @@ describe('what the crew can close', () => {
       1
     );
     expect(juniorCeilingPerSec(skilled)).toBeCloseTo(
-      (heads(100) * speed * aura * 1000) / JUNIOR_CLOSE_MS,
+      (heads(100) * speed * aura * 1000) / CREW_STATS.juniors.closeMs,
       6
     );
   });
@@ -185,7 +171,7 @@ describe('what the crew can close', () => {
       1
     );
     expect(juniorCeilingPerSec(crew(10, 0, { juniorSpeed: 3 }))).toBeCloseTo(
-      (heads(10) * product * 1000) / JUNIOR_CLOSE_MS,
+      (heads(10) * product * 1000) / CREW_STATS.juniors.closeMs,
       6
     );
   });
@@ -198,7 +184,7 @@ describe('what the crew can close', () => {
     const capped = auras.reduce((all, effect) => all * effect.cap, 1);
     const maxed = crew(500, 0, { juniorPresence: node.levels.length });
     expect(juniorCeilingPerSec(maxed)).toBeCloseTo(
-      (heads(500) * capped * 1000) / JUNIOR_CLOSE_MS,
+      (heads(500) * capped * 1000) / CREW_STATS.juniors.closeMs,
       6
     );
     expect(
@@ -208,7 +194,7 @@ describe('what the crew can close', () => {
 
   it('counts the women on the crew rather than averaging them away', () => {
     expect(juniorCeilingPerSec(crew(4, 0))).toBeCloseTo(
-      (5 * 1000) / JUNIOR_CLOSE_MS,
+      (5 * 1000) / CREW_STATS.juniors.closeMs,
       6
     );
     expect(juniorCeilingPerSec(crew(4, 0))).toBeGreaterThan(
@@ -238,7 +224,7 @@ describe('what the crew can close', () => {
   it('adds the senior sweep at its full batch', () => {
     const state = crew(0, 4);
     expect(seniorCeilingPerSec(state)).toBeCloseTo(
-      (heads(4, CREW_WOMAN_EVERY.seniors) * seniorBatch(state) * 1000) /
+      (heads(4, CREW_STATS.seniors.womanEvery) * seniorBatch(state) * 1000) /
         seniorCloseMs(state),
       6
     );
@@ -336,11 +322,11 @@ describe('what a crew is allowed to claim', () => {
 });
 
 describe('walking a gendered pool', () => {
-  const crews = Object.keys(CREW_WOMAN_EVERY) as CrewKind[];
+  const crews: readonly CrewKind[] = CREW_KINDS;
 
   it('draws every woman in the pool rather than one of them', () => {
     for (const crew of crews) {
-      const every = CREW_WOMAN_EVERY[crew];
+      const every = crewWomanEvery(consultancy(), crew);
       const size = castPoolSize(crew, true);
       const drawn = new Set<string>();
       for (let seat = 0; seat < every * size; seat += 1) {
@@ -352,7 +338,7 @@ describe('walking a gendered pool', () => {
   });
 
   it('draws from the pool the hire belongs to', () => {
-    const every = CREW_WOMAN_EVERY.juniors;
+    const every = CREW_STATS.juniors.womanEvery;
     for (let seat = 0; seat < 40; seat += 1) {
       const woman = hireIsWoman(seat, every);
       const name = crewName('juniors', hirePoolSeat(seat, every), woman);

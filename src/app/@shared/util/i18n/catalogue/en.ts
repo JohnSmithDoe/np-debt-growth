@@ -306,6 +306,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.kit.3.label': 'IDE Licences',
   'skill.kit.4.label': 'Second Monitors',
   'skill.kit.5.label': 'CI Tier: Enterprise',
+  'skill.kit.6.label': 'Observability Vendor',
   'skill.kit.blurb': 'The desks fitted out. Every item is on the value side.',
   'skill.lineOfSight.1.label': 'Line of Sight',
   'skill.lineOfSight.blurb':

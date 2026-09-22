@@ -1,13 +1,10 @@
+/**
+ * The can. Capacity is a hard cap: once it is full nothing more can be
+ * collected until the haul finishes, and the haul is the whole cadence — there
+ * is no wall clock.
+ */
 export const SPRINT_SLOTS_BASE = 14;
 
-export const SPRINT_OVERFLOW_RATE = 0.35;
+export const HAUL_MS = 4_000;
 
-export const ROUND_LENGTH_BASE_MS = 10_000;
-
-export const ROUND_TARGET_OF_BASELINE = 0.75;
-
-export const RETAINER_PER_HIRE = {
-  juniors: 20,
-  seniors: 280,
-  managers: 420,
-} as const;
+export const HAUL_MIN_MS = 800;

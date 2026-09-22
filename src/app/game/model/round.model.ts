@@ -1,4 +1,8 @@
-export type RoundPhase = 'running' | 'review';
+/**
+ * `hauling` blocks collection only — spawning, crew and the clock all keep
+ * running through it.
+ */
+export type RoundPhase = 'collecting' | 'hauling';
 
 export interface RoundOutcome {
   readonly seq: number;

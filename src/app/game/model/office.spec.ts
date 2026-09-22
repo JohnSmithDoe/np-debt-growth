@@ -8,6 +8,7 @@ import {
   nextPlate,
   platesAt,
 } from './office.model';
+import { OFFICE_NODE_IDS, SKILL_BY_ID } from './skill.model';
 
 describe('the floor plan (D36)', () => {
   it('fills the grid it is laid out on exactly', () => {
@@ -26,8 +27,13 @@ describe('the floor plan (D36)', () => {
     expect(builtPlates(0)).toEqual([OFFICE_PLAN[0]]);
   });
 
-  it('leaves the starting plate mechanically inert', () => {
-    expect(OFFICE_PLAN[0]!.effect).toBeNull();
+  it('leaves the first bought plate mechanically inert', () => {
+    const o1 = SKILL_BY_ID.get(OFFICE_NODE_IDS[0]!);
+    expect(o1?.levels[0]?.effects).toEqual([{ kind: 'none' }]);
+  });
+
+  it('never promises more plates than the plan draws', () => {
+    expect(platesAt(OFFICE_NODE_IDS.length)).toBe(OFFICE_PLATES);
   });
 
   it('runs out rather than overrunning the plan', () => {

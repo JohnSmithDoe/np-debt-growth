@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Consultancy } from '../model/consultancy.model';
-import { freshConsultancy } from '../model/consultancy.model';
-import { SAVE_VERSION } from '../model/game.consts';
 import { TICKET_TYPES } from '../model/ticket.model';
-import type { PurchaseId } from '../model/balance/progression';
 import {
   FACT_COUNTDOWN_MS,
   FACT_EVERY_MS,
@@ -14,23 +10,8 @@ import {
 import { BOARD_CAPACITY } from '../model/geometry';
 import { addTicket } from '../util/board';
 import { sprintSlots } from '../util/economy';
-import { OFFICE_NODE_IDS } from '../model/skill.model';
 import { GameStore } from './game.store';
-
-function storeWith(
-  overrides: Partial<Omit<Consultancy, 'levels'>> & {
-    readonly levels?: Partial<Record<PurchaseId, number>>;
-  } = {}
-): GameStore {
-  const store = new GameStore();
-  const fresh = freshConsultancy(0, SAVE_VERSION);
-  store.hydrate({
-    ...fresh,
-    ...overrides,
-    levels: { ...fresh.levels, ...overrides.levels },
-  });
-  return store;
-}
+import { rooms, storeWith } from './store.fixture';
 
 function run(store: GameStore, from: number, to: number): number {
   for (let at = from + 100; at <= to; at += 100) {
@@ -39,9 +20,6 @@ function run(store: GameStore, from: number, to: number): number {
   }
   return to;
 }
-
-const rooms = (count: number): Record<string, number> =>
-  Object.fromEntries(OFFICE_NODE_IDS.slice(0, count).map((id) => [id, 1]));
 
 const notes = (store: GameStore, note: string): number =>
   store.log().filter((line) => line.kind === 'note' && line.note === note)

@@ -1,19 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Consultancy } from '../model/consultancy.model';
-import { freshConsultancy, resumed } from '../model/consultancy.model';
-import {
-  FEED_LINES_PER_SEC,
-  MAX_CATCHUP_MS,
-  SAVE_VERSION,
-} from '../model/game.consts';
-import {
-  OFFICE_NODE_IDS,
-  SECRET_SKILL_ID,
-  SKILL_BY_ID,
-} from '../model/skill.model';
+import { resumed } from '../model/consultancy.model';
+import { FEED_LINES_PER_SEC, MAX_CATCHUP_MS } from '../model/game.consts';
+import { SECRET_SKILL_ID, SKILL_BY_ID } from '../model/skill.model';
 import { tierAt } from '../model/tier.model';
-import type { PurchaseId } from '../model/balance/progression';
 import { DESKS_PER_PLATE } from '../model/balance/crew';
 import {
   ROUND_LENGTH_BASE_MS,
@@ -22,32 +12,12 @@ import {
 import { addTicket } from '../util/board';
 import { overflowFactor, sprintSlots } from '../util/economy';
 import { GameStore } from './game.store';
-
-function rooms(count: number): Record<string, number> {
-  return Object.fromEntries(
-    OFFICE_NODE_IDS.slice(0, count).map((id) => [id, 1])
-  );
-}
+import { rooms, storeWith } from './store.fixture';
 
 function billRound(store: GameStore): number {
   const before = store.budget();
   for (let at = 100; at <= ROUND_LENGTH_BASE_MS; at += 100) store.advanceTo(at);
   return store.budget() - before;
-}
-
-function storeWith(
-  overrides: Partial<Omit<Consultancy, 'levels'>> & {
-    readonly levels?: Partial<Record<PurchaseId, number>>;
-  } = {}
-): GameStore {
-  const store = new GameStore();
-  const fresh = freshConsultancy(0, SAVE_VERSION);
-  store.hydrate({
-    ...fresh,
-    ...overrides,
-    levels: { ...fresh.levels, ...overrides.levels },
-  });
-  return store;
 }
 
 const AUTOMATED = { root: 1, a1: 1, a2: 1, a3: 1 };

@@ -19,23 +19,14 @@ import type { TicketType, TicketTypeId } from '../model/ticket.model';
 import { ladderUp, TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
 import { approachCap } from '../model/balance/curve';
 import type { PurchaseId } from '../model/balance/progression';
-import type { CrewKind } from '../model/crew.model';
+import type { ClaimPick, CrewKind, HirePace } from '../model/crew.model';
+import type { CrewBand } from '../model/balance/crew';
 import {
-  CREW_WOMAN_EVERY,
+  CREW_KINDS,
+  CREW_STATS,
   DESKS_PER_PLATE,
-  JUNIOR_BAND_TOP,
-  JUNIOR_BATCH_BASE,
-  JUNIOR_CLOSE_MS,
-  JUNIOR_SWEEP_RADIUS,
-  JUNIOR_WALK_SPEED,
-  MANAGER_CLOSE_MS,
-  MANAGER_WALK_SPEED,
+  DESK_LINES,
   PROMOTION_PREMIUM,
-  SENIOR_BAND_FROM,
-  SENIOR_BATCH_BASE,
-  SENIOR_CLOSE_MS,
-  SENIOR_SWEEP_RADIUS,
-  SENIOR_WALK_SPEED,
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
 import {
@@ -54,7 +45,6 @@ import {
   VELOCITY_UNLOCK_TIER,
 } from '../model/balance/progression';
 import {
-  RETAINER_PER_HIRE,
   ROUND_LENGTH_BASE_MS,
   ROUND_TARGET_OF_BASELINE,
   SPRINT_OVERFLOW_RATE,
@@ -87,8 +77,18 @@ export function desks(state: Consultancy): number {
   return officePlates(state) * DESKS_PER_PLATE;
 }
 
-function crewCount(state: Consultancy): number {
-  return state.levels.junior + state.levels.senior + state.levels.manager;
+/** Headcount of a crew kind; the weather staffs whatever has no bought line. */
+export function crewSize(
+  state: Consultancy,
+  crew: CrewKind,
+  weather: Weather = CALM
+): number {
+  const key = CREW_STATS[crew].levelKey;
+  return key === null ? weather.offshore : state.levels[key];
+}
+
+export function crewCount(state: Consultancy): number {
+  return DESK_LINES.reduce((total, line) => total + state.levels[line], 0);
 }
 
 export function freeDesks(state: Consultancy): number {
@@ -96,7 +96,7 @@ export function freeDesks(state: Consultancy): number {
 }
 
 export function needsDesk(line: PurchaseId): boolean {
-  return line === 'junior' || line === 'senior' || line === 'manager';
+  return DESK_LINES.includes(line);
 }
 
 export function deskLimited(state: Consultancy, line: PurchaseId): boolean {
@@ -163,7 +163,11 @@ function productOf(
   return foldRanks(state, 1, (total, effect) => total * (match(effect) ?? 1));
 }
 
-function multOf(state: Consultancy, kind: SkillEffect['kind']): number {
+/** `null` means no skill effect tunes the field, so the base value stands. */
+type EffectKind = SkillEffect['kind'] | null;
+
+function multOf(state: Consultancy, kind: EffectKind): number {
+  if (kind === null) return 1;
   return productOf(state, (e) =>
     e.kind === kind && 'mult' in e ? e.mult : null
   );
@@ -176,11 +180,8 @@ function sumOf(
   return foldRanks(state, 0, (total, effect) => total + (match(effect) ?? 0));
 }
 
-function additive(
-  state: Consultancy,
-  kind: SkillEffect['kind'],
-  base: number
-): number {
+function additive(state: Consultancy, kind: EffectKind, base: number): number {
+  if (kind === null) return base;
   return (
     base + sumOf(state, (e) => (e.kind === kind && 'add' in e ? e.add : null))
   );
@@ -223,10 +224,10 @@ export function roundBilled(
 }
 
 export function retainerPerRound(state: Consultancy): number {
-  const heads =
-    state.levels.junior * RETAINER_PER_HIRE.juniors +
-    state.levels.senior * RETAINER_PER_HIRE.seniors +
-    state.levels.manager * RETAINER_PER_HIRE.managers;
+  const heads = CREW_KINDS.reduce(
+    (total, crew) => total + crewSize(state, crew) * CREW_STATS[crew].retainer,
+    0
+  );
   return (
     heads *
     (roundLengthMs(state) / ROUND_LENGTH_BASE_MS) *
@@ -329,28 +330,86 @@ function auraMultiplier(state: Consultancy): number {
   return total;
 }
 
-function juniorEfficiency(state: Consultancy): number {
-  return multOf(state, 'junior') * auraMultiplier(state);
-}
-
-function juniorBatchPenalty(state: Consultancy): number {
+/** Batch effects trade throughput for a slower close; only some crews carry one. */
+function batchPenalty(state: Consultancy, kind: EffectKind): number {
   return productOf(state, (e) =>
-    e.kind === 'juniorBatch' ? e.closeMult : null
+    e.kind === kind && 'closeMult' in e ? e.closeMult : null
   );
 }
 
-export function juniorCloseMs(state: Consultancy): number {
-  return (
-    (JUNIOR_CLOSE_MS * juniorBatchPenalty(state)) / juniorEfficiency(state)
+export function crewCloseMs(
+  state: Consultancy,
+  crew: CrewKind,
+  hire?: SeniorHire
+): number {
+  const stats = CREW_STATS[crew];
+  const { close, batch } = stats.effects;
+  const aura = stats.aura ? auraMultiplier(state) : 1;
+  const faster = scaled(multOf(state, close), hire, close) * aura;
+  return (stats.closeMs * batchPenalty(state, batch)) / faster;
+}
+
+export function crewBatch(
+  state: Consultancy,
+  crew: CrewKind,
+  hire?: SeniorHire
+): number {
+  const stats = CREW_STATS[crew];
+  const { batch } = stats.effects;
+  return Math.floor(
+    scaled(additive(state, batch, stats.batchBase), hire, batch)
   );
 }
 
-export function juniorBatch(state: Consultancy): number {
-  return Math.floor(additive(state, 'juniorBatch', JUNIOR_BATCH_BASE));
+export function crewSweepRadius(
+  state: Consultancy,
+  crew: CrewKind,
+  hire?: SeniorHire
+): number {
+  const stats = CREW_STATS[crew];
+  const { sweep } = stats.effects;
+  return stats.sweepRadius * scaled(multOf(state, sweep), hire, sweep);
 }
 
-export function juniorSweepRadius(state: Consultancy): number {
-  return JUNIOR_SWEEP_RADIUS * multOf(state, 'juniorSweep');
+export function crewWalkSpeed(
+  state: Consultancy,
+  crew: CrewKind,
+  hire?: SeniorHire
+): number {
+  const stats = CREW_STATS[crew];
+  const { walk } = stats.effects;
+  return stats.walkSpeed * scaled(multOf(state, walk), hire, walk);
+}
+
+/** Which claim heuristic a crew follows — policy per kind, not a tuning number. */
+export function crewPick(
+  state: Consultancy,
+  crew: CrewKind,
+  hire?: SeniorHire
+): ClaimPick {
+  if (crew === 'offshore') return 'random';
+  if (crew === 'managers') {
+    return managersPreferFiller(state) ? 'cheapest' : 'random';
+  }
+  if (crew === 'seniors') {
+    if (seniorPrefersTop(state, hire)) return 'dearest';
+    return hire && seniorClaimsNearest(state, hire) ? 'nearest' : 'random';
+  }
+  return claimsNearest(state) ? 'nearest' : 'random';
+}
+
+export function crewPace(
+  state: Consultancy,
+  crew: CrewKind,
+  hire?: SeniorHire
+): HirePace {
+  return {
+    closeMs: crewCloseMs(state, crew, hire),
+    speed: crewWalkSpeed(state, crew, hire),
+    batch: crewBatch(state, crew, hire),
+    sweep: crewSweepRadius(state, crew, hire),
+    pick: crewPick(state, crew, hire),
+  };
 }
 
 export function claimsNearest(state: Consultancy): boolean {
@@ -366,10 +425,10 @@ export function hirePoolSeat(index: number, every: number): number {
   return hireIsWoman(index, every) ? women - 1 : index - women;
 }
 
+/** Promotion refills the senior bench from the junior pool, so it inherits that ratio. */
 export function crewWomanEvery(state: Consultancy, crew: CrewKind): number {
-  return crew === 'seniors' && !state.promoted
-    ? CREW_WOMAN_EVERY.seniors
-    : CREW_WOMAN_EVERY.juniors;
+  const promotedIn = crew === 'seniors' && state.promoted;
+  return CREW_STATS[promotedIn ? 'juniors' : crew].womanEvery;
 }
 
 export function crewClaims(
@@ -410,15 +469,10 @@ export function crewCeiling(
   return dearest;
 }
 
-function crewBand(
-  state: Consultancy,
-  crew: CrewKind
-): { readonly from: number; readonly to: number } {
-  if (crew === 'juniors') {
-    return { from: 0, to: additive(state, 'juniorBand', JUNIOR_BAND_TOP) };
-  }
-  if (crew === 'seniors') return { from: SENIOR_BAND_FROM, to: Infinity };
-  return { from: 0, to: Infinity };
+function crewBand(state: Consultancy, crew: CrewKind): CrewBand {
+  const { band } = CREW_STATS[crew];
+  if (crew !== 'juniors') return band;
+  return { from: band.from, to: additive(state, 'juniorBand', band.to) };
 }
 
 export function autoCloses(state: Consultancy, type: TicketTypeId): boolean {
@@ -447,7 +501,7 @@ function triageSkips(
 }
 
 export function crewTakesRares(_state: Consultancy, crew: CrewKind): boolean {
-  return crew === 'offshore';
+  return CREW_STATS[crew].takesRares;
 }
 
 export function womenAmong(count: number, every: number): number {
@@ -455,9 +509,10 @@ export function womenAmong(count: number, every: number): number {
 }
 
 export function crewWomen(state: Consultancy): number {
-  return (
-    womenAmong(state.levels.junior, crewWomanEvery(state, 'juniors')) +
-    womenAmong(state.levels.senior, crewWomanEvery(state, 'seniors'))
+  return CREW_KINDS.reduce(
+    (total, crew) =>
+      total + womenAmong(crewSize(state, crew), crewWomanEvery(state, crew)),
+    0
   );
 }
 
@@ -466,15 +521,32 @@ function crewRate(count: number, every: number): number {
   return count - women + women * WOMAN_CLOSE_RATE;
 }
 
+/** Closes per second for one worker at the given pace. */
+function closesPerSec(rate: number, batch: number, closeMs: number): number {
+  return (rate * batch * 1000) / closeMs;
+}
+
 export function juniorCeilingPerSec(state: Consultancy): number {
   const juniors = state.levels.junior;
   if (juniors === 0) return 0;
   const rate = crewRate(juniors, crewWomanEvery(state, 'juniors'));
-  return (rate * juniorBatch(state) * 1000) / juniorCloseMs(state);
+  return closesPerSec(rate, crewBatch(state, 'juniors'), juniorCloseMs(state));
+}
+
+export function juniorCloseMs(state: Consultancy): number {
+  return crewCloseMs(state, 'juniors');
+}
+
+export function juniorBatch(state: Consultancy): number {
+  return crewBatch(state, 'juniors');
+}
+
+export function juniorSweepRadius(state: Consultancy): number {
+  return crewSweepRadius(state, 'juniors');
 }
 
 export function juniorWalkSpeed(state: Consultancy): number {
-  return JUNIOR_WALK_SPEED * multOf(state, 'juniorWalk');
+  return crewWalkSpeed(state, 'juniors');
 }
 
 export function hireAt(
@@ -487,10 +559,11 @@ export function hireAt(
 function scaled(
   base: number,
   hire: SeniorHire | undefined,
-  kind: SkillEffect['kind']
+  kind: EffectKind
 ): number {
+  if (kind === null || !hire) return base;
   let total = base;
-  for (const trait of hire?.traits ?? []) {
+  for (const trait of hire.traits) {
     for (const effect of TRAITS[trait]) {
       if (effect.kind === kind && 'mult' in effect) total *= effect.mult;
     }
@@ -508,33 +581,22 @@ function hireHolds(
 }
 
 export function seniorCloseMs(state: Consultancy, hire?: SeniorHire): number {
-  return SENIOR_CLOSE_MS / scaled(multOf(state, 'senior'), hire, 'senior');
+  return crewCloseMs(state, 'seniors', hire);
 }
 
 export function seniorWalkSpeed(state: Consultancy, hire?: SeniorHire): number {
-  return (
-    SENIOR_WALK_SPEED * scaled(multOf(state, 'seniorWalk'), hire, 'seniorWalk')
-  );
+  return crewWalkSpeed(state, 'seniors', hire);
 }
 
 export function seniorBatch(state: Consultancy, hire?: SeniorHire): number {
-  return Math.floor(
-    scaled(
-      additive(state, 'seniorBatch', SENIOR_BATCH_BASE),
-      hire,
-      'seniorBatch'
-    )
-  );
+  return crewBatch(state, 'seniors', hire);
 }
 
 export function seniorSweepRadius(
   state: Consultancy,
   hire?: SeniorHire
 ): number {
-  return (
-    SENIOR_SWEEP_RADIUS *
-    scaled(multOf(state, 'seniorSweep'), hire, 'seniorSweep')
-  );
+  return crewSweepRadius(state, 'seniors', hire);
 }
 
 export function seniorPrefersTop(
@@ -560,8 +622,11 @@ export function seniorCeilingPerSec(state: Consultancy): number {
   for (let seat = 0; seat < seniors; seat += 1) {
     const hire = hireAt(state, seat);
     const rate = hireIsWoman(seat, every) ? WOMAN_CLOSE_RATE : 1;
-    total +=
-      (rate * seniorBatch(state, hire) * 1000) / seniorCloseMs(state, hire);
+    total += closesPerSec(
+      rate,
+      seniorBatch(state, hire),
+      seniorCloseMs(state, hire)
+    );
   }
   return total;
 }
@@ -597,11 +662,11 @@ export function crewCeilingPerSec(state: Consultancy): number {
 }
 
 export function managerCloseMs(state: Consultancy): number {
-  return MANAGER_CLOSE_MS / multOf(state, 'manager');
+  return crewCloseMs(state, 'managers');
 }
 
 export function managerWalkSpeed(state: Consultancy): number {
-  return MANAGER_WALK_SPEED * multOf(state, 'managerWalk');
+  return crewWalkSpeed(state, 'managers');
 }
 
 export function relabelSteps(state: Consultancy): number {
@@ -659,22 +724,59 @@ export function overflowFactor(state: Consultancy, count: number): number {
   return (capacity + (count - capacity) * SPRINT_OVERFLOW_RATE) / count;
 }
 
+/**
+ * The one pricing chain a sprint goes through: hotfix, then overflow, then
+ * escalation. `sprintPayout` wants only the total, `sprintInvoice` wants each
+ * step named — both read it from here so the money and the receipt agree.
+ */
+interface PricedSprint {
+  readonly subtotal: number;
+  readonly count: number;
+  readonly hotfix: number;
+  readonly overflow: number;
+  readonly escalation: number;
+  readonly gross: number;
+}
+
+function priceSprint(
+  state: Consultancy,
+  subtotal: number,
+  count: number,
+  now: number
+): PricedSprint {
+  const hotfix = subtotal * (hotfixMultiplier(state, now) - 1);
+  const buffed = subtotal + hotfix;
+  const overflow = buffed * (overflowFactor(state, count) - 1);
+  const spilled = buffed + overflow;
+  const escalation = state.escalated
+    ? spilled * (escalationMultiplier(state) - 1)
+    : 0;
+  return {
+    subtotal,
+    count,
+    hotfix,
+    overflow,
+    escalation,
+    gross: spilled + escalation,
+  };
+}
+
 export function sprintPayout(
   state: Consultancy,
   mix: TicketMix,
   now = 0
 ): number {
-  let base = 0;
+  const unbuffed: Consultancy = { ...state, hotfixUntil: 0 };
+  let subtotal = 0;
   let count = 0;
   for (const id of TICKET_TYPE_IDS) {
     const held = mix[id] ?? 0;
     if (held > 0) {
-      base += held * ticketValue(state, id, now);
+      subtotal += held * ticketValue(unbuffed, id, now);
       count += held;
     }
   }
-  base *= overflowFactor(state, count);
-  return state.escalated ? base * escalationMultiplier(state) : base;
+  return priceSprint(state, subtotal, count, now).gross;
 }
 
 export function sprintInvoice(
@@ -697,23 +799,10 @@ export function sprintInvoice(
   }
   lines.sort((a, b) => b.total - a.total);
 
-  const hotfix = subtotal * (hotfixMultiplier(state, now) - 1);
-  const buffed = subtotal + hotfix;
-  const overflow = buffed * (overflowFactor(state, count) - 1);
-  const spilled = buffed + overflow;
-  const escalation = state.escalated
-    ? spilled * (escalationMultiplier(state) - 1)
-    : 0;
-
   return {
     lines,
-    count,
     capacity: sprintSlots(state),
-    subtotal,
-    hotfix,
-    overflow,
-    escalation,
-    gross: spilled + escalation,
+    ...priceSprint(state, subtotal, count, now),
   };
 }
 

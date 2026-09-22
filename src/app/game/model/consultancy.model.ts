@@ -12,6 +12,7 @@ export interface Consultancy {
 
   readonly phase: RoundPhase;
   readonly roundMs: number;
+  readonly haulLeftMs: number;
   readonly roundSeq: number;
   readonly lastOutcome: RoundOutcome | null;
 
@@ -42,8 +43,9 @@ export function resumed(state: Consultancy, now: number): Consultancy {
   return {
     ...state,
     lastTick: now,
-    phase: 'review',
+    phase: 'collecting',
     roundMs: 0,
+    haulLeftMs: 0,
     sprintCount: 0,
     escalated: false,
     escalationFiresAt: 0,
@@ -57,8 +59,9 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     storyPoints: 0,
     lastTick: now,
     runMs: 0,
-    phase: 'running',
+    phase: 'collecting',
     roundMs: 0,
+    haulLeftMs: 0,
     roundSeq: 1,
     lastOutcome: null,
     levels: Object.fromEntries(PURCHASE_IDS.map((id) => [id, 0])) as Record<

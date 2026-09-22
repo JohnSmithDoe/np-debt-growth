@@ -2,25 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { TicketMix } from '../model/board.model';
 import type { Consultancy } from '../model/consultancy.model';
-import { freshConsultancy } from '../model/consultancy.model';
-import { SAVE_VERSION } from '../model/game.consts';
-import type { PurchaseId } from '../model/balance/progression';
+import { consultancy } from '../model/consultancy.fixture';
 import { SPRINT_SLOTS_BASE } from '../model/balance/round';
 import { HOTFIX_MS } from '../model/balance/weather';
 import { sprintInvoice, sprintPayout } from './economy';
-
-function consultancy(
-  overrides: Partial<Omit<Consultancy, 'levels'>> & {
-    readonly levels?: Partial<Record<PurchaseId, number>>;
-  } = {}
-): Consultancy {
-  const fresh = freshConsultancy(0, SAVE_VERSION);
-  return {
-    ...fresh,
-    ...overrides,
-    levels: { ...fresh.levels, ...overrides.levels },
-  };
-}
 
 describe('the itemised invoice', () => {
   const mix: TicketMix = { lint: 5, bug: 4, legacy: 3 };

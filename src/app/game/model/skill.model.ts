@@ -2,6 +2,7 @@ import type { TicketTypeId } from './ticket.model';
 import type { PurchaseId } from './balance/progression';
 import type { CrewKind } from './crew.model';
 import { DEBT_INTEREST_PER_RANK } from './balance/flow';
+import { KIT_PLAN } from './kit.model';
 
 export type SkillEffect =
   | { readonly kind: 'none' }
@@ -754,13 +755,10 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'O',
     currency: 'eur',
     requires: 'o1',
-    levels: [
-      { cost: 3_000, effects: [{ kind: 'line', line: 'kit' }] },
-      { cost: 12_000, effects: [{ kind: 'line', line: 'kit' }] },
-      { cost: 45_000, effects: [{ kind: 'line', line: 'kit' }] },
-      { cost: 160_000, effects: [{ kind: 'line', line: 'kit' }] },
-      { cost: 550_000, effects: [{ kind: 'line', line: 'kit' }] },
-    ],
+    levels: KIT_PLAN.map((item) => ({
+      cost: item.cost,
+      effects: [{ kind: 'line', line: 'kit' }],
+    })),
   },
 
   {

@@ -1,11 +1,3 @@
-import {
-  FREEZE_SLOT_MULT,
-  MIGRATION_SUPPLY_MULT,
-  OFFSHORE_CREW,
-  PAGE_INCIDENT_MULT,
-  STORM_INCIDENT_MULT,
-} from './balance/weather';
-
 export type HazardKind = 'invitation' | 'fact';
 
 export type HazardId =
@@ -78,21 +70,21 @@ export const HAZARDS: readonly Hazard[] = [
     kind: 'fact',
     fromTier: 2,
     durationMs: 60_000,
-    weather: { offshore: OFFSHORE_CREW },
+    weather: { offshore: 5 },
   },
   {
     id: 'freeze',
     kind: 'fact',
     fromTier: 3,
     durationMs: 25_000,
-    weather: { slots: FREEZE_SLOT_MULT },
+    weather: { slots: 0.5 },
   },
   {
     id: 'storm',
     kind: 'fact',
     fromTier: 3,
     durationMs: 30_000,
-    weather: { incidentRate: STORM_INCIDENT_MULT },
+    weather: { incidentRate: 100 },
   },
   { id: 'grooming', kind: 'fact', fromTier: 3, durationMs: 0 },
   {
@@ -100,14 +92,14 @@ export const HAZARDS: readonly Hazard[] = [
     kind: 'fact',
     fromTier: 6,
     durationMs: 12_000,
-    weather: { incidentRate: PAGE_INCIDENT_MULT, meeting: true },
+    weather: { incidentRate: 25, meeting: true },
   },
   {
     id: 'migration',
     kind: 'fact',
     fromTier: 7,
     durationMs: 15_000,
-    weather: { supply: MIGRATION_SUPPLY_MULT },
+    weather: { supply: 0 },
   },
 ];
 
