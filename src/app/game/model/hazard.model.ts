@@ -36,6 +36,13 @@ export interface Hazard {
   readonly weather?: Partial<Weather>;
 }
 
+/**
+ * Stashed for now, not deleted: the rework has no weather in it, and the
+ * reference has none either. Flip this back on when hazards get their own
+ * pass — the rows, the `Partial<Weather>` patch and the specs all still work.
+ */
+export const HAZARDS_ENABLED = false;
+
 export const HAZARDS: readonly Hazard[] = [
   {
     id: 'all-hands',

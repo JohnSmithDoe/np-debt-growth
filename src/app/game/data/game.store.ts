@@ -34,6 +34,7 @@ import type { Hazard, HazardId, Weather } from '../model/hazard.model';
 import {
   CALM,
   HAZARDS,
+  HAZARDS_ENABLED,
   HAZARD_BY_ID,
   hazardDurationMs,
 } from '../model/hazard.model';
@@ -585,9 +586,9 @@ export class GameStore {
 
   #placeDue(kind: HazardKindOf, runMs: number, state: Consultancy): void {
     const cadence = this.#cadence[kind];
-    const eligible = HAZARDS.filter(
-      (row) => row.kind === kind && state.tier >= row.fromTier
-    );
+    const eligible = HAZARDS_ENABLED
+      ? HAZARDS.filter((row) => row.kind === kind && state.tier >= row.fromTier)
+      : [];
 
     if (eligible.length === 0) {
       cadence.due = runMs + cadence.every;

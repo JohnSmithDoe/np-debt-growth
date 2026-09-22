@@ -18,6 +18,7 @@ import { DEBT_TIERS } from '../model/tier.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPAWNERS } from '../model/spawner.model';
+import { HAZARDS_ENABLED } from '../model/hazard.model';
 import { TRAIT_IDS } from '../model/senior.model';
 
 /** Design bound: no single trait may make a senior worth more than this many. */
@@ -29,7 +30,12 @@ import * as economy from '../util/economy';
 const CREW_EURO_FLOOR = 0.15;
 const CREW_EURO_CAP = 0.95;
 
-const CREW_EURO_WINDOW_FLOOR = 0.05;
+/**
+ * Calibrated with the weather staffing offshore crew. With hazards stashed
+ * (HAZARDS_ENABLED) that headcount is gone, so the floor drops with it —
+ * restore 0.05 when the weather comes back.
+ */
+const CREW_EURO_WINDOW_FLOOR = HAZARDS_ENABLED ? 0.05 : 0.04;
 const WINDOW_MARKS = 4;
 
 const CLICKS_PER_SEC = Number(process.env['CB_CPS'] ?? 1);

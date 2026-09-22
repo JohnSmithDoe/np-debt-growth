@@ -1,4 +1,7 @@
+// Weather is stashed (see HAZARDS_ENABLED); these run again when it is.
 import { describe, expect, it } from 'vitest';
+
+import { HAZARDS_ENABLED } from '../model/hazard.model';
 
 import { TICKET_TYPES } from '../model/ticket.model';
 import {
@@ -25,7 +28,7 @@ const notes = (store: GameStore, note: string): number =>
   store.log().filter((line) => line.kind === 'note' && line.note === note)
     .length;
 
-describe('invitations', () => {
+describe.runIf(HAZARDS_ENABLED)('invitations', () => {
   it('puts a card on the board, and only from tier 1', () => {
     const early = storeWith({ tier: 0 });
     run(early, 0, INVITATION_EVERY_MS + 2_000);
@@ -100,7 +103,7 @@ describe('invitations', () => {
   });
 });
 
-describe('facts', () => {
+describe.runIf(HAZARDS_ENABLED)('facts', () => {
   it('announces itself without putting anything on the board', () => {
     const store = storeWith({ tier: 3, levels: { manager: 1 } });
     run(store, 0, FACT_EVERY_MS + 500);
@@ -141,7 +144,7 @@ describe('facts', () => {
   });
 });
 
-describe('a Prod Freeze', () => {
+describe.runIf(HAZARDS_ENABLED)('a Prod Freeze', () => {
   it('halves what the sprint will take, and gives it back', () => {
     const store = storeWith({ tier: 3 });
     const open = sprintSlots(store.snapshot());
@@ -158,7 +161,7 @@ describe('a Prod Freeze', () => {
   });
 });
 
-describe('the late weather', () => {
+describe.runIf(HAZARDS_ENABLED)('the late weather', () => {
   function windTo(store: GameStore, id: string): number {
     let at = 0;
     while (at < FACT_EVERY_MS * 12 && store.hazardNotice()?.id !== id) {
