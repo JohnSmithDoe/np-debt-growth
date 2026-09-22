@@ -13,7 +13,6 @@ export interface SprintInvoice {
   readonly capacity: number;
   readonly subtotal: number;
   readonly hotfix: number;
-  readonly overflow: number;
   readonly escalation: number;
   readonly gross: number;
 }
@@ -32,7 +31,6 @@ export const EMPTY_INVOICE: RoundInvoice = {
   capacity: 0,
   subtotal: 0,
   hotfix: 0,
-  overflow: 0,
   escalation: 0,
   gross: 0,
   skimmed: 0,

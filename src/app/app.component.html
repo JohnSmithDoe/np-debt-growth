@@ -29,15 +29,8 @@
         @if (running()) {
           {{ sprintCount() }}/{{ sprintSlots() }}
           <span class="pending">{{ money(sprintValue()) }}</span>
-          @if (roundTarget(); as target) {
-            <span class="chip" [class.ok]="onTarget()"
-              >of {{ money(target) }}</span
-            >
-          }
-          @if (sprintOver() > 0) {
-            <span class="chip sev0"
-              >{{ sprintOver() }} over · reduced rate</span
-            >
+          @if (canFull()) {
+            <span class="chip sev0">full · the truck is on its way</span>
           }
           @if (escalated()) {
             <span class="chip sev0">Escalated ×{{ escalation() }}</span>
@@ -83,17 +76,10 @@
 
     @if (onTree()) {
       <div class="interval-bar">
-        <button type="button" class="btn ghost small" (click)="toReview()">
-          Back to the review
-        </button>
-        <button type="button" class="btn primary" (click)="startNextRound()">
-          Start sprint {{ nextRound() }}
+        <button type="button" class="btn primary" (click)="toReview()">
+          Back to the floor
         </button>
       </div>
-    }
-
-    @if (!running() && !ended() && !onTree()) {
-      <cb-sprint-review (startRound)="startNextRound()" (openTree)="toTree()" />
     }
   </div>
 

@@ -219,7 +219,7 @@ export class StageService {
       harvest: (ids: readonly number[]) => store.harvest(ids),
       running: () => store.running(),
       roundLeftMs: () => store.roundLeftMs(),
-      roundLengthMs: () => store.roundLengthMs(),
+      roundLengthMs: () => store.haulMs(),
       escalationMultiplier: () => store.escalationMultiplier(),
       womanEvery: (crew) => store.womanEvery(crew),
       takePayout: () => store.takePayout(),

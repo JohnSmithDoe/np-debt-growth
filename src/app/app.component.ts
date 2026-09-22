@@ -21,7 +21,6 @@ import { AwardBannerComponent } from './console/feature/award-banner/award-banne
 import { MomentModalComponent } from './console/feature/moment-modal/moment-modal.component';
 import { DebugBarComponent } from './console/feature/debug-bar/debug-bar.component';
 import { NextStepsComponent } from './console/feature/next-steps/next-steps.component';
-import { SprintReviewComponent } from './console/feature/sprint-review/sprint-review.component';
 import { AchievementsPanelComponent } from './console/feature/achievements-panel/achievements-panel.component';
 import { ActivityFeedComponent } from './console/feature/activity-feed/activity-feed.component';
 import { LifetimeStatsComponent } from './console/feature/lifetime-stats/lifetime-stats.component';
@@ -63,7 +62,6 @@ const STEP_MODE: Partial<Record<NoticeTarget, StageMode>> = {
     PostMortemComponent,
     NextStepsComponent,
     SettingsModalComponent,
-    SprintReviewComponent,
   ],
 })
 export class AppComponent {
@@ -125,15 +123,10 @@ export class AppComponent {
     Math.max(0, this.sprintCount() - this.sprintSlots())
   );
 
-  readonly roundTarget = this.#store.roundTarget;
-  readonly onTarget = computed(() => {
-    const target = this.roundTarget();
-    return target !== null && this.#store.roundBilled() >= target;
-  });
-
   readonly roundSeq = this.#store.roundSeq;
   readonly running = this.#store.running;
   readonly nextRound = computed(() => this.roundSeq() + 1);
+  readonly canFull = this.#store.canFull;
   readonly roundLabel = computed(() =>
     this.running() ? formatCountdown(this.#store.roundLeftMs()) : 'Review'
   );

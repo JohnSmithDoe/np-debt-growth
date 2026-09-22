@@ -76,16 +76,12 @@ describe('invitations', () => {
 
   it('still lands on a board that is already full', () => {
     const store = storeWith({ tier: 1 });
-    const flooded = (at: number): void => {
-      if (!store.startRound(at)) return;
-      for (let n = 0; n < BOARD_CAPACITY + 50; n++) {
-        addTicket(store.board, 'lint');
-      }
-    };
+    for (let n = 0; n < BOARD_CAPACITY + 50; n++) {
+      addTicket(store.board, 'lint');
+    }
 
     for (let at = 100; at <= INVITATION_EVERY_MS + 500; at += 100) {
       store.advanceTo(at);
-      flooded(at);
     }
 
     expect(store.board.tickets.length).toBeGreaterThanOrEqual(BOARD_CAPACITY);

@@ -5,18 +5,16 @@ import { FEED_LINES_PER_SEC, MAX_CATCHUP_MS } from '../model/game.consts';
 import { SECRET_SKILL_ID, SKILL_BY_ID } from '../model/skill.model';
 import { tierAt } from '../model/tier.model';
 import { DESKS_PER_PLATE } from '../model/balance/crew';
-import {
-  ROUND_LENGTH_BASE_MS,
-  SPRINT_OVERFLOW_RATE,
-} from '../model/balance/round';
 import { addTicket } from '../util/board';
-import { overflowFactor, sprintSlots } from '../util/economy';
+import { sprintSlots } from '../util/economy';
 import { GameStore } from './game.store';
 import { rooms, storeWith } from './store.fixture';
 
+const A_WHILE_MS = 10_000;
+
 function billRound(store: GameStore): number {
   const before = store.budget();
-  for (let at = 100; at <= ROUND_LENGTH_BASE_MS; at += 100) store.advanceTo(at);
+  for (let at = 100; at <= A_WHILE_MS; at += 100) store.advanceTo(at);
   return store.budget() - before;
 }
 
@@ -49,29 +47,14 @@ describe('the free Copilot (C3)', () => {
 });
 
 describe('the sprint (C4, D20, D23)', () => {
-  it('takes work past the last slot rather than refusing it (D54)', () => {
+  it('refuses work past the last slot — the can is a hard cap', () => {
     const store = storeWith();
     const slots = sprintSlots(store.snapshot());
     for (let i = 0; i < slots; i += 1) expect(click(store, 'lint')).toBe(true);
 
-    expect(click(store, 'lint')).toBe(true);
-    expect(store.sprintCount()).toBe(slots + 1);
-    expect(store.board.tickets.length).toBe(0);
-  });
-
-  it('prices the overflow down, and never to nothing (D54)', () => {
-    const state = storeWith().snapshot();
-    const slots = sprintSlots(state);
-
-    expect(overflowFactor(state, slots)).toBe(1);
-
-    const over = overflowFactor(state, slots * 2);
-    expect(over).toBeLessThan(1);
-    expect(over).toBeGreaterThan(SPRINT_OVERFLOW_RATE);
-    expect(overflowFactor(state, slots * 10)).toBeLessThan(over);
-    expect(overflowFactor(state, slots * 1000)).toBeGreaterThan(
-      SPRINT_OVERFLOW_RATE * 0.99
-    );
+    expect(click(store, 'lint')).toBe(false);
+    expect(store.sprintCount()).toBe(slots);
+    expect(store.board.tickets.length).toBe(1);
   });
 
   it('counts a rare as work, and an event as not (D5, D31)', () => {
@@ -79,39 +62,54 @@ describe('the sprint (C4, D20, D23)', () => {
     const slots = sprintSlots(store.snapshot());
     for (let i = 0; i < slots; i += 1) click(store, 'lint');
 
-    expect(click(store, 'incident')).toBe(true);
-    expect(store.sprintCount()).toBe(slots + 1);
+    expect(click(store, 'incident')).toBe(false);
+    expect(store.sprintCount()).toBe(slots);
 
     expect(click(store, 'hotfix')).toBe(true);
-    expect(store.sprintCount()).toBe(slots + 1);
-    expect(billRound(store)).toBeGreaterThan(0);
+    expect(store.sprintCount()).toBe(slots);
+    expect(store.budget()).toBeGreaterThan(0);
   });
 
-  it("bills at the round's end, and not before (D53)", () => {
+  it('pays at pickup, not at a bell', () => {
     const store = storeWith();
-    click(store, 'bug');
+    expect(store.budget()).toBe(0);
 
-    for (let at = 100; at <= ROUND_LENGTH_BASE_MS - 500; at += 100) {
+    click(store, 'bug');
+    expect(store.budget()).toBeGreaterThan(0);
+    expect(store.running()).toBe(true);
+  });
+
+  it('sends the truck when the can fills, and takes it back empty', () => {
+    const store = storeWith();
+    const slots = sprintSlots(store.snapshot());
+    for (let i = 0; i < slots; i += 1) click(store, 'lint');
+
+    store.advanceTo(100);
+    expect(store.hauling()).toBe(true);
+    expect(store.lastRound()?.seq).toBe(1);
+
+    for (let at = 200; at <= 200 + store.haulMs(); at += 100) {
       store.advanceTo(at);
     }
-    expect(store.budget()).toBe(0);
-    expect(store.running()).toBe(true);
-
-    store.advanceTo(ROUND_LENGTH_BASE_MS);
-    expect(store.budget()).toBeGreaterThan(0);
-    expect(store.running()).toBe(false);
-    expect(store.lastRound()?.seq).toBe(1);
+    expect(store.hauling()).toBe(false);
+    expect(store.sprintCount()).toBe(0);
+    expect(store.roundSeq()).toBe(2);
   });
 
-  it('starts the next round empty, and counts it', () => {
+  it('leaves the backlog on the board across a haul — debt accumulates', () => {
     const store = storeWith();
-    click(store, 'bug');
-    billRound(store);
+    addTicket(store.board, 'lint');
+    addTicket(store.board, 'lint');
+    const standing = store.board.tickets.length;
 
-    expect(store.startRound(ROUND_LENGTH_BASE_MS)).toBe(true);
-    expect(store.roundSeq()).toBe(2);
+    const slots = sprintSlots(store.snapshot());
+    for (let i = 0; i < slots; i += 1) click(store, 'lint');
+    for (let at = 100; at <= 100 + store.haulMs(); at += 100) {
+      store.advanceTo(at);
+    }
+
     expect(store.sprintCount()).toBe(0);
-    expect(store.board.tickets.length).toBe(0);
+    expect(store.board.tickets.length).toBeGreaterThanOrEqual(standing);
   });
 
   it('keeps the ticket that filled a slot readable after it left the board', () => {
@@ -122,52 +120,47 @@ describe('the sprint (C4, D20, D23)', () => {
 
     expect(store.board.byId.has(ticket.id)).toBe(false);
     expect(store.sprint()).toEqual([{ type: 'bug', title: written }]);
-
-    billRound(store);
-    expect(store.sprint()).toEqual([]);
   });
 
-  it('clears the sky at the bell, so no buff is spent reading the Review', () => {
+  it('clears the sky when the truck leaves, so no buff rides a haul out', () => {
     const store = storeWith();
-    for (let at = 100; at < ROUND_LENGTH_BASE_MS; at += 100)
-      store.advanceTo(at);
     expect(click(store, 'hotfix')).toBe(true);
     expect(store.hotfixUntil()).toBeGreaterThan(0);
 
-    store.advanceTo(ROUND_LENGTH_BASE_MS);
+    const slots = sprintSlots(store.snapshot());
+    for (let i = 0; i < slots; i += 1) click(store, 'lint');
+    for (let at = 100; at <= 100 + store.haulMs(); at += 100) {
+      store.advanceTo(at);
+    }
     expect(store.hotfixUntil()).toBe(0);
   });
 
-  it('hands a reloaded run the baseline the Review compares against', () => {
+  it('hands a reloaded run the last haul it remembers', () => {
     const played = storeWith();
-    click(played, 'bug');
-    billRound(played);
-    const rang = played.lastRound();
+    const slots = sprintSlots(played.snapshot());
+    for (let i = 0; i < slots; i += 1) click(played, 'lint');
+    played.advanceTo(100);
+    const hauled = played.lastRound();
+    expect(hauled).not.toBeNull();
 
     const back = new GameStore();
     back.hydrate(resumed(played.state(), 0));
 
     expect(back.lastRound()).toBeNull();
-    expect(back.previousRound()).toEqual(rang);
-
-    back.startRound(0);
-    click(back, 'bug');
-    billRound(back);
-    expect(back.previousRound()).toEqual(rang);
-    expect(back.lastRound()?.seq).toBe(2);
+    expect(back.previousRound()).toEqual(hauled);
   });
 
-  it('lets one Enterprise Escalation multiply the whole sprint', () => {
+  it('lets one Enterprise Escalation multiply every close in its window', () => {
     const plain = storeWith();
     click(plain, 'bug');
     click(plain, 'bug');
-    const flat = billRound(plain);
+    const flat = plain.budget();
 
     const escalated = storeWith();
-    click(escalated, 'bug');
-    click(escalated, 'bug');
     click(escalated, 'escalation');
-    expect(billRound(escalated)).toBeGreaterThan(flat);
+    click(escalated, 'bug');
+    click(escalated, 'bug');
+    expect(escalated.budget()).toBeGreaterThan(flat);
   });
 });
 
@@ -271,18 +264,12 @@ describe('advancing the clock (S3)', () => {
   });
 
   it('measures per-second income the same however the stretch was stepped', () => {
-    const span = ROUND_LENGTH_BASE_MS * 2;
+    const span = A_WHILE_MS * 2;
     const even = idle();
-    for (let ms = 100; ms <= span; ms += 100) {
-      even.advanceTo(ms);
-      even.startRound(ms);
-    }
+    for (let ms = 100; ms <= span; ms += 100) even.advanceTo(ms);
 
     const ragged = idle();
-    for (let ms = 1003; ms <= span; ms += 1003) {
-      ragged.advanceTo(ms);
-      ragged.startRound(ms);
-    }
+    for (let ms = 1003; ms <= span; ms += 1003) ragged.advanceTo(ms);
     ragged.advanceTo(span);
 
     expect(even.perSecond()).toBeGreaterThan(0);
@@ -306,13 +293,15 @@ describe('juniors and the sprint', () => {
     const store = storeWith({
       levels: { junior: 200 },
     });
-    for (let ms = 100; ms < ROUND_LENGTH_BASE_MS; ms += 100) {
+    for (let ms = 100; ms < A_WHILE_MS; ms += 100) {
       for (let n = 0; n < 4; n++) addTicket(store.board, 'lint');
       store.advanceTo(ms);
     }
 
-    expect(store.sprintCount()).toBeGreaterThan(sprintSlots(store.snapshot()));
-    expect(store.lifetimeClosed()).toBe(store.sprintCount());
+    expect(store.sprintCount()).toBeLessThanOrEqual(
+      sprintSlots(store.snapshot())
+    );
+    expect(store.lifetimeClosed()).toBeGreaterThan(0);
   });
 
   it("bills through the sprint at the round's end, never around it", () => {
@@ -321,10 +310,7 @@ describe('juniors and the sprint', () => {
       skills: { ...AUTOMATED, capacity: 5 },
       levels: { junior: 200, copilot: 1 },
     });
-    for (let ms = 100; ms <= 600_000; ms += 100) {
-      store.advanceTo(ms);
-      store.startRound(ms);
-    }
+    for (let ms = 100; ms <= 600_000; ms += 100) store.advanceTo(ms);
 
     expect(store.budget()).toBeGreaterThan(0);
     expect(store.lifetimeRounds()).toBeGreaterThan(0);

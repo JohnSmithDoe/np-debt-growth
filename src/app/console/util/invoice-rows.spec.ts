@@ -56,7 +56,6 @@ describe('the invoice, in words', () => {
       capacity: 14,
       subtotal: 814,
       hotfix: 814,
-      overflow: -100,
       escalation: 2000,
       gross: 3528,
       skimmed: -300,
@@ -70,7 +69,6 @@ describe('the invoice, in words', () => {
       'lint',
       'subtotal',
       'hotfix',
-      'overflow',
       'escalation',
       'board',
       'retainer',
@@ -80,12 +78,12 @@ describe('the invoice, in words', () => {
 
   it('marks a cost as spent and a gain as not', () => {
     const rows = invoiceRows(
-      invoice({ ...oneLine, overflow: -100, hotfix: 50 })
+      invoice({ ...oneLine, skimmed: -100, hotfix: 50 })
     );
     const by = new Map(rows.map((row) => [row.key, row]));
-    expect(by.get('overflow')?.negative).toBe(true);
+    expect(by.get('skimmed')?.negative).toBe(true);
     expect(by.get('hotfix')?.negative).toBe(false);
-    expect(by.get('overflow')?.value.startsWith('−')).toBe(true);
+    expect(by.get('skimmed')?.value.startsWith('−')).toBe(true);
   });
 
   it('says nothing at all about a round that never billed', () => {

@@ -40,14 +40,6 @@ describe('the debt tier ladder', () => {
       expect(TICKET_TYPES[tier.ticket].tier).toBe(tier.index);
     }
   });
-
-  it('sets a round target the crew is asked to reach, not a fraction of nothing', () => {
-    for (const tier of DEBT_TIERS) {
-      const target = economy.roundTarget(consultancy({ tier: tier.index }));
-      expect(target).toBeGreaterThan(0);
-      expect(target).toBeLessThan(tier.baselinePerRound);
-    }
-  });
 });
 
 describe('the retype ladder', () => {

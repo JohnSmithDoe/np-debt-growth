@@ -8,10 +8,7 @@ import { AWARDS } from '../model/award.model';
 import { MAX_TIER } from '../model/tier.model';
 import { addTicket } from '../util/board';
 import * as economy from '../util/economy';
-import {
-  ROUND_LENGTH_BASE_MS,
-  SPRINT_SLOTS_BASE,
-} from '../model/balance/round';
+import { HAUL_MS, SPRINT_SLOTS_BASE } from '../model/balance/round';
 import {
   ESCALATION_HOLD_MS,
   HOTFIX_MS,
@@ -65,8 +62,8 @@ describe('the Hotfix Window (D31)', () => {
 });
 
 describe('the held Escalation (D31)', () => {
-  it('can fire inside a round of base length', () => {
-    expect(ESCALATION_HOLD_MS).toBeLessThan(ROUND_LENGTH_BASE_MS);
+  it('holds longer than the truck takes, so the window outlives a haul', () => {
+    expect(ESCALATION_HOLD_MS).toBeGreaterThan(HAUL_MS);
   });
 
   it('arms a countdown rather than billing immediately', () => {
@@ -144,12 +141,13 @@ describe('a full sprint and the rares (D23, D31)', () => {
     expect(store.snapshot().hotfixUntil).toBeGreaterThan(0);
   });
 
-  it('takes ordinary work even with no room left (D54)', () => {
+  it('refuses ordinary work with no room left — the can is a hard cap', () => {
     const store = storeWith({ sprintCount: 999 });
     const harvest = store.harvest([place(store, 'bug')]);
 
-    expect(harvest.taken.length).toBe(1);
-    expect(harvest.value).toBeGreaterThan(0);
+    expect(harvest.taken.length).toBe(0);
+    expect(harvest.value).toBe(0);
+    expect(store.board.tickets.length).toBe(1);
   });
 });
 

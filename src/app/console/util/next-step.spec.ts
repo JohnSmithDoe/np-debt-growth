@@ -17,7 +17,7 @@ const gates: StepGates = {
 
 const state = (patch: Partial<Consultancy>): Consultancy => ({
   ...freshConsultancy(0, SAVE_VERSION),
-  phase: 'review',
+  phase: 'hauling',
   ...patch,
 });
 
@@ -33,61 +33,26 @@ describe('nextSteps', () => {
     expect(first?.id).not.toBe('teach:triage');
   });
 
-  it('names the interval only while it is up', () => {
+  it('names the next rung whether or not the truck is out', () => {
     const waiting = state({
       lifetimeClosed: 40,
       lifetimeBilled: 50_000,
       budget: 50_000,
       tier: 1,
-      phase: 'review',
+      phase: 'hauling',
     });
-    expect(
-      nextSteps(waiting, gates).some((step) => step.id.startsWith('adr:'))
-    ).toBe(true);
-    expect(
-      nextSteps({ ...waiting, phase: 'running' }, gates).some(
-        (step) => step.target === 'review'
-      )
-    ).toBe(false);
-  });
+    const named = (at: typeof waiting): boolean =>
+      nextSteps(at, gates).some((step) => step.id.startsWith('adr:'));
 
-  it('offers the start whenever the interval is up', () => {
-    const waiting = state({
-      lifetimeClosed: 40,
-      lifetimeRounds: 6,
-      phase: 'review',
-    });
-    const [first] = nextSteps(waiting, gates);
-    expect(first?.act).toBe('startRound');
-    expect(first?.target).toBe('board');
-
-    expect(
-      nextSteps({ ...waiting, phase: 'running' }, gates).some(
-        (step) => step.act === 'startRound'
-      )
-    ).toBe(false);
-  });
-
-  it('offers nothing from the interval while a round is running', () => {
-    const rich = {
-      lifetimeClosed: 40,
-      lifetimeRounds: 6,
-      lifetimeBilled: 400_000,
-      budget: 400_000,
-    };
-    const running = nextSteps(state({ ...rich, phase: 'running' }), gates);
-    const interval = nextSteps(state({ ...rich, phase: 'review' }), gates);
-
-    expect(running.some((step) => step.target === 'review')).toBe(false);
-    expect(interval.some((step) => step.target === 'review')).toBe(true);
+    expect(named(waiting)).toBe(true);
+    expect(named({ ...waiting, phase: 'collecting' })).toBe(true);
   });
 
   it('acts only on the board', () => {
     const acting = nextSteps(
-      state({ lifetimeClosed: 3, phase: 'review' }),
+      state({ lifetimeClosed: 3, phase: 'hauling' }),
       gates
     ).filter((step) => step.act !== undefined);
-    expect(acting.length).toBeGreaterThan(0);
     expect(acting.every((step) => step.target === 'board')).toBe(true);
   });
 
@@ -138,17 +103,11 @@ describe('nextSteps', () => {
       lifetimeClosed: 3,
       lifetimeRounds: 1,
       budget: 0,
-      phase: 'running',
+      phase: 'collecting',
     });
     const steps = nextSteps(broke, gates);
     expect(steps).toHaveLength(1);
     expect(steps[0]?.titleKey).toBe('step.earn.title');
-  });
-
-  it('falls back to starting the next round when standing in the interval', () => {
-    const broke = state({ lifetimeClosed: 3, lifetimeRounds: 1, budget: 0 });
-    const steps = nextSteps(broke, gates);
-    expect(steps[0]?.act).toBe('startRound');
   });
 });
 

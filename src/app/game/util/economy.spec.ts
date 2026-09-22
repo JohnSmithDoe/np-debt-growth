@@ -12,10 +12,10 @@ import {
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
 import { SENIOR_BUYOUT_STEPS } from '../model/balance/progression';
-import { ROUND_TARGET_OF_BASELINE } from '../model/balance/round';
-import { DEBT_TIERS } from '../model/tier.model';
 import {
   ceilingPerSec,
+  haulMs,
+  retainerPerSec,
   closeRate,
   crewCeilingPerSec,
   juniorCeilingPerSec,
@@ -30,10 +30,6 @@ import {
   hirePoolSeat,
   juniorBatch,
   juniorCloseMs,
-  retainerPerRound,
-  roundBilled,
-  roundLengthMs,
-  roundTarget,
   spawnRate,
   sprintSlots,
   totalSpawnRate,
@@ -55,11 +51,11 @@ describe('the senior buyout ladder (D33)', () => {
   });
 });
 
-describe('the bucket (C4)', () => {
-  it("drains at slots per ROUND, so time is capacity's rival (D53)", () => {
+describe('the can (C4)', () => {
+  it('is bounded by the haul, because the truck is the only forced wait', () => {
     const state = consultancy({ skills: { capacity: 2 } });
     expect(ceilingPerSec(state)).toBeCloseTo(
-      sprintSlots(state) / (roundLengthMs(state) / 1000),
+      sprintSlots(state) / (haulMs(state) / 1000),
       6
     );
 
@@ -396,31 +392,10 @@ describe('what a body may take (crewCeiling)', () => {
   });
 });
 
-describe("the client's line (round target)", () => {
-  it('is unset until the first ADR is signed', () => {
-    expect(roundTarget(consultancy({ tier: 0 }))).toBeNull();
-  });
-
-  it('is the rung baseline times the one coefficient', () => {
-    for (const tier of DEBT_TIERS) {
-      expect(roundTarget(consultancy({ tier: tier.index }))).toBeCloseTo(
-        tier.baselinePerRound * ROUND_TARGET_OF_BASELINE,
-        6
-      );
-    }
-  });
-
-  it('does not move with the round count', () => {
-    const early = consultancy({ tier: 3, roundSeq: 4 });
-    const late = consultancy({ tier: 3, roundSeq: 40 });
-    expect(roundTarget(early)).toBe(roundTarget(late));
-  });
-
-  it('counts the sprint, the retainer and the board', () => {
+describe('the retainer', () => {
+  it('bills per second now, because there is no round to bill per', () => {
     const at = consultancy({ tier: 2, levels: { junior: 3 } });
-    expect(roundBilled(at, 500, 200)).toBeCloseTo(
-      500 + retainerPerRound(at) + 200,
-      6
-    );
+    expect(retainerPerSec(at)).toBeGreaterThan(0);
+    expect(retainerPerSec(consultancy({ tier: 2 }))).toBe(0);
   });
 });

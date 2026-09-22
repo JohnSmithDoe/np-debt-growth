@@ -12,7 +12,6 @@ import type { KitItem } from '../model/kit.model';
 import { boughtKit, nextKitItem } from '../model/kit.model';
 import type { SeniorHire, TraitId } from '../model/senior.model';
 import { TRAITS, hireFor } from '../model/senior.model';
-import { tierAt } from '../model/tier.model';
 import type { SkillEffect } from '../model/skill.model';
 import { OFFICE_NODE_IDS, SKILL_BY_ID } from '../model/skill.model';
 import type { TicketType, TicketTypeId } from '../model/ticket.model';
@@ -45,9 +44,9 @@ import {
   VELOCITY_UNLOCK_TIER,
 } from '../model/balance/progression';
 import {
-  ROUND_LENGTH_BASE_MS,
-  ROUND_TARGET_OF_BASELINE,
-  SPRINT_OVERFLOW_RATE,
+  HAUL_MIN_MS,
+  HAUL_MS,
+  RETAINER_PERIOD_MS,
   SPRINT_SLOTS_BASE,
 } from '../model/balance/round';
 import {
@@ -210,36 +209,26 @@ export function sprintRoom(
   return Math.max(0, sprintSlots(state, weather) - state.sprintCount);
 }
 
-export function roundTarget(state: Consultancy): number | null {
-  const tier = tierAt(state.tier);
-  return tier ? tier.baselinePerRound * ROUND_TARGET_OF_BASELINE : null;
-}
-
-export function roundBilled(
-  state: Consultancy,
-  sprintValue: number,
-  boardBilled: number
-): number {
-  return sprintValue + retainerPerRound(state) + boardBilled;
-}
-
-export function retainerPerRound(state: Consultancy): number {
+export function retainerPerSec(state: Consultancy): number {
   const heads = CREW_KINDS.reduce(
     (total, crew) => total + crewSize(state, crew) * CREW_STATS[crew].retainer,
     0
   );
   return (
-    heads *
-    (roundLengthMs(state) / ROUND_LENGTH_BASE_MS) *
-    (sprintSlots(state) / SPRINT_SLOTS_BASE)
+    (heads * (sprintSlots(state) / SPRINT_SLOTS_BASE)) /
+    (RETAINER_PERIOD_MS / 1000)
   );
 }
 
-export function roundLengthMs(state: Consultancy): number {
-  const bought = sumOf(state, (e) =>
+/**
+ * The truck. `roundLength` effects now shave the haul rather than stretch a
+ * round — same sign, same nodes, and the haul is the only forced downtime.
+ */
+export function haulMs(state: Consultancy): number {
+  const shaved = sumOf(state, (e) =>
     e.kind === 'roundLength' ? e.seconds : null
   );
-  return ROUND_LENGTH_BASE_MS + bought * 1_000;
+  return Math.max(HAUL_MIN_MS, HAUL_MS - shaved * 1_000);
 }
 
 export function seniorsPreferTop(state: Consultancy): boolean {
@@ -247,7 +236,7 @@ export function seniorsPreferTop(state: Consultancy): boolean {
 }
 
 export function ceilingPerSec(state: Consultancy): number {
-  return sprintSlots(state) / (roundLengthMs(state) / 1000);
+  return sprintSlots(state) / (haulMs(state) / 1000);
 }
 
 export function clickRadius(state: Consultancy): number {
@@ -717,23 +706,14 @@ export function closeValue(
   return state.escalated ? base * escalationMultiplier(state) : base;
 }
 
-export function overflowFactor(state: Consultancy, count: number): number {
-  if (count <= 0) return 1;
-  const capacity = sprintSlots(state);
-  if (count <= capacity) return 1;
-  return (capacity + (count - capacity) * SPRINT_OVERFLOW_RATE) / count;
-}
-
 /**
- * The one pricing chain a sprint goes through: hotfix, then overflow, then
- * escalation. `sprintPayout` wants only the total, `sprintInvoice` wants each
- * step named — both read it from here so the money and the receipt agree.
+ * The one pricing chain: hotfix, then escalation. There is no overflow step —
+ * the can is a hard cap, so nothing past capacity is ever priced.
  */
 interface PricedSprint {
   readonly subtotal: number;
   readonly count: number;
   readonly hotfix: number;
-  readonly overflow: number;
   readonly escalation: number;
   readonly gross: number;
 }
@@ -746,18 +726,15 @@ function priceSprint(
 ): PricedSprint {
   const hotfix = subtotal * (hotfixMultiplier(state, now) - 1);
   const buffed = subtotal + hotfix;
-  const overflow = buffed * (overflowFactor(state, count) - 1);
-  const spilled = buffed + overflow;
   const escalation = state.escalated
-    ? spilled * (escalationMultiplier(state) - 1)
+    ? buffed * (escalationMultiplier(state) - 1)
     : 0;
   return {
     subtotal,
     count,
     hotfix,
-    overflow,
     escalation,
-    gross: spilled + escalation,
+    gross: buffed + escalation,
   };
 }
 
@@ -830,7 +807,6 @@ export function mergeInvoices(
     capacity: next.capacity,
     subtotal: first.subtotal + next.subtotal,
     hotfix: first.hotfix + next.hotfix,
-    overflow: first.overflow + next.overflow,
     escalation: first.escalation + next.escalation,
     gross: first.gross + next.gross,
   };

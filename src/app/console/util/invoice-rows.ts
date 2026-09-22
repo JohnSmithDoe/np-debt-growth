@@ -51,12 +51,6 @@ export function invoiceRows(invoice: RoundInvoice): readonly InvoiceRow[] {
   const weather = listed([
     term('hotfix', 'Hotfix Window', 'open at the bell', invoice.hotfix),
     term(
-      'overflow',
-      'Over capacity',
-      `${invoice.count} filed into ${invoice.capacity} slots`,
-      invoice.overflow
-    ),
-    term(
       'escalation',
       'Enterprise Escalation',
       'the whole sprint, repriced',

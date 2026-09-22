@@ -42,19 +42,12 @@ describe('the itemised invoice', () => {
       const lines = invoice.lines.reduce((sum, line) => sum + line.total, 0);
       expect(lines).toBeCloseTo(invoice.subtotal, 6);
       expect(
-        invoice.subtotal +
-          invoice.hotfix +
-          invoice.overflow +
-          invoice.escalation
+        invoice.subtotal + invoice.hotfix + invoice.escalation
       ).toBeCloseTo(invoice.gross, 6);
     });
   }
 
-  it('signs the overflow as a cost and the buffs as gains', () => {
-    const spilled = sprintInvoice(consultancy(), over, 0);
-    expect(spilled.overflow).toBeLessThan(0);
-    expect(spilled.hotfix).toBe(0);
-
+  it('signs the buffs as gains', () => {
     const buffed = sprintInvoice(
       consultancy({ hotfixUntil: HOTFIX_MS, escalated: true }),
       mix,
@@ -62,7 +55,6 @@ describe('the itemised invoice', () => {
     );
     expect(buffed.hotfix).toBeGreaterThan(0);
     expect(buffed.escalation).toBeGreaterThan(0);
-    expect(buffed.overflow).toBe(0);
   });
 
   it('reads dearest first, because that is the line worth reading', () => {

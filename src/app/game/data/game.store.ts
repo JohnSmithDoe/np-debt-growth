@@ -223,6 +223,8 @@ export class GameStore {
 
   #filledAt = -1;
   #retainerBilled = 0;
+  #cycleBilled = 0;
+  #cycleRetainer = 0;
   #opened = { closed: 0, crewBilled: 0 };
   #roundSp = { velocity: 0, copilots: 0, awards: 0, skimmed: 0 };
   #outcome = signal<RoundOutcome | null>(null);
@@ -253,14 +255,9 @@ export class GameStore {
   readonly sprintValue = computed(() =>
     economy.sprintPayout(this.#state(), this.#mix(), this.#state().lastTick)
   );
-  readonly roundTarget = computed(() => economy.roundTarget(this.#state()));
-  readonly roundBilled = computed(() =>
-    economy.roundBilled(
-      this.#state(),
-      this.sprintValue(),
-      this.#roundBoardBilled()
-    )
-  );
+  readonly hauling = computed(() => this.#state().phase === 'hauling');
+  readonly haulLeftMs = computed(() => this.#state().haulLeftMs);
+  readonly canFull = computed(() => this.sprintCount() >= this.sprintSlots());
   readonly escalated = computed(() => this.#state().escalated);
   readonly escalationMultiplier = computed(() =>
     economy.escalationMultiplier(this.#state())
@@ -274,8 +271,11 @@ export class GameStore {
 
   readonly perSecond = computed(() => {
     const last = this.#outcome();
-    if (!last || last.durationMs <= 0) return 0;
-    return last.billed / (last.durationMs / 1000);
+    if (last && last.durationMs > 0) {
+      return last.billed / (last.durationMs / 1000);
+    }
+    const state = this.#state();
+    return state.runMs > 0 ? state.lifetimeBilled / (state.runMs / 1000) : 0;
   });
 
   seedRandom(rand: () => number): void {
@@ -327,7 +327,7 @@ export class GameStore {
   readonly escalationFiresAt = computed(() => this.#state().escalationFiresAt);
 
   readonly phase = computed(() => this.#state().phase);
-  readonly running = computed(() => this.#state().phase === 'running');
+  readonly running = computed(() => this.#state().phase === 'collecting');
   readonly roundSeq = computed(() => this.#state().roundSeq);
 
   readonly ended = computed(() => this.#state().endedAt > 0);
@@ -345,11 +345,6 @@ export class GameStore {
 
   advanceTo(now: number): void {
     const state = this.#state();
-    if (state.phase !== 'running') {
-      this.#state.set({ ...state, lastTick: now });
-      return;
-    }
-
     const elapsed = now - state.lastTick;
     if (elapsed <= 0) {
       this.#state.set({ ...state, lastTick: now });
@@ -358,56 +353,37 @@ export class GameStore {
 
     let at = now - Math.min(elapsed, MAX_CATCHUP_MS);
     while (at < now) {
-      const left = this.#roundLeftMs();
-      if (left <= 0) break;
-      const to = Math.min(at + TICK_MS, now, at + left);
+      const to = Math.min(at + TICK_MS, now);
       this.#advance((to - at) / 1000, to);
       at = to;
     }
-    if (this.#roundLeftMs() <= 0) this.#endRound(at);
+    this.#state.set({ ...this.#state(), lastTick: now });
   }
 
-  roundLengthMs(): number {
-    return economy.roundLengthMs(this.#state());
-  }
-
-  #roundLeftMs(): number {
-    return this.roundLengthMs() - this.#state().roundMs;
+  haulMs(): number {
+    return economy.haulMs(this.#state());
   }
 
   roundLeftMs(): number {
-    return this.#state().phase === 'running'
-      ? Math.max(0, this.#roundLeftMs())
-      : 0;
+    return this.#state().haulLeftMs;
   }
 
-  #endRound(now: number): void {
-    const opening = this.#state();
-    this.#lastTarget.set(economy.roundTarget(opening));
-    const capacity = economy.sprintSlots(opening, this.#sky());
-    const filled = opening.sprintCount;
-    const unbilled = this.#board.tickets.length;
-    const billed = this.#billSprint(now);
-    const retainer = economy.retainerPerRound(opening);
-    this.#retainerBilled += retainer;
-    const settled = this.#state();
-    const state = {
-      ...settled,
-      budget: settled.budget + retainer,
-      lifetimeBilled: settled.lifetimeBilled + retainer,
-      lifetimeCrewBilled: settled.lifetimeCrewBilled + retainer,
-      lifetimeWorkBilled: settled.lifetimeWorkBilled + retainer,
-    };
-
+  /**
+   * The can filled, so the truck takes it. Collection is dead until it
+   * returns, and that wait is the whole cadence — nothing here is on a clock.
+   * The money is already paid: it landed per ticket, at pickup.
+   */
+  #startHaul(now: number): void {
+    const state = this.#state();
     const outcome: RoundOutcome = {
       seq: state.roundSeq,
-      billed: billed + retainer + this.#roundBoardBilled(),
+      billed: this.#cycleBilled,
       closed: state.lifetimeClosed - this.#opened.closed,
       closedByCrew: state.lifetimeCrewBilled - this.#opened.crewBilled,
-      filled,
-      capacity,
+      filled: state.sprintCount,
+      capacity: economy.sprintSlots(state, this.#sky()),
       filledAtMs: this.#filledAt,
-      unbilled,
+      unbilled: this.#board.tickets.length,
       durationMs: state.roundMs,
       skimmed: this.#roundSp.skimmed,
       spVelocity: this.#roundSp.velocity,
@@ -419,15 +395,15 @@ export class GameStore {
       ...this.#roundSprintInvoice,
       skimmed: -this.#roundSp.skimmed,
       storyPoints: this.#roundSp.velocity,
-      retainer,
+      retainer: this.#cycleRetainer,
       board: this.#roundBoardBilled(),
       billed: outcome.billed,
     });
 
     this.#state.set({
       ...state,
-      phase: 'review',
-      hotfixUntil: 0,
+      phase: 'hauling',
+      haulLeftMs: economy.haulMs(state),
       lastTick: now,
       lastOutcome: outcome,
     });
@@ -436,19 +412,10 @@ export class GameStore {
     this.#outcome.set(outcome);
   }
 
-  endRoundNow(now: number): void {
-    if (this.#state().phase !== 'running') return;
-    this.#endRound(now);
-  }
-
-  startRound(now: number): boolean {
+  /** The truck is away: the can comes back empty and collection resumes. */
+  #finishHaul(now: number): void {
     const state = this.#state();
-    if (state.phase === 'running') return false;
-    const { nextId, nextCrewId } = this.#board;
-    this.#board = emptyBoard();
-    this.#board.nextId = nextId;
-    this.#board.nextCrewId = nextCrewId;
-    this.#budget = new SpawnBudget();
+    this.#roundSlots.set([...this.#sprint()]);
     this.#sprint.set([]);
     this.#filledAt = -1;
     this.#opened = {
@@ -459,17 +426,33 @@ export class GameStore {
     this.#roundBoardBilled.set(0);
     this.#roundSprintInvoice = EMPTY_INVOICE;
     this.#roundFrom.set(this.#seq);
-    this.#roundSlots.set([]);
+    this.#cycleBilled = 0;
+    this.#cycleRetainer = 0;
     this.#state.set({
       ...state,
-      phase: 'running',
+      phase: 'collecting',
+      haulLeftMs: 0,
       roundMs: 0,
       roundSeq: state.roundSeq + 1,
       sprintCount: 0,
       escalated: false,
       escalationFiresAt: 0,
+      hotfixUntil: 0,
+      lifetimeRounds: state.lifetimeRounds + 1,
       lastTick: now,
     });
+  }
+
+  /** Debug door: send the truck early. */
+  endRoundNow(now: number): void {
+    if (this.#state().phase !== 'collecting') return;
+    this.#startHaul(now);
+  }
+
+  /** Debug door: bring the truck back early. */
+  startRound(now: number): boolean {
+    if (this.#state().phase !== 'hauling') return false;
+    this.#finishHaul(now);
     return true;
   }
 
@@ -483,12 +466,17 @@ export class GameStore {
       this.#rand,
       weather
     );
-    const crews = stepBoard(
-      this.#board,
-      crewRules(this.#board, state, weather),
-      dtMs,
-      this.#rand
-    );
+    // A full can stops the floor: nothing closes until the truck is away.
+    const crews =
+      economy.sprintRoom(state, weather) <= 0
+        ? { closed: [], byWomen: 0 }
+        : stepBoard(
+            this.#board,
+            crewRules(this.#board, state, weather),
+            dtMs,
+            this.#rand,
+            economy.sprintRoom(state, weather)
+          );
     const filed = fileAutomated(
       this.#board,
       state,
@@ -501,22 +489,50 @@ export class GameStore {
 
   #advance(seconds: number, now: number): void {
     const state = this.#state();
-    const work = this.#stepBoard(state, seconds * 1000);
+    const dtMs = seconds * 1000;
+    const work = this.#stepBoard(state, dtMs);
+    const banked = this.#bank(state, work, now);
+    const retainer = economy.retainerPerSec(state) * seconds;
+    this.#retainerBilled += retainer;
+    this.#cycleRetainer += retainer;
+
     this.#state.set({
-      ...this.#bank(state, work, now).next,
+      ...banked.next,
+      budget: banked.next.budget + retainer,
+      lifetimeBilled: banked.next.lifetimeBilled + retainer,
+      lifetimeCrewBilled: banked.next.lifetimeCrewBilled + retainer,
+      lifetimeWorkBilled: banked.next.lifetimeWorkBilled + retainer,
+      haulLeftMs: Math.max(0, state.haulLeftMs - dtMs),
       lastTick: now,
-      runMs: state.runMs + seconds * 1000,
-      roundMs: state.roundMs + seconds * 1000,
+      runMs: state.runMs + dtMs,
+      roundMs: state.roundMs + dtMs,
     });
     this.#logCloses(state, work.closed, now);
-    this.#stepWeather(state.runMs + seconds * 1000, now);
+    this.#stepWeather(state.runMs + dtMs, now);
     this.#sampleBurndown(this.#state().runMs);
 
+    // Escalation is a live window now, not a bill: the x5 rides every close
+    // inside the hold, then lapses.
     const armed = this.#state().escalationFiresAt;
-    if (armed > 0 && now >= armed) this.#billSprint(now);
+    if (armed > 0 && now >= armed) {
+      this.#state.set({
+        ...this.#state(),
+        escalated: false,
+        escalationFiresAt: 0,
+      });
+    }
 
     this.#grantAwards();
     this.#note();
+
+    const settled = this.#state();
+    if (settled.phase === 'hauling') {
+      if (settled.haulLeftMs <= 0) this.#finishHaul(now);
+    } else if (
+      settled.sprintCount >= economy.sprintSlots(settled, this.#sky())
+    ) {
+      this.#startHaul(now);
+    }
   }
 
   #sampleBurndown(runMs: number): void {
@@ -569,14 +585,6 @@ export class GameStore {
     const eligible = HAZARDS.filter(
       (row) => row.kind === kind && state.tier >= row.fromTier
     );
-
-    if (
-      eligible.length > 0 &&
-      runMs >= cadence.due &&
-      this.#roundLeftMs() < cadence.needs
-    ) {
-      return;
-    }
 
     if (eligible.length === 0) {
       cadence.due = runMs + cadence.every;
@@ -761,14 +769,26 @@ export class GameStore {
       this.#filledAt = state.roundMs;
     }
 
+    // Money lands here, per ticket, at pickup — the can only rate-limits.
+    const skimmed = banked.value * economy.velocitySkim(state);
+    const payout = banked.value - skimmed;
+    const velocitySp = economy.velocityStoryPoints(state, banked.value);
+    this.#billed += payout;
+    this.#cycleBilled += payout;
+    this.#roundSp.velocity += velocitySp;
+    this.#roundSp.skimmed += skimmed;
+
     return {
       next: {
         ...state,
         ...buffs,
+        budget: state.budget + payout,
         sprintCount: state.sprintCount + banked.took.length,
-        storyPoints: state.storyPoints + copilotSp,
+        storyPoints: state.storyPoints + copilotSp + velocitySp,
         lifetimeClosed: state.lifetimeClosed + closed.length,
         lifetimeClosedByWomen: state.lifetimeClosedByWomen + byWomen,
+        lifetimeBilled: state.lifetimeBilled + payout,
+        lifetimeSkimmed: state.lifetimeSkimmed + skimmed,
         lifetimeCrewBilled: state.lifetimeCrewBilled + banked.crew,
         lifetimeWorkBilled: state.lifetimeWorkBilled + banked.value,
       },
@@ -847,10 +867,31 @@ export class GameStore {
     );
   }
 
+  /**
+   * The can is a hard cap. Value tickets past the brim are left where they
+   * are — the scene bounces them in place rather than taking them.
+   */
+  #withinCan(state: Consultancy, ids: readonly number[]): readonly number[] {
+    let room = economy.sprintRoom(state, this.#sky());
+    const allowed: number[] = [];
+    for (const id of ids) {
+      const ticket = this.#board.byId.get(id);
+      if (!ticket) continue;
+      if (TICKET_TYPES[ticket.type].effect !== 'value') {
+        allowed.push(id);
+        continue;
+      }
+      if (room <= 0) continue;
+      room -= 1;
+      allowed.push(id);
+    }
+    return allowed;
+  }
+
   harvest(ids: readonly number[]): Harvest {
     const state = this.#state();
     const now = state.lastTick;
-    const reached = reachedBy(this.#board, ids);
+    const reached = reachedBy(this.#board, this.#withinCan(state, ids));
     const { taken, closed } = reached;
 
     this.#probeClick(now, ids.length, taken.length, state);
@@ -895,42 +936,6 @@ export class GameStore {
     const due = this.#closeFloats;
     this.#closeFloats = [];
     return due;
-  }
-
-  #billSprint(now: number): number {
-    const state = this.#state();
-    if (state.sprintCount === 0) {
-      this.#state.set({ ...state, escalated: false, escalationFiresAt: 0 });
-      this.#sprint.set([]);
-      return 0;
-    }
-    const mix = this.#mix();
-    const gross = economy.sprintPayout(state, mix, now);
-    this.#roundSprintInvoice = economy.mergeInvoices(
-      this.#roundSprintInvoice,
-      economy.sprintInvoice(state, mix, now)
-    );
-    const skimmed = gross * economy.velocitySkim(state);
-    const payout = gross - skimmed;
-    const velocitySp = economy.velocityStoryPoints(state, gross);
-
-    this.#billed += payout;
-    this.#roundSp.velocity += velocitySp;
-    this.#roundSp.skimmed += skimmed;
-    this.#roundSlots.update((banked) => [...banked, ...this.#sprint()]);
-    this.#sprint.set([]);
-    this.#state.set({
-      ...state,
-      budget: state.budget + payout,
-      storyPoints: state.storyPoints + velocitySp,
-      sprintCount: 0,
-      escalated: false,
-      escalationFiresAt: 0,
-      lifetimeBilled: state.lifetimeBilled + payout,
-      lifetimeSkimmed: state.lifetimeSkimmed + skimmed,
-      lifetimeRounds: state.lifetimeRounds + 1,
-    });
-    return payout;
   }
 
   seniorPoolSeat(seat: number): number {

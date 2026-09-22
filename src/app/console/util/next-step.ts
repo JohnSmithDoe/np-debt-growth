@@ -23,7 +23,6 @@ export function nextSteps(
 ): readonly NextStep[] {
   const steps: NextStep[] = [];
   const affordable = (cost: number): boolean => state.budget >= cost;
-  const spending = state.phase === 'review';
 
   if (state.lifetimeClosed === 0) {
     steps.push({
@@ -45,21 +44,10 @@ export function nextSteps(
     });
   }
 
-  if (state.phase === 'review') {
-    steps.push({
-      id: 'start',
-      target: 'board',
-      act: 'startRound',
-      titleKey: 'step.start.title',
-      detailKey: 'step.start.detail',
-      detailParams: { round: state.roundSeq + 1 },
-    });
-  }
-
   const tier = tierAt(state.tier + 1);
   const inSight =
     tier && affordable(tier.unlockCost * PURCHASE_REVEAL_FRACTION);
-  if (spending && tier && inSight) {
+  if (tier && inSight) {
     const banked = affordable(tier.unlockCost);
     steps.push({
       id: `adr:${tier.index}`,

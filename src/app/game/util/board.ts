@@ -83,23 +83,25 @@ export function stepBoard(
   board: Board,
   crews: readonly CrewRules[],
   dtMs: number,
-  rand: () => number = Math.random
+  rand: () => number = Math.random,
+  room = Number.POSITIVE_INFINITY
 ): CrewWork {
   returning(board, dtMs, rand);
-  return workCrews(board, crews, dtMs, rand);
+  return workCrews(board, crews, dtMs, rand, room);
 }
 
 export function workCrews(
   board: Board,
   crews: readonly CrewRules[],
   dtMs: number,
-  rand: () => number = Math.random
+  rand: () => number = Math.random,
+  room = Number.POSITIVE_INFINITY
 ): CrewWork {
   const closed: Close[] = [];
   let byWomen = 0;
 
   for (const rules of crews) {
-    const took = work(board, rules, dtMs, rand);
+    const took = work(board, rules, dtMs, rand, room - closed.length);
     closed.push(...took.closed);
     byWomen += took.byWomen;
   }
@@ -270,7 +272,8 @@ export function work(
   board: Board,
   rules: CrewRules,
   dtMs: number,
-  rand: () => number = Math.random
+  rand: () => number = Math.random,
+  room = Number.POSITIVE_INFINITY
 ): CrewWork {
   staff(board, rules, rand);
   const closed: Close[] = [];
@@ -315,6 +318,8 @@ export function work(
 
     worker.leftMs -= dtMs;
     if (worker.leftMs > 0) continue;
+    // The can is full: hold the finished work rather than overfilling it.
+    if (closed.length >= room) continue;
 
     const took = deliverClose(
       rules,
