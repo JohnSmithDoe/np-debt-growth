@@ -21,6 +21,7 @@ export function spawnInto(
   const from = state.runMs;
   const to = from + seconds * 1000;
   const interest = economy.debtInterest(state);
+  const golden = economy.goldenChance(state);
 
   for (const id of TICKET_TYPE_IDS) {
     if (heldBack(id, from)) continue;
@@ -33,7 +34,7 @@ export function spawnInto(
     const dearer = interest > 0 ? economy.interestTarget(state, id) : null;
     for (let n = 0; n < due; n++) {
       const arriving = dearer && rand() < interest ? dearer : id;
-      addTicket(board, arriving, rand);
+      addTicket(board, arriving, rand, false, false, rand() < golden);
     }
   }
 
@@ -67,6 +68,7 @@ export function fileAutomated(
     closed.push({
       type: ticket.type,
       title: ticket.title,
+      golden: ticket.golden,
       by: 'auto',
       poolSeat: NO_SEAT,
       woman: false,

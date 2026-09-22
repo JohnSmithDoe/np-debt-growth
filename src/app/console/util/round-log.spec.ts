@@ -19,6 +19,7 @@ function close(
     close: {
       type,
       title: `title ${seq}`,
+      golden: false,
       by: 'you',
       poolSeat: 0,
       woman: false,

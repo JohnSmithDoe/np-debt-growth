@@ -61,6 +61,13 @@ export function claimFrame(slot: number): string {
   return `claim-${slot}`;
 }
 
+/** Golden work gets its own card so it reads across a crowded board. */
+export function goldFrame(id: TicketTypeId): string {
+  return `gold-${id}`;
+}
+
+export const GOLD_INK = 0xf2c14e;
+
 export function buildBoardAtlas(
   scene: Phaser.Scene,
   text: SceneDeps['text']
@@ -88,6 +95,10 @@ export function buildBoardAtlas(
     const at = shelf.place(CARD_WIDTH, CARD_HEIGHT);
     drawCard(ctx, at.x, at.y, type.prefix, hex(type.colour));
     texture.add(cardFrame(id), 0, at.x, at.y, CARD_WIDTH, CARD_HEIGHT);
+
+    const gold = shelf.place(CARD_WIDTH, CARD_HEIGHT);
+    drawCard(ctx, gold.x, gold.y, type.prefix, hex(GOLD_INK));
+    texture.add(goldFrame(id), 0, gold.x, gold.y, CARD_WIDTH, CARD_HEIGHT);
   }
 
   for (let slot = 0; slot < CLAIM_SLOTS; slot++) {

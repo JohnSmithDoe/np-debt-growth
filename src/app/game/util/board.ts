@@ -113,7 +113,8 @@ export function addTicket(
   type: TicketTypeId,
   rand: () => number = Math.random,
   reborn = false,
-  relabelled = false
+  relabelled = false,
+  golden = false
 ): BoardTicket | null {
   if (board.tickets.length >= BOARD_CAPACITY && !admittedPastCap(type)) {
     return null;
@@ -127,6 +128,7 @@ export function addTicket(
     type,
     title: pickTicketTitle(type),
     reborn,
+    golden,
     relabelled,
     autoLeftMs: NOT_AUTOMATED,
     x: cellX(col),
@@ -237,6 +239,7 @@ function deliverClose(
     closed.push({
       type: banked,
       title: card.title,
+      golden: card.golden,
       by: rules.kind,
       poolSeat,
       woman,
@@ -258,6 +261,7 @@ function pickUp(
   worker.carrying = taken.map((ticket) => ({
     type: ticket.type,
     title: ticket.title,
+    golden: ticket.golden,
     reborn: ticket.reborn,
     relabelled: ticket.relabelled,
   }));
@@ -352,7 +356,10 @@ function sweep(
     .map((id) => board.byId.get(id))
     .filter(
       (ticket): ticket is BoardTicket =>
-        ticket !== undefined && ticket !== target && rules.claims(ticket.type)
+        ticket !== undefined &&
+        ticket !== target &&
+        rules.claims(ticket.type) &&
+        (!ticket.golden || rules.golden)
     )
     .sort(
       (a, b) =>
@@ -402,6 +409,7 @@ function claim(
         ? board.claimable[at]
         : board.rares[at - board.claimable.length];
     if (!ticket || !rules.claims(ticket.type)) continue;
+    if (ticket.golden && !rules.golden) continue;
     if (pace.pick === 'random') {
       leavePool(board, ticket);
       return ticket;
@@ -426,14 +434,14 @@ function claim(
 
 function firstAllowed(board: Board, rules: CrewRules): BoardTicket | null {
   for (const ticket of board.claimable) {
-    if (rules.claims(ticket.type)) {
+    if (rules.claims(ticket.type) && (!ticket.golden || rules.golden)) {
       leavePool(board, ticket);
       return ticket;
     }
   }
   if (!rules.rares) return null;
   for (const ticket of board.rares) {
-    if (rules.claims(ticket.type)) {
+    if (rules.claims(ticket.type) && (!ticket.golden || rules.golden)) {
       leavePool(board, ticket);
       return ticket;
     }

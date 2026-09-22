@@ -39,6 +39,8 @@ import {
   CLICK_RADIUS_BASE,
   CLICK_RADIUS_MAX,
   DEBT_INTEREST_CAP,
+  GOLDEN_CHANCE_CAP,
+  GOLDEN_VALUE_BASE,
   RELABEL_STEPS_BASE,
 } from '../model/balance/flow';
 import {
@@ -233,6 +235,24 @@ export function retainerPerSec(state: Consultancy): number {
  */
 export function haulMs(_state: Consultancy): number {
   return Math.max(HAUL_MIN_MS, HAUL_MS);
+}
+
+/**
+ * The automation-exempt class. Golden work pays a fortune and the crew
+ * refuses it, so the player's own sweep stays worth doing however much
+ * automation is running — until `goldenCrew` sells the exemption back.
+ */
+export function goldenChance(state: Consultancy): number {
+  const ranks = sumOf(state, (e) => (e.kind === 'goldenChance' ? e.add : null));
+  return Math.min(GOLDEN_CHANCE_CAP, ranks);
+}
+
+export function goldenMultiplier(state: Consultancy): number {
+  return GOLDEN_VALUE_BASE * multOf(state, 'goldenValue');
+}
+
+export function crewTakesGolden(state: Consultancy): boolean {
+  return holds(state, 'goldenCrew');
 }
 
 export function seniorsPreferTop(state: Consultancy): boolean {

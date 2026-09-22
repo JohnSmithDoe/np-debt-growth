@@ -54,6 +54,9 @@ export type SkillEffect =
     }
   | { readonly kind: 'debtInterest'; readonly approach: number }
   | { readonly kind: 'global'; readonly mult: number }
+  | { readonly kind: 'goldenChance'; readonly add: number }
+  | { readonly kind: 'goldenValue'; readonly mult: number }
+  | { readonly kind: 'goldenCrew' }
   | { readonly kind: 'line'; readonly line: PurchaseId };
 
 export type SkillGate =
@@ -759,6 +762,35 @@ export const SKILL_NODES: readonly SkillNode[] = [
       cost: item.cost,
       effects: [{ kind: 'line', line: 'kit' }],
     })),
+  },
+
+  {
+    id: 'golden',
+    track: 'A',
+    requires: 'radius',
+    gate: 'tier2',
+    levels: [
+      { cost: 900, effects: [{ kind: 'goldenChance', add: 0.02 }] },
+      { cost: 6_000, effects: [{ kind: 'goldenChance', add: 0.02 }] },
+    ],
+  },
+  {
+    id: 'goldenValue',
+    track: 'A',
+    requires: 'golden',
+    levels: [
+      { cost: 4_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
+      { cost: 22_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
+      { cost: 120_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
+      { cost: 650_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
+    ],
+  },
+  {
+    id: 'goldenCrew',
+    track: 'A',
+    requires: 'goldenValue',
+    gate: 'tier6',
+    levels: [{ cost: 900_000, effects: [{ kind: 'goldenCrew' }] }],
   },
 
   {

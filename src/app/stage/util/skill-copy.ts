@@ -17,6 +17,18 @@ function describe(effect: SkillEffect): EffectText {
   switch (effect.kind) {
     case 'none':
       return { key: 'skill.effect.none' };
+    case 'goldenChance':
+      return {
+        key: 'skill.effect.goldenChance',
+        params: { value: percent(1 + effect.add) },
+      };
+    case 'goldenValue':
+      return {
+        key: 'skill.effect.goldenValue',
+        params: { value: percent(effect.mult) },
+      };
+    case 'goldenCrew':
+      return { key: 'skill.effect.goldenCrew' };
     case 'clickRadius':
       return { key: 'skill.effect.clickRadius', params: pct(effect.mult) };
     case 'slots':

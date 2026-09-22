@@ -15,6 +15,7 @@ import {
 import {
   ATLAS_KEY,
   cardFrame,
+  goldFrame,
   claimFrame,
   GLOW_FRAME,
   paintClaimCard,
@@ -243,7 +244,11 @@ export class TicketHeap {
 
     const claim = this.#claimSlot.get(ticket.id);
     this.#member.frame =
-      claim === undefined ? cardFrame(ticket.type) : claimFrame(claim);
+      claim !== undefined
+        ? claimFrame(claim)
+        : ticket.golden
+          ? goldFrame(ticket.type)
+          : cardFrame(ticket.type);
     this.#member.x = x;
     this.#member.y = y;
     this.#member.rotation = ((ticket.id % 13) - 6) * 0.01;

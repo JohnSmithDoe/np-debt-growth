@@ -197,6 +197,22 @@ export const EN: Readonly<Record<string, string>> = {
   'title.strap': 'A software consultancy, paid by the hour.',
   'title.windowed': 'Windowed',
   'postmortem.no-tier': 'None approved',
+  'skill.golden.1.label': 'Partner-Only Work',
+  'skill.golden.2.label': 'More Of It',
+  'skill.golden.blurb':
+    'Some work arrives flagged partner-only. It pays a fortune, and the crew will not go near it.',
+  'skill.goldenCrew.1.label': 'Delegated Authority',
+  'skill.goldenCrew.blurb':
+    'Clear the crew to touch partner-only work. You stop being the bottleneck.',
+  'skill.goldenValue.1.label': 'Partner Rate',
+  'skill.goldenValue.2.label': 'Partner Rate II',
+  'skill.goldenValue.3.label': 'Partner Rate III',
+  'skill.goldenValue.4.label': 'Partner Rate IV',
+  'skill.goldenValue.blurb':
+    'Bill the partner-only work the way a partner bills.',
+  'skill.effect.goldenChance': 'Golden work: {{value}} of arrivals',
+  'skill.effect.goldenCrew': 'The crew will handle golden work',
+  'skill.effect.goldenValue': 'Golden work is worth {{value}} more',
   'spawner.0.blurb':
     'Fresh graduates, shipping formatting crimes and off-by-ones. The intake never stops.',
   'spawner.0.label': 'Junior Intake',

@@ -9,6 +9,7 @@ export type CrewPhase = 'idle' | 'toTicket' | 'toDesk' | 'closing' | 'meeting';
 export interface Carried {
   readonly type: TicketTypeId;
   readonly title: string;
+  readonly golden: boolean;
   readonly reborn: boolean;
   readonly relabelled: boolean;
 }
@@ -18,6 +19,7 @@ export interface BoardTicket {
   type: TicketTypeId;
   title: string;
   reborn: boolean;
+  golden: boolean;
   autoLeftMs: number;
   relabelled: boolean;
   readonly x: number;
@@ -46,6 +48,7 @@ export type CloseAuthor = 'you' | 'auto' | CrewKind;
 export interface Close {
   readonly type: TicketTypeId;
   readonly title: string;
+  readonly golden: boolean;
   readonly by: CloseAuthor;
   readonly poolSeat: number;
   readonly woman: boolean;

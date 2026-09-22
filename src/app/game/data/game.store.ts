@@ -161,6 +161,7 @@ function reachedBy(board: Board, ids: readonly number[]): Reached {
     closed.push({
       type: ticket.type,
       title: ticket.title,
+      golden: ticket.golden,
       by: 'you',
       poolSeat: NO_SEAT,
       woman: false,
@@ -807,9 +808,11 @@ export class GameStore {
     let autoCount = 0;
     const took: SprintSlot[] = [];
 
-    for (const { type, title, by, x, y } of closed) {
+    const goldenMult = economy.goldenMultiplier(state);
+    for (const { type, title, by, x, y, golden } of closed) {
       if (TICKET_TYPES[type].effect !== 'value') continue;
-      const worth = economy.closeValue(state, type, now);
+      const worth =
+        economy.closeValue(state, type, now) * (golden ? goldenMult : 1);
       value += worth;
       took.push({ type, title });
       if (by === 'auto') {

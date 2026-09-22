@@ -61,6 +61,7 @@ function rulesFor(
       ? (type) => transform(type) !== null
       : economy.crewClaims(state, kind),
     rares: economy.crewTakesRares(state, kind),
+    golden: economy.crewTakesGolden(state),
     paces: stats.perSeat ? seatPaces(state, kind, weather) : null,
     interrupted: stats.interruptible && weather.meeting,
     transform,

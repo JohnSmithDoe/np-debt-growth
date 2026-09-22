@@ -201,6 +201,22 @@ export const DE: Readonly<Record<string, string>> = {
   'title.strap': 'Eine Software-Beratung. Abrechnung nach Aufwand.',
   'title.windowed': 'Fenstermodus',
   'postmortem.no-tier': 'Keiner freigegeben',
+  'skill.golden.1.label': 'Partnersache',
+  'skill.golden.2.label': 'Mehr davon',
+  'skill.golden.blurb':
+    'Manche Arbeit kommt als Partnersache herein. Sie zahlt ein Vermögen, und das Team fasst sie nicht an.',
+  'skill.goldenCrew.1.label': 'Delegierte Vollmacht',
+  'skill.goldenCrew.blurb':
+    'Das Team für Partnersachen freigeben. Du bist nicht länger der Engpass.',
+  'skill.goldenValue.1.label': 'Partnersatz',
+  'skill.goldenValue.2.label': 'Partnersatz II',
+  'skill.goldenValue.3.label': 'Partnersatz III',
+  'skill.goldenValue.4.label': 'Partnersatz IV',
+  'skill.goldenValue.blurb':
+    'Partnersachen so abrechnen, wie ein Partner abrechnet.',
+  'skill.effect.goldenChance': 'Goldene Arbeit: {{value}} der Eingänge',
+  'skill.effect.goldenCrew': 'Das Team nimmt goldene Arbeit an',
+  'skill.effect.goldenValue': 'Goldene Arbeit ist {{value}} mehr wert',
   'spawner.0.blurb':
     'Frische Absolventen, die Formatierungsverbrechen und Off-by-Ones liefern. Der Zulauf endet nie.',
   'spawner.0.label': 'Junior-Zulauf',

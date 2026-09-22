@@ -18,3 +18,8 @@ export const FIRST_INCIDENT_AT_MS = 75_000;
 export const BUG_REVEAL_AT_MS = 90_000;
 
 export const TIER_BURST = { tier: 3, count: 10 } as const;
+
+/** Golden: rare, worth a fortune, and the crew will not touch it. */
+export const GOLDEN_CHANCE_PER_RANK = 0.02;
+export const GOLDEN_CHANCE_CAP = 0.2;
+export const GOLDEN_VALUE_BASE = 100;
