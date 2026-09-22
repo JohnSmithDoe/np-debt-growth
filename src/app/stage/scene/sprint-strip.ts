@@ -14,9 +14,9 @@ import {
 } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
 
-function clockLabel(leftMs: number, running: boolean): string {
-  if (!running) return 'SPRINT CLOSED';
-  return `${Math.ceil(leftMs / 1000)}s LEFT`;
+function clockLabel(leftMs: number, collecting: boolean): string {
+  if (collecting) return 'COLLECTING';
+  return `TRUCK ${Math.ceil(leftMs / 1000)}s`;
 }
 
 const PIP_HEIGHT = 16;

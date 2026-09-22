@@ -21,7 +21,7 @@ const HEADINGS: Record<
   board: {
     title: 'Sprint Board',
     blurb:
-      'Click a work item to triage it. The sprint bills itself when the round ends. Rare tickets are yours alone — juniors will not touch them.',
+      'Sweep the pointer over work to clear it — you are paid on the spot. When the sprint fills, nothing closes until it ships. Rare tickets are yours alone — juniors will not touch them.',
     chip: 'Active sprint',
   },
   skills: {

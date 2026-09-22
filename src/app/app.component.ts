@@ -128,7 +128,9 @@ export class AppComponent {
   readonly nextRound = computed(() => this.roundSeq() + 1);
   readonly canFull = this.#store.canFull;
   readonly roundLabel = computed(() =>
-    this.running() ? formatCountdown(this.#store.roundLeftMs()) : 'Review'
+    this.running()
+      ? 'open'
+      : `truck ${formatCountdown(this.#store.roundLeftMs())}`
   );
 
   #now = signal(Date.now());

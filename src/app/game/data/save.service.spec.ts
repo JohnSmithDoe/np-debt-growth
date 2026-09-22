@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { freshConsultancy } from '../model/consultancy.model';
 import { SAVE_VERSION } from '../model/game.consts';
+import { retainerPerSec } from '../util/economy';
 import { GameStore } from './game.store';
 import { SaveService } from './save.service';
 
@@ -33,8 +34,12 @@ describe('restoring a save', () => {
     TestBed.inject(SaveService).restore();
 
     expect(store.snapshot().lastTick).toBeGreaterThanOrEqual(before);
-    store.advanceTo(Date.now());
-    expect(store.budget()).toBeCloseTo(500, 0);
+
+    // A restore must not simulate the gap: one tick of retainer, never hours
+    // of it. Stepped off `lastTick` so the assertion is not wall-clock bound.
+    const at = store.snapshot().lastTick;
+    store.advanceTo(at + 100);
+    expect(store.budget()).toBeLessThan(500 + retainerPerSec(store.snapshot()));
   });
 
   it('resumes with an empty sprint', () => {
