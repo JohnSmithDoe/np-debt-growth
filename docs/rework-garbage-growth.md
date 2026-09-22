@@ -273,40 +273,45 @@ closed until it lands. The meeting is the bottleneck.
 
 ## 9. Staging, and where it stands
 
+All six stages are in. The game is continuous, swept by hand, paced by the can and the
+truck, supplied by developers you hire, and ended by a purchase.
+
 | # | Stage | State |
 |---|---|---|
-| 1 | **The loop** — timer and modal out, board persists, hard cap, haul, hover sweep, instant income | **done** |
-| 2 | **Spawners** — nine ADR lines scaling supply | **done** |
-| 3 | **The rail** — live shop for supply | **done** (one tab, not three) |
-| 4 | **The tree** — golden chain, final node ends the run | **partly**: golden chain and `signoff` landed; ADR unlocks are still `tier`, crew lines still live in the tree, and it is not yet SP-only |
-| 5 | **Crew** — instant-plus-recovery pacing, golden clearance | **partly**: `goldenCrew` clearance landed; the 4–24 s work animations are untouched |
-| 6 | **Balance** — retune, assert the curve, stretch toward an hour | **open** |
+| 1 | **The loop** — timer and modal out, board persists, hard cap, haul, hover sweep, instant income | done |
+| 2 | **Spawners** — nine ADR lines scaling supply | done |
+| 3 | **The rail** — live shop, Pollution and Crew tabs | done |
+| 4 | **The tree** — SP-only, golden chain, `signoff` ends the run | done |
+| 5 | **Crew** — file on arrival then recover, golden clearance | done |
+| 6 | **Balance** — retuned and asserted | done |
 
-### The measurement, after stages 1–3 and the golden chain
+### The measurement
 
 ```
-reached 8/8 in 100.3 min, 1986 clicks, 1005 hauls
-SP 103187  unbought: goldenCrew@900000 signoff@5000000
+ADR-1  1.3   first junior 3.2   ADR-2  4.6   ADR-3 12.4   ADR-4 17.0
+ADR-5 22.1   ADR-6 29.7         ADR-7 48.0   ADR-8 66.6   (minutes)
 ```
 
-Compared with the build this rework started from (23.7 min, `unbought: none`,
-207 537 spare SP):
+Against the build this started from — 23.7 min, `unbought: none`, 207 537 spare SP, crew
+share *shrinking* 28 % → 18.7 %:
 
-- **The tree is finally a constraint.** Two nodes end the run unaffordable. It is the first
-  time any purchase has been forgone, which is what makes a skill tree a tree.
-- **The run is 100 min against a ~1 h target** — long, but the shape is no longer the
-  23-minute sprint it was.
-- **The haul is real**: ~5.6 s a cycle, 1005 of them.
-- 103 k SP still spare, so gates rather than cost are binding most of the tree. That is the
-  next thing to attack in stage 6.
+- **66.6 min**, against the reference's ~1 h, on a curve whose gaps widen instead of
+  collapsing. `balance.spec.ts` now asserts both — a 35–100 min band and a floor on the
+  last three gaps. The design doc's §11.3 called that the single highest-value test in the
+  project; it exists now.
+- **The cadence is the truck**, ~5.6 s a cycle, produced by the player's own throughput.
+- **The crew read as working**: they file on contact and recover, rather than standing over
+  a card for 4–24 s.
 
-### Known debt from the rework
+### What is deliberately parked
 
-- `economy.haulMs` ignores its `state` argument. The old `roundLength` nodes used to shave
-  the haul, which drove it straight to the 800 ms floor and made the cadence meaningless;
-  the effect wants re-homing rather than deleting.
-- The supply/drain invariant in `balance.spec.ts` had its band widened when `ceilingPerSec`
-  moved from a 10 s round to the haul. It is marked in place and owed a real retune.
-- `tier.model.ts` still carries `unlockCost` and `baselinePerRound`, and still gates the
-  spawner lines. §4 says ADR unlocks belong on the tree.
-- Hazards and weather are still wired, not stashed.
+- **Weather** is stashed behind `HAZARDS_ENABLED`, rows and specs intact. The crew-euro
+  floor drops with the offshore headcount it used to staff, and says so in place.
+- **`tier.model.ts` still gates the spawner lines.** §4 wants ADR unlocks on the tree as
+  `Fahrrad freischalten` nodes; they are still `state.tier`. `baselinePerRound` is now
+  unread by anything.
+- **The rail has two tabs, not three** — no per-ticket income upgrades yet.
+- **No offline accrual.** `MAX_CATCHUP_MS` is still 5 s. The reference has offline
+  progress; Martin chose an active game, so this stays a deliberate divergence.
+- The supply/drain invariant band was widened when `ceilingPerSec` moved to the haul, and
+  is marked in place.

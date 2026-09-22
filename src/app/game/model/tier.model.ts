@@ -43,19 +43,19 @@ export const DEBT_TIERS: readonly DebtTier[] = [
   },
   {
     index: 6,
-    unlockCost: 1_100_000,
+    unlockCost: 2_200_000,
     ticket: 'zombie',
     baselinePerRound: 1_490_000,
   },
   {
     index: 7,
-    unlockCost: 9_500_000,
+    unlockCost: 110_000_000,
     ticket: 'rewrite',
     baselinePerRound: 12_200_000,
   },
   {
     index: 8,
-    unlockCost: 90_000_000,
+    unlockCost: 280_000_000,
     ticket: 'swarm',
     baselinePerRound: 77_000_000,
   },

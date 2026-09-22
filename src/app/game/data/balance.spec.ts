@@ -731,6 +731,28 @@ describe('the session arc', () => {
     }
   });
 
+  it('finishes inside a sitting, not a coffee break', () => {
+    const at = run.reached.get('tier 8');
+    expect(at, 'the run never reached ADR-8').toBeDefined();
+    // The reference is finished in about an hour. Wide enough that ordinary
+    // tuning does not trip it, tight enough to catch the curve collapsing.
+    expect(at! / 60_000).toBeGreaterThan(35);
+    expect(at! / 60_000).toBeLessThan(100);
+  });
+
+  it('spaces the late rungs, instead of stacking them', () => {
+    const gap = (from: string, to: string): number =>
+      (run.reached.get(to)! - run.reached.get(from)!) / 60_000;
+
+    for (const [from, to] of [
+      ['tier 5', 'tier 6'],
+      ['tier 6', 'tier 7'],
+      ['tier 7', 'tier 8'],
+    ] as const) {
+      expect(gap(from, to), `${from} to ${to}`).toBeGreaterThan(2);
+    }
+  });
+
   it('never hurries the truck away entirely', () => {
     const hurried = { ...fullyLevelled(40, 4, 8), skills: everySkill() };
     expect(economy.haulMs(hurried)).toBeGreaterThanOrEqual(HAUL_MIN_MS);
