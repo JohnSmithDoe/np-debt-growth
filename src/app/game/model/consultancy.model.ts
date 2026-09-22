@@ -1,4 +1,5 @@
 import type { RoundOutcome, RoundPhase } from './round.model';
+import { SPAWNER_FREE_AT_ADR_0 } from './spawner.model';
 import type { SeniorHire } from './senior.model';
 import type { PurchaseId } from './balance/progression';
 import { PURCHASE_IDS } from './balance/progression';
@@ -18,6 +19,7 @@ export interface Consultancy {
 
   readonly levels: Readonly<Record<PurchaseId, number>>;
   readonly skills: Readonly<Record<string, number>>;
+  readonly spawners: Readonly<Record<string, number>>;
   readonly promoted: boolean;
   readonly roster: readonly SeniorHire[];
   readonly tier: number;
@@ -69,6 +71,7 @@ export function freshConsultancy(now: number, version: number): Consultancy {
       number
     >,
     skills: {},
+    spawners: { 0: SPAWNER_FREE_AT_ADR_0 },
     promoted: false,
     roster: [],
     tier: 0,

@@ -10,6 +10,12 @@ import { CALM } from '../model/hazard.model';
 import type { InvoiceLine, SprintInvoice } from '../model/invoice.model';
 import type { KitItem } from '../model/kit.model';
 import { boughtKit, nextKitItem } from '../model/kit.model';
+import {
+  SPAWNER_BY_ADR,
+  SPAWNER_CAP,
+  SPAWNER_COST_STEP,
+  spawnerFor,
+} from '../model/spawner.model';
 import type { SeniorHire, TraitId } from '../model/senior.model';
 import { TRAITS, hireFor } from '../model/senior.model';
 import type { SkillEffect } from '../model/skill.model';
@@ -221,14 +227,12 @@ export function retainerPerSec(state: Consultancy): number {
 }
 
 /**
- * The truck. `roundLength` effects now shave the haul rather than stretch a
- * round — same sign, same nodes, and the haul is the only forced downtime.
+ * The truck, and the only forced wait in the game. Deliberately not
+ * purchasable yet: letting the old `roundLength` nodes shave it drove the
+ * haul straight to its floor and the cadence stopped meaning anything.
  */
-export function haulMs(state: Consultancy): number {
-  const shaved = sumOf(state, (e) =>
-    e.kind === 'roundLength' ? e.seconds : null
-  );
-  return Math.max(HAUL_MIN_MS, HAUL_MS - shaved * 1_000);
+export function haulMs(_state: Consultancy): number {
+  return Math.max(HAUL_MIN_MS, HAUL_MS);
 }
 
 export function seniorsPreferTop(state: Consultancy): boolean {
@@ -269,9 +273,40 @@ export function ticketValue(
   );
 }
 
+export function spawnerCount(state: Consultancy, adr: number): number {
+  return state.spawners[String(adr)] ?? 0;
+}
+
+/** `1.15^level`, the same shape every line on the rail climbs. */
+export function spawnerCost(state: Consultancy, adr: number): number {
+  const row = SPAWNER_BY_ADR.get(adr);
+  if (!row) return Number.POSITIVE_INFINITY;
+  const level = spawnerCount(state, adr);
+  if (level >= SPAWNER_CAP) return Number.POSITIVE_INFINITY;
+  return Math.ceil(row.cost * SPAWNER_COST_STEP ** level);
+}
+
+export function spawnerUnlocked(state: Consultancy, adr: number): boolean {
+  return adr === 0 || state.tier >= adr;
+}
+
+export function canBuySpawner(state: Consultancy, adr: number): boolean {
+  return (
+    spawnerUnlocked(state, adr) &&
+    spawnerCount(state, adr) < SPAWNER_CAP &&
+    state.budget >= spawnerCost(state, adr)
+  );
+}
+
+/**
+ * Supply is the crowd on the path: no spawners on a line, no arrivals from
+ * it. This is where a euro buys a worse codebase.
+ */
 function sourceMultiplier(state: Consultancy, type: TicketType): number {
-  if (type.handOnly || type.tier === 0) return 1;
-  return state.tier < type.tier ? 0 : 1;
+  if (type.handOnly) return 1;
+  const row = spawnerFor(type.id);
+  if (!row) return state.tier < type.tier ? 0 : 1;
+  return spawnerUnlocked(state, row.adr) ? spawnerCount(state, row.adr) : 0;
 }
 
 export function spawnRate(state: Consultancy, id: TicketTypeId): number {

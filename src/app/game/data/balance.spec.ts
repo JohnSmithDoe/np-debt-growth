@@ -16,6 +16,7 @@ import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import { DEBT_TIERS } from '../model/tier.model';
 import type { PurchaseId } from '../model/balance/progression';
+import { SPAWNERS } from '../model/spawner.model';
 import { TRAIT_IDS } from '../model/senior.model';
 
 /** Design bound: no single trait may make a senior worth more than this many. */
@@ -161,11 +162,16 @@ class Playthrough {
     this.#record();
   }
 
+  #hauledSeq = -1;
+
+  /** Spend once per haul, and let the truck take the time it takes. */
   #turnRound(): void {
-    if (this.store.phase() === 'collecting') return;
+    if (this.store.phase() !== 'hauling') return;
+    const seq = this.store.lastRound()?.seq ?? -1;
+    if (seq === this.#hauledSeq) return;
+    this.#hauledSeq = seq;
     this.#score();
     this.#spend();
-    this.store.startRound(this.#now);
     this.#rounds += 1;
   }
 
@@ -233,6 +239,23 @@ class Playthrough {
     this.#promote();
     this.#buySkills();
     while (this.store.unlockNextTier());
+    this.#buySpawners();
+  }
+
+  /** Supply first: an empty path produces nothing to bill for. */
+  #buySpawners(): void {
+    for (;;) {
+      const state = this.store.snapshot();
+      const next = SPAWNERS.filter(
+        (row) =>
+          this.store.canBuySpawner(row.adr) &&
+          this.store.spawnerCost(row.adr) <=
+            state.budget * PURCHASE_SPEND_FRACTION
+      ).sort(
+        (a, b) => this.store.spawnerCost(a.adr) - this.store.spawnerCost(b.adr)
+      )[0];
+      if (!next || !this.store.buySpawner(next.adr)) return;
+    }
   }
 
   #promote(): void {
@@ -381,6 +404,12 @@ function fullyLevelled(
       copilot: 1,
     },
     skills: everySkill(),
+    spawners: Object.fromEntries(
+      SPAWNERS.filter((row) => row.adr <= tier).map((row) => [
+        String(row.adr),
+        10,
+      ])
+    ),
     tier,
   };
 }

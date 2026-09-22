@@ -992,6 +992,34 @@ export class GameStore {
     return true;
   }
 
+  spawnerCount(adr: number): number {
+    return economy.spawnerCount(this.#state(), adr);
+  }
+
+  spawnerCost(adr: number): number {
+    return economy.spawnerCost(this.#state(), adr);
+  }
+
+  canBuySpawner(adr: number): boolean {
+    return economy.canBuySpawner(this.#state(), adr);
+  }
+
+  /** Hire another developer: more of them, more debt, more to bill for. */
+  buySpawner(adr: number): boolean {
+    const state = this.#state();
+    if (!economy.canBuySpawner(state, adr)) return false;
+    const cost = economy.spawnerCost(state, adr);
+    this.#state.set({
+      ...state,
+      budget: state.budget - cost,
+      spawners: {
+        ...state.spawners,
+        [String(adr)]: economy.spawnerCount(state, adr) + 1,
+      },
+    });
+    return true;
+  }
+
   #burst(tier: number, type: TicketTypeId): void {
     if (tier !== TIER_BURST.tier) return;
     for (let n = 0; n < TIER_BURST.count; n++)
