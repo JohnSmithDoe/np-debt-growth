@@ -98,7 +98,12 @@ export const CLICK_RING = {
   alpha: 0.28,
   flashAlpha: 0.7,
   flashMs: 120,
+  ink: 0x98a1b0,
+  refused: 0xd2604a,
 } as const;
+
+/** How long the ring stays red after a sweep the full can turned away. */
+export const REFUSED_MS = 220;
 
 export const BOARD_INK = {
   floorLine: 0x1a212a,

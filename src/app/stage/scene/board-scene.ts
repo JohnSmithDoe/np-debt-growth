@@ -21,6 +21,7 @@ import {
   CLAIM_TINT_REACH,
   CLAIM_TINT_STEPS,
   CLICK_RING,
+  REFUSED_MS,
   CLOSE_FLOAT,
   CLOSE_FLOATS_PER_FRAME,
   FALL_MS,
@@ -180,7 +181,11 @@ export class BoardScene extends CbScene {
   #onPointerMove = (pointer: Phaser.Input.Pointer): void => {
     this.#readBoard(pointer.worldX, pointer.worldY);
     this.#placeRing(pointer.worldX, pointer.worldY);
+    this.#sweepAt = { x: pointer.worldX, y: pointer.worldY };
   };
+  /** Where the pointer last was; the sweep runs once a frame from here. */
+  #sweepAt: { x: number; y: number } | null = null;
+  #refusedUntil = 0;
   #onPointerOut = (): void => {
     this.#onBoard = false;
     this.#clearHover();
@@ -307,7 +312,21 @@ export class BoardScene extends CbScene {
     this.#bill(parts);
     this.#floatCloses();
     this.#holdStripHover();
+    this.#sweepFrame();
     this.#ring?.setVisible(this.#onBoard && this.deps.showClickRing());
+  }
+
+  #sweepFrame(): void {
+    const at = this.#sweepAt;
+    if (at && this.#onBoard) this.#sweep(at.x, at.y);
+
+    const ring = this.#ring;
+    if (!ring) return;
+    ring.setStrokeStyle(
+      CLICK_RING.width,
+      this.time.now < this.#refusedUntil ? CLICK_RING.refused : CLICK_RING.ink,
+      ring.strokeAlpha
+    );
   }
 
   #land(
@@ -525,18 +544,29 @@ export class BoardScene extends CbScene {
   }
 
   #harvest(px: number, py: number): void {
-    const parts = this.#parts;
-    if (!parts) return;
+    this.#flashRing(px, py);
+    this.#sweep(px, py);
+  }
+
+  /**
+   * The verb: everything under the ring is taken as the pointer passes. A
+   * full can takes nothing, which is what the refusal tint says.
+   */
+  #sweep(px: number, py: number): void {
+    if (!this.#parts) return;
     const ids = pickWithin(
       this.deps.board(),
       (px - this.#offX) / this.#scale,
       (py - this.#offY) / this.#scale,
       this.deps.radius()
     );
-    this.#flashRing(px, py);
     if (ids.length === 0) return;
 
-    const { value } = this.deps.harvest(ids);
+    const { taken, value } = this.deps.harvest(ids);
+    if (taken.length === 0) {
+      this.#refusedUntil = this.time.now + REFUSED_MS;
+      return;
+    }
     if (value > 0) this.floatPayout(px, py - 14, `+${formatMoney(value)}`);
   }
 

@@ -12,12 +12,6 @@ import { rooms, storeWith } from './store.fixture';
 
 const A_WHILE_MS = 10_000;
 
-function billRound(store: GameStore): number {
-  const before = store.budget();
-  for (let at = 100; at <= A_WHILE_MS; at += 100) store.advanceTo(at);
-  return store.budget() - before;
-}
-
 const AUTOMATED = { root: 1, a1: 1, a2: 1, a3: 1 };
 
 function click(store: GameStore, id: Parameters<typeof addTicket>[1]): boolean {

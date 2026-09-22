@@ -600,16 +600,6 @@ describe("an unattended run keeps cycling (C1's successor)", () => {
     return store.budget();
   };
 
-  const pressing = (skills: Record<string, number>): number => {
-    const store = new GameStore();
-    store.hydrate({ ...fullyLevelled(40, 4, 5), skills });
-    for (let ms = 100; ms <= SPAN_MS; ms += 100) {
-      store.advanceTo(ms);
-      store.startRound(ms);
-    }
-    return store.budget();
-  };
-
   it('keeps earning with nobody pressing anything', () => {
     const idle = unattended(everySkill());
     expect(idle).toBeGreaterThan(0);
