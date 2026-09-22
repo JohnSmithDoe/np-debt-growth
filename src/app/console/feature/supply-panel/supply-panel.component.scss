@@ -1,0 +1,71 @@
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--np-cb-line, #232a34);
+  border-radius: 4px;
+  background: var(--np-cb-panel, #131922);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+
+  &:not(:disabled):hover {
+    border-color: var(--np-cb-gold, #d8a53a);
+  }
+}
+
+.head {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.cost {
+  color: var(--np-cb-gold, #d8a53a);
+  font-variant-numeric: tabular-nums;
+
+  &.max {
+    color: var(--np-cb-dim, #6d7683);
+  }
+}
+
+.blurb {
+  font-size: 0.82em;
+  line-height: 1.35;
+  opacity: 0.72;
+}
+
+.held {
+  grid-column: 2;
+  align-self: end;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.locked {
+  margin: 8px 0 0;
+  font-size: 0.82em;
+  opacity: 0.6;
+}

@@ -1,0 +1,28 @@
+<cb-panel heading="Pollution" subheading="Hire developers. They make the debt.">
+  <span panel-meta class="chip accent">Supply</span>
+
+  <ul class="lines">
+    @for (row of rows(); track row.adr) {
+      <li>
+        <button
+          type="button"
+          class="line"
+          [class.maxed]="row.maxed"
+          [disabled]="!row.affordable"
+          (click)="buy(row.adr)"
+        >
+          <span class="head">
+            <span class="name">{{ row.name }}</span>
+            <span class="cost" [class.max]="row.maxed">{{ row.cost }}</span>
+          </span>
+          <span class="blurb">{{ row.blurb }}</span>
+          <span class="held">{{ row.held }}/{{ row.cap }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+
+  @if (locked() > 0) {
+    <p class="locked">{{ locked() }} more behind the next ADR.</p>
+  }
+</cb-panel>

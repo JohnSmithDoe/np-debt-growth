@@ -197,6 +197,9 @@ export const EN: Readonly<Record<string, string>> = {
   'title.strap': 'A software consultancy, paid by the hour.',
   'title.windowed': 'Windowed',
   'postmortem.no-tier': 'None approved',
+  'spawner.0.blurb':
+    'Fresh graduates, shipping formatting crimes and off-by-ones. The intake never stops.',
+  'spawner.0.label': 'Junior Intake',
   'tier.1.blurb':
     'jQuery 1.4, load-bearing. Small defects, constantly, forever.',
   'tier.1.name': 'Legacy Framework',

@@ -201,6 +201,9 @@ export const DE: Readonly<Record<string, string>> = {
   'title.strap': 'Eine Software-Beratung. Abrechnung nach Aufwand.',
   'title.windowed': 'Fenstermodus',
   'postmortem.no-tier': 'Keiner freigegeben',
+  'spawner.0.blurb':
+    'Frische Absolventen, die Formatierungsverbrechen und Off-by-Ones liefern. Der Zulauf endet nie.',
+  'spawner.0.label': 'Junior-Zulauf',
   'tier.1.blurb':
     'jQuery 1.4, statisch tragend. Kleine Defekte, ständig, für immer.',
   'tier.1.name': 'Legacy-Framework',

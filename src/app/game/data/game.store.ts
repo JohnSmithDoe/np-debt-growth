@@ -1000,6 +1000,10 @@ export class GameStore {
     return economy.spawnerCost(this.#state(), adr);
   }
 
+  spawnerUnlocked(adr: number): boolean {
+    return economy.spawnerUnlocked(this.#state(), adr);
+  }
+
   canBuySpawner(adr: number): boolean {
     return economy.canBuySpawner(this.#state(), adr);
   }

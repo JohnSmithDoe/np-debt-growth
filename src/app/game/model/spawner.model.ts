@@ -1,4 +1,5 @@
 import type { TicketTypeId } from './ticket.model';
+import { tierBlurbKey, tierNameKey } from './tier.model';
 
 /**
  * The people on the path. One line per ADR: you buy developers who commit
@@ -20,8 +21,11 @@ export const SPAWNER_COST_STEP = 1.15;
 /** ADR-0 arrives staffed, so the board is never empty on the first frame. */
 export const SPAWNER_FREE_AT_ADR_0 = 1;
 
-export const spawnerLabelKey = (adr: number): string => `spawner.${adr}.label`;
-export const spawnerBlurbKey = (adr: number): string => `spawner.${adr}.blurb`;
+/** ADR 1-8 already name their own source in the tier copy; ADR-0 is new. */
+export const spawnerLabelKey = (adr: number): string =>
+  adr === 0 ? 'spawner.0.label' : tierNameKey(adr);
+export const spawnerBlurbKey = (adr: number): string =>
+  adr === 0 ? 'spawner.0.blurb' : tierBlurbKey(adr);
 
 export const SPAWNERS: readonly Spawner[] = [
   {

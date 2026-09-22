@@ -24,6 +24,7 @@ import { NextStepsComponent } from './console/feature/next-steps/next-steps.comp
 import { AchievementsPanelComponent } from './console/feature/achievements-panel/achievements-panel.component';
 import { ActivityFeedComponent } from './console/feature/activity-feed/activity-feed.component';
 import { LifetimeStatsComponent } from './console/feature/lifetime-stats/lifetime-stats.component';
+import { SupplyPanelComponent } from './console/feature/supply-panel/supply-panel.component';
 import { PostMortemComponent } from './console/feature/post-mortem/post-mortem.component';
 import { SettingsModalComponent } from './console/feature/settings-modal/settings-modal.component';
 import { TitleScreenComponent } from './console/feature/title-screen/title-screen.component';
@@ -54,6 +55,7 @@ const STEP_MODE: Partial<Record<NoticeTarget, StageMode>> = {
     AchievementsPanelComponent,
     ActivityFeedComponent,
     LifetimeStatsComponent,
+    SupplyPanelComponent,
     DebugBarComponent,
     AdrModalComponent,
     AwardBannerComponent,
