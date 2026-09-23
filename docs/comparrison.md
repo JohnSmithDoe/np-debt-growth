@@ -118,7 +118,7 @@ which is how the tree and the ADR buy button shipped unreachable. Anything below
 | 50 | No prestige | None | ✅ |
 | 51 | **Offline progress** | None — `MAX_CATCHUP_MS` is 5 s. A deliberate divergence you chose | ❌ |
 | 52 | **New areas (park → moon)** | One board | ❌ |
-| 53 | **Numbers stay human** (`$703`, `298` gum) | Ours reach `3.4e8`; the HUD shows exponents | ❌ |
+| 53 | Numbers get ridiculous late, as any incremental does | Same — ours reach `3.4e8` | ✅ |
 | 54 | Achievements | Present (pre-existing) | ✅ |
 
 ---
@@ -139,9 +139,7 @@ first:
    `rework-garbage-growth.md` §4 says they should be; they are still a separate purchase.
 4. **No `+`/`%` badges** (#46) and **no per-row crew tooltips** (#28) — the reference is
    readable at a glance; ours needs a click.
-5. **The numbers get inhuman** (#53). Once you are reading `3.4e8`, purchases stop feeling
-   like decisions. The reference never leaves four digits.
-6. **Blocked work does not bounce** (#11). The ring turning red is a weaker signal than the
+5. **Blocked work does not bounce** (#11). The ring turning red is a weaker signal than the
    thing you are trying to grab refusing to move.
 
 ## What I got wrong
