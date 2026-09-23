@@ -88,6 +88,13 @@
       <cb-next-steps (go)="goTo($event)" />
       <cb-achievements-panel />
     } @else {
+      <button type="button" class="btn primary rail-tree" (click)="toTree()">
+        Open the tree
+        @if (storyPoints() > 0) {
+          <span class="chip points">{{ points(storyPoints()) }}</span>
+        }
+      </button>
+      <cb-adr-panel />
       <cb-supply-panel />
       <cb-lifetime-stats />
       <cb-activity-feed />

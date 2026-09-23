@@ -48,22 +48,22 @@
       <p class="locked">{{ locked() }} more behind the next ADR.</p>
     }
   } @else {
-    @if (crew().length === 0) {
-      <p class="locked">Nothing hired yet. The tree opens the lines.</p>
-    }
+    <p class="locked">Lines open on the tree; heads are hired here.</p>
     <ul class="lines">
       @for (row of crew(); track row.line) {
         <li>
           <button
             type="button"
             class="line"
-            [class.maxed]="row.maxed"
+            [class.maxed]="row.maxed || row.locked"
             [disabled]="!row.affordable"
             (click)="hire(row.line)"
           >
             <span class="head">
               <span class="name">{{ row.name }}</span>
-              <span class="cost" [class.max]="row.maxed">{{ row.cost }}</span>
+              <span class="cost" [class.max]="row.maxed || row.locked">{{
+                row.cost
+              }}</span>
             </span>
             <span class="held">{{ row.held }}/{{ row.cap }}</span>
           </button>

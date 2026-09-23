@@ -306,3 +306,19 @@ cb-debug-bar {
     overflow: hidden;
   }
 }
+
+.rail cb-adr-panel {
+  display: block;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--np-cb-line);
+  border-radius: 6px;
+  background: var(--np-cb-panel);
+}
+
+.rail-tree {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}

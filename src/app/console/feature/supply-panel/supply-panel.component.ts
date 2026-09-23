@@ -24,6 +24,7 @@ type Tab = 'supply' | 'crew';
 interface LineRow {
   readonly line: PurchaseId;
   readonly name: string;
+  readonly locked: boolean;
   readonly held: number;
   readonly cap: number;
   readonly cost: string;
@@ -85,22 +86,28 @@ export class SupplyPanelComponent {
 
   readonly crew = computed<readonly LineRow[]>(() => {
     this.#store.state();
-    return PURCHASE_IDS.filter((line) => this.#store.lineUnlocked(line)).map(
-      (line) => {
-        const held = this.#store.levels()[line];
-        const cap = this.#store.lineCap(line);
-        const maxed = held >= cap;
-        return {
-          line,
-          name: this.#text.instant(`purchase.${line}.label`),
-          held,
-          cap,
-          cost: maxed ? 'MAX' : formatCompactMoney(this.#store.lineCost(line)),
-          maxed,
-          affordable: this.#store.canBuyLine(line),
-        };
-      }
-    );
+    // Locked lines stay on show — an empty tab reads as broken, not as
+    // "these open on the tree".
+    return PURCHASE_IDS.map((line) => {
+      const locked = !this.#store.lineUnlocked(line);
+      const held = this.#store.levels()[line];
+      const cap = this.#store.lineCap(line);
+      const maxed = held >= cap;
+      return {
+        line,
+        name: this.#text.instant(`purchase.${line}.label`),
+        locked,
+        held,
+        cap,
+        cost: locked
+          ? 'on the tree'
+          : maxed
+            ? 'MAX'
+            : formatCompactMoney(this.#store.lineCost(line)),
+        maxed,
+        affordable: this.#store.canBuyLine(line),
+      };
+    });
   });
 
   show(tab: Tab): void {
