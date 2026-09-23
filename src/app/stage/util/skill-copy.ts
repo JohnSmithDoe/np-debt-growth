@@ -41,6 +41,10 @@ function describe(effect: SkillEffect): EffectText {
       return { key: 'skill.effect.spPerClose', params: { count: effect.add } };
     case 'crewSp':
       return { key: 'skill.effect.crewSp' };
+    case 'coach':
+      return { key: 'skill.effect.coach', params: { count: effect.add } };
+    case 'deck':
+      return { key: 'skill.effect.deck', params: { count: effect.add } };
     case 'runners':
       return { key: 'skill.effect.runners', params: { count: effect.add } };
     case 'slots':

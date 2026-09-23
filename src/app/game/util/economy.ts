@@ -44,6 +44,9 @@ import {
 import {
   AUTO_CLOSE_MS,
   AUTO_RUNNERS_BASE,
+  VOTE_BONUS_BASE,
+  VOTE_CYCLE_MS,
+  VOTE_ON_MS,
   AUTO_RUNNER_PER_SEC,
   CLICK_RADIUS_BASE,
   CLICK_RADIUS_MAX,
@@ -1055,13 +1058,48 @@ export function pickupStoryPoints(
   golden: boolean,
   byCrew: boolean
 ): number {
-  if (state.levels.velocity === 0) return 0;
+  if (!pickupsPaySp(state)) return 0;
   const type = TICKET_TYPES[id];
   const tierScale = type.scalesWithTier ? Math.max(1, state.tier) : 1;
   const base = type.value * tierScale * (golden ? goldenMultiplier(state) : 1);
   const bonus = sumOf(state, (e) => (e.kind === 'spPerClose' ? e.add : null));
   const crew = byCrew && holds(state, 'crewSp') ? CREW_SP_MULT : 1;
   return (base * SP_PER_EURO + bonus) * crew;
+}
+
+export function pickupsPaySp(state: Consultancy): boolean {
+  return state.levels.velocity > 0;
+}
+
+export function coachCount(state: Consultancy): number {
+  return sumOf(state, (e) => (e.kind === 'coach' ? e.add : null));
+}
+
+export function voteBonusPerCrossing(state: Consultancy): number {
+  return (
+    VOTE_BONUS_BASE + sumOf(state, (e) => (e.kind === 'deck' ? e.add : null))
+  );
+}
+
+/** Whether coach `index`'s vote is live at `runMs`; the stage draws the same. */
+export function voteLive(
+  state: Consultancy,
+  index: number,
+  runMs: number
+): boolean {
+  const count = Math.max(1, coachCount(state));
+  const offset = (index * VOTE_CYCLE_MS) / count;
+  return (runMs + offset) % VOTE_CYCLE_MS < VOTE_ON_MS;
+}
+
+/** SP a ticket earns for every live vote it falls through at `runMs`. */
+export function voteBonus(state: Consultancy, runMs: number): number {
+  const coaches = coachCount(state);
+  let live = 0;
+  for (let index = 0; index < coaches; index += 1) {
+    if (voteLive(state, index, runMs)) live += 1;
+  }
+  return live * voteBonusPerCrossing(state);
 }
 
 /** The offline estimate's SP: the same mix `unattendedEuroPerSec` prices, at base value. */

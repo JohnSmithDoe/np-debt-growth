@@ -211,6 +211,7 @@ export class StageService {
       sprint: () => store.sprint(),
       lanes: () => store.lanes(),
       laneCapacity: () => store.laneCapacity(),
+      votes: () => store.votes(),
       pending: () => store.sprintValue(),
       escalated: () => store.escalated(),
       tier: () => store.tier(),

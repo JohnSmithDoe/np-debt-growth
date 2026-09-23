@@ -26,6 +26,8 @@ export interface SceneDeps {
   sprint(): readonly SprintSlot[];
   lanes(): readonly Lane[];
   laneCapacity(): number;
+  /** One flag per coach: is that vote live right now. */
+  votes(): readonly boolean[];
   pending(): number;
   escalated(): boolean;
   tier(): number;

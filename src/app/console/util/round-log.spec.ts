@@ -20,6 +20,7 @@ function close(
       type,
       title: `title ${seq}`,
       golden: false,
+      spBonus: 0,
       by: 'you',
       poolSeat: 0,
       woman: false,

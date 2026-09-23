@@ -19,6 +19,18 @@ export const AUTO_CLOSE_MS = 3_000;
  * one ticket a second, the pace of one of the reference's rats.
  */
 export const AUTO_RUNNERS_BASE = 4;
+
+/**
+ * Planning poker, the reference's gum angels. Each coach runs a vote that is
+ * live for `VOTE_ON_MS` of every `VOTE_CYCLE_MS`, offset from the others; a
+ * ticket falling through a live vote is re-estimated upward.
+ */
+export const VOTE_CYCLE_MS = 4_000;
+export const VOTE_ON_MS = 1_400;
+export const VOTE_BONUS_BASE = 30;
+export const VOTE_BONUS_PER_RANK = 15;
+/** Arrivals inside one step are spread by this, so a burst doesn't share one vote. */
+export const VOTE_SPREAD_MS = 37;
 export const AUTO_RUNNER_PER_SEC = 1;
 
 /**

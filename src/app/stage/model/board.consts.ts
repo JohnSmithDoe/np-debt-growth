@@ -130,6 +130,15 @@ export const FLOOR_SCATTER = {
  * The lane above the board. One band, every line's actors mixed into it, so
  * the crowd on the path is the receipt for everything the rail sold.
  */
+/** The planning-poker band, just under the lane the work falls from. */
+export const VOTES = {
+  top: 150,
+  spacing: 7,
+  amplitude: 3,
+  wavelength: 38,
+  coachX: 16,
+} as const;
+
 export const LANE = {
   top: 6,
   height: 62,
@@ -151,6 +160,9 @@ export const BOARD_INK = {
   laneAway: 0x1b2129,
   train: 0xe6e9ef,
   trainWindow: 0x1f6feb,
+  vote: 0xe06c9f,
+  card: 0xe6e9ef,
+  coach: 0x98a1b0,
 } as const;
 
 export const BOARD_TEXT = {
@@ -158,6 +170,7 @@ export const BOARD_TEXT = {
   body: '#98a1b0',
   bright: '#e6e9ef',
   gold: '#d8b34a',
+  points: '#e06c9f',
   secret: '#2f3846',
 } as const;
 

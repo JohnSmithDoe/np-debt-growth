@@ -131,6 +131,7 @@ export function addTicket(
     title: pickTicketTitle(type),
     reborn,
     golden,
+    spBonus: 0,
     relabelled,
     autoLeftMs: NOT_AUTOMATED,
     lifeLeftMs: TICKET_TYPES[type].handOnly ? NEVER_EXPIRES : TICKET_LIFE_MS,
@@ -263,6 +264,7 @@ function deliverClose(
       type: banked,
       title: card.title,
       golden: card.golden,
+      spBonus: card.spBonus,
       by: rules.kind,
       poolSeat,
       woman,
@@ -285,6 +287,7 @@ function pickUp(
     type: ticket.type,
     title: ticket.title,
     golden: ticket.golden,
+    spBonus: ticket.spBonus,
     reborn: ticket.reborn,
     relabelled: ticket.relabelled,
   }));

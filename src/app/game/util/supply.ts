@@ -4,7 +4,7 @@ import type { Consultancy } from '../model/consultancy.model';
 import type { Weather } from '../model/hazard.model';
 import { CALM } from '../model/hazard.model';
 import { TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
-import { SPAWN_BURST_CAP } from '../model/balance/flow';
+import { SPAWN_BURST_CAP, VOTE_SPREAD_MS } from '../model/balance/flow';
 import { addTicket, comeBack, removeTicket } from './board';
 import * as economy from './economy';
 import { heldBack, scriptedSpawns } from './first-act';
@@ -34,7 +34,17 @@ export function spawnInto(
     const dearer = interest > 0 ? economy.interestTarget(state, id) : null;
     for (let n = 0; n < due; n++) {
       const arriving = dearer && rand() < interest ? dearer : id;
-      addTicket(board, arriving, rand, false, false, rand() < golden);
+      const ticket = addTicket(
+        board,
+        arriving,
+        rand,
+        false,
+        false,
+        rand() < golden
+      );
+      if (ticket && !ticket.golden) {
+        ticket.spBonus = economy.voteBonus(state, from + n * VOTE_SPREAD_MS);
+      }
     }
   }
 
@@ -75,6 +85,7 @@ export function fileAutomated(
       type: ticket.type,
       title: ticket.title,
       golden: ticket.golden,
+      spBonus: ticket.spBonus,
       by: 'auto',
       poolSeat: NO_SEAT,
       woman: false,

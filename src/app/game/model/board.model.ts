@@ -13,6 +13,7 @@ export interface Carried {
   readonly golden: boolean;
   readonly reborn: boolean;
   readonly relabelled: boolean;
+  readonly spBonus: number;
 }
 
 export interface BoardTicket {
@@ -21,6 +22,8 @@ export interface BoardTicket {
   title: string;
   reborn: boolean;
   golden: boolean;
+  /** SP the planning-poker votes it fell through add at pickup. */
+  spBonus: number;
   autoLeftMs: number;
   /** Counts down while unclaimed; `NEVER_EXPIRES` for hand-only cards. */
   lifeLeftMs: number;
@@ -52,6 +55,7 @@ export interface Close {
   readonly type: TicketTypeId;
   readonly title: string;
   readonly golden: boolean;
+  readonly spBonus: number;
   readonly by: CloseAuthor;
   readonly poolSeat: number;
   readonly woman: boolean;
@@ -84,6 +88,7 @@ export interface Harvest {
   /** Reached but left on the board because the can was full. */
   readonly refused: readonly number[];
   readonly value: number;
+  readonly sp: number;
 }
 
 export interface Comeback {

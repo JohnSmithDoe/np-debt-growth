@@ -1,7 +1,11 @@
 import type { TicketTypeId } from './ticket.model';
 import { SKILL_COST_SCALE, type PurchaseId } from './balance/progression';
 import type { CrewKind } from './crew.model';
-import { DEBT_INTEREST_PER_RANK, GOLDEN_VALUE_PER_RANK } from './balance/flow';
+import {
+  DEBT_INTEREST_PER_RANK,
+  GOLDEN_VALUE_PER_RANK,
+  VOTE_BONUS_PER_RANK,
+} from './balance/flow';
 import { WIP_LIMIT_STEP } from './balance/round';
 import { DESKS_PER_RANK } from './balance/crew';
 import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from './tier.model';
@@ -39,6 +43,8 @@ export type SkillEffect =
   | { readonly kind: 'runners'; readonly add: number }
   | { readonly kind: 'spPerClose'; readonly add: number }
   | { readonly kind: 'crewSp' }
+  | { readonly kind: 'coach'; readonly add: number }
+  | { readonly kind: 'deck'; readonly add: number }
   | { readonly kind: 'senior'; readonly mult: number }
   | { readonly kind: 'seniorWalk'; readonly mult: number }
   | { readonly kind: 'seniorBatch'; readonly add: number }
@@ -618,6 +624,26 @@ export const SKILL_NODES: readonly SkillNode[] = [
     levels: [4, 20, 90, 400, 1_800].map((cost) => ({
       cost,
       effects: [{ kind: 'spPerClose' as const, add: 2 }],
+    })),
+  },
+  {
+    id: 'coaches',
+    track: 'C',
+    requires: 'estimates',
+    gate: 'tier2',
+    levels: [
+      200, 500, 1_200, 3_000, 7_500, 18_000, 45_000, 110_000, 270_000, 650_000,
+    ].map((cost) => ({ cost, effects: [{ kind: 'coach' as const, add: 1 }] })),
+  },
+  {
+    id: 'deck',
+    track: 'C',
+    requires: 'coaches',
+    levels: [
+      300, 700, 1_600, 4_000, 10_000, 25_000, 60_000, 150_000, 350_000, 800_000,
+    ].map((cost) => ({
+      cost,
+      effects: [{ kind: 'deck' as const, add: VOTE_BONUS_PER_RANK }],
     })),
   },
   {

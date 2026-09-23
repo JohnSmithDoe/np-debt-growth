@@ -175,6 +175,7 @@ function reachedBy(board: Board, ids: readonly number[]): Reached {
       type: ticket.type,
       title: ticket.title,
       golden: ticket.golden,
+      spBonus: ticket.spBonus,
       by: 'you',
       poolSeat: NO_SEAT,
       woman: false,
@@ -357,6 +358,14 @@ export class GameStore {
 
   readonly sprint = this.#sprint.asReadonly();
   readonly lanes = computed(() => economy.lanesOf(this.#state()));
+  /** Read each frame by the stage, so not a signal: votes flip on the run clock. */
+  votes(): readonly boolean[] {
+    const state = this.#state();
+    return Array.from({ length: economy.coachCount(state) }, (_, index) =>
+      economy.voteLive(state, index, state.runMs)
+    );
+  }
+
   readonly laneCapacity = computed(() =>
     economy.laneCapacity(this.#state(), this.#sky())
   );
@@ -884,9 +893,9 @@ export class GameStore {
     state: Consultancy,
     work: CrewWork,
     now: number
-  ): { next: Consultancy; value: number } {
+  ): { next: Consultancy; value: number; sp: number } {
     const { closed, byWomen } = work;
-    if (closed.length === 0) return { next: state, value: 0 };
+    if (closed.length === 0) return { next: state, value: 0, sp: 0 };
 
     const banked = this.#bankWork(state, closed, now);
     const buffs = armBuffs(state, closed, now);
@@ -932,6 +941,7 @@ export class GameStore {
         lifetimeWorkBilled: state.lifetimeWorkBilled + banked.value,
       },
       value: banked.value,
+      sp: velocitySp,
     };
   }
 
@@ -954,14 +964,16 @@ export class GameStore {
 
     const goldenMult = economy.goldenMultiplier(state);
     const conversion = economy.crewGoldenConversion(state);
-    for (const { type, title, by, x, y, golden } of closed) {
+    for (const { type, title, by, x, y, golden, spBonus } of closed) {
       if (TICKET_TYPES[type].effect !== 'value') continue;
       const gilded =
         golden || (by !== 'you' && conversion > 0 && this.#rand() < conversion);
       const worth =
         economy.closeValue(state, type, now) * (gilded ? goldenMult : 1);
       value += worth;
-      sp += economy.pickupStoryPoints(state, type, gilded, by !== 'you');
+      sp +=
+        economy.pickupStoryPoints(state, type, gilded, by !== 'you') +
+        (economy.pickupsPaySp(state) ? spBonus : 0);
       took.push({ type, title });
       if (by === 'auto') {
         auto += worth;
@@ -1054,7 +1066,7 @@ export class GameStore {
     const { taken, closed } = reached;
 
     this.#probeClick(now, ids.length, taken.length, state);
-    if (taken.length === 0) return { taken, refused, value: 0 };
+    if (taken.length === 0) return { taken, refused, value: 0, sp: 0 };
 
     for (const ticket of reached.tickets) {
       if (TICKET_TYPES[ticket.type].effect === 'decline') {
@@ -1063,12 +1075,12 @@ export class GameStore {
       comeBack(this.#board, ticket);
       removeTicket(this.#board, ticket);
     }
-    const { next, value } = this.#bank(state, { closed, byWomen: 0 }, now);
+    const { next, value, sp } = this.#bank(state, { closed, byWomen: 0 }, now);
     this.#state.set(next);
     this.#lastLineAt = now;
     this.#logClose(state, dearest(state, closed, now), now);
     if (reached.quarterEnd) this.#billWholeBoard(now);
-    return { taken, refused, value };
+    return { taken, refused, value, sp };
   }
 
   takePayout(): number {

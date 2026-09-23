@@ -1,6 +1,9 @@
 import * as Phaser from 'phaser';
 
-import { formatMoney } from '../../@shared/util/format-quantity';
+import {
+  formatCompactWhole,
+  formatMoney,
+} from '../../@shared/util/format-quantity';
 import type {
   Board,
   BoardTicket,
@@ -49,6 +52,7 @@ import { CbScene } from './cb-scene';
 import { GroundLayer } from './ground-layer';
 import { SprintStrip } from './sprint-strip';
 import { TierSpawners } from './tier-spawners';
+import { VoteBeams } from './vote-beams';
 
 interface BoardParts {
   readonly ground: GroundLayer;
@@ -59,6 +63,7 @@ interface BoardParts {
   readonly managers: CrewLayer;
   readonly offshore: CrewLayer;
   readonly spawners: TierSpawners;
+  readonly votes: VoteBeams;
   readonly strip: SprintStrip;
 }
 
@@ -225,6 +230,7 @@ export class BoardScene extends CbScene {
       managers: new CrewLayer(this, DEPTH.crew + 2, 'managers', 2),
       offshore: new CrewLayer(this, DEPTH.crew + 3, 'offshore', 3),
       spawners: new TierSpawners(this, DEPTH.spawner),
+      votes: new VoteBeams(this, DEPTH.spawner - 1),
       strip,
     };
     parts.flyers.onArrive = (kind, id) => {
@@ -310,6 +316,7 @@ export class BoardScene extends CbScene {
     );
 
     parts.spawners.update(step);
+    parts.votes.update(this.deps.votes(), step);
     parts.heap.update(step);
     parts.crew.update(step);
     parts.seniors.update(step);
@@ -599,13 +606,19 @@ export class BoardScene extends CbScene {
     flyers.fallingWithin(px, py, radius * this.#scale, ids);
     if (ids.length === 0) return;
 
-    const { taken, refused, value } = this.deps.harvest(ids);
+    const { taken, refused, value, sp } = this.deps.harvest(ids);
     if (refused.length > 0) {
       this.#refusedUntil = this.time.now + REFUSED_MS;
       parts.heap.bounce(refused.filter((id) => !flyers.isFalling(id)));
     }
     if (taken.length === 0) return;
     if (value > 0) this.floatPayout(px, py - 14, `+${formatMoney(value)}`);
+    if (sp > 0) {
+      this.floatPayout(px, py + 8, `+${formatCompactWhole(sp)} SP`, {
+        colour: BOARD_TEXT.points,
+        size: '14px',
+      });
+    }
   }
 
   #flashRing(px: number, py: number): void {
@@ -695,6 +708,7 @@ export class BoardScene extends CbScene {
     parts.strip.layout(width, height);
     parts.heap.layout(this.#scale, this.#offX, this.#offY);
     parts.spawners.layout(0, 0, width);
+    parts.votes.layout(width);
     parts.crew.layout(this.#scale, this.#offX, this.#offY);
     parts.seniors.layout(this.#scale, this.#offX, this.#offY);
     parts.managers.layout(this.#scale, this.#offX, this.#offY);
@@ -722,6 +736,7 @@ export class BoardScene extends CbScene {
     parts.managers.destroy();
     parts.offshore.destroy();
     parts.spawners.destroy();
+    parts.votes.destroy();
     parts.flyers.destroy();
     parts.heap.destroy();
     parts.ground.destroy();

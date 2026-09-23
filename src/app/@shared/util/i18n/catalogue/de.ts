@@ -459,6 +459,33 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.estimates.blurb':
     'Ein bisschen höher schätzen. Jedes geschlossene Ticket bringt mehr Story Points.',
   'skill.effect.spPerClose': '+{{count}} SP pro Ticket',
+  'skill.coaches.1.label': 'Agile Coach einstellen',
+  'skill.coaches.2.label': 'Zweiter Coach',
+  'skill.coaches.3.label': 'Coaching-Kreis',
+  'skill.coaches.4.label': 'Scrum of Scrums',
+  'skill.coaches.5.label': 'Agiles Kompetenzzentrum',
+  'skill.coaches.6.label': 'Transformationsbüro',
+  'skill.coaches.7.label': 'SAFe-Berater',
+  'skill.coaches.8.label': 'Release Train Engineers',
+  'skill.coaches.9.label': 'Lean-Portfolio-Rat',
+  'skill.coaches.10.label': 'Der agile Tribe',
+  'skill.coaches.blurb':
+    'Ein Coach am Rand des Pfads spielt Planning Poker. Arbeit, die durch eine laufende Abstimmung fällt, wird höher geschätzt.',
+  'skill.effect.coach': '+{{count}} Planning-Poker-Abstimmung',
+  'skill.deck.1.label': 'Eine 13 dazu',
+  'skill.deck.2.label': 'Eine 20 dazu',
+  'skill.deck.3.label': 'Eine 40 dazu',
+  'skill.deck.4.label': 'Eine 100 dazu',
+  'skill.deck.5.label': 'Ein ☕ dazu',
+  'skill.deck.6.label': 'Ein ∞ dazu',
+  'skill.deck.7.label': 'Ein ? dazu',
+  'skill.deck.8.label': 'Eigenes Deck',
+  'skill.deck.9.label': 'Nur noch 100er',
+  'skill.deck.10.label': 'Schätzen in Epics',
+  'skill.deck.blurb':
+    'Eine größere Karte in jedem Coach-Deck. Jede Abstimmung, durch die ein Ticket fällt, schätzt es höher.',
+  'skill.effect.deck':
+    '+{{count}} SP pro Abstimmung, durch die ein Ticket fällt',
   'skill.timesheets.1.label': 'Stundenzettel-Polster',
   'skill.timesheets.blurb':
     'Was Team und Pipeline schließen, wird zweimal gebucht.',
