@@ -44,11 +44,12 @@ describe('skill layout', () => {
     expect(touching).toEqual([]);
   });
 
-  it('hangs exactly six arms off the root, and nothing else is rootless', () => {
+  it('hangs exactly seven arms off the root, and nothing else is rootless', () => {
     const arms = SKILL_GRAPH.squares.filter(
       (square) => square.parent === SKILL_ROOT_ID
     );
     expect(arms.map((square) => square.id).sort()).toEqual([
+      'adr1',
       'copilot',
       'income',
       'junior',
@@ -135,6 +136,7 @@ describe('skill layout', () => {
 describe('skill reveal', () => {
   it('opens as the root, readable, with a box on each arm it would open', () => {
     expect([...ranked({}).entries()].sort()).toEqual([
+      ['adr1', 'box'],
       ['copilot', 'box'],
       ['income', 'box'],
       ['junior', 'box'],
@@ -145,7 +147,7 @@ describe('skill reveal', () => {
     ]);
   });
 
-  it('makes the six arms readable once the root is bought', () => {
+  it('makes the seven arms readable once the root is bought', () => {
     const shown = ranked({ root: 1 });
 
     expect(shown.get(SKILL_ROOT_ID)).toBe('owned');
@@ -156,6 +158,7 @@ describe('skill reveal', () => {
       'supply',
       'copilot',
       'o1',
+      'adr1',
     ]) {
       expect(shown.get(arm)).toBe('open');
     }

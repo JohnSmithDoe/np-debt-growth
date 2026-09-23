@@ -1,7 +1,7 @@
 import type { ConsultancyPatch } from '../model/consultancy.fixture';
 import { consultancy } from '../model/consultancy.fixture';
 import { TICK_MS } from '../model/game.consts';
-import { OFFICE_NODE_IDS } from '../model/skill.model';
+import { DESK_NODE_ID, SKILL_BY_ID } from '../model/skill.model';
 import { GameStore } from './game.store';
 
 export function storeWith(patch: ConsultancyPatch = {}): GameStore {
@@ -10,11 +10,15 @@ export function storeWith(patch: ConsultancyPatch = {}): GameStore {
   return store;
 }
 
-/** Bought office nodes, which is how the floor — and so the desks — grows. */
-export function rooms(count: number): Record<string, number> {
-  return Object.fromEntries(
-    OFFICE_NODE_IDS.slice(0, count).map((id) => [id, 1])
-  );
+/** Ranks of the headcount node — the only thing that adds desks. */
+export function rooms(ranks: number): Record<string, number> {
+  const node = SKILL_BY_ID.get(DESK_NODE_ID);
+  return {
+    root: 1,
+    crew: 1,
+    junior: 1,
+    [DESK_NODE_ID]: Math.min(ranks, node?.levels.length ?? 0),
+  };
 }
 
 /** Walk the clock to `to` in the sub-ticks the real clock would use. */

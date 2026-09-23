@@ -39,7 +39,10 @@ class Shelf {
 }
 
 export const GLOW_FRAME = 'glow';
+
+/** Indexed by ADR, so `SPAWNER_FRAMES[0]` is the intake that starts the run. */
 export const SPAWNER_FRAMES = [
+  'spawner-0',
   'spawner-1',
   'spawner-2',
   'spawner-3',
@@ -122,6 +125,7 @@ export function buildBoardAtlas(
   }
 
   const spawners = [
+    drawIntern,
     drawLegacyService,
     drawCyclist,
     drawOffshoreCrew,
@@ -232,6 +236,21 @@ function splitLabel(label: string): [string, string] {
     label.slice(0, space).toUpperCase(),
     label.slice(space + 1).toUpperCase(),
   ];
+}
+
+/** ADR-0: an intern with a laptop, leaving lint behind them. */
+function drawIntern(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.fillStyle = '#d7c0a4';
+  ctx.fillRect(x + 26, y + 6, 9, 9);
+  ctx.fillStyle = hex(TICKET_TYPES.lint.colour);
+  ctx.fillRect(x + 23, y + 16, 15, 17);
+  ctx.fillRect(x + 20, y + 20, 4, 10);
+  ctx.fillRect(x + 37, y + 20, 4, 10);
+  panel(ctx, x + 16, y + 30, 28, 10, '#1b2129', '#39434f');
+  ctx.fillStyle = hex(TICKET_TYPES.bug.colour);
+  ctx.fillRect(x + 19, y + 33, 6, 2);
+  ctx.fillStyle = '#39434f';
+  ctx.fillRect(x + 27, y + 33, 14, 2);
 }
 
 function drawLegacyService(

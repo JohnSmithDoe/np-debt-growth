@@ -73,3 +73,8 @@ const BY_TICKET = new Map<TicketTypeId, Spawner>(
 export function spawnerFor(id: TicketTypeId): Spawner | undefined {
   return BY_TICKET.get(id);
 }
+
+/** Every ticket a line drops, in rung order — the income tab's rows. */
+export const SPAWNED_TICKET_IDS: readonly TicketTypeId[] = SPAWNERS.flatMap(
+  (row) => row.produces
+);

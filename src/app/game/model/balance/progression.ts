@@ -5,9 +5,21 @@ export const VELOCITY_SKIM_DECAY = 0.88;
 export const VELOCITY_SP_PER_EURO = 0.0006;
 export const VELOCITY_UNLOCK_TIER = 2;
 
-export const FREE_COPILOT_AT_TIER = 1;
+/** The tree is bought with story points, so the first copilot ships with the laptop. */
+export const FREE_COPILOTS = 1;
 
 export const PURCHASE_REVEAL_FRACTION = 0.6;
+
+/**
+ * Per-ticket income lines — the rail's third tab. Each rank lifts what that
+ * one ticket bills; the line only opens once its spawner is on the path.
+ */
+export const INCOME_CAP = 10;
+export const INCOME_VALUE_STEP = 1.3;
+export const INCOME_COST_STEP = 1.75;
+
+/** An income line's first rank costs this many of its spawner's first head. */
+export const INCOME_COST_OF_SPAWNER = 16;
 
 export const PURCHASE_IDS = [
   'junior',

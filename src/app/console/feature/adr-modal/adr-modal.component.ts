@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 
-import { formatMoney } from '../../../@shared/util/format-quantity';
+import { formatWhole } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import type { DebtTier } from '../../../game/model/tier.model';
 import { tierAt, tierNameKey } from '../../../game/model/tier.model';
@@ -82,8 +82,8 @@ export class AdrModalComponent {
       art: `assets/art/tier/${tier}.png`,
       office: officeArtFor(tier),
       signed,
-      cost: formatMoney(debtTier.unlockCost),
-      affordable: this.#store.state().budget >= debtTier.unlockCost,
+      cost: `${formatWhole(debtTier.spCost)} SP`,
+      affordable: this.#store.state().storyPoints >= debtTier.spCost,
     };
   }
 

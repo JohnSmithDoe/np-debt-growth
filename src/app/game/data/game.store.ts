@@ -24,6 +24,9 @@ import {
   FEED_LIMIT,
   FEED_LINE_GAP_MS,
   MAX_CATCHUP_MS,
+  OFFLINE_FROM_MS,
+  OFFLINE_MAX_MS,
+  OFFLINE_RATE,
   SAVE_VERSION,
   TICK_MS,
 } from '../model/game.consts';
@@ -51,12 +54,11 @@ import {
   skillLabelKey,
   skillParent,
 } from '../model/skill.model';
-import { tierAt } from '../model/tier.model';
+import { adrNodeId, tierAt } from '../model/tier.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { TIER_BURST } from '../model/balance/flow';
-import { FREE_COPILOT_AT_TIER } from '../model/balance/progression';
 import {
   ESCALATION_HOLD_MS,
   FACT_COUNTDOWN_MS,
@@ -281,6 +283,24 @@ export class GameStore {
     return state.runMs > 0 ? state.lifetimeBilled / (state.runMs / 1000) : 0;
   });
 
+  /** Story points banked per second so far — what an ADR is priced against. */
+  readonly pointsPerSecond = computed(() => {
+    const state = this.#state();
+    if (state.runMs <= 0) return 0;
+    return (state.storyPoints + this.#spentPoints()) / (state.runMs / 1000);
+  });
+
+  #spentPoints(): number {
+    const state = this.#state();
+    let spent = 0;
+    for (const [id, rank] of Object.entries(state.skills)) {
+      const node = SKILL_BY_ID.get(id);
+      if (!node || node.currency === 'eur') continue;
+      for (const level of node.levels.slice(0, rank)) spent += level.cost;
+    }
+    return spent;
+  }
+
   seedRandom(rand: () => number): void {
     this.#rand = rand;
   }
@@ -354,6 +374,7 @@ export class GameStore {
       this.#state.set({ ...state, lastTick: now });
       return;
     }
+    if (elapsed >= OFFLINE_FROM_MS) this.#accrueOffline(elapsed);
 
     let at = now - Math.min(elapsed, MAX_CATCHUP_MS);
     while (at < now) {
@@ -362,6 +383,48 @@ export class GameStore {
       at = to;
     }
     this.#state.set({ ...this.#state(), lastTick: now });
+  }
+
+  /**
+   * The hours away, paid out in one step. Bounded by `OFFLINE_MAX_MS` and
+   * discounted by `OFFLINE_RATE`: the floor runs without you, worse than
+   * with you.
+   */
+  #accrueOffline(elapsed: number): void {
+    const state = this.#state();
+    const away = Math.min(elapsed, OFFLINE_MAX_MS) - MAX_CATCHUP_MS;
+    if (away <= 0) return;
+
+    const seconds = (away / 1000) * OFFLINE_RATE;
+    const gross = economy.unattendedEuroPerSec(state) * seconds;
+    const closed = Math.floor(economy.unattendedClosesPerSec(state) * seconds);
+    const retainer = economy.retainerPerSec(state) * seconds;
+    const skimmed = gross * economy.velocitySkim(state);
+    const payout = gross - skimmed + retainer;
+    if (payout <= 0) return;
+
+    const points =
+      economy.velocityStoryPoints(state, gross) +
+      economy.copilotSpPerClose(state) * closed;
+
+    this.#retainerBilled += retainer;
+    this.#state.set({
+      ...state,
+      budget: state.budget + payout,
+      storyPoints: state.storyPoints + points,
+      lifetimeClosed: state.lifetimeClosed + closed,
+      lifetimeBilled: state.lifetimeBilled + payout,
+      lifetimeSkimmed: state.lifetimeSkimmed + skimmed,
+      lifetimeCrewBilled: state.lifetimeCrewBilled + gross - skimmed + retainer,
+      lifetimeWorkBilled: state.lifetimeWorkBilled + gross + retainer,
+      runMs: state.runMs + away,
+    });
+    this.#write({
+      kind: 'note',
+      note: 'offline',
+      count: Math.round(away / 60_000),
+      money: payout,
+    });
   }
 
   haulMs(): number {
@@ -877,9 +940,13 @@ export class GameStore {
    * The can is a hard cap. Value tickets past the brim are left where they
    * are — the scene bounces them in place rather than taking them.
    */
-  #withinCan(state: Consultancy, ids: readonly number[]): readonly number[] {
+  #withinCan(
+    state: Consultancy,
+    ids: readonly number[]
+  ): { allowed: readonly number[]; refused: readonly number[] } {
     let room = economy.sprintRoom(state, this.#sky());
     const allowed: number[] = [];
+    const refused: number[] = [];
     for (const id of ids) {
       const ticket = this.#board.byId.get(id);
       if (!ticket) continue;
@@ -887,21 +954,25 @@ export class GameStore {
         allowed.push(id);
         continue;
       }
-      if (room <= 0) continue;
+      if (room <= 0) {
+        refused.push(id);
+        continue;
+      }
       room -= 1;
       allowed.push(id);
     }
-    return allowed;
+    return { allowed, refused };
   }
 
   harvest(ids: readonly number[]): Harvest {
     const state = this.#state();
     const now = state.lastTick;
-    const reached = reachedBy(this.#board, this.#withinCan(state, ids));
+    const { allowed, refused } = this.#withinCan(state, ids);
+    const reached = reachedBy(this.#board, allowed);
     const { taken, closed } = reached;
 
     this.#probeClick(now, ids.length, taken.length, state);
-    if (taken.length === 0) return { taken, value: 0 };
+    if (taken.length === 0) return { taken, refused, value: 0 };
 
     for (const ticket of reached.tickets) {
       if (TICKET_TYPES[ticket.type].effect === 'decline') {
@@ -915,7 +986,7 @@ export class GameStore {
     this.#lastLineAt = now;
     this.#logClose(state, dearest(state, closed, now), now);
     if (reached.quarterEnd) this.#billWholeBoard(now);
-    return { taken, value };
+    return { taken, refused, value };
   }
 
   takePayout(): number {
@@ -981,21 +1052,18 @@ export class GameStore {
     return true;
   }
 
+  /** The rung is a tree node; this is the same purchase, reached from the rail. */
   unlockNextTier(): boolean {
-    const state = this.#state();
-    const next = tierAt(state.tier + 1);
-    if (!next || state.budget < next.unlockCost) return false;
-    const grantsCopilot =
-      next.index === FREE_COPILOT_AT_TIER && state.levels.copilot === 0;
-    this.#state.set({
-      ...state,
-      budget: state.budget - next.unlockCost,
-      tier: next.index,
-      levels: grantsCopilot ? { ...state.levels, copilot: 1 } : state.levels,
-    });
-    this.#burst(next.index, next.ticket);
-    this.#markApproval(next.index, state.runMs);
-    return true;
+    const next = tierAt(this.#state().tier + 1);
+    return next !== undefined && this.buySkill(adrNodeId(next.index));
+  }
+
+  /** The rung landed: the board gets its first cards of the new type. */
+  #approve(index: number): void {
+    const tier = tierAt(index);
+    if (!tier) return;
+    this.#burst(index, tier.ticket);
+    this.#markApproval(index, this.#state().runMs);
   }
 
   lineCost(line: PurchaseId): number {
@@ -1059,6 +1127,38 @@ export class GameStore {
       spawners: {
         ...state.spawners,
         [String(adr)]: economy.spawnerCount(state, adr) + 1,
+      },
+    });
+    return true;
+  }
+
+  incomeLevel(id: TicketTypeId): number {
+    return economy.incomeLevel(this.#state(), id);
+  }
+
+  incomeCost(id: TicketTypeId): number {
+    return economy.incomeCost(this.#state(), id);
+  }
+
+  incomeUnlocked(id: TicketTypeId): boolean {
+    return economy.incomeUnlocked(this.#state(), id);
+  }
+
+  canBuyIncome(id: TicketTypeId): boolean {
+    return economy.canBuyIncome(this.#state(), id);
+  }
+
+  /** Bill more for one kind of work — the rail's third tab. */
+  buyIncome(id: TicketTypeId): boolean {
+    const state = this.#state();
+    if (!economy.canBuyIncome(state, id)) return false;
+    const cost = economy.incomeCost(state, id);
+    this.#state.set({
+      ...state,
+      budget: state.budget - cost,
+      income: {
+        ...state.income,
+        [id]: economy.incomeLevel(state, id) + 1,
       },
     });
     return true;
@@ -1175,8 +1275,10 @@ export class GameStore {
     const node = SKILL_BY_ID.get(id);
     const bought = node?.levels[economy.skillRank(state, id)];
     const levels = { ...state.levels };
+    let tier = state.tier;
     for (const effect of bought?.effects ?? []) {
       if (effect.kind === 'line') levels[effect.line] += 1;
+      if (effect.kind === 'adr') tier = Math.max(tier, effect.adr);
     }
 
     const roster =
@@ -1190,9 +1292,11 @@ export class GameStore {
       storyPoints: eur ? state.storyPoints : state.storyPoints - cost,
       levels,
       roster,
+      tier,
       skills: { ...state.skills, [id]: economy.skillRank(state, id) + 1 },
       endedAt: id === FINAL_SKILL_ID ? state.lastTick : state.endedAt,
     });
+    if (tier > state.tier) this.#approve(tier);
     return true;
   }
 

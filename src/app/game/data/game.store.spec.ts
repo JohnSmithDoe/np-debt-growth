@@ -2,9 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import { resumed } from '../model/consultancy.model';
 import { FEED_LINES_PER_SEC, MAX_CATCHUP_MS } from '../model/game.consts';
-import { SECRET_SKILL_ID, SKILL_BY_ID } from '../model/skill.model';
-import { tierAt } from '../model/tier.model';
-import { DESKS_PER_PLATE } from '../model/balance/crew';
+import {
+  DESK_NODE_ID,
+  SECRET_SKILL_ID,
+  SKILL_BY_ID,
+  SKILL_ROOT_ID,
+} from '../model/skill.model';
+import { adrNodeId, tierAt } from '../model/tier.model';
+import { FREE_COPILOTS } from '../model/balance/progression';
+import { DESKS_BASE, DESKS_PER_RANK } from '../model/balance/crew';
 import { addTicket } from '../util/board';
 import { sprintSlots } from '../util/economy';
 import { GameStore } from './game.store';
@@ -21,22 +27,32 @@ function click(store: GameStore, id: Parameters<typeof addTicket>[1]): boolean {
 }
 
 describe('the free Copilot (C3)', () => {
-  it('comes with tier 1, so Story Points are reachable without buying one', () => {
-    const store = storeWith({ budget: tierAt(1)!.unlockCost });
-    expect(store.levels().copilot).toBe(0);
-    expect(store.unlockNextTier()).toBe(true);
-    expect(store.tier()).toBe(1);
-    expect(store.levels().copilot).toBe(1);
+  // The tree is bought with story points now, so the first copilot has to
+  // ship with the laptop: without it the first ADR is unreachable.
+  it('ships with the run, so Story Points flow from the first close', () => {
+    const store = storeWith();
+    expect(store.levels().copilot).toBe(FREE_COPILOTS);
+    expect(store.tier()).toBe(0);
   });
 
-  it('is granted once — tier 2 hands out nothing', () => {
+  it('opens the first rung on story points, not on budget', () => {
     const store = storeWith({
-      tier: 1,
-      levels: { copilot: 1 },
-      budget: tierAt(2)!.unlockCost,
+      storyPoints: tierAt(1)!.spCost,
+      budget: 0,
+      skills: { root: 1 },
     });
     expect(store.unlockNextTier()).toBe(true);
-    expect(store.levels().copilot).toBe(1);
+    expect(store.tier()).toBe(1);
+  });
+
+  it('refuses a rung the run has not earned the points for', () => {
+    const store = storeWith({
+      storyPoints: 0,
+      budget: 1e9,
+      skills: { root: 1 },
+    });
+    expect(store.unlockNextTier()).toBe(false);
+    expect(store.tier()).toBe(0);
   });
 });
 
@@ -219,12 +235,22 @@ describe('purchases', () => {
   });
 
   it('opens a branch on the first level, not the last', () => {
-    const store = storeWith({ storyPoints: 1_000_000, budget: 1_000_000 });
+    const store = storeWith({
+      storyPoints: 1_000_000,
+      budget: 1_000_000,
+      skills: {},
+    });
     expect(store.buySkill('radius')).toBe(false);
     expect(store.buySkill('root')).toBe(true);
     expect(store.buySkill('capacity')).toBe(false);
     expect(store.buySkill('radius')).toBe(true);
     expect(store.buySkill('capacity')).toBe(true);
+  });
+
+  it('ships the root bought, so the ADR ladder is never stranded', () => {
+    const store = storeWith();
+    expect(store.skillRank(SKILL_ROOT_ID)).toBe(1);
+    expect(store.skillAvailable(adrNodeId(1))).toBe(true);
   });
 });
 
@@ -316,31 +342,32 @@ describe('juniors and the sprint', () => {
   });
 });
 
-describe('rooms gate the crew (D36, D56)', () => {
-  it('refuses a seat whose room has not been bought', () => {
+describe('desks gate the crew (D36, D56)', () => {
+  it('refuses a seat the floor has no desk for', () => {
     const store = storeWith({
       budget: 1_000_000,
       skills: { root: 1, junior: 1 },
-      levels: { junior: DESKS_PER_PLATE },
+      levels: { junior: DESKS_BASE },
     });
     expect(store.skillAvailable('junior')).toBe(false);
     expect(store.buySkill('junior')).toBe(false);
   });
 
-  it('lets the same seat through once the room is there', () => {
+  it('adds seats a rank at a time, never by a factor', () => {
     const store = storeWith({
       budget: 1_000_000,
-      skills: { root: 1, radius: 1, capacity: 1, o1: 1, junior: 1 },
-      levels: { junior: DESKS_PER_PLATE },
+      skills: { root: 1, crew: 1, junior: 1, [DESK_NODE_ID]: 1 },
+      levels: { junior: DESKS_BASE },
     });
+    expect(store.freeDesks()).toBe(DESKS_PER_RANK);
     expect(store.buyLine('junior')).toBe(true);
-    expect(store.levels().junior).toBe(DESKS_PER_PLATE + 1);
+    expect(store.levels().junior).toBe(DESKS_BASE + 1);
   });
 
   it('leaves every line that seats nobody alone', () => {
     const store = storeWith({
       budget: 1_000_000,
-      levels: { junior: DESKS_PER_PLATE },
+      levels: { junior: DESKS_BASE },
     });
     for (const line of ['copilot', 'velocity', 'kit'] as const) {
       expect(store.deskLimited(line)).toBe(false);
@@ -350,11 +377,11 @@ describe('rooms gate the crew (D36, D56)', () => {
   it('never blocks the Promotion Round on a full floor', () => {
     const store = storeWith({
       budget: 100_000_000,
-      levels: { junior: DESKS_PER_PLATE - 1, senior: 1 },
+      levels: { junior: DESKS_BASE - 1, senior: 1 },
     });
     expect(store.freeDesks()).toBe(0);
     expect(store.promote()).toBe(true);
-    expect(store.levels().senior).toBe(DESKS_PER_PLATE);
+    expect(store.levels().senior).toBe(DESKS_BASE);
   });
 });
 
@@ -490,5 +517,48 @@ describe('the senior hire (D34)', () => {
     expect(state.levels.senior).toBe(5);
     expect(state.roster.length).toBe(1);
     expect(state.roster[3]).toBeUndefined();
+  });
+});
+
+describe('a full can refuses in place (parity #11)', () => {
+  it('names what it left behind, and leaves it on the board', () => {
+    const store = storeWith();
+    const slots = sprintSlots(store.snapshot());
+    for (let i = 0; i < slots; i += 1) click(store, 'lint');
+
+    const left = addTicket(store.board, 'lint')!;
+    const { taken, refused } = store.harvest([left.id]);
+
+    expect(taken).toEqual([]);
+    expect(refused).toEqual([left.id]);
+    expect(store.board.byId.has(left.id)).toBe(true);
+  });
+
+  it('refuses nothing while there is room', () => {
+    const store = storeWith();
+    const ticket = addTicket(store.board, 'lint')!;
+    expect(store.harvest([ticket.id]).refused).toEqual([]);
+  });
+});
+
+describe('an ADR is a tree node (parity #23)', () => {
+  it('opens the rung, its spawner line and its ticket in one purchase', () => {
+    const store = storeWith({
+      storyPoints: tierAt(1)!.spCost,
+      skills: { root: 1 },
+    });
+    expect(store.spawnerUnlocked(1)).toBe(false);
+
+    expect(store.buySkill(adrNodeId(1))).toBe(true);
+    expect(store.tier()).toBe(1);
+    expect(store.spawnerUnlocked(1)).toBe(true);
+    expect(store.skillRank(adrNodeId(1))).toBe(1);
+  });
+
+  it('chains the rungs, so none can be skipped', () => {
+    const store = storeWith({ storyPoints: 1e9, skills: { root: 1 } });
+    expect(store.skillAvailable(adrNodeId(2))).toBe(false);
+    store.buySkill(adrNodeId(1));
+    expect(store.skillAvailable(adrNodeId(2))).toBe(true);
   });
 });

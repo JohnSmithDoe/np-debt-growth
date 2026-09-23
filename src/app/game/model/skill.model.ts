@@ -2,11 +2,16 @@ import type { TicketTypeId } from './ticket.model';
 import type { PurchaseId } from './balance/progression';
 import type { CrewKind } from './crew.model';
 import { DEBT_INTEREST_PER_RANK } from './balance/flow';
+import { DESKS_PER_RANK } from './balance/crew';
+import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from './tier.model';
 
 export type SkillEffect =
   | { readonly kind: 'none' }
   | { readonly kind: 'clickRadius'; readonly mult: number }
-  | { readonly kind: 'slots'; readonly mult: number }
+  | { readonly kind: 'slots'; readonly add: number }
+  | { readonly kind: 'cans'; readonly mult: number }
+  | { readonly kind: 'desks'; readonly add: number }
+  | { readonly kind: 'adr'; readonly adr: number }
   | { readonly kind: 'roundLength'; readonly seconds: number }
   | { readonly kind: 'junior'; readonly mult: number }
   | { readonly kind: 'juniorWalk'; readonly mult: number }
@@ -72,7 +77,7 @@ export type SkillGate =
   | 'tier8';
 
 export type SkillTrack =
-  'root' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'O' | 'secret';
+  'root' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'N' | 'O' | 'secret';
 
 export type SkillCurrency = 'sp' | 'eur';
 
@@ -103,6 +108,19 @@ export const skillLabelKey = (id: string, level = 1): string =>
 
 export const skillBlurbKey = (id: string): string => `skill.${id}.blurb`;
 
+/**
+ * One node per ADR, chained. Approving it opens that rung's spawner line and
+ * the ticket type it drops — the two arrive together, as one purchase.
+ */
+const ADR_NODES: readonly SkillNode[] = DEBT_TIERS.map((tier) => ({
+  id: adrNodeId(tier.index),
+  track: 'N' as const,
+  requires: tier.index === 1 ? ADR_HEADING_ID : adrNodeId(tier.index - 1),
+  levels: [
+    { cost: tier.spCost, effects: [{ kind: 'adr' as const, adr: tier.index }] },
+  ],
+}));
+
 export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'root',
@@ -117,6 +135,14 @@ export const SKILL_NODES: readonly SkillNode[] = [
   { id: 'debt', track: 'D', requires: 'root', heading: true, levels: [] },
   { id: 'client', track: 'C', requires: 'root', heading: true, levels: [] },
   { id: 'office', track: 'O', requires: 'root', heading: true, levels: [] },
+  {
+    id: ADR_HEADING_ID,
+    track: 'N',
+    requires: 'root',
+    heading: true,
+    levels: [],
+  },
+  ...ADR_NODES,
 
   {
     id: 'radius',
@@ -133,11 +159,21 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'A',
     requires: 'radius',
     levels: [
-      { cost: 12, effects: [{ kind: 'slots', mult: 1.6 }] },
-      { cost: 48, effects: [{ kind: 'slots', mult: 1.55 }] },
-      { cost: 190, effects: [{ kind: 'slots', mult: 1.5 }] },
-      { cost: 760, effects: [{ kind: 'slots', mult: 1.45 }] },
-      { cost: 3_000, effects: [{ kind: 'slots', mult: 1.4 }] },
+      { cost: 12, effects: [{ kind: 'slots', add: 6 }] },
+      { cost: 48, effects: [{ kind: 'slots', add: 8 }] },
+      { cost: 190, effects: [{ kind: 'slots', add: 10 }] },
+      { cost: 760, effects: [{ kind: 'slots', add: 14 }] },
+      { cost: 3_000, effects: [{ kind: 'slots', add: 18 }] },
+    ],
+  },
+  {
+    id: 'cans',
+    track: 'A',
+    requires: 'capacity',
+    levels: [
+      { cost: 260, effects: [{ kind: 'cans', mult: 2 }] },
+      { cost: 5_200, effects: [{ kind: 'cans', mult: 2 }] },
+      { cost: 110_000, effects: [{ kind: 'cans', mult: 2 }] },
     ],
   },
   {
@@ -164,6 +200,15 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'B',
     requires: 'crew',
     levels: [{ cost: 6, effects: [{ kind: 'line', line: 'junior' }] }],
+  },
+  {
+    id: 'headcount',
+    track: 'B',
+    requires: 'junior',
+    levels: [30, 260, 2_100, 18_000, 150_000].map((cost) => ({
+      cost,
+      effects: [{ kind: 'desks' as const, add: DESKS_PER_RANK }],
+    })),
   },
   {
     id: 'juniorSpeed',
@@ -676,7 +721,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'o2',
     track: 'O',
     requires: 'o1',
-    levels: [{ cost: 38, effects: [{ kind: 'slots', mult: 1.1 }] }],
+    levels: [{ cost: 38, effects: [{ kind: 'slots', add: 2 }] }],
   },
   {
     id: 'o3',
@@ -746,7 +791,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'G',
     requires: 'goldenCrew',
     gate: 'tier8',
-    levels: [{ cost: 250_000, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 3_000_000, effects: [{ kind: 'none' }] }],
   },
 
   {
@@ -792,6 +837,11 @@ const COLLAPSED: ReadonlyMap<string, string | null> = new Map(
     return [node.id, at];
   })
 );
+
+export const ADR_NODE_IDS: readonly string[] = ADR_NODES.map((node) => node.id);
+
+/** The one node that adds desks; `Rattenpopulation`'s opposite number. */
+export const DESK_NODE_ID = 'headcount';
 
 export const OFFICE_HEADING_ID = 'office';
 

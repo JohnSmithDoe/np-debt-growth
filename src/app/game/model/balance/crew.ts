@@ -147,4 +147,7 @@ export const WOMAN_CLOSE_RATE = 2;
 
 export const PROMOTION_PREMIUM = 1.6;
 
-export const DESKS_PER_PLATE = 10;
+/** The floor you start with; the headcount node adds seats on top, never multiplies. */
+export const DESKS_BASE = 10;
+
+export const DESKS_PER_RANK = 5;

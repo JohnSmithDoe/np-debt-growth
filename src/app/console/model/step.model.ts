@@ -12,6 +12,7 @@ export interface NextStep {
   readonly detailKey: string;
   readonly detailParams?: EffectParams;
   readonly detailMoney?: number;
+  readonly detailPoints?: number;
   readonly focus?: string;
   readonly act?: StepAction;
   readonly teaches?: boolean;

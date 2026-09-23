@@ -1,107 +1,128 @@
 import * as Phaser from 'phaser';
 
-import { DEBT_TIERS, tierNameKey } from '../../game/model/tier.model';
-import type { SceneDeps } from '../model/scene-deps.model';
-import { BOARD_TEXT } from '../model/board.consts';
+import { SPAWNERS } from '../../game/model/spawner.model';
+import { LANE } from '../model/board.consts';
 import { ATLAS_KEY, SPAWNER_FRAMES } from '../util/board-atlas';
 
-const LANE_GAP = 46;
-
-interface Walker {
-  readonly frame: string;
+interface Pace {
   readonly speed: number;
-  readonly direction: 1 | -1;
+  readonly lane: number;
 }
 
-const WALKERS: Readonly<Record<number, Walker>> = {
-  1: { frame: SPAWNER_FRAMES[0] ?? '', speed: 26, direction: 1 },
-  2: { frame: SPAWNER_FRAMES[1] ?? '', speed: 58, direction: -1 },
-  3: { frame: SPAWNER_FRAMES[2] ?? '', speed: 40, direction: 1 },
-  4: { frame: SPAWNER_FRAMES[3] ?? '', speed: 34, direction: -1 },
-  5: { frame: SPAWNER_FRAMES[4] ?? '', speed: 72, direction: 1 },
-  6: { frame: SPAWNER_FRAMES[5] ?? '', speed: 18, direction: -1 },
-  7: { frame: SPAWNER_FRAMES[6] ?? '', speed: 46, direction: 1 },
-  8: { frame: SPAWNER_FRAMES[7] ?? '', speed: 88, direction: -1 },
-};
+/** Stable per-walker pace and height, so a crowd does not march in step. */
+function paceOf(adr: number, index: number): Pace {
+  const noise = Math.sin((adr * 37 + index * 11 + 1) * 12.9898) * 43758.5453;
+  const at = noise - Math.floor(noise);
+  return { speed: 16 + at * 74, lane: at };
+}
 
+interface Walker {
+  readonly image: Phaser.GameObjects.Image;
+  readonly speed: number;
+  readonly lane: number;
+  direction: 1 | -1;
+}
+
+/**
+ * The path above the board. Every line you buy puts another body on it, so
+ * the lane is the receipt for the whole rail — crowd it and the board fills.
+ */
 export class TierSpawners {
-  readonly #walkers: Phaser.GameObjects.Image[] = [];
-  readonly #labels: Phaser.GameObjects.Text[] = [];
-  readonly #specs: (Walker | undefined)[] = [];
-  readonly #direction: number[] = [];
+  readonly #scene: Phaser.Scene;
+  readonly #depth: number;
+  readonly #lines = new Map<number, Walker[]>();
+  readonly #counts = new Map<number, number>();
 
   #left = 0;
   #right = 0;
-  #tier = -1;
+  #top = 0;
 
-  constructor(scene: Phaser.Scene, depth: number, text: SceneDeps['text']) {
-    DEBT_TIERS.forEach((tier) => {
-      const spec = WALKERS[tier.index];
-      this.#specs.push(spec);
-      this.#direction.push(spec?.direction ?? 1);
-      this.#walkers.push(
-        scene.add
-          .image(0, 0, ATLAS_KEY, spec?.frame ?? SPAWNER_FRAMES[0])
-          .setDepth(depth)
-          .setVisible(false)
-      );
-      this.#labels.push(
-        scene.add
-          .text(0, 0, text(tierNameKey(tier.index)).toUpperCase(), {
-            fontFamily: 'monospace',
-            fontSize: '9px',
-            color: BOARD_TEXT.dim,
-          })
-          .setOrigin(0.5, 0)
-          .setDepth(depth)
-          .setVisible(false)
-      );
-    });
+  constructor(scene: Phaser.Scene, depth: number) {
+    this.#scene = scene;
+    this.#depth = depth;
   }
 
   layout(left: number, top: number, width: number): void {
-    this.#left = left + 40;
-    this.#right = left + width - 40;
-    this.#walkers.forEach((walker, index) => {
-      walker.setPosition(
-        Phaser.Math.Between(this.#left, this.#right),
-        top + 40 + index * LANE_GAP
-      );
-    });
-  }
-
-  sync(tier: number): void {
-    if (tier === this.#tier) return;
-    this.#tier = tier;
-    const shown = (index: number): boolean =>
-      index < tier && this.#specs[index] !== undefined;
-    this.#walkers.forEach((walker, index) => walker.setVisible(shown(index)));
-    this.#labels.forEach((label, index) => label.setVisible(shown(index)));
-  }
-
-  update(deltaMs: number): void {
-    for (let index = 0; index < this.#walkers.length; index++) {
-      const walker = this.#walkers[index];
-      if (!walker?.visible) continue;
-      const direction = this.#direction[index] ?? 1;
-      const speed = this.#specs[index]?.speed ?? 0;
-      walker.x += (speed * direction * deltaMs) / 1000;
-      if (walker.x < this.#left || walker.x > this.#right) {
-        this.#direction[index] = -direction;
-        walker.x = Phaser.Math.Clamp(walker.x, this.#left, this.#right);
-      }
-      walker.setFlipX(direction < 0);
-      this.#labels[index]?.setPosition(walker.x, walker.y + 24);
+    this.#left = left + LANE.margin;
+    this.#right = left + width - LANE.margin;
+    this.#top = top + LANE.top;
+    for (const walkers of this.#lines.values()) {
+      walkers.forEach((walker, index) => this.#place(index, walker));
     }
   }
 
-  originOf(tierIndex: number): Phaser.GameObjects.Image | null {
-    const walker = this.#walkers[tierIndex - 1];
-    return walker?.visible ? walker : null;
+  /** `counts` is the rail's ledger: one walker drawn per head bought, capped. */
+  sync(counts: (adr: number) => number): void {
+    for (const row of SPAWNERS) {
+      const wanted = Math.min(counts(row.adr), LANE.perLine);
+      if (this.#counts.get(row.adr) === wanted) continue;
+      this.#counts.set(row.adr, wanted);
+      this.#fit(row.adr, wanted);
+    }
+  }
+
+  update(deltaMs: number): void {
+    for (const walkers of this.#lines.values()) {
+      for (const walker of walkers) {
+        const step = (walker.speed * walker.direction * deltaMs) / 1000;
+        walker.image.x += step;
+        if (walker.image.x < this.#left || walker.image.x > this.#right) {
+          walker.direction = walker.direction < 0 ? 1 : -1;
+          walker.image.x = Phaser.Math.Clamp(
+            walker.image.x,
+            this.#left,
+            this.#right
+          );
+        }
+        walker.image.setFlipX(walker.direction < 0);
+      }
+    }
+  }
+
+  /** Where a card of this line falls from: one of the bodies that dropped it. */
+  originOf(adr: number): Phaser.GameObjects.Image | null {
+    const walkers = this.#lines.get(adr);
+    if (!walkers || walkers.length === 0) return null;
+    const at = Math.floor(Math.random() * walkers.length);
+    return walkers[at]?.image ?? null;
   }
 
   destroy(): void {
-    for (const walker of this.#walkers) walker.destroy();
-    for (const label of this.#labels) label.destroy();
+    for (const walkers of this.#lines.values()) {
+      for (const walker of walkers) walker.image.destroy();
+    }
+    this.#lines.clear();
+    this.#counts.clear();
+  }
+
+  #fit(adr: number, wanted: number): void {
+    const walkers = this.#lines.get(adr) ?? [];
+    this.#lines.set(adr, walkers);
+
+    while (walkers.length > wanted) walkers.pop()?.image.destroy();
+    while (walkers.length < wanted) {
+      const index = walkers.length;
+      const { speed, lane } = paceOf(adr, index);
+      const walker: Walker = {
+        image: this.#scene.add
+          .image(0, 0, ATLAS_KEY, SPAWNER_FRAMES[adr] ?? SPAWNER_FRAMES[0])
+          .setScale(LANE.scale)
+          .setDepth(this.#depth + (lane < 0.5 ? 0 : 1)),
+        speed,
+        lane,
+        direction: index % 2 === 0 ? 1 : -1,
+      };
+      walkers.push(walker);
+      this.#place(index, walker);
+    }
+  }
+
+  #place(index: number, walker: Walker): void {
+    const span = Math.max(1, this.#right - this.#left);
+    const spread = (index + 0.5) / Math.max(1, LANE.perLine);
+    walker.image.setPosition(
+      this.#left + ((spread + walker.lane) % 1) * span,
+      this.#top + walker.lane * LANE.height
+    );
   }
 }

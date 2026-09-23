@@ -8,6 +8,7 @@ import type { Consultancy } from '../model/consultancy.model';
 import { freshConsultancy } from '../model/consultancy.model';
 import { SAVE_VERSION } from '../model/game.consts';
 import {
+  FINAL_SKILL_ID,
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_NODES,
@@ -17,7 +18,7 @@ import { TICKET_TYPES } from '../model/ticket.model';
 import { DEBT_TIERS } from '../model/tier.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { PURCHASE_IDS } from '../model/balance/progression';
-import { SPAWNERS } from '../model/spawner.model';
+import { SPAWNED_TICKET_IDS, SPAWNERS } from '../model/spawner.model';
 import { HAZARDS_ENABLED } from '../model/hazard.model';
 import { TRAIT_IDS } from '../model/senior.model';
 
@@ -54,11 +55,10 @@ function everySkill(): Record<string, number> {
 }
 
 const MILESTONES = [
-  // ADR-1 comes first now: it hands over the free copilot, and copilots are
-  // the only source of SP before velocity, so nothing on the tree is
-  // reachable until it lands.
-  ['tier 1', (s: Consultancy) => s.tier >= 1],
+  // The copilot ships with the run now — the tree is bought in story points,
+  // so SP has to flow before the first rung, not after it.
   ['first junior', (s: Consultancy) => s.levels.junior >= 1],
+  ['tier 1', (s: Consultancy) => s.tier >= 1],
   ['tier 2', (s: Consultancy) => s.tier >= 2],
   ['tier 3', (s: Consultancy) => s.tier >= 3],
   ['tier 4', (s: Consultancy) => s.tier >= 4],
@@ -66,6 +66,8 @@ const MILESTONES = [
   ['tier 6', (s: Consultancy) => s.tier >= 6],
   ['tier 7', (s: Consultancy) => s.tier >= 7],
   ['tier 8', (s: Consultancy) => s.tier >= 8],
+  // The run ends on a purchase, so the purchase is the last milestone.
+  ['signed off', (s: Consultancy) => (s.skills[FINAL_SKILL_ID] ?? 0) > 0],
 ] as const;
 
 const UNORDERED_MILESTONES = [
@@ -252,6 +254,20 @@ class Playthrough {
     while (this.store.unlockNextTier());
     this.#buyLines();
     this.#buySpawners();
+    this.#buyIncome();
+  }
+
+  /** The rates tab: the only euro sink left once every line has capped. */
+  #buyIncome(): void {
+    for (;;) {
+      const state = this.store.snapshot();
+      const next = SPAWNED_TICKET_IDS.filter(
+        (id) =>
+          this.store.canBuyIncome(id) &&
+          this.store.incomeCost(id) <= state.budget * PURCHASE_SPEND_FRACTION
+      ).sort((a, b) => this.store.incomeCost(a) - this.store.incomeCost(b))[0];
+      if (!next || !this.store.buyIncome(next)) return;
+    }
   }
 
   /** Headcount is a rail purchase now, not a tree one. */
@@ -732,8 +748,8 @@ describe('the session arc', () => {
   });
 
   it('finishes inside a sitting, not a coffee break', () => {
-    const at = run.reached.get('tier 8');
-    expect(at, 'the run never reached ADR-8').toBeDefined();
+    const at = run.reached.get('signed off');
+    expect(at, 'the run never bought the last upgrade').toBeDefined();
     // The reference is finished in about an hour. Wide enough that ordinary
     // tuning does not trip it, tight enough to catch the curve collapsing.
     expect(at! / 60_000).toBeGreaterThan(35);
@@ -745,12 +761,25 @@ describe('the session arc', () => {
       (run.reached.get(to)! - run.reached.get(from)!) / 60_000;
 
     for (const [from, to] of [
+      ['tier 4', 'tier 5'],
       ['tier 5', 'tier 6'],
       ['tier 6', 'tier 7'],
       ['tier 7', 'tier 8'],
+      ['tier 8', 'signed off'],
     ] as const) {
       expect(gap(from, to), `${from} to ${to}`).toBeGreaterThan(2);
     }
+  });
+
+  it('leaves nothing on the tree unbought by the time it signs off', () => {
+    const end = run.store.snapshot();
+    const unbought = SKILL_NODES.filter(
+      (node) =>
+        node.id !== SECRET_SKILL_ID &&
+        node.heading !== true &&
+        (end.skills[node.id] ?? 0) === 0
+    );
+    expect(unbought.map((node) => node.id)).toEqual([]);
   });
 
   it('never hurries the truck away entirely', () => {
@@ -788,19 +817,22 @@ describe('the session arc', () => {
     const rows = marks.map((state, n) => {
       const since = n === 0 ? undefined : marks[n - 1];
       const perMin = (state.lifetimeBilled - (since?.lifetimeBilled ?? 0)) / 5;
+      const spPerMin = (state.storyPoints - (since?.storyPoints ?? 0)) / 5;
       const next = DEBT_TIERS.find((tier) => tier.index === state.tier + 1);
-      const owes = next ? next.unlockCost / Math.max(perMin, 1) : 0;
+      const owes = next ? next.spCost / Math.max(spPerMin, 1) : 0;
       return [
         String((n + 1) * 5).padStart(5),
         formatSci(perMin).padStart(12),
         formatSci(state.budget).padStart(12),
+        formatSci(spPerMin).padStart(10),
+        formatSci(state.storyPoints).padStart(10),
         String(state.tier).padStart(6),
-        (next ? formatSci(next.unlockCost) : '—').padStart(12),
+        (next ? formatSci(next.spCost) : '—').padStart(12),
         (next ? owes.toFixed(1) : '—').padStart(9),
       ].join('');
     });
     report(
-      `  min       EUR/min      budget  tier  next unlock  owes min\n${rows.join('\n')}`
+      `  min       EUR/min      budget     SP/min        SP  tier  next unlock  owes min\n${rows.join('\n')}`
     );
   });
 
@@ -823,7 +855,7 @@ describe('the session arc', () => {
       const next = rungs[n + 1]?.tier;
       const owes =
         next && perRound !== undefined && perRound > 0
-          ? next.unlockCost / perRound
+          ? next.spCost / perRound
           : undefined;
       if (reached) {
         fromRound = round;
@@ -831,7 +863,7 @@ describe('the session arc', () => {
       }
       return [
         `ADR-${tier.index}`.padStart(6),
-        formatSci(tier.unlockCost).padStart(13),
+        formatSci(tier.spCost).padStart(13),
         (round === undefined ? '—' : String(round)).padStart(7),
         (gap === undefined ? '—' : String(gap)).padStart(5),
         (perRound === undefined ? '—' : formatSci(perRound)).padStart(12),

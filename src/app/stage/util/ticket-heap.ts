@@ -8,6 +8,7 @@ import {
   CLAIM_SLOTS,
   HEAP_CAPACITY,
   RARE_CAPACITY,
+  REFUSAL_BOUNCE,
   RARE_LIFT,
   RARE_TITLE_OFFSET,
   RARE_TITLE_WIDTH,
@@ -37,6 +38,7 @@ export class TicketHeap {
   readonly #drawnAs = new Map<number, TicketTypeId>();
   readonly #rareSlot = new Map<number, number>();
 
+  readonly #bouncing = new Map<number, number>();
   readonly #claimSlot = new Map<number, number>();
   readonly #claimFree: number[] = [];
   readonly #claimPainted = new Map<number, number>();
@@ -177,6 +179,30 @@ export class TicketHeap {
     if (ticket) this.#draw(ticket);
   }
 
+  /** The can was full: these hop where they lie and stay on the board. */
+  bounce(ids: readonly number[]): void {
+    for (const id of ids) {
+      if (this.#drawn.has(id)) this.#bouncing.set(id, 0);
+    }
+  }
+
+  update(deltaMs: number): void {
+    if (this.#bouncing.size === 0) return;
+    for (const [id, at] of [...this.#bouncing]) {
+      const next = at + deltaMs;
+      if (next >= REFUSAL_BOUNCE.ms) this.#bouncing.delete(id);
+      else this.#bouncing.set(id, next);
+      const ticket = this.#drawn.get(id);
+      if (ticket) this.#draw(ticket);
+    }
+  }
+
+  #lift(id: number): number {
+    const at = this.#bouncing.get(id);
+    if (at === undefined) return 0;
+    return Math.sin((at / REFUSAL_BOUNCE.ms) * Math.PI) * REFUSAL_BOUNCE.lift;
+  }
+
   positionOf(id: number): { x: number; y: number } | null {
     const ticket = this.#drawn.get(id);
     if (!ticket) return null;
@@ -203,6 +229,7 @@ export class TicketHeap {
       this.#claimPainted.delete(claim);
       this.#claimFree.push(claim);
     }
+    this.#bouncing.delete(id);
     const rare = this.#rareSlot.get(id);
     if (rare !== undefined) {
       this.#rareCards[rare]?.setVisible(false);
@@ -223,7 +250,7 @@ export class TicketHeap {
     const slot = this.#slotOf.get(ticket.id);
     if (slot === undefined) return;
     const x = this.px(ticket.x);
-    const y = this.py(ticket.y);
+    const y = this.py(ticket.y) - this.#lift(ticket.id);
 
     if (TICKET_TYPES[ticket.type].handOnly) {
       const held = this.#rareSlot.get(ticket.id) ?? this.#rareFree.pop();

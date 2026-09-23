@@ -242,7 +242,7 @@ export class SprintStrip {
   }
 
   #drawCooldown(): void {
-    const length = this.#deps.roundLengthMs();
+    const length = this.#deps.haulMs();
     const width = CLOCK_WIDTH * (length > 0 ? this.#remaining / length : 0);
     const drawn = Math.round(width);
     if (drawn === this.#drawnCooldown) return;

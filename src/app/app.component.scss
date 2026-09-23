@@ -171,6 +171,10 @@
   gap: 1.1rem;
   min-width: 0;
   min-height: 0;
+  // Three shop tabs and ten rate lines can outgrow a short screen; the rail
+  // scrolls inside its own box rather than growing the page.
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .rail cb-activity-feed,

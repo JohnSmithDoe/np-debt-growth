@@ -1,7 +1,7 @@
 import type { Consultancy } from '../../game/model/consultancy.model';
 import { officeLabelKey } from '../../game/model/office.model';
-import { skillLabelKey } from '../../game/model/skill.model';
-import { tierAt, tierNameKey } from '../../game/model/tier.model';
+import { DESK_NODE_ID, skillLabelKey } from '../../game/model/skill.model';
+import { adrNodeId, tierAt, tierNameKey } from '../../game/model/tier.model';
 import { PURCHASE_REVEAL_FRACTION } from '../../game/model/balance/progression';
 import * as economy from '../../game/util/economy';
 import type { NextStep } from '../model/step.model';
@@ -22,7 +22,6 @@ export function nextSteps(
   gates: StepGates
 ): readonly NextStep[] {
   const steps: NextStep[] = [];
-  const affordable = (cost: number): boolean => state.budget >= cost;
 
   if (state.lifetimeClosed === 0) {
     steps.push({
@@ -45,28 +44,28 @@ export function nextSteps(
   }
 
   const tier = tierAt(state.tier + 1);
-  const inSight =
-    tier && affordable(tier.unlockCost * PURCHASE_REVEAL_FRACTION);
+  const earned = (cost: number): boolean => state.storyPoints >= cost;
+  const inSight = tier && earned(tier.spCost * PURCHASE_REVEAL_FRACTION);
   if (tier && inSight) {
-    const banked = affordable(tier.unlockCost);
+    const banked = earned(tier.spCost);
     steps.push({
       id: `adr:${tier.index}`,
-      target: 'review',
+      target: 'skills',
+      focus: adrNodeId(tier.index),
       titleKey: banked ? 'step.adr.title' : 'step.adr.bank.title',
       titleParams: { index: tier.index },
       detailKey: banked ? 'step.adr.detail' : 'step.adr.bank.detail',
       detailParams: { name: tierNameKey(tier.index) },
-      detailMoney: banked ? undefined : tier.unlockCost - state.budget,
+      detailPoints: banked ? undefined : tier.spCost - state.storyPoints,
     });
   }
 
   const plate = economy.officeNext(state);
-  const room = economy.officeNextNodeId(state);
-  if (plate && room !== null && economy.freeDesks(state) < 1) {
+  if (plate && economy.freeDesks(state) < 1) {
     steps.push({
       id: `office:${economy.officePlates(state)}`,
       target: 'skills',
-      focus: room,
+      focus: DESK_NODE_ID,
       titleKey: 'step.floor.title',
       detailKey: 'step.floor.detail',
       detailParams: { plate: officeLabelKey(plate.id) },

@@ -20,7 +20,7 @@ import {
   skillIconUrl,
 } from '../model/skill-icon.model';
 import { SKILL_ROOT_ID } from '../../game/model/skill.model';
-import { skillCode } from '../util/skill-copy';
+import { skillBadge, skillCode } from '../util/skill-copy';
 import type { SkillSquare, SquareState } from '../util/skill-layout';
 import {
   revealSquares,
@@ -38,6 +38,7 @@ const ICON_CY = 21;
 const CODE_TOP = 7;
 const PIP = { top: 38, height: 4, width: 8, gap: 3 } as const;
 const BAND = { scale: 2 } as const;
+const BADGE = { inset: 2 } as const;
 
 const PAD = 128;
 const STROKE = 4;
@@ -267,6 +268,24 @@ export class SkillScene extends PanZoomScene {
 
     this.#drawPips(frames, square, node);
     this.#drawPrice(square, node);
+    this.#drawBadge(square, node, state);
+  }
+
+  /** `+` adds, `%` compounds — the one thing a shopper reads before the price. */
+  #drawBadge(
+    square: SkillSquare,
+    node: SkillNodeView,
+    state: SquareState
+  ): void {
+    const badge = skillBadge(square.node, Math.min(node.rank + 1, node.ranks));
+    if (badge === null) return;
+    this.label(
+      square.x + SQUARE - STROKE - this.#glyph - BADGE.inset,
+      square.y + STROKE + BADGE.inset,
+      badge,
+      state === 'owned' ? INK.code : INK.codeDim,
+      SQUARE
+    );
   }
 
   #fillFor(node: SkillNodeView, state: SquareState): number {

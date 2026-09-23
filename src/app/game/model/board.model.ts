@@ -77,6 +77,8 @@ export interface CloseFloat {
 
 export interface Harvest {
   readonly taken: readonly number[];
+  /** Reached but left on the board because the can was full. */
+  readonly refused: readonly number[];
   readonly value: number;
 }
 

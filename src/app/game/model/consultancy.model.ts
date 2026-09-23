@@ -1,8 +1,9 @@
 import type { RoundOutcome, RoundPhase } from './round.model';
 import { SPAWNER_FREE_AT_ADR_0 } from './spawner.model';
 import type { SeniorHire } from './senior.model';
+import { SKILL_ROOT_ID } from './skill.model';
 import type { PurchaseId } from './balance/progression';
-import { PURCHASE_IDS } from './balance/progression';
+import { FREE_COPILOTS, PURCHASE_IDS } from './balance/progression';
 
 export interface Consultancy {
   readonly version: number;
@@ -20,6 +21,7 @@ export interface Consultancy {
   readonly levels: Readonly<Record<PurchaseId, number>>;
   readonly skills: Readonly<Record<string, number>>;
   readonly spawners: Readonly<Record<string, number>>;
+  readonly income: Readonly<Record<string, number>>;
   readonly promoted: boolean;
   readonly roster: readonly SeniorHire[];
   readonly tier: number;
@@ -41,10 +43,14 @@ export interface Consultancy {
   readonly lifetimeWorkBilled: number;
 }
 
+/**
+ * `lastTick` survives the restore on purpose: the gap between it and now is
+ * what the first tick pays out as offline progress.
+ */
 export function resumed(state: Consultancy, now: number): Consultancy {
   return {
     ...state,
-    lastTick: now,
+    lastTick: Math.min(state.lastTick, now),
     phase: 'collecting',
     roundMs: 0,
     haulLeftMs: 0,
@@ -66,12 +72,18 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     haulLeftMs: 0,
     roundSeq: 1,
     lastOutcome: null,
-    levels: Object.fromEntries(PURCHASE_IDS.map((id) => [id, 0])) as Record<
-      PurchaseId,
-      number
-    >,
-    skills: {},
+    levels: {
+      ...(Object.fromEntries(PURCHASE_IDS.map((id) => [id, 0])) as Record<
+        PurchaseId,
+        number
+      >),
+      copilot: FREE_COPILOTS,
+    },
+    // The root is free and the whole tree hangs off it — including the ADR
+    // ladder the rail's own button buys. Leaving it unclicked strands the run.
+    skills: { [SKILL_ROOT_ID]: 1 },
     spawners: { 0: SPAWNER_FREE_AT_ADR_0 },
+    income: {},
     promoted: false,
     roster: [],
     tier: 0,

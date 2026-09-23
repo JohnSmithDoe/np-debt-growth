@@ -20,7 +20,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.seniorBatch.one': '+{{count}} ticket per sweep',
   'skill.effect.seniorSweep': '{{pct}} sweep radius',
   'skill.effect.seniorWalk': '{{pct}} senior walk speed',
-  'skill.effect.slots': '{{pct}} sprint slots',
+  'skill.effect.slots': '+{{count}} sprint slots',
   'skill.effect.roundLength': '+{{seconds}}s sprint length',
   'skill.effect.spawnRate': '{{pct}} ticket spawn rate',
   'skill.effect.spawnRate.ticket': '{{pct}} {{ticket}} spawn rate',
@@ -423,4 +423,50 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.velocity.1.label': 'Velocity Accounting',
   'skill.velocity.blurb':
     'Story Points bought with money, and the rate decays as you use it.',
+  'skill.effect.cans': '×{{times}} sprint capacity',
+  'skill.effect.desks': '+{{count}} desks',
+  'skill.effect.adr':
+    'Approves ADR-{{adr}}: opens its line and the work it leaves',
+  'skill.adrs.1.label': 'Architecture Decisions',
+  'skill.cans.1.label': 'Second Board',
+  'skill.cans.2.label': 'Programme Board',
+  'skill.cans.3.label': 'Portfolio Wall',
+  'skill.cans.blurb':
+    'Doubles the whole sprint, slots and all. The other capacity axis.',
+  'skill.headcount.1.label': 'Desk Order',
+  'skill.headcount.2.label': 'Second Bullpen',
+  'skill.headcount.3.label': 'Floor Expansion',
+  'skill.headcount.4.label': 'Satellite Office',
+  'skill.headcount.5.label': 'Campus',
+  'skill.headcount.blurb':
+    'Five more desks a rank. Nobody is hired without one.',
+  'rail.tab.supply': 'Debt',
+  'rail.tab.income': 'Rates',
+  'rail.tab.crew': 'Crew',
+  'rail.income.locked': 'A rate opens once its source is on the path.',
+  'rail.income.effect': 'Bills {{pct}} more for every {{ticket}}',
+  'skill.adr1.1.label': 'Approve ADR-1',
+  'skill.adr1.blurb':
+    'Adopts the legacy framework. Its maintainers walk the path and leave work behind.',
+  'skill.adr2.1.label': 'Approve ADR-2',
+  'skill.adr2.blurb':
+    'Blesses copy-paste as a pattern. The flakes come with it.',
+  'skill.adr3.1.label': 'Approve ADR-3',
+  'skill.adr3.blurb':
+    'Signs the offshore contract. Merge conflicts, around the clock.',
+  'skill.adr4.1.label': 'Approve ADR-4',
+  'skill.adr4.blurb':
+    'Puts an AI assistant on the team. It writes more than anyone can read.',
+  'skill.adr5.1.label': 'Approve ADR-5',
+  'skill.adr5.blurb':
+    'Gives the rockstar commit rights, and a line on the path.',
+  'skill.adr6.1.label': 'Approve ADR-6',
+  'skill.adr6.blurb':
+    'Declares a service deprecated without deleting it. It still pages.',
+  'skill.adr7.1.label': 'Approve ADR-7',
+  'skill.adr7.blurb':
+    'Hires the CTO who wants a rewrite. The migration starts on the path.',
+  'skill.adr8.1.label': 'Approve ADR-8',
+  'skill.adr8.blurb':
+    'Stands up the architecture board. Agents, forever, in parallel.',
 };

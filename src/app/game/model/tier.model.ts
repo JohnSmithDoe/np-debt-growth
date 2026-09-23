@@ -1,64 +1,27 @@
 import type { TicketTypeId } from './ticket.model';
 
+/**
+ * An ADR is a tree node: it unlocks the spawner line and the ticket type
+ * together, and it is paid for in story points like every other node.
+ */
 export interface DebtTier {
   readonly index: number;
-  readonly unlockCost: number;
+  readonly spCost: number;
   readonly ticket: TicketTypeId;
-  readonly baselinePerRound: number;
 }
 
 export const tierNameKey = (index: number): string => `tier.${index}.name`;
 export const tierBlurbKey = (index: number): string => `tier.${index}.blurb`;
 
 export const DEBT_TIERS: readonly DebtTier[] = [
-  {
-    index: 1,
-    unlockCost: 130,
-    ticket: 'legacy',
-    baselinePerRound: 203,
-  },
-  {
-    index: 2,
-    unlockCost: 650,
-    ticket: 'flaky',
-    baselinePerRound: 900,
-  },
-  {
-    index: 3,
-    unlockCost: 3_500,
-    ticket: 'conflict',
-    baselinePerRound: 6_300,
-  },
-  {
-    index: 4,
-    unlockCost: 20_000,
-    ticket: 'slop',
-    baselinePerRound: 34_600,
-  },
-  {
-    index: 5,
-    unlockCost: 140_000,
-    ticket: 'rockstar',
-    baselinePerRound: 281_000,
-  },
-  {
-    index: 6,
-    unlockCost: 2_200_000,
-    ticket: 'zombie',
-    baselinePerRound: 1_490_000,
-  },
-  {
-    index: 7,
-    unlockCost: 110_000_000,
-    ticket: 'rewrite',
-    baselinePerRound: 12_200_000,
-  },
-  {
-    index: 8,
-    unlockCost: 280_000_000,
-    ticket: 'swarm',
-    baselinePerRound: 77_000_000,
-  },
+  { index: 1, spCost: 12, ticket: 'legacy' },
+  { index: 2, spCost: 110, ticket: 'flaky' },
+  { index: 3, spCost: 900, ticket: 'conflict' },
+  { index: 4, spCost: 16_000, ticket: 'slop' },
+  { index: 5, spCost: 130_000, ticket: 'rockstar' },
+  { index: 6, spCost: 440_000, ticket: 'zombie' },
+  { index: 7, spCost: 1_400_000, ticket: 'rewrite' },
+  { index: 8, spCost: 4_200_000, ticket: 'swarm' },
 ];
 
 export const MAX_TIER = DEBT_TIERS.length;
@@ -66,3 +29,8 @@ export const MAX_TIER = DEBT_TIERS.length;
 export function tierAt(index: number): DebtTier | undefined {
   return DEBT_TIERS[index - 1];
 }
+
+/** The tree node that approves a rung; `adrNodeId(3)` is ADR-3's square. */
+export const adrNodeId = (index: number): string => `adr${index}`;
+
+export const ADR_HEADING_ID = 'adrs';

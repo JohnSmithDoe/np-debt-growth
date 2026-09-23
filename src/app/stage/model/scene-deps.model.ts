@@ -26,6 +26,7 @@ export interface SceneDeps {
   pending(): number;
   escalated(): boolean;
   tier(): number;
+  spawnerCount(adr: number): number;
   relabelTarget(type: TicketTypeId): TicketTypeId | null;
   crewCeiling(crew: CrewKind): TicketTypeId | null;
   hazardNotice(): HazardNotice | null;
@@ -38,7 +39,7 @@ export interface SceneDeps {
   harvest(ids: readonly number[]): Harvest;
   running(): boolean;
   roundLeftMs(): number;
-  roundLengthMs(): number;
+  haulMs(): number;
   takePayout(): number;
   takeCloseFloats(): readonly CloseFloat[];
   unlockSecret(): void;

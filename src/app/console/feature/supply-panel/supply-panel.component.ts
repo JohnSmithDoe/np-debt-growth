@@ -10,8 +10,16 @@ import { TranslateService } from '@ngx-translate/core';
 import { formatCompactMoney } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import type { PurchaseId } from '../../../game/model/balance/progression';
-import { PURCHASE_IDS } from '../../../game/model/balance/progression';
 import {
+  INCOME_CAP,
+  INCOME_VALUE_STEP,
+  PURCHASE_IDS,
+} from '../../../game/model/balance/progression';
+import { LINE_EFFECT_PARAMS } from '../../../game/model/purchase-copy.model';
+import type { TicketTypeId } from '../../../game/model/ticket.model';
+import { ticketLabelKey } from '../../../game/model/ticket.model';
+import {
+  SPAWNED_TICKET_IDS,
   SPAWNER_CAP,
   SPAWNERS,
   spawnerBlurbKey,
@@ -19,23 +27,18 @@ import {
 } from '../../../game/model/spawner.model';
 import { PanelComponent } from '../../ui/panel/panel.component';
 
-type Tab = 'supply' | 'crew';
+const TABS = ['supply', 'income', 'crew'] as const;
 
-interface LineRow {
-  readonly line: PurchaseId;
-  readonly name: string;
-  readonly locked: boolean;
-  readonly held: number;
-  readonly cap: number;
-  readonly cost: string;
-  readonly maxed: boolean;
-  readonly affordable: boolean;
-}
+type Tab = (typeof TABS)[number];
 
-interface SupplyRow {
-  readonly adr: number;
+const MAXED = 'MAX';
+
+/** One shop row, whatever tab it sits in. */
+interface Row {
+  readonly key: string;
   readonly name: string;
   readonly blurb: string;
+  readonly locked: boolean;
   readonly held: number;
   readonly cap: number;
   readonly cost: string;
@@ -54,20 +57,30 @@ export class SupplyPanelComponent {
   #store = inject(GameStore);
   #text = inject(TranslateService);
 
-  readonly rows = computed<readonly SupplyRow[]>(() => {
+  readonly tab = signal<Tab>('supply');
+
+  // Resolved per render: the catalogue is lazily imported, so a field
+  // initialiser would read the keys back raw.
+  readonly tabs = computed<readonly { id: Tab; label: string }[]>(() => {
+    this.#store.state();
+    return TABS.map((id) => ({ id, label: this.#say(`rail.tab.${id}`) }));
+  });
+
+  readonly supply = computed<readonly Row[]>(() => {
     this.#store.state();
     return SPAWNERS.filter((row) => this.#store.spawnerUnlocked(row.adr)).map(
       (row) => {
         const held = this.#store.spawnerCount(row.adr);
         const maxed = held >= SPAWNER_CAP;
         return {
-          adr: row.adr,
-          name: this.#text.instant(spawnerLabelKey(row.adr)),
-          blurb: this.#text.instant(spawnerBlurbKey(row.adr)),
+          key: String(row.adr),
+          name: this.#say(spawnerLabelKey(row.adr)),
+          blurb: this.#say(spawnerBlurbKey(row.adr)),
+          locked: false,
           held,
           cap: SPAWNER_CAP,
           cost: maxed
-            ? 'MAX'
+            ? MAXED
             : formatCompactMoney(this.#store.spawnerCost(row.adr)),
           maxed,
           affordable: this.#store.canBuySpawner(row.adr),
@@ -82,9 +95,35 @@ export class SupplyPanelComponent {
       .length;
   });
 
-  readonly tab = signal<Tab>('supply');
+  /** Rates: bill more for one kind of work, once its source is on the path. */
+  readonly income = computed<readonly Row[]>(() => {
+    this.#store.state();
+    return SPAWNED_TICKET_IDS.filter((id) =>
+      this.#store.incomeUnlocked(id)
+    ).map((id) => {
+      const held = this.#store.incomeLevel(id);
+      const maxed = held >= INCOME_CAP;
+      return {
+        key: id,
+        name: this.#say(ticketLabelKey(id)),
+        blurb: this.#rateBlurb(id),
+        locked: false,
+        held,
+        cap: INCOME_CAP,
+        cost: maxed ? MAXED : formatCompactMoney(this.#store.incomeCost(id)),
+        maxed,
+        affordable: this.#store.canBuyIncome(id),
+      };
+    });
+  });
 
-  readonly crew = computed<readonly LineRow[]>(() => {
+  readonly rateLocked = computed(() => {
+    this.#store.state();
+    return SPAWNED_TICKET_IDS.filter((id) => !this.#store.incomeUnlocked(id))
+      .length;
+  });
+
+  readonly crew = computed<readonly Row[]>(() => {
     this.#store.state();
     // Locked lines stay on show — an empty tab reads as broken, not as
     // "these open on the tree".
@@ -94,15 +133,16 @@ export class SupplyPanelComponent {
       const cap = this.#store.lineCap(line);
       const maxed = held >= cap;
       return {
-        line,
-        name: this.#text.instant(`purchase.${line}.label`),
+        key: line,
+        name: this.#say(`purchase.${line}.label`),
+        blurb: this.#say(`purchase.${line}.effect`, LINE_EFFECT_PARAMS[line]),
         locked,
         held,
         cap,
         cost: locked
           ? 'on the tree'
           : maxed
-            ? 'MAX'
+            ? MAXED
             : formatCompactMoney(this.#store.lineCost(line)),
         maxed,
         affordable: this.#store.canBuyLine(line),
@@ -110,15 +150,43 @@ export class SupplyPanelComponent {
     });
   });
 
+  readonly rows = computed<readonly Row[]>(() => {
+    switch (this.tab()) {
+      case 'supply':
+        return this.supply();
+      case 'income':
+        return this.income();
+      case 'crew':
+        return this.crew();
+    }
+  });
+
   show(tab: Tab): void {
     this.tab.set(tab);
   }
 
-  buy(adr: number): void {
-    this.#store.buySpawner(adr);
+  buy(key: string): void {
+    switch (this.tab()) {
+      case 'supply':
+        this.#store.buySpawner(Number(key));
+        return;
+      case 'income':
+        this.#store.buyIncome(key as TicketTypeId);
+        return;
+      case 'crew':
+        this.#store.buyLine(key as PurchaseId);
+        return;
+    }
   }
 
-  hire(line: PurchaseId): void {
-    this.#store.buyLine(line);
+  #rateBlurb(id: TicketTypeId): string {
+    return this.#say('rail.income.effect', {
+      pct: `+${Math.round((INCOME_VALUE_STEP - 1) * 100)}%`,
+      ticket: this.#say(ticketLabelKey(id)),
+    });
+  }
+
+  #say(key: string, params?: Record<string, string | number>): string {
+    return this.#text.instant(key, params);
   }
 }

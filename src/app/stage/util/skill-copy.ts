@@ -32,7 +32,13 @@ function describe(effect: SkillEffect): EffectText {
     case 'clickRadius':
       return { key: 'skill.effect.clickRadius', params: pct(effect.mult) };
     case 'slots':
-      return { key: 'skill.effect.slots', params: pct(effect.mult) };
+      return { key: 'skill.effect.slots', params: { count: effect.add } };
+    case 'cans':
+      return { key: 'skill.effect.cans', params: { times: effect.mult } };
+    case 'desks':
+      return { key: 'skill.effect.desks', params: { count: effect.add } };
+    case 'adr':
+      return { key: 'skill.effect.adr', params: { adr: effect.adr } };
     case 'roundLength':
       return {
         key: 'skill.effect.roundLength',
@@ -171,6 +177,22 @@ export function skillEffectText(
     .join(' · ');
   BY_LEVEL.set(memo, resolved);
   return resolved;
+}
+
+export type SkillBadge = '+' | '%';
+
+/**
+ * Additive or multiplicative, at a glance — the reference puts this on every
+ * node so a shopper can tell a flat bump from a compounding one.
+ */
+export function skillBadge(node: SkillNode, level: number): SkillBadge | null {
+  const effects = node.levels[level - 1]?.effects ?? [];
+  let badge: SkillBadge | null = null;
+  for (const effect of effects) {
+    if ('mult' in effect) return '%';
+    if ('add' in effect || effect.kind === 'roundLength') badge = '+';
+  }
+  return badge;
 }
 
 export function skillCode(label: string): string {

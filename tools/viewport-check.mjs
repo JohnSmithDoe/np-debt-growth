@@ -74,26 +74,26 @@ for (const [width, height] of SIZES) {
 
   await fits('Board');
 
-  await page.evaluate(() => window.debtGrowth.endRound());
-  await page.waitForTimeout(700);
+  // The shop grew a third tab; each has to fit on its own.
+  for (const tab of ['Rates', 'Crew']) {
+    await page
+      .locator('cb-supply-panel .tabs button', { hasText: tab })
+      .click();
+    await page.waitForTimeout(300);
+    await fits(`Shop · ${tab}`);
+  }
 
-  if ((await page.locator('cb-sprint-review').count()) === 0) {
-    failures.push(`${width}x${height}: the Sprint Review never appeared`);
+  await page.getByRole('button', { name: /open the tree/i }).click();
+  await page.waitForTimeout(1200);
+
+  if ((await page.locator('.interval-bar').count()) === 0) {
+    failures.push(`${width}x${height}: the tree never opened`);
   } else {
-    await fits('Sprint Review');
-
-    await page.getByRole('button', { name: /open the tree/i }).click();
-    await page.waitForTimeout(1200);
-
-    if ((await page.locator('.interval-bar').count()) === 0) {
-      failures.push(`${width}x${height}: the tree never opened`);
-    } else {
-      await fits('Skills');
-      await page.getByRole('button', { name: /^Start sprint/ }).click();
-      await page.waitForTimeout(900);
-      if ((await page.locator('cb-sprint-review').count()) > 0) {
-        failures.push(`${width}x${height}: Start left the interval up`);
-      }
+    await fits('Skills');
+    await page.getByRole('button', { name: /back to the floor/i }).click();
+    await page.waitForTimeout(900);
+    if ((await page.locator('.interval-bar').count()) > 0) {
+      failures.push(`${width}x${height}: the tree would not close`);
     }
   }
 

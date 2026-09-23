@@ -37,7 +37,7 @@ describe('nextSteps', () => {
     const waiting = state({
       lifetimeClosed: 40,
       lifetimeBilled: 50_000,
-      budget: 50_000,
+      storyPoints: 50_000,
       tier: 1,
       phase: 'hauling',
     });
@@ -58,15 +58,15 @@ describe('nextSteps', () => {
 
   it('names the rung before it is affordable, and what is short', () => {
     const rung = tierAt(1);
-    const cost = rung?.unlockCost ?? 0;
+    const cost = rung?.spCost ?? 0;
 
-    const climbing = (budget: number): NextStep | undefined =>
+    const climbing = (storyPoints: number): NextStep | undefined =>
       nextSteps(
         state({
           lifetimeClosed: 30,
           lifetimeRounds: 4,
-          lifetimeBilled: Math.max(budget, cost),
-          budget,
+          lifetimeBilled: Math.max(storyPoints, cost),
+          storyPoints,
         }),
         gates
       ).find((step) => step.id === 'adr:1');
@@ -76,13 +76,13 @@ describe('nextSteps', () => {
 
     const near = climbing(cost * PURCHASE_REVEAL_FRACTION);
     expect(near?.titleKey).toBe('step.adr.bank.title');
-    expect(near?.detailMoney).toBeCloseTo(
+    expect(near?.detailPoints).toBeCloseTo(
       cost * (1 - PURCHASE_REVEAL_FRACTION)
     );
 
     const there = climbing(cost);
     expect(there?.titleKey).toBe('step.adr.title');
-    expect(there?.detailMoney).toBeUndefined();
+    expect(there?.detailPoints).toBeUndefined();
   });
 
   it('stops naming a rung once it has been taken', () => {
@@ -90,7 +90,7 @@ describe('nextSteps', () => {
       lifetimeClosed: 30,
       lifetimeRounds: 4,
       lifetimeBilled: 50_000,
-      budget: 50_000,
+      storyPoints: 50_000,
       tier: 1,
     });
     expect(nextSteps(climbed, gates).some((step) => step.id === 'adr:1')).toBe(
@@ -112,12 +112,16 @@ describe('nextSteps', () => {
 });
 
 describe('reached', () => {
-  it('opens with one screen and no dark rooms', () => {
+  it('opens with the tree already reachable — the ladder lives there', () => {
     expect(reached(state({}))).toEqual({
       board: true,
       review: true,
-      skills: false,
+      skills: true,
     });
+  });
+
+  it('closes the tree only for a run with no root at all', () => {
+    expect(reached(state({ skills: {} })).skills).toBe(false);
   });
 
   it('keeps Skills on a rank after the points that bought it are gone', () => {

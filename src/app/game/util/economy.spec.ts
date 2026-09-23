@@ -9,12 +9,22 @@ import type { CrewKind } from '../model/crew.model';
 import {
   CREW_KINDS,
   CREW_STATS,
+  DESKS_PER_RANK,
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
-import { SENIOR_BUYOUT_STEPS } from '../model/balance/progression';
+import {
+  INCOME_CAP,
+  INCOME_VALUE_STEP,
+  SENIOR_BUYOUT_STEPS,
+} from '../model/balance/progression';
 import {
   ceilingPerSec,
+  desks,
   haulMs,
+  incomeCost,
+  incomeLevel,
+  incomeUnlocked,
+  ticketValue,
   retainerPerSec,
   closeRate,
   crewCeilingPerSec,
@@ -397,5 +407,72 @@ describe('the retainer', () => {
     const at = consultancy({ tier: 2, levels: { junior: 3 } });
     expect(retainerPerSec(at)).toBeGreaterThan(0);
     expect(retainerPerSec(consultancy({ tier: 2 }))).toBe(0);
+  });
+});
+
+describe('the can has two axes (parity #13, #14)', () => {
+  const slots = (skills: Record<string, number>): number =>
+    sprintSlots(consultancy({ skills }));
+
+  it('adds slots a rank at a time, and never scales them', () => {
+    const one = slots({ capacity: 1 });
+    const two = slots({ capacity: 2 });
+    const node = SKILL_BY_ID.get('capacity')!;
+    const added = (rank: number): number => {
+      const level = node.levels[rank - 1]!.effects[0]!;
+      return 'add' in level ? level.add : 0;
+    };
+
+    expect(one - slots({})).toBe(added(1));
+    expect(two - one).toBe(added(2));
+  });
+
+  it('doubles the whole can per can, slots included', () => {
+    const bare = slots({ capacity: 3 });
+    expect(slots({ capacity: 3, cans: 1 })).toBe(bare * 2);
+    expect(slots({ capacity: 3, cans: 2 })).toBe(bare * 4);
+  });
+
+  it('adds desks by the rank, mirroring the reference worker node', () => {
+    const none = desks(consultancy());
+    expect(desks(consultancy({ skills: { headcount: 1 } })) - none).toBe(
+      DESKS_PER_RANK
+    );
+    expect(desks(consultancy({ skills: { headcount: 3 } })) - none).toBe(
+      DESKS_PER_RANK * 3
+    );
+  });
+});
+
+describe('the rates tab (parity #25)', () => {
+  const staffed = (income: Record<string, number>): Consultancy =>
+    consultancy({ spawners: { 0: 1, 1: 1 }, tier: 1, income });
+
+  it('stays shut until its source is on the path', () => {
+    expect(incomeUnlocked(consultancy({ spawners: {} }), 'lint')).toBe(false);
+    expect(incomeUnlocked(staffed({}), 'lint')).toBe(true);
+    expect(incomeUnlocked(staffed({}), 'swarm')).toBe(false);
+  });
+
+  it('lifts only the ticket it names', () => {
+    const rated = staffed({ lint: 4 });
+    const flat = staffed({});
+    expect(ticketValue(rated, 'lint') / ticketValue(flat, 'lint')).toBeCloseTo(
+      INCOME_VALUE_STEP ** 4,
+      6
+    );
+    expect(ticketValue(rated, 'bug')).toBe(ticketValue(flat, 'bug'));
+  });
+
+  it('stops at the cap, and asks more for every rank up to it', () => {
+    expect(incomeLevel(staffed({ lint: 99 }), 'lint')).toBe(INCOME_CAP);
+    expect(incomeCost(staffed({ lint: INCOME_CAP }), 'lint')).toBe(Infinity);
+
+    let last = 0;
+    for (let rank = 0; rank < INCOME_CAP; rank += 1) {
+      const cost = incomeCost(staffed({ lint: rank }), 'lint');
+      expect(cost, `rank ${rank}`).toBeGreaterThan(last);
+      last = cost;
+    }
   });
 });

@@ -29,7 +29,7 @@ import type { CrewBand } from '../model/balance/crew';
 import {
   CREW_KINDS,
   CREW_STATS,
-  DESKS_PER_PLATE,
+  DESKS_BASE,
   DESK_LINES,
   PROMOTION_PREMIUM,
   WOMAN_CLOSE_RATE,
@@ -45,6 +45,10 @@ import {
 } from '../model/balance/flow';
 import {
   COPILOT_SP_PER_CLOSE,
+  INCOME_CAP,
+  INCOME_COST_OF_SPAWNER,
+  INCOME_COST_STEP,
+  INCOME_VALUE_STEP,
   LINE_COST_STEP,
   LINE_PLAN,
   SENIOR_BUYOUT_STEPS,
@@ -82,8 +86,9 @@ export function kitNext(state: Consultancy): KitItem | null {
   return nextKitItem(state.levels.kit);
 }
 
+/** A flat desk count plus whatever the headcount node has added — never a product. */
 export function desks(state: Consultancy): number {
-  return officePlates(state) * DESKS_PER_PLATE;
+  return additive(state, 'desks', DESKS_BASE);
 }
 
 /** Headcount of a crew kind; the weather staffs whatever has no bought line. */
@@ -204,12 +209,20 @@ function globalMultiplier(state: Consultancy): number {
   return multOf(state, 'global');
 }
 
+/**
+ * Two axes, as the reference has them: slots are added to the can, and a
+ * second can doubles whatever the slots came to.
+ */
 export function sprintSlots(
   state: Consultancy,
   weather: Weather = CALM
 ): number {
-  const slots = Math.floor(SPRINT_SLOTS_BASE * multOf(state, 'slots'));
+  const slots = additive(state, 'slots', SPRINT_SLOTS_BASE) * cans(state);
   return Math.max(1, Math.floor(slots * weather.slots));
+}
+
+export function cans(state: Consultancy): number {
+  return productOf(state, (e) => (e.kind === 'cans' ? e.mult : null));
 }
 
 export function sprintRoom(
@@ -291,9 +304,41 @@ export function ticketValue(
   return (
     type.value *
     fromSkills *
+    incomeMultiplier(state, id) *
     tierScale *
     globalMultiplier(state) *
     hotfixMultiplier(state, now)
+  );
+}
+
+export function incomeLevel(state: Consultancy, id: TicketTypeId): number {
+  return Math.min(INCOME_CAP, state.income[id] ?? 0);
+}
+
+export function incomeMultiplier(state: Consultancy, id: TicketTypeId): number {
+  return INCOME_VALUE_STEP ** incomeLevel(state, id);
+}
+
+/** An income line opens once its source is on the path, not before. */
+export function incomeUnlocked(state: Consultancy, id: TicketTypeId): boolean {
+  const row = spawnerFor(id);
+  return row !== undefined && spawnerCount(state, row.adr) > 0;
+}
+
+export function incomeCost(state: Consultancy, id: TicketTypeId): number {
+  const row = spawnerFor(id);
+  const level = incomeLevel(state, id);
+  if (!row || level >= INCOME_CAP) return Number.POSITIVE_INFINITY;
+  return Math.ceil(
+    row.cost * INCOME_COST_OF_SPAWNER * INCOME_COST_STEP ** level
+  );
+}
+
+export function canBuyIncome(state: Consultancy, id: TicketTypeId): boolean {
+  return (
+    incomeUnlocked(state, id) &&
+    incomeLevel(state, id) < INCOME_CAP &&
+    state.budget >= incomeCost(state, id)
   );
 }
 
@@ -375,6 +420,28 @@ export function closeRate(state: Consultancy, id: TicketTypeId): number {
 
 export function totalSpawnRate(state: Consultancy): number {
   return TICKET_TYPE_IDS.reduce((sum, id) => sum + closeRate(state, id), 0);
+}
+
+/**
+ * What the floor bills per second when nobody is watching: supply, clamped by
+ * the can, priced at the mix the lines actually drop. No board to walk, so it
+ * is arithmetic — the only way to pay out hours in one frame.
+ */
+export function unattendedEuroPerSec(state: Consultancy): number {
+  let supply = 0;
+  let worth = 0;
+  for (const id of TICKET_TYPE_IDS) {
+    if (TICKET_TYPES[id].effect !== 'value') continue;
+    const rate = closeRate(state, id);
+    supply += rate;
+    worth += rate * ticketValue(state, id);
+  }
+  if (supply <= 0) return 0;
+  return (worth / supply) * Math.min(supply, ceilingPerSec(state));
+}
+
+export function unattendedClosesPerSec(state: Consultancy): number {
+  return Math.min(totalSpawnRate(state), ceilingPerSec(state));
 }
 
 export function juniorSpawnRate(state: Consultancy): number {

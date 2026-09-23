@@ -8,7 +8,7 @@ import {
 
 import {
   formatDuration,
-  formatMoney,
+  formatWhole,
 } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import { ticketLabelKey } from '../../../game/model/ticket.model';
@@ -51,19 +51,19 @@ export class AdrPanelComponent {
     const tier = tierAt(state.tier + 1);
     if (!tier) return null;
 
-    const affordable = state.budget >= tier.unlockCost;
-    const perSecond = this.#store.perSecond();
+    const affordable = state.storyPoints >= tier.spCost;
+    const perSecond = this.#store.pointsPerSecond();
     return {
       index: tier.index,
       nameKey: tierNameKey(tier.index),
       blurbKey: tierBlurbKey(tier.index),
       ticketKey: ticketLabelKey(tier.ticket),
-      cost: formatMoney(tier.unlockCost),
+      cost: `${formatWhole(tier.spCost)} SP`,
       affordable,
       timeToAfford:
         affordable || perSecond <= 0
           ? '—'
-          : formatDuration((tier.unlockCost - state.budget) / perSecond),
+          : formatDuration((tier.spCost - state.storyPoints) / perSecond),
       art: officeArtFor(tier.index),
     };
   });

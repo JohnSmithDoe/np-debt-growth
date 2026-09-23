@@ -105,6 +105,33 @@ export const CLICK_RING = {
 /** How long the ring stays red after a sweep the full can turned away. */
 export const REFUSED_MS = 220;
 
+/**
+ * A full can does not just tint the ring: the work you tried to take hops
+ * where it lies and stays there. The refusal is on the card, not the cursor.
+ */
+export const REFUSAL_BOUNCE = { ms: 260, lift: 9 } as const;
+
+/** Scatter dressing on the floor — drawn, never collectible. */
+export const FLOOR_SCATTER = {
+  tile: 192,
+  count: 26,
+  size: 2,
+  inks: [0xd8b34a, 0x9fb05a, 0xc9d3e2] as const,
+  alpha: 0.5,
+} as const;
+
+/**
+ * The lane above the board. One band, every line's actors mixed into it, so
+ * the crowd on the path is the receipt for everything the rail sold.
+ */
+export const LANE = {
+  top: 6,
+  height: 62,
+  margin: 34,
+  scale: 0.62,
+  perLine: 14,
+} as const;
+
 export const BOARD_INK = {
   floorLine: 0x1a212a,
   clickRing: 0x98a1b0,

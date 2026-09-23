@@ -7,7 +7,10 @@ import {
 } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { formatMoney } from '../../../@shared/util/format-quantity';
+import {
+  formatMoney,
+  formatWhole,
+} from '../../../@shared/util/format-quantity';
 import type { EffectParams } from '../../../game/model/purchase-copy.model';
 import { NextStepService } from '../../data/next-step.service';
 import type {
@@ -58,12 +61,8 @@ export class NextStepsComponent {
           id: step.id,
           does: acts && step.act ? DOES[step.act] : this.#points(step),
           acts,
-          title: this.#say(step.titleKey, step.titleParams),
-          detail: this.#say(
-            step.detailKey,
-            step.detailParams,
-            step.detailMoney
-          ),
+          title: this.#say(step.titleKey, this.#resolve(step.titleParams)),
+          detail: this.#detail(step),
           teaches: step.teaches === true,
           step,
         };
@@ -78,14 +77,27 @@ export class NextStepsComponent {
     this.go.emit(row.step);
   }
 
-  #say(key: string, params?: EffectParams, money?: number): string {
-    if (!params && money === undefined) return this.#translate.instant(key);
+  #detail(step: NextStep): string {
+    const resolved = this.#resolve(step.detailParams);
+    if (step.detailMoney !== undefined) {
+      resolved['money'] = formatMoney(step.detailMoney);
+    }
+    if (step.detailPoints !== undefined) {
+      resolved['points'] = formatWhole(Math.ceil(step.detailPoints));
+    }
+    return this.#say(step.detailKey, resolved);
+  }
+
+  #resolve(params?: EffectParams): Record<string, string | number> {
     const resolved: Record<string, string | number> = {};
     for (const [name, value] of Object.entries(params ?? {})) {
       resolved[name] =
         typeof value === 'string' ? this.#translate.instant(value) : value;
     }
-    if (money !== undefined) resolved['money'] = formatMoney(money);
-    return this.#translate.instant(key, resolved);
+    return resolved;
+  }
+
+  #say(key: string, params: Record<string, string | number>): string {
+    return this.#translate.instant(key, params);
   }
 }

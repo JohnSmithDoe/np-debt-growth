@@ -1,12 +1,14 @@
 import * as Phaser from 'phaser';
 
 import {
+  FLOOR_SCATTER,
   GROUND_FADE_MS,
   GROUND_TIER_INK,
   GROUND_TILE,
 } from '../model/board.consts';
 
 const TILE_KEY = 'cb-ground-tile';
+const SCATTER_KEY = 'cb-ground-scatter';
 
 function jitterAt(cell: number): number {
   const noise = Math.sin(cell * 12.9898) * 43758.5453;
@@ -41,6 +43,29 @@ function bakeTile(scene: Phaser.Scene): void {
   texture.refresh();
 }
 
+/**
+ * The flowers. Scatter that is drawn and never in the board model, so no
+ * amount of sweeping can pick it up — the floor reads as a place, not a heap.
+ */
+function bakeScatter(scene: Phaser.Scene): void {
+  if (scene.textures.exists(SCATTER_KEY)) scene.textures.remove(SCATTER_KEY);
+
+  const { tile, count, size, inks } = FLOOR_SCATTER;
+  const texture = scene.textures.createCanvas(SCATTER_KEY, tile, tile);
+  const ctx = texture?.getContext();
+  if (!texture || !ctx) return;
+
+  ctx.clearRect(0, 0, tile, tile);
+  for (let speck = 0; speck < count; speck++) {
+    const x = jitterAt(speck * 3 + 1) * (tile - size);
+    const y = jitterAt(speck * 3 + 2) * (tile - size);
+    const ink = inks[Math.floor(jitterAt(speck * 3 + 3) * inks.length)] ?? 0;
+    ctx.fillStyle = `#${ink.toString(16).padStart(6, '0')}`;
+    ctx.fillRect(Math.round(x), Math.round(y), size, size);
+  }
+  texture.refresh();
+}
+
 function inkAt(tier: number): number {
   const last = GROUND_TIER_INK.length - 1;
   return (
@@ -50,16 +75,23 @@ function inkAt(tier: number): number {
 
 export class GroundLayer {
   readonly #carpet: Phaser.GameObjects.TileSprite;
+  readonly #scatter: Phaser.GameObjects.TileSprite;
   readonly #scene: Phaser.Scene;
   #tier = -1;
   #fade?: Phaser.Tweens.Tween;
 
   constructor(scene: Phaser.Scene, depth: number) {
     bakeTile(scene);
+    bakeScatter(scene);
     this.#scene = scene;
     this.#carpet = scene.add
       .tileSprite(0, 0, 1, 1, TILE_KEY)
       .setOrigin(0, 0)
+      .setDepth(depth);
+    this.#scatter = scene.add
+      .tileSprite(0, 0, 1, 1, SCATTER_KEY)
+      .setOrigin(0, 0)
+      .setAlpha(FLOOR_SCATTER.alpha)
       .setDepth(depth);
   }
 
@@ -99,15 +131,18 @@ export class GroundLayer {
     width: number,
     height: number
   ): void {
-    this.#carpet.setSize(width, height);
-    this.#carpet.tileScaleX = scale;
-    this.#carpet.tileScaleY = scale;
-    this.#carpet.tilePositionX = -offX / scale;
-    this.#carpet.tilePositionY = -offY / scale;
+    for (const layer of [this.#carpet, this.#scatter]) {
+      layer.setSize(width, height);
+      layer.tileScaleX = scale;
+      layer.tileScaleY = scale;
+      layer.tilePositionX = -offX / scale;
+      layer.tilePositionY = -offY / scale;
+    }
   }
 
   destroy(): void {
     this.#fade?.remove();
     this.#carpet.destroy();
+    this.#scatter.destroy();
   }
 }

@@ -131,6 +131,13 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
             mark: '✦',
             text: `${hazardName(line.hazard)} — declined on your behalf`,
           };
+        case 'offline':
+          return {
+            kind: 'note',
+            seq: line.seq,
+            mark: '✦',
+            text: `The retainer ran for ${line.count} min — ${formatMoney(line.money ?? 0)} banked`,
+          };
         case 'hazard-groomed':
           return {
             kind: 'alert',

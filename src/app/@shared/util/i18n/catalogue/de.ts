@@ -21,7 +21,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.seniorBatch.one': '+{{count}} Ticket pro Durchgang',
   'skill.effect.seniorSweep': '{{pct}} Durchgangs-Radius',
   'skill.effect.seniorWalk': '{{pct}} Senior-Lauftempo',
-  'skill.effect.slots': '{{pct}} Sprint-Slots',
+  'skill.effect.slots': '+{{count}} Sprint-Slots',
   'skill.effect.roundLength': '+{{seconds}}s Sprint-Dauer',
   'skill.effect.spawnRate': '{{pct}} Ticket-Spawnrate',
   'skill.effect.spawnRate.ticket': '{{pct}} Spawnrate von {{ticket}}',
@@ -437,4 +437,49 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.velocity.1.label': 'Velocity-Buchhaltung',
   'skill.velocity.blurb':
     'Story Points für Geld — und der Kurs verfällt, je mehr du ihn nutzt.',
+  'skill.effect.cans': '×{{times}} Sprint-Kapazität',
+  'skill.effect.desks': '+{{count}} Schreibtische',
+  'skill.effect.adr': 'Genehmigt ADR-{{adr}}: öffnet die Linie und ihre Arbeit',
+  'skill.adrs.1.label': 'Architekturentscheidungen',
+  'skill.cans.1.label': 'Zweites Board',
+  'skill.cans.2.label': 'Programm-Board',
+  'skill.cans.3.label': 'Portfolio-Wand',
+  'skill.cans.blurb':
+    'Verdoppelt den ganzen Sprint, Slots inklusive. Die zweite Kapazitätsachse.',
+  'skill.headcount.1.label': 'Tischbestellung',
+  'skill.headcount.2.label': 'Zweiter Bullpen',
+  'skill.headcount.3.label': 'Flächenerweiterung',
+  'skill.headcount.4.label': 'Außenstelle',
+  'skill.headcount.5.label': 'Campus',
+  'skill.headcount.blurb':
+    'Fünf Schreibtische pro Rang. Ohne Tisch wird niemand eingestellt.',
+  'rail.tab.supply': 'Schulden',
+  'rail.tab.income': 'Sätze',
+  'rail.tab.crew': 'Team',
+  'rail.income.locked': 'Ein Satz öffnet, sobald seine Quelle auf dem Weg ist.',
+  'rail.income.effect': 'Rechnet {{pct}} mehr pro {{ticket}} ab',
+  'skill.adr1.1.label': 'ADR-1 genehmigen',
+  'skill.adr1.blurb':
+    'Führt das Legacy-Framework ein. Seine Betreuer laufen über den Weg und lassen Arbeit liegen.',
+  'skill.adr2.1.label': 'ADR-2 genehmigen',
+  'skill.adr2.blurb':
+    'Erklärt Copy-Paste zum Muster. Die Flakes kommen gratis dazu.',
+  'skill.adr3.1.label': 'ADR-3 genehmigen',
+  'skill.adr3.blurb':
+    'Unterschreibt den Offshore-Vertrag. Merge-Konflikte, rund um die Uhr.',
+  'skill.adr4.1.label': 'ADR-4 genehmigen',
+  'skill.adr4.blurb':
+    'Setzt einen KI-Assistenten ins Team. Er schreibt mehr, als jemand lesen kann.',
+  'skill.adr5.1.label': 'ADR-5 genehmigen',
+  'skill.adr5.blurb':
+    'Gibt dem Rockstar Commit-Rechte — und eine Linie auf dem Weg.',
+  'skill.adr6.1.label': 'ADR-6 genehmigen',
+  'skill.adr6.blurb':
+    'Erklärt einen Service für deprecated, ohne ihn zu löschen. Er piept weiter.',
+  'skill.adr7.1.label': 'ADR-7 genehmigen',
+  'skill.adr7.blurb':
+    'Holt den CTO, der neu schreiben will. Die Migration startet auf dem Weg.',
+  'skill.adr8.1.label': 'ADR-8 genehmigen',
+  'skill.adr8.blurb':
+    'Richtet das Architekturboard ein. Agenten, für immer, parallel.',
 };

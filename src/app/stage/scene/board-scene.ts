@@ -13,6 +13,7 @@ import type { CrewKind } from '../../game/model/crew.model';
 import { LOGICAL_BOARD } from '../../game/model/geometry';
 import type { TicketTypeId } from '../../game/model/ticket.model';
 import { ticketLabelKey, TICKET_TYPES } from '../../game/model/ticket.model';
+import { spawnerFor } from '../../game/model/spawner.model';
 import {
   BOARD_INK,
   BOARD_TEXT,
@@ -217,7 +218,7 @@ export class BoardScene extends CbScene {
       seniors: new CrewLayer(this, DEPTH.crew + 1, 'seniors', 1),
       managers: new CrewLayer(this, DEPTH.crew + 2, 'managers', 2),
       offshore: new CrewLayer(this, DEPTH.crew + 3, 'offshore', 3),
-      spawners: new TierSpawners(this, DEPTH.spawner, this.deps.text),
+      spawners: new TierSpawners(this, DEPTH.spawner),
       strip,
     };
     parts.flyers.onArrive = (kind, id) => {
@@ -275,7 +276,7 @@ export class BoardScene extends CbScene {
     const board = this.deps.board();
 
     parts.ground.tier(this.deps.tier());
-    parts.spawners.sync(this.deps.tier());
+    parts.spawners.sync((adr) => this.deps.spawnerCount(adr));
     this.#openSlots();
     parts.heap.sync(
       board,
@@ -302,6 +303,7 @@ export class BoardScene extends CbScene {
     );
 
     parts.spawners.update(step);
+    parts.heap.update(step);
     parts.crew.update(step);
     parts.seniors.update(step);
     parts.managers.update(step);
@@ -336,7 +338,7 @@ export class BoardScene extends CbScene {
     x: number,
     y: number
   ): boolean {
-    const source = parts.spawners.originOf(TICKET_TYPES[type].tier);
+    const source = parts.spawners.originOf(spawnerFor(type)?.adr ?? -1);
     return parts.flyers.launch(
       cardFrame(type),
       FLIGHT.drop,
@@ -553,7 +555,8 @@ export class BoardScene extends CbScene {
    * full can takes nothing, which is what the refusal tint says.
    */
   #sweep(px: number, py: number): void {
-    if (!this.#parts) return;
+    const parts = this.#parts;
+    if (!parts) return;
     const ids = pickWithin(
       this.deps.board(),
       (px - this.#offX) / this.#scale,
@@ -562,11 +565,12 @@ export class BoardScene extends CbScene {
     );
     if (ids.length === 0) return;
 
-    const { taken, value } = this.deps.harvest(ids);
-    if (taken.length === 0) {
+    const { taken, refused, value } = this.deps.harvest(ids);
+    if (refused.length > 0) {
       this.#refusedUntil = this.time.now + REFUSED_MS;
-      return;
+      parts.heap.bounce(refused);
     }
+    if (taken.length === 0) return;
     if (value > 0) this.floatPayout(px, py - 14, `+${formatMoney(value)}`);
   }
 

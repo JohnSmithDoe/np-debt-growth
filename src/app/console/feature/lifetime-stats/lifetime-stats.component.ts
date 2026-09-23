@@ -53,8 +53,8 @@ export class LifetimeStatsComponent {
     return {
       nameKey: tierNameKey(next.index),
       index: next.index,
-      cost: formatMoney(next.unlockCost),
-      pct: Math.min(100, (state.budget / next.unlockCost) * 100),
+      cost: `${formatWhole(next.spCost)} SP`,
+      pct: Math.min(100, (state.storyPoints / next.spCost) * 100),
       done: false,
     };
   });
