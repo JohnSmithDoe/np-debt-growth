@@ -205,12 +205,12 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'junior',
     track: 'B',
     requires: 'crew',
-    levels: [{ cost: 6, effects: [{ kind: 'line', line: 'junior' }] }],
+    levels: [{ cost: 40, effects: [{ kind: 'line', line: 'junior' }] }],
   },
   {
     id: 'headcount',
     track: 'B',
-    requires: 'junior',
+    requires: 'juniorSpeed',
     levels: [30, 260, 2_100, 18_000, 150_000].map((cost) => ({
       cost,
       effects: [{ kind: 'desks' as const, add: DESKS_PER_RANK }],

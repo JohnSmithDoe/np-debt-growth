@@ -14,11 +14,11 @@ export const tierNameKey = (index: number): string => `tier.${index}.name`;
 export const tierBlurbKey = (index: number): string => `tier.${index}.blurb`;
 
 export const DEBT_TIERS: readonly DebtTier[] = [
-  { index: 1, spCost: 12, ticket: 'legacy' },
-  { index: 2, spCost: 110, ticket: 'flaky' },
-  { index: 3, spCost: 900, ticket: 'conflict' },
-  { index: 4, spCost: 16_000, ticket: 'slop' },
-  { index: 5, spCost: 130_000, ticket: 'rockstar' },
+  { index: 1, spCost: 75, ticket: 'legacy' },
+  { index: 2, spCost: 2_500, ticket: 'flaky' },
+  { index: 3, spCost: 12_000, ticket: 'conflict' },
+  { index: 4, spCost: 40_000, ticket: 'slop' },
+  { index: 5, spCost: 150_000, ticket: 'rockstar' },
   { index: 6, spCost: 440_000, ticket: 'zombie' },
   { index: 7, spCost: 1_400_000, ticket: 'rewrite' },
   { index: 8, spCost: 4_200_000, ticket: 'swarm' },
