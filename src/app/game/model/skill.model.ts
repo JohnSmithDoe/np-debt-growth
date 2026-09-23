@@ -721,7 +721,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'o2',
     track: 'O',
     requires: 'o1',
-    levels: [{ cost: 38, effects: [{ kind: 'slots', add: 2 }] }],
+    levels: [{ cost: 38, effects: [{ kind: 'slots', add: 14 }] }],
   },
   {
     id: 'o3',

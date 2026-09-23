@@ -31,7 +31,7 @@ export const SPAWNERS: readonly Spawner[] = [
   {
     adr: 0,
     produces: ['lint', 'bug'],
-    cost: 4,
+    cost: 2,
     labelKey: spawnerLabelKey(0),
   },
   { adr: 1, produces: ['legacy'], cost: 32, labelKey: spawnerLabelKey(1) },

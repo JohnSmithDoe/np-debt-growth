@@ -333,6 +333,7 @@ describe('juniors and the sprint', () => {
       tier: 1,
       skills: { ...AUTOMATED, capacity: 5 },
       levels: { junior: 200, copilot: 1 },
+      spawners: { 0: 20 },
     });
     for (let ms = 100; ms <= 600_000; ms += 100) store.advanceTo(ms);
 

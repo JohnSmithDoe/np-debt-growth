@@ -3,7 +3,7 @@
  * collected until the haul finishes, and the haul is the whole cadence — there
  * is no wall clock.
  */
-export const SPRINT_SLOTS_BASE = 14;
+export const SPRINT_SLOTS_BASE = 100;
 
 export const HAUL_MS = 4_000;
 

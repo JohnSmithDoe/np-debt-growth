@@ -14,6 +14,7 @@ import {
   SPAWNER_BY_ADR,
   SPAWNER_CAP,
   SPAWNER_COST_STEP,
+  SPAWNER_FREE_AT_ADR_0,
   spawnerFor,
 } from '../model/spawner.model';
 import type { SeniorHire, TraitId } from '../model/senior.model';
@@ -377,7 +378,9 @@ export function spawnerCost(state: Consultancy, adr: number): number {
   if (!row) return Number.POSITIVE_INFINITY;
   const level = spawnerCount(state, adr);
   if (level >= SPAWNER_CAP) return Number.POSITIVE_INFINITY;
-  return Math.ceil(row.cost * SPAWNER_COST_STEP ** level);
+  // The head ADR-0 ships with was free; it does not raise the next one's price.
+  const paid = adr === 0 ? Math.max(0, level - SPAWNER_FREE_AT_ADR_0) : level;
+  return Math.ceil(row.cost * SPAWNER_COST_STEP ** paid);
 }
 
 export function spawnerUnlocked(state: Consultancy, adr: number): boolean {
