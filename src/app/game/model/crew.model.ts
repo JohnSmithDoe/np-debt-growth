@@ -21,6 +21,14 @@ export interface CrewSeat {
   readonly woman: boolean;
 }
 
+/** A pizza party: workers inside the circle step `mult` times as fast. */
+export interface Rush {
+  readonly x: number;
+  readonly y: number;
+  readonly radius: number;
+  readonly mult: number;
+}
+
 export interface CrewRules extends HirePace {
   readonly kind: CrewKind;
   readonly crew: CrewMember[];
@@ -34,6 +42,7 @@ export interface CrewRules extends HirePace {
   readonly paces: readonly HirePace[] | null;
   readonly seatOf: (index: number, pace: HirePace) => CrewSeat;
   readonly interrupted: boolean;
+  readonly rush: Rush | null;
   readonly transform: ((type: TicketTypeId) => TicketTypeId | null) | null;
   readonly leaves: {
     readonly type: TicketTypeId;

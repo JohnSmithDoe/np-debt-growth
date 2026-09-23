@@ -4,6 +4,8 @@ import { ticketLabelKey } from '../../game/model/ticket.model';
 import {
   DEBT_INTEREST_CAP,
   GOLDEN_CREW_CONVERSION,
+  PIZZA_MS,
+  PIZZA_RUSH,
 } from '../../game/model/balance/flow';
 import type { SceneDeps } from '../model/scene-deps.model';
 
@@ -41,6 +43,11 @@ function describe(effect: SkillEffect): EffectText {
       return { key: 'skill.effect.spPerClose', params: { count: effect.add } };
     case 'crewSp':
       return { key: 'skill.effect.crewSp' };
+    case 'pizza':
+      return {
+        key: 'skill.effect.pizza',
+        params: { times: PIZZA_RUSH, seconds: PIZZA_MS / 1000 },
+      };
     case 'coach':
       return { key: 'skill.effect.coach', params: { count: effect.add } };
     case 'deck':

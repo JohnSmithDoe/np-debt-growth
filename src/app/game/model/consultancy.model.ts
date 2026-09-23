@@ -5,6 +5,13 @@ import { SKILL_ROOT_ID } from './skill.model';
 import type { PurchaseId } from './balance/progression';
 import { FREE_COPILOTS, PURCHASE_IDS } from './balance/progression';
 
+/** Where the last voucher was swept, in board units, and when the pizza runs out. */
+export interface PizzaParty {
+  readonly x: number;
+  readonly y: number;
+  readonly until: number;
+}
+
 export interface Consultancy {
   readonly version: number;
   readonly budget: number;
@@ -32,6 +39,7 @@ export interface Consultancy {
   readonly escalated: boolean;
   readonly escalationFiresAt: number;
   readonly hotfixUntil: number;
+  readonly pizza: PizzaParty | null;
 
   readonly achievements: readonly string[];
   readonly endedAt: number;
@@ -62,6 +70,7 @@ export function resumed(state: Consultancy, now: number): Consultancy {
     laneCursor: 0,
     escalated: false,
     escalationFiresAt: 0,
+    pizza: null,
   };
 }
 
@@ -98,6 +107,7 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     escalated: false,
     escalationFiresAt: 0,
     hotfixUntil: 0,
+    pizza: null,
     achievements: [],
     endedAt: 0,
     lifetimeClosed: 0,

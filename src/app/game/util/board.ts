@@ -18,7 +18,7 @@ import {
 import { pickTicketTitle } from '../model/ticket-copy.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
-import type { CrewRules, CrewSeat, HirePace } from '../model/crew.model';
+import type { CrewRules, CrewSeat, HirePace, Rush } from '../model/crew.model';
 import { FLAKY_COMEBACK_MS } from '../model/ticket.model';
 import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
 import { TICKET_LIFE_MS } from '../model/balance/flow';
@@ -314,6 +314,7 @@ export function work(
     const worker = rules.crew[index];
     if (!worker) continue;
     const pace = rules.paces?.[index] ?? rules;
+    const dt = rushed(rules.rush, worker) ? dtMs * rules.rush!.mult : dtMs;
 
     if (meeting) {
       if (worker.phase !== 'meeting') {
@@ -321,7 +322,7 @@ export function work(
         worker.phase = 'meeting';
         worker.target = NO_TICKET;
       }
-      stepToward(worker, meetingSpot(worker.id), (pace.speed * dtMs) / 1000);
+      stepToward(worker, meetingSpot(worker.id), (pace.speed * dt) / 1000);
       continue;
     }
     if (worker.phase === 'meeting') worker.phase = 'idle';
@@ -339,7 +340,7 @@ export function work(
         dropClaim(board, worker.id);
         continue;
       }
-      if (!stepToward(worker, target, (pace.speed * dtMs) / 1000)) continue;
+      if (!stepToward(worker, target, (pace.speed * dt) / 1000)) continue;
       // The can is full: wait at the card rather than overfilling it.
       if (closed.length >= room) continue;
 
@@ -353,12 +354,19 @@ export function work(
       continue;
     }
 
-    worker.leftMs -= dtMs;
+    worker.leftMs -= dt;
     if (worker.leftMs > 0) continue;
     worker.phase = 'idle';
     worker.leftMs = 0;
   }
   return { closed, byWomen };
+}
+
+function rushed(rush: Rush | null, worker: CrewMember): boolean {
+  if (!rush) return false;
+  const dx = worker.x - rush.x;
+  const dy = worker.y - rush.y;
+  return dx * dx + dy * dy <= rush.radius * rush.radius;
 }
 
 function sweep(

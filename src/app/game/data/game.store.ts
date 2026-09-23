@@ -61,7 +61,7 @@ import { adrNodeId, tierAt } from '../model/tier.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
-import { TIER_BURST } from '../model/balance/flow';
+import { PIZZA_MS, TIER_BURST } from '../model/balance/flow';
 import {
   ESCALATION_HOLD_MS,
   FACT_COUNTDOWN_MS,
@@ -86,7 +86,7 @@ import { SpawnBudget } from '../util/spawn-budget';
 
 type Buffs = Pick<
   Consultancy,
-  'escalated' | 'escalationFiresAt' | 'hotfixUntil'
+  'escalated' | 'escalationFiresAt' | 'hotfixUntil' | 'pizza'
 >;
 
 function armBuffs(state: Consultancy, closed: Closed, now: number): Buffs {
@@ -94,9 +94,10 @@ function armBuffs(state: Consultancy, closed: Closed, now: number): Buffs {
     escalated: state.escalated,
     escalationFiresAt: state.escalationFiresAt,
     hotfixUntil: state.hotfixUntil,
+    pizza: state.pizza,
   };
 
-  for (const { type } of closed) {
+  for (const { type, x, y } of closed) {
     switch (TICKET_TYPES[type].effect) {
       case 'sprintMultiplier':
         buffs = {
@@ -107,6 +108,9 @@ function armBuffs(state: Consultancy, closed: Closed, now: number): Buffs {
         break;
       case 'hotfixBuff':
         buffs = { ...buffs, hotfixUntil: now + HOTFIX_MS };
+        break;
+      case 'crewRush':
+        buffs = { ...buffs, pizza: { x, y, until: now + PIZZA_MS } };
         break;
       case 'value':
       case 'billBoard':
@@ -358,6 +362,15 @@ export class GameStore {
 
   readonly sprint = this.#sprint.asReadonly();
   readonly lanes = computed(() => economy.lanesOf(this.#state()));
+  /** Read each frame by the stage. `left` runs 1 → 0 as the pizza goes. */
+  pizzaParty(): { x: number; y: number; radius: number; left: number } | null {
+    const state = this.#state();
+    const rush = economy.pizzaRush(state);
+    if (!rush || !state.pizza) return null;
+    const left = (state.pizza.until - state.lastTick) / PIZZA_MS;
+    return { x: rush.x, y: rush.y, radius: rush.radius, left };
+  }
+
   /** Read each frame by the stage, so not a signal: votes flip on the run clock. */
   votes(): readonly boolean[] {
     const state = this.#state();

@@ -59,3 +59,22 @@ describe('planning poker (the reference gum angels)', () => {
     expect(golden.every((ticket) => ticket.spBonus === 0)).toBe(true);
   });
 });
+
+describe('the pizza party (the reference Chad)', () => {
+  it('sends no voucher until the node is bought', () => {
+    expect(economy.spawnRate(consultancy(), 'pizza')).toBe(0);
+    expect(
+      economy.spawnRate(consultancy({ skills: { pizza: 1 } }), 'pizza')
+    ).toBeGreaterThan(0);
+  });
+
+  it('rushes the crew only while the pizza lasts', () => {
+    const party = { x: 100, y: 100, until: 5_000 };
+    expect(
+      economy.pizzaRush(consultancy({ pizza: party, lastTick: 4_000 }))
+    ).not.toBeNull();
+    expect(
+      economy.pizzaRush(consultancy({ pizza: party, lastTick: 5_000 }))
+    ).toBeNull();
+  });
+});

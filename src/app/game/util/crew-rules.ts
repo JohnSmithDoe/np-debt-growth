@@ -64,6 +64,7 @@ function rulesFor(
     golden: economy.crewTakesGolden(state),
     paces: stats.perSeat ? seatPaces(state, kind, weather) : null,
     interrupted: stats.interruptible && weather.meeting,
+    rush: economy.pizzaRush(state),
     transform,
     leaves: leavesOf(state, stats.leaves),
   };

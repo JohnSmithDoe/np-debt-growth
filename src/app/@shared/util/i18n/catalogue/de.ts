@@ -486,6 +486,12 @@ export const DE: Readonly<Record<string, string>> = {
     'Eine größere Karte in jedem Coach-Deck. Jede Abstimmung, durch die ein Ticket fällt, schätzt es höher.',
   'skill.effect.deck':
     '+{{count}} SP pro Abstimmung, durch die ein Ticket fällt',
+  'skill.pizza.1.label': 'Pizza-Party',
+  'skill.pizza.blurb':
+    'Ein Engineering Manager legt Pizza-Gutscheine aufs Board. Nimm einen, und das Team in der Nähe arbeitet viel schneller, bis die Pizza weg ist.',
+  'skill.effect.pizza':
+    'Pizza-Gutscheine: ×{{times}} Team in der Nähe für {{seconds}}s',
+  'ticket.type.pizza': 'Pizza-Party-Gutschein',
   'skill.timesheets.1.label': 'Stundenzettel-Polster',
   'skill.timesheets.blurb':
     'Was Team und Pipeline schließen, wird zweimal gebucht.',

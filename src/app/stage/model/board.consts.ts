@@ -161,6 +161,7 @@ export const BOARD_INK = {
   train: 0xe6e9ef,
   trainWindow: 0x1f6feb,
   vote: 0xe06c9f,
+  pizza: 0xf97316,
   card: 0xe6e9ef,
   coach: 0x98a1b0,
 } as const;

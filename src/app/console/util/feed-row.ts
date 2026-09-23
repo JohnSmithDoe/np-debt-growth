@@ -14,6 +14,7 @@ import {
   HOTFIX_MS,
   HOTFIX_MULTIPLIER,
 } from '../../game/model/balance/weather';
+import { PIZZA_MS, PIZZA_RUSH } from '../../game/model/balance/flow';
 
 export interface CloseRow {
   readonly kind: 'close';
@@ -46,6 +47,8 @@ function eventLabel(
       return `×${HOTFIX_MULTIPLIER} for ${HOTFIX_MS / 1000}s`;
     case 'billBoard':
       return 'bills the board';
+    case 'crewRush':
+      return `×${PIZZA_RUSH} crew nearby for ${PIZZA_MS / 1000}s`;
     default:
       return undefined;
   }

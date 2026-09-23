@@ -43,6 +43,7 @@ export type SkillEffect =
   | { readonly kind: 'runners'; readonly add: number }
   | { readonly kind: 'spPerClose'; readonly add: number }
   | { readonly kind: 'crewSp' }
+  | { readonly kind: 'pizza' }
   | { readonly kind: 'coach'; readonly add: number }
   | { readonly kind: 'deck'; readonly add: number }
   | { readonly kind: 'senior'; readonly mult: number }
@@ -645,6 +646,13 @@ export const SKILL_NODES: readonly SkillNode[] = [
       cost,
       effects: [{ kind: 'deck' as const, add: VOTE_BONUS_PER_RANK }],
     })),
+  },
+  {
+    id: 'pizza',
+    track: 'B',
+    requires: 'timesheets',
+    gate: 'tier5',
+    levels: [{ cost: 20_000, effects: [{ kind: 'pizza' }] }],
   },
   {
     id: 'timesheets',

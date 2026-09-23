@@ -266,6 +266,14 @@ export const TICKET_TITLES: Readonly<Record<TicketTypeId, readonly string[]>> =
       'Account flagged as at risk in the quarterly review',
       'Escalation covers a feature the customer has not bought',
     ],
+    pizza: [
+      'Pizza party voucher, valid while the pizza lasts',
+      'Engineering manager ordered twelve pizzas for morale',
+      'Free pizza in the war room, first come first served',
+      'Pizza in lieu of a pay rise, approved by HR',
+      'Team-building pizza, attendance mandatory',
+      'Leftover pizza from the all-hands, still warm',
+    ],
     hotfix: [
       'Change freeze lifted for the next ten minutes',
       'Emergency release window opened by the release manager',

@@ -21,6 +21,15 @@ export const AUTO_CLOSE_MS = 3_000;
 export const AUTO_RUNNERS_BASE = 4;
 
 /**
+ * The pizza party, the reference's Chad: a rare voucher only the player can
+ * sweep. The crew near where it was picked up work `PIZZA_RUSH` times faster
+ * until the pizza's gone.
+ */
+export const PIZZA_MS = 12_000;
+export const PIZZA_RUSH = 5;
+export const PIZZA_RADIUS = 240;
+
+/**
  * Planning poker, the reference's gum angels. Each coach runs a vote that is
  * live for `VOTE_ON_MS` of every `VOTE_CYCLE_MS`, offset from the others; a
  * ticket falling through a live vote is re-estimated upward.

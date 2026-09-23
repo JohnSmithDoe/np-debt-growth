@@ -93,7 +93,7 @@ describe('hand-only rares are weather, not a source (D5)', () => {
     const bought = consultancy({
       tier: 3,
       levels: { junior: 40, senior: 40, copilot: 40 },
-      skills: { supply: 5, capacity: 5, spawnLint: 1, spawnBug: 1 },
+      skills: { supply: 5, capacity: 5, spawnLint: 1, spawnBug: 1, pizza: 1 },
     });
     for (const id of rares) {
       expect(spawnRate(bought, id)).toBeCloseTo(TICKET_TYPES[id].ratePerSec, 6);

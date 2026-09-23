@@ -13,10 +13,16 @@ export type TicketTypeId =
   | 'escalation'
   | 'hotfix'
   | 'quarter'
-  | 'invite';
+  | 'invite'
+  | 'pizza';
 
 export type TicketEffect =
-  'value' | 'sprintMultiplier' | 'hotfixBuff' | 'billBoard' | 'decline';
+  | 'value'
+  | 'sprintMultiplier'
+  | 'hotfixBuff'
+  | 'billBoard'
+  | 'decline'
+  | 'crewRush';
 
 export interface TicketType {
   readonly id: TicketTypeId;
@@ -213,6 +219,18 @@ export const TICKET_TYPES: Readonly<Record<TicketTypeId, TicketType>> = {
     effect: 'decline',
     scalesWithTier: false,
     colour: 0x8aa4c8,
+  },
+  pizza: {
+    id: 'pizza',
+    prefix: 'PIZZA',
+    value: 0,
+    ratePerSec: 0.012,
+    tier: 0,
+    handOnly: true,
+    respawns: false,
+    effect: 'crewRush',
+    scalesWithTier: false,
+    colour: 0xf97316,
   },
 };
 

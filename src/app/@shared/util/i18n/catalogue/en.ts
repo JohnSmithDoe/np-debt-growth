@@ -471,6 +471,12 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.deck.blurb':
     'A bigger card in every coach’s deck. Each vote a ticket falls through re-estimates it higher.',
   'skill.effect.deck': '+{{count}} SP per vote a ticket falls through',
+  'skill.pizza.1.label': 'Pizza Party',
+  'skill.pizza.blurb':
+    'An engineering manager starts leaving pizza vouchers on the board. Sweep one and the crew nearby work much faster until the pizza is gone.',
+  'skill.effect.pizza':
+    'Pizza vouchers: ×{{times}} crew nearby for {{seconds}}s',
+  'ticket.type.pizza': 'Pizza Party Voucher',
   'skill.timesheets.1.label': 'Timesheet Padding',
   'skill.timesheets.blurb':
     'Work the crew and the pipeline close gets logged twice.',

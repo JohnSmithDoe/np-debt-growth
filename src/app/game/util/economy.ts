@@ -31,7 +31,7 @@ import type { TicketType, TicketTypeId } from '../model/ticket.model';
 import { ladderUp, TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
 import { approachCap } from '../model/balance/curve';
 import type { PurchaseId } from '../model/balance/progression';
-import type { ClaimPick, CrewKind, HirePace } from '../model/crew.model';
+import type { ClaimPick, CrewKind, HirePace, Rush } from '../model/crew.model';
 import type { CrewBand } from '../model/balance/crew';
 import {
   CREW_KINDS,
@@ -44,6 +44,8 @@ import {
 import {
   AUTO_CLOSE_MS,
   AUTO_RUNNERS_BASE,
+  PIZZA_RADIUS,
+  PIZZA_RUSH,
   VOTE_BONUS_BASE,
   VOTE_CYCLE_MS,
   VOTE_ON_MS,
@@ -478,6 +480,7 @@ function sourceMultiplier(state: Consultancy, type: TicketType): number {
 
 export function spawnRate(state: Consultancy, id: TicketTypeId): number {
   const type = TICKET_TYPES[id];
+  if (type.effect === 'crewRush' && !holds(state, 'pizza')) return 0;
   const fromSkills = productOf(state, (e) =>
     e.kind === 'spawnRate' &&
     (e.target === id || (e.target === undefined && !type.handOnly))
@@ -1065,6 +1068,13 @@ export function pickupStoryPoints(
   const bonus = sumOf(state, (e) => (e.kind === 'spPerClose' ? e.add : null));
   const crew = byCrew && holds(state, 'crewSp') ? CREW_SP_MULT : 1;
   return (base * SP_PER_EURO + bonus) * crew;
+}
+
+/** The live pizza party, if any, as the crew rules take it. */
+export function pizzaRush(state: Consultancy): Rush | null {
+  const party = state.pizza;
+  if (!party || state.lastTick >= party.until) return null;
+  return { x: party.x, y: party.y, radius: PIZZA_RADIUS, mult: PIZZA_RUSH };
 }
 
 export function pickupsPaySp(state: Consultancy): boolean {

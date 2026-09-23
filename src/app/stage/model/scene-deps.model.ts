@@ -28,6 +28,8 @@ export interface SceneDeps {
   laneCapacity(): number;
   /** One flag per coach: is that vote live right now. */
   votes(): readonly boolean[];
+  /** The live pizza party in board units, with the share of it left. */
+  pizza(): { x: number; y: number; radius: number; left: number } | null;
   pending(): number;
   escalated(): boolean;
   tier(): number;

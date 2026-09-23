@@ -165,6 +165,7 @@ export class BoardScene extends CbScene {
   #hoverSlot = NONE;
 
   #ring?: Phaser.GameObjects.Arc;
+  #pizza?: Phaser.GameObjects.Arc;
   #onBoard = false;
 
   #banner?: Phaser.GameObjects.Text;
@@ -269,6 +270,12 @@ export class BoardScene extends CbScene {
       .setDepth(DEPTH.ring)
       .setVisible(false);
 
+    this.#pizza = this.add
+      .circle(0, 0, 1, BOARD_INK.pizza, 0.12)
+      .setStrokeStyle(2, BOARD_INK.pizza, 0.7)
+      .setDepth(DEPTH.floor + 1)
+      .setVisible(false);
+
     this.#buildSecret();
     this.#layout();
 
@@ -330,6 +337,21 @@ export class BoardScene extends CbScene {
     this.#holdStripHover();
     this.#sweepFrame();
     this.#ring?.setVisible(this.#onBoard && this.deps.showClickRing());
+    this.#drawPizza();
+  }
+
+  #drawPizza(): void {
+    const circle = this.#pizza;
+    if (!circle) return;
+    const party = this.deps.pizza();
+    circle.setVisible(party !== null);
+    if (!party) return;
+    circle
+      .setPosition(
+        party.x * this.#scale + this.#offX,
+        party.y * this.#scale + this.#offY
+      )
+      .setRadius(party.radius * this.#scale * (0.35 + 0.65 * party.left));
   }
 
   #sweepFrame(): void {

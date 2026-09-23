@@ -212,6 +212,7 @@ export class StageService {
       lanes: () => store.lanes(),
       laneCapacity: () => store.laneCapacity(),
       votes: () => store.votes(),
+      pizza: () => store.pizzaParty(),
       pending: () => store.sprintValue(),
       escalated: () => store.escalated(),
       tier: () => store.tier(),
