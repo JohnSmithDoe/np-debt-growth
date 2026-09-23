@@ -5,7 +5,8 @@ and the parity pass that closed it.
 
 **Legend:** ✅ match · 🟡 partial · ❌ missing
 
-**How this was checked.** Garbage Growth: 18 screenshots and Martin's play notes. Debt
+**How this was checked.** Garbage Growth: 18 screenshots, Martin's play notes, and
+§12's rows from Martin playing both side by side. Debt
 Growth: read out of `src/`, asserted in specs, **and driven in the running app** — a
 Playwright session that clicks the title screen, sweeps the board by hand, approves all
 eight ADRs, buys heads on every line, walks the three shop tabs, fills the can, and opens
@@ -29,7 +30,7 @@ reference.
 |---|---|---|---|
 | 5 | Hover a radius, area-of-effect | Same, swept once a frame | ✅ |
 | 6 | Collection is instant, no per-item delay | Same | ✅ |
-| 7 | Litter animates into the can | Tickets fly to the sprint strip (`FLIGHT.harvest`) | ✅ |
+| 7 | Litter hops high into the air, then drops into the can, slowly | Tickets fly to the sprint strip (`FLIGHT.harvest`): 460 ms, a flat 44 px arc | 🟡 |
 | 8 | A `$n` floats off each item | Same | ✅ |
 | 9 | Money paid at pickup | Same — the invoice chain is gone | ✅ |
 
@@ -40,15 +41,15 @@ reference.
 | 10 | Hard cap; nothing collects when full | Same | ✅ |
 | 11 | **Blocked litter jumps in place** | Same — `harvest` returns `refused`, `TicketHeap.bounce` hops them where they lie (`REFUSAL_BOUNCE`) | ✅ |
 | 12 | A truck empties it, and that wait is the cadence | Same, 4 s, floored at 2.5 s | ✅ |
-| 13 | **"More cans" doubles capacity** | `cans`, three ranks, ×2 each | ✅ |
+| 13 | **"More cans" adds a physical can**, each with its own truck; items go round-robin, and hauling one never blocks the rest | `cans`, three ranks, a hidden ×2 on one can, and one haul blocks all collection | ❌ |
 | 14 | "More slots" adds capacity | `slots` is additive: `+6 +8 +10 +14 +18` | ✅ |
 
 ## 4. The field
 
 | # | Garbage Growth | Debt Growth | |
 |---|---|---|---|
-| 15 | Litter accumulates and is never wiped | Same — `emptyBoard()` at round start is gone | ✅ |
-| 16 | The field becomes visibly dense (~80 items) | Reaches `BOARD_CAPACITY` late — wall to wall | ✅ |
+| 15 | Each item **vanishes about 15 s after landing**; the field is never wiped at once, and never full. Ours will close it as "won't fix" | Tickets never expire | ❌ |
+| 16 | Density is spawn rate × 15 s, so it tracks what you bought (~80 items late) | Climbs to `BOARD_CAPACITY` 600 and stays there | ❌ |
 | 17 | Background flowers, not collectible | `FLOOR_SCATTER` — a second, untinted tile layer that is drawn and never in the board model, so the sweep cannot reach it | ✅ |
 
 ## 5. Spawners — the content engine
@@ -99,7 +100,7 @@ reference.
 |---|---|---|---|
 | 40 | Two currencies | € and SP | ✅ |
 | 41 | Money per pickup | Same | ✅ |
-| 42 | Gum by routing value into it | Velocity skim | ✅ |
+| 42 | Gum at pickup, 1:1 with the item's $ once unlocked, then 5 × `+2` per litter type | Velocity skim: at most 0.0002 SP per € | ❌ |
 | 43 | Rail spends money, tree spends gum | Same — the tree is SP-only, ADRs included | ✅ |
 
 ## 10. The tree
@@ -108,7 +109,7 @@ reference.
 |---|---|---|---|
 | 44 | Mostly padlocked, all of it visible | Same, painted owned/open/locked | ✅ |
 | 45 | `n/m` capped nodes | Same | ✅ |
-| 46 | **`+` and `%` badges telling additive from multiplicative** | `skillBadge` reads the next rank's effects and stamps one in the corner | ✅ |
+| 46 | Four corner badges, by node kind rather than strictly by maths: `+` (unlocks or adds; even the ×2 `Schleimige Ratte`), `↑` (strengthens: radius, speed, laser), `%` and `✕` (on litter-value nodes). Frames come in yellow, green, red and black-with-padlock; red matches a price shown in red (unaffordable), the rest unconfirmed | `skillBadge` stamps `+` or `%` from the next rank's effects; owned/open/locked | 🟡 |
 | 47 | Tree unlocks a line, rail sells the heads | Same | ✅ |
 
 ## 11. The run
@@ -123,15 +124,29 @@ reference.
 | 53 | Numbers get ridiculous late, as any incremental does | Same | ✅ |
 | 54 | Achievements | Present (pre-existing) | ✅ |
 
+## 12. Feel — from Martin playing both
+
+Screenshots can't show these. Rows 7, 15 and 16 above were corrected in the same pass.
+The tasks are F1–F11 in `handoff-next.md` §0.
+
+| # | Garbage Growth | Debt Growth | |
+|---|---|---|---|
+| 55 | Litter can be caught **mid-flight** | Falling tickets are hidden until they land. The sweep checks the landing spot, so the invisible card is catchable and the visible one isn't | ❌ |
+| 56 | One opening spawner: about 1 item per 4 s | 1 per 1.1–1.7 s | ❌ |
+| 57 | First spawner free, second 2 | First free, second 4 | 🟡 |
+| 58 | The can holds 100 from the start | `SPRINT_SLOTS_BASE` 14 (8 seen in the build) | ❌ |
+| 59 | The opening never meets the cap; you don't know there is one | The cap is felt at once | ❌ |
+| 60 | Gum angels: pulsing beams, +30 gum per beam crossed on normal litter, two 10-rank gum nodes | Nothing; planned as planning poker (F11) | ❌ |
+
 ---
 
 ## Tally
 
-**53 ✅ · 0 🟡 · 1 ❌** across 54 rows.
+**47 ✅ · 3 🟡 · 10 ❌** across 60 rows.
 
-The previous revision of this file totted up its own table wrong (it said 33/10/11
-against a table holding 39/7/8). The fifteen rows it listed as open were right; the sum
-was not.
+The previous 53/0/1 counted mechanisms that exist, not whether the game plays the same.
+Martin's play turned up six wrong rows (7, 13, 15, 16, 42, 46) and six rows the screenshots
+couldn't see (55–60).
 
 ## Accepted divergence
 
