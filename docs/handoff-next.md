@@ -78,8 +78,27 @@ rank above everything below. Numbers marked *ref* are his observations.
 | F8 | **Done** (`176b4b1`). `lint` 0.18/s, `bug` 0.08/s (≈ 1 per 4 s from one head) |
 | F5 | **Done** (`176b4b1`). `SPRINT_SLOTS_BASE` 100, `o2` +14. The `slots` ranks stay at +6…+18: scaling them ×7 took sign-off to 47 min. **Why the build showed 8 is still unexplained**: the base has been 14 since the first commit, and only weather shrinks it |
 | F4, F6 | Follow from F8 + F5: first junior at 8.9 min (was 3.1), and the opening never meets the cap |
+| golden | **Done** (`c6bd2cf`). Gate `tier1`; `goldenValue` +50× a rank, additive (100× → 300×); `goldenCrew` turns 5 % of crew closes golden |
+| auto-close | **Resolved** (`c6bd2cf`). The pipeline is a throughput: `runners` node, `AUTO_RUNNERS_BASE` 4, ~1 close/s each. The crew-share floors count crew + pipeline as one automation share, like the reference's rats |
+| F9 | **Done** (`c6bd2cf`). SP at pickup off the ticket's *base* value (income ranks lift € only, so SP falls behind late, as gum does), once the €25 `velocity` row is bought; skim gone. Tree SP prices × `SKILL_COST_SCALE` 10. `estimates` (+2 SP a ticket, 5 ranks), `timesheets` (crew/pipeline SP ×2). The bootstrap copilot still ships; it's now redundant |
+| F10 | **Done** (`c6bd2cf`). Lanes round-robin with their own release train; `cans` +1 lane (9 ranks), `capacity` WIP +25 (10 ranks). The strip draws the lanes and a train crossing each one that's away. `SAVE_VERSION` 4 |
+| prices | **Done** (`5ad5d25`). Spawner bases 2 / 500 / 15 000 …; ADR-1…5 at 75 / 2 500 / 12 000 / 40 000 / 150 000 SP; `headcount` behind `juniorSpeed` |
+| F11 | **Done** (`c502100`). `coaches` / `deck`, 10 ranks each; `voteBonus` decided at spawn, `voteLive` drawn by `stage/scene/vote-beams.ts`. Sweeps float their SP |
+| F12 | **Done** (`701d0f4`). `pizza` node from ADR-5; hand-only voucher; ×5 crew in a 240-unit circle for 12 s |
 
-**Open: automation takes the money mid-run.** With a 100-slot can the truck rarely gates, and
+**Pacing now:** first junior 4.6 min, ADR-1 6.0, ADR-4 13.8, ADR-8 50.2, **sign-off 57.3**,
+tree bought out. ADR-2…4 sit close together (10.3 → 13.8); ADR-5 → 6 and 7 → 8 are the long
+waits.
+
+**Still open from this pass**
+- `CLAUDE.md` still says "the velocity skim is the only bridge" and describes one can and a
+  truck. Not edited here because another session had uncommitted changes in it.
+- The coaches, the train and the pizza circle are canvas-drawn placeholders; art pass owed.
+- The first copilot shipping free is now redundant with the €25 SP row.
+- The playtest scripts live in `image-staging/playtest/` (gitignored), driven through the
+  new `debtGrowth.buySkill` / `buyLine` doors.
+
+**Was open: automation takes the money mid-run** (resolved, see the status table). With a 100-slot can the truck rarely gates, and
 auto-close files nearly everything within 3 s: automation is 90–95 % of the money from
 minute 20 to 35 (crew share floor still passes). Sign-off is 48.6 min. `leaves an attentive
 player ahead of an idle one` now passes or fails on `Math.random` (margin about 2 %). The

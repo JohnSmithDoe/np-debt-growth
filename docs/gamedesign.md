@@ -94,14 +94,14 @@ of knob (see §6).
 | | Symbol | Earned from | Spends on |
 |---|---|---|---|
 | **Budget** | € | Every pickup, the retainer, board bills | The rail: spawner lines, crew heads, income rates |
-| **Story Points** | SP | Velocity skim, copilots, awards | The tree — **all of it**, ADRs included |
+| **Story Points** | SP | Every pickup (base value, once the €25 row is bought), planning-poker votes, copilots, awards | The tree — **all of it**, ADRs included |
 
 **The tree unlocks, the rail buys.** That split is now clean: no node costs euros, and no
 rail row costs points.
 
 SP has three sources (`RoundOutcome.spVelocity / spCopilots / spAwards`):
 
-- **Velocity skim** (`economy.velocitySkim`) — you divert a fraction of revenue into SP.
+- **SP at pickup** (`economy.pickupStoryPoints`) — each ticket pays its base value in SP, plus `estimates` and any planning-poker votes it fell through; crew closes ×2 with `timesheets`. Income ranks lift euros only, so SP falls behind money late.
   `approachCap(0.35, 0.88 ** level)`: the cap is 35 %, approached with diminishing
   returns, so early velocity levels are the valuable ones. Converted at
   `VELOCITY_SP_PER_EURO` 0.0006.
