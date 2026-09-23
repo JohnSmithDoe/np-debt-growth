@@ -1,3 +1,4 @@
+import type { Lane } from '../../game/model/round.model';
 import type {
   Board,
   CloseFloat,
@@ -23,6 +24,8 @@ export interface SceneDeps {
   slots(): number;
   filled(): number;
   sprint(): readonly SprintSlot[];
+  lanes(): readonly Lane[];
+  laneCapacity(): number;
   pending(): number;
   escalated(): boolean;
   tier(): number;

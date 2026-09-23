@@ -20,6 +20,27 @@ describe('golden work (the automation-exempt class)', () => {
     expect(economy.goldenMultiplier(bought)).toBeGreaterThan(50);
   });
 
+  it('climbs additively, 100× to 300× over the ladder', () => {
+    const at = (goldenValue: number): number =>
+      economy.goldenMultiplier(
+        consultancy({ skills: { golden: 1, goldenValue } })
+      );
+    expect(at(0)).toBe(100);
+    expect(at(1)).toBe(150);
+    expect(at(4)).toBe(300);
+  });
+
+  it('turns a share of the crew’s closes golden once they are cleared', () => {
+    expect(
+      economy.crewGoldenConversion(consultancy({ skills: { golden: 1 } }))
+    ).toBe(0);
+    expect(
+      economy.crewGoldenConversion(
+        consultancy({ skills: { golden: 1, goldenValue: 1, goldenCrew: 1 } })
+      )
+    ).toBeCloseTo(0.05, 6);
+  });
+
   it('is left on the board by a crew that has no clearance', () => {
     const state = consultancy({ levels: { junior: 8 }, skills: { golden: 1 } });
     const board = emptyBoard();

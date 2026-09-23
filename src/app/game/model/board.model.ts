@@ -62,6 +62,7 @@ export interface Close {
 export interface SprintSlot {
   readonly type: TicketTypeId;
   readonly title: string;
+  readonly lane: number;
 }
 
 export type TicketMix = Readonly<Partial<Record<TicketTypeId, number>>>;
@@ -105,6 +106,8 @@ export interface Board {
   readonly lowFree: Int32Array;
   nextId: number;
   nextCrewId: number;
+  /** Pipeline closes owed but not yet filed; refilled by the runners each step. */
+  autoCredit: number;
 }
 
 export const HEAP_COLS = Math.floor(LOGICAL_BOARD.width / TICKET_SLOT.width);
@@ -157,5 +160,6 @@ export function emptyBoard(): Board {
     lowFree: new Int32Array(HEAP_COLS),
     nextId: 1,
     nextCrewId: 0,
+    autoCredit: 0,
   };
 }

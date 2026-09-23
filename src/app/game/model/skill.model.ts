@@ -1,7 +1,8 @@
 import type { TicketTypeId } from './ticket.model';
-import type { PurchaseId } from './balance/progression';
+import { SKILL_COST_SCALE, type PurchaseId } from './balance/progression';
 import type { CrewKind } from './crew.model';
-import { DEBT_INTEREST_PER_RANK } from './balance/flow';
+import { DEBT_INTEREST_PER_RANK, GOLDEN_VALUE_PER_RANK } from './balance/flow';
+import { WIP_LIMIT_STEP } from './balance/round';
 import { DESKS_PER_RANK } from './balance/crew';
 import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from './tier.model';
 
@@ -9,7 +10,7 @@ export type SkillEffect =
   | { readonly kind: 'none' }
   | { readonly kind: 'clickRadius'; readonly mult: number }
   | { readonly kind: 'slots'; readonly add: number }
-  | { readonly kind: 'cans'; readonly mult: number }
+  | { readonly kind: 'cans'; readonly add: number }
   | { readonly kind: 'desks'; readonly add: number }
   | { readonly kind: 'adr'; readonly adr: number }
   | { readonly kind: 'roundLength'; readonly seconds: number }
@@ -35,6 +36,9 @@ export type SkillEffect =
   | { readonly kind: 'nearestClaim' }
   | { readonly kind: 'autoClose'; readonly target: TicketTypeId }
   | { readonly kind: 'autoCloseSpeed'; readonly mult: number }
+  | { readonly kind: 'runners'; readonly add: number }
+  | { readonly kind: 'spPerClose'; readonly add: number }
+  | { readonly kind: 'crewSp' }
   | { readonly kind: 'senior'; readonly mult: number }
   | { readonly kind: 'seniorWalk'; readonly mult: number }
   | { readonly kind: 'seniorBatch'; readonly add: number }
@@ -59,7 +63,7 @@ export type SkillEffect =
   | { readonly kind: 'debtInterest'; readonly approach: number }
   | { readonly kind: 'global'; readonly mult: number }
   | { readonly kind: 'goldenChance'; readonly add: number }
-  | { readonly kind: 'goldenValue'; readonly mult: number }
+  | { readonly kind: 'goldenValue'; readonly add: number }
   | { readonly kind: 'goldenCrew' }
   | { readonly kind: 'line'; readonly line: PurchaseId };
 
@@ -101,6 +105,11 @@ export interface SkillLock {
   readonly key: string;
   readonly params?: Readonly<Record<string, string | number>>;
   readonly resolveParams?: readonly string[];
+}
+
+/** What a rank costs: SP prices scale with `SKILL_COST_SCALE`, euro prices don't. */
+export function skillLevelCost(node: SkillNode, level: SkillLevel): number {
+  return node.currency === 'eur' ? level.cost : level.cost * SKILL_COST_SCALE;
 }
 
 export const skillLabelKey = (id: string, level = 1): string =>
@@ -158,23 +167,20 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'capacity',
     track: 'A',
     requires: 'radius',
-    levels: [
-      { cost: 12, effects: [{ kind: 'slots', add: 6 }] },
-      { cost: 48, effects: [{ kind: 'slots', add: 8 }] },
-      { cost: 190, effects: [{ kind: 'slots', add: 10 }] },
-      { cost: 760, effects: [{ kind: 'slots', add: 14 }] },
-      { cost: 3_000, effects: [{ kind: 'slots', add: 18 }] },
-    ],
+    levels: [12, 30, 75, 190, 480, 1_200, 3_000, 7_500, 19_000, 48_000].map(
+      (cost) => ({
+        cost,
+        effects: [{ kind: 'slots' as const, add: WIP_LIMIT_STEP }],
+      })
+    ),
   },
   {
     id: 'cans',
     track: 'A',
     requires: 'capacity',
-    levels: [
-      { cost: 260, effects: [{ kind: 'cans', mult: 2 }] },
-      { cost: 5_200, effects: [{ kind: 'cans', mult: 2 }] },
-      { cost: 110_000, effects: [{ kind: 'cans', mult: 2 }] },
-    ],
+    levels: [60, 180, 540, 1_600, 4_800, 14_000, 42_000, 125_000, 375_000].map(
+      (cost) => ({ cost, effects: [{ kind: 'cans' as const, add: 1 }] })
+    ),
   },
   {
     id: 'duration',
@@ -416,6 +422,15 @@ export const SKILL_NODES: readonly SkillNode[] = [
     ],
   },
   {
+    id: 'runners',
+    track: 'F',
+    requires: 'autoLint',
+    levels: [60, 220, 800, 2_800, 9_000].map((cost) => ({
+      cost,
+      effects: [{ kind: 'runners' as const, add: 3 }],
+    })),
+  },
+  {
     id: 'autoLint',
     track: 'F',
     requires: 'copilot',
@@ -597,11 +612,20 @@ export const SKILL_NODES: readonly SkillNode[] = [
     ],
   },
   {
-    id: 'velocity',
+    id: 'estimates',
     track: 'C',
     requires: 'income',
+    levels: [4, 20, 90, 400, 1_800].map((cost) => ({
+      cost,
+      effects: [{ kind: 'spPerClose' as const, add: 2 }],
+    })),
+  },
+  {
+    id: 'timesheets',
+    track: 'B',
+    requires: 'juniorSpeed',
     gate: 'tier2',
-    levels: [{ cost: 400, effects: [{ kind: 'line', line: 'velocity' }] }],
+    levels: [{ cost: 300, effects: [{ kind: 'crewSp' }] }],
   },
   {
     id: 'valueLint',
@@ -764,7 +788,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'golden',
     track: 'A',
     requires: 'radius',
-    gate: 'tier2',
+    gate: 'tier1',
     levels: [{ cost: 90, effects: [{ kind: 'goldenChance', add: 0.02 }] }],
   },
   {
@@ -772,10 +796,22 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'A',
     requires: 'golden',
     levels: [
-      { cost: 320, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
-      { cost: 1_400, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
-      { cost: 6_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
-      { cost: 26_000, effects: [{ kind: 'goldenValue', mult: 1.5 }] },
+      {
+        cost: 320,
+        effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
+      },
+      {
+        cost: 1_400,
+        effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
+      },
+      {
+        cost: 6_000,
+        effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
+      },
+      {
+        cost: 26_000,
+        effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
+      },
     ],
   },
   {

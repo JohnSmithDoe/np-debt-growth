@@ -1,7 +1,10 @@
 import { LINE_EFFECT_PARAMS } from '../../game/model/purchase-copy.model';
 import type { SkillEffect, SkillNode } from '../../game/model/skill.model';
 import { ticketLabelKey } from '../../game/model/ticket.model';
-import { DEBT_INTEREST_CAP } from '../../game/model/balance/flow';
+import {
+  DEBT_INTEREST_CAP,
+  GOLDEN_CREW_CONVERSION,
+} from '../../game/model/balance/flow';
 import type { SceneDeps } from '../model/scene-deps.model';
 
 interface EffectText {
@@ -25,16 +28,25 @@ function describe(effect: SkillEffect): EffectText {
     case 'goldenValue':
       return {
         key: 'skill.effect.goldenValue',
-        params: { value: percent(effect.mult) },
+        params: { times: effect.add },
       };
     case 'goldenCrew':
-      return { key: 'skill.effect.goldenCrew' };
+      return {
+        key: 'skill.effect.goldenCrew',
+        params: { value: `${Math.round(GOLDEN_CREW_CONVERSION * 100)}%` },
+      };
     case 'clickRadius':
       return { key: 'skill.effect.clickRadius', params: pct(effect.mult) };
+    case 'spPerClose':
+      return { key: 'skill.effect.spPerClose', params: { count: effect.add } };
+    case 'crewSp':
+      return { key: 'skill.effect.crewSp' };
+    case 'runners':
+      return { key: 'skill.effect.runners', params: { count: effect.add } };
     case 'slots':
       return { key: 'skill.effect.slots', params: { count: effect.add } };
     case 'cans':
-      return { key: 'skill.effect.cans', params: { times: effect.mult } };
+      return { key: 'skill.effect.cans', params: { count: effect.add } };
     case 'desks':
       return { key: 'skill.effect.desks', params: { count: effect.add } };
     case 'adr':

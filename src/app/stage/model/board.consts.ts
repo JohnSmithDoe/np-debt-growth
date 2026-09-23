@@ -35,7 +35,7 @@ export const RARE_LIFT = 14;
 
 export const SPRINT_STRIP_HEIGHT = 48;
 export const SPRINT_PIP_LIMIT = 40;
-export const SPRINT_BAR_WIDTH = 300;
+export const SPRINT_BAR_WIDTH = 420;
 
 export const MAX_FRAME_MS = 250;
 
@@ -148,6 +148,9 @@ export const BOARD_INK = {
   button: 0x1f6feb,
   buttonIdle: 0x232b35,
   gold: 0xd8b34a,
+  laneAway: 0x1b2129,
+  train: 0xe6e9ef,
+  trainWindow: 0x1f6feb,
 } as const;
 
 export const BOARD_TEXT = {

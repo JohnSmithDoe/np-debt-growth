@@ -1,9 +1,14 @@
 export const COPILOT_SP_PER_CLOSE = 0.013;
 
-export const VELOCITY_SKIM_CAP = 0.35;
-export const VELOCITY_SKIM_DECAY = 0.88;
-export const VELOCITY_SP_PER_EURO = 0.0006;
-export const VELOCITY_UNLOCK_TIER = 2;
+/**
+ * Story points land at pickup, one per euro the ticket bills, once the
+ * `velocity` row is bought — the reference's "1 gum per $1".
+ */
+export const SP_PER_EURO = 1;
+/** Every node's SP price is scaled by this, so the tree keeps pace with 1:1 SP. */
+export const SKILL_COST_SCALE = 10;
+/** Crew and pipeline closes pay this much more SP once `timesheets` is bought. */
+export const CREW_SP_MULT = 2;
 
 /** The tree is bought with story points, so the first copilot ships with the laptop. */
 export const FREE_COPILOTS = 1;
@@ -44,12 +49,15 @@ export const SENIOR_BUYOUT_STEPS = [
 export const LINE_COST_STEP = 1.15;
 
 export const LINE_PLAN: Readonly<
-  Record<PurchaseId, { readonly cost: number; readonly cap: number }>
+  Record<
+    PurchaseId,
+    { readonly cost: number; readonly cap: number; readonly open?: boolean }
+  >
 > = {
   junior: { cost: 20, cap: 50 },
   senior: { cost: 1_200, cap: 50 },
   manager: { cost: 28_000, cap: 50 },
   copilot: { cost: 150, cap: 50 },
-  velocity: { cost: 25_000, cap: 10 },
+  velocity: { cost: 25, cap: 1, open: true },
   kit: { cost: 400, cap: 6 },
 };

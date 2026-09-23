@@ -427,10 +427,10 @@ describe('the can has two axes (parity #13, #14)', () => {
     expect(two - one).toBe(added(2));
   });
 
-  it('doubles the whole can per can, slots included', () => {
+  it('adds a whole swimlane per can, at the same WIP limit', () => {
     const bare = slots({ capacity: 3 });
     expect(slots({ capacity: 3, cans: 1 })).toBe(bare * 2);
-    expect(slots({ capacity: 3, cans: 2 })).toBe(bare * 4);
+    expect(slots({ capacity: 3, cans: 2 })).toBe(bare * 3);
   });
 
   it('adds desks by the rank, mirroring the reference worker node', () => {

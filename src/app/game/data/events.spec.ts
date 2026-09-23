@@ -142,7 +142,10 @@ describe('a full sprint and the rares (D23, D31)', () => {
   });
 
   it('refuses ordinary work with no room left — the can is a hard cap', () => {
-    const store = storeWith({ sprintCount: 999 });
+    const store = storeWith({
+      sprintCount: 999,
+      lanes: [{ count: 999, releaseLeftMs: 0 }],
+    });
     const harvest = store.harvest([place(store, 'bug')]);
 
     expect(harvest.taken.length).toBe(0);

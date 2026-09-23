@@ -50,6 +50,11 @@ export function fileAutomated(
 ): Close[] {
   const waitMs = economy.autoCloseMs(state);
   let room = Math.max(0, economy.sprintRoom(state, weather) - taken);
+  const perSec = economy.autoClosesPerSec(state);
+  board.autoCredit = Math.min(
+    perSec,
+    board.autoCredit + (perSec * dtMs) / 1000
+  );
   const closed: Close[] = [];
 
   for (let at = board.tickets.length - 1; at >= 0; at -= 1) {
@@ -61,10 +66,11 @@ export function fileAutomated(
     }
     if (ticket.autoLeftMs === NOT_AUTOMATED) ticket.autoLeftMs = waitMs;
     ticket.autoLeftMs -= dtMs;
-    if (ticket.autoLeftMs > 0 || room <= 0) continue;
+    if (ticket.autoLeftMs > 0 || room <= 0 || board.autoCredit < 1) continue;
     if (ticket.claimedBy !== NO_TICKET) continue;
 
     room -= 1;
+    board.autoCredit -= 1;
     closed.push({
       type: ticket.type,
       title: ticket.title,

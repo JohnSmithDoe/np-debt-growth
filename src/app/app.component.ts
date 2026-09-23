@@ -134,7 +134,7 @@ export class AppComponent {
   readonly roundLabel = computed(() =>
     this.running()
       ? 'open'
-      : `truck ${formatCountdown(this.#store.roundLeftMs())}`
+      : `release ${formatCountdown(this.#store.roundLeftMs())}`
   );
 
   #now = signal(Date.now());

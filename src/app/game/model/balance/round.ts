@@ -5,6 +5,12 @@
  */
 export const SPRINT_SLOTS_BASE = 100;
 
+/** Each "raise the WIP limit" rank, per lane — the reference's +25 capacity. */
+export const WIP_LIMIT_STEP = 25;
+
+/** You start with one swimlane; `cans` opens up to nine more. */
+export const LANES_BASE = 1;
+
 export const HAUL_MS = 4_000;
 
 /**

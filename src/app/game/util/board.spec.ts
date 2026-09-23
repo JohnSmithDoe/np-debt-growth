@@ -481,6 +481,7 @@ describe('a ticket that closes itself', () => {
     const state = {
       ...automated({ autoLint: 1 }),
       sprintCount: sprintSlots(stateWith()) + 99,
+      lanes: [{ count: 999, releaseLeftMs: 0 }],
     };
     fill(board, 'lint', 6, cycling());
 

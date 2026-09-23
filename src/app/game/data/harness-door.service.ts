@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 
+import type { PurchaseId } from '../model/balance/progression';
 import { GameStore } from './game.store';
 import { SaveService } from './save.service';
 
@@ -8,6 +9,8 @@ export interface HarnessDoors {
   reset(): void;
   endRound(): void;
   startRound(): void;
+  buySkill(id: string): boolean;
+  buyLine(line: PurchaseId): boolean;
 }
 
 interface HarnessGlobal {
@@ -28,6 +31,8 @@ export class HarnessDoor {
       },
       endRound: () => this.#store.endRoundNow(Date.now()),
       startRound: () => void this.#store.startRound(Date.now()),
+      buySkill: (id) => this.#store.buySkill(id),
+      buyLine: (line) => this.#store.buyLine(line),
     };
   }
 }

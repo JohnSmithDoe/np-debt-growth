@@ -8,6 +8,7 @@ import type { SkillLock } from '../../game/model/skill.model';
 import {
   SECRET_SKILL_ID,
   SKILL_BY_ID,
+  skillLevelCost,
   SKILL_HEADING_IDS,
   skillBlurbKey,
   skillLabelKey,
@@ -163,7 +164,7 @@ export class StageService {
           effect: skillEffectText(node, at + 1, (key, params) =>
             translate.instant(key, params)
           ),
-          cost: level.cost,
+          cost: skillLevelCost(node, level),
         })),
         cost: maxed ? 0 : store.skillRankCost(node.id),
         currency: node.currency ?? 'sp',
@@ -208,6 +209,8 @@ export class StageService {
       slots: () => store.sprintSlots(),
       filled: () => store.sprintCount(),
       sprint: () => store.sprint(),
+      lanes: () => store.lanes(),
+      laneCapacity: () => store.laneCapacity(),
       pending: () => store.sprintValue(),
       escalated: () => store.escalated(),
       tier: () => store.tier(),

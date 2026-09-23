@@ -6,6 +6,8 @@ import type { OfficePlate } from '../model/office.model';
 import { nextPlate, platesAt } from '../model/office.model';
 import { castPoolSize } from '../model/cast.model';
 import type { Weather } from '../model/hazard.model';
+import type { Lane } from '../model/round.model';
+import { EMPTY_LANE } from '../model/round.model';
 import { CALM } from '../model/hazard.model';
 import type { InvoiceLine, SprintInvoice } from '../model/invoice.model';
 import type { KitItem } from '../model/kit.model';
@@ -20,7 +22,11 @@ import {
 import type { SeniorHire, TraitId } from '../model/senior.model';
 import { TRAITS, hireFor } from '../model/senior.model';
 import type { SkillEffect } from '../model/skill.model';
-import { OFFICE_NODE_IDS, SKILL_BY_ID } from '../model/skill.model';
+import {
+  OFFICE_NODE_IDS,
+  SKILL_BY_ID,
+  skillLevelCost,
+} from '../model/skill.model';
 import type { TicketType, TicketTypeId } from '../model/ticket.model';
 import { ladderUp, TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
 import { approachCap } from '../model/balance/curve';
@@ -37,15 +43,20 @@ import {
 } from '../model/balance/crew';
 import {
   AUTO_CLOSE_MS,
+  AUTO_RUNNERS_BASE,
+  AUTO_RUNNER_PER_SEC,
   CLICK_RADIUS_BASE,
   CLICK_RADIUS_MAX,
   DEBT_INTEREST_CAP,
   GOLDEN_CHANCE_CAP,
+  GOLDEN_CREW_CONVERSION,
   GOLDEN_VALUE_BASE,
   RELABEL_STEPS_BASE,
 } from '../model/balance/flow';
 import {
   COPILOT_SP_PER_CLOSE,
+  CREW_SP_MULT,
+  SP_PER_EURO,
   INCOME_CAP,
   INCOME_COST_OF_SPAWNER,
   INCOME_COST_STEP,
@@ -53,15 +64,12 @@ import {
   LINE_COST_STEP,
   LINE_PLAN,
   SENIOR_BUYOUT_STEPS,
-  VELOCITY_SKIM_CAP,
-  VELOCITY_SKIM_DECAY,
-  VELOCITY_SP_PER_EURO,
-  VELOCITY_UNLOCK_TIER,
 } from '../model/balance/progression';
 import {
   HAUL_MIN_MS,
   HAUL_MS,
   RETAINER_PERIOD_MS,
+  LANES_BASE,
   SPRINT_SLOTS_BASE,
 } from '../model/balance/round';
 import {
@@ -126,7 +134,8 @@ export function skillRank(state: Consultancy, id: string): number {
 
 export function skillRankCost(state: Consultancy, id: string): number {
   const node = SKILL_BY_ID.get(id);
-  return node?.levels[skillRank(state, id)]?.cost ?? Number.POSITIVE_INFINITY;
+  const level = node?.levels[skillRank(state, id)];
+  return node && level ? skillLevelCost(node, level) : Number.POSITIVE_INFINITY;
 }
 
 const EXPANDED = new WeakMap<object, readonly SkillEffect[]>();
@@ -210,27 +219,77 @@ function globalMultiplier(state: Consultancy): number {
   return multOf(state, 'global');
 }
 
-/**
- * Two axes, as the reference has them: slots are added to the can, and a
- * second can doubles whatever the slots came to.
- */
+/** One lane's WIP limit: the base plus every "raise the WIP limit" rank. */
+export function laneCapacity(
+  state: Consultancy,
+  weather: Weather = CALM
+): number {
+  const slots = additive(state, 'slots', SPRINT_SLOTS_BASE);
+  return Math.max(1, Math.floor(slots * weather.slots));
+}
+
+export function laneCount(state: Consultancy): number {
+  return LANES_BASE + sumOf(state, (e) => (e.kind === 'cans' ? e.add : null));
+}
+
+/** Every lane the run owns, including ones bought since the last write. */
+export function lanesOf(state: Consultancy): readonly Lane[] {
+  const count = laneCount(state);
+  if (state.lanes.length >= count) return state.lanes.slice(0, count);
+  return [
+    ...state.lanes,
+    ...Array.from({ length: count - state.lanes.length }, () => EMPTY_LANE),
+  ];
+}
+
+/** The whole board of lanes: capacity × lanes, as the reference's row of cans. */
 export function sprintSlots(
   state: Consultancy,
   weather: Weather = CALM
 ): number {
-  const slots = additive(state, 'slots', SPRINT_SLOTS_BASE) * cans(state);
-  return Math.max(1, Math.floor(slots * weather.slots));
+  return laneCapacity(state, weather) * laneCount(state);
 }
 
-export function cans(state: Consultancy): number {
-  return productOf(state, (e) => (e.kind === 'cans' ? e.mult : null));
-}
-
+/** Room in the lanes whose train is home; a lane that is away takes nothing. */
 export function sprintRoom(
   state: Consultancy,
   weather: Weather = CALM
 ): number {
-  return Math.max(0, sprintSlots(state, weather) - state.sprintCount);
+  const cap = laneCapacity(state, weather);
+  return lanesOf(state).reduce(
+    (room, lane) =>
+      lane.releaseLeftMs > 0 ? room : room + Math.max(0, cap - lane.count),
+    0
+  );
+}
+
+/**
+ * Deals `taken` tickets round-robin into lanes with room, skipping lanes
+ * whose train is away. Returns the lane each ticket went to, in order.
+ */
+export function fillLanes(
+  state: Consultancy,
+  taken: number,
+  weather: Weather = CALM
+): { lanes: readonly Lane[]; cursor: number; placed: readonly number[] } {
+  const cap = laneCapacity(state, weather);
+  const lanes = lanesOf(state).map((lane) => ({ ...lane }));
+  const placed: number[] = [];
+  let cursor = state.laneCursor % lanes.length;
+  for (let n = 0; n < taken; n += 1) {
+    let tried = 0;
+    while (tried < lanes.length) {
+      const lane = lanes[cursor]!;
+      if (lane.releaseLeftMs <= 0 && lane.count < cap) break;
+      cursor = (cursor + 1) % lanes.length;
+      tried += 1;
+    }
+    if (tried === lanes.length) break;
+    lanes[cursor]!.count += 1;
+    placed.push(cursor);
+    cursor = (cursor + 1) % lanes.length;
+  }
+  return { lanes, cursor, placed };
 }
 
 export function retainerPerSec(state: Consultancy): number {
@@ -266,11 +325,19 @@ export function goldenChance(state: Consultancy): number {
 }
 
 export function goldenMultiplier(state: Consultancy): number {
-  return GOLDEN_VALUE_BASE * multOf(state, 'goldenValue');
+  return (
+    GOLDEN_VALUE_BASE +
+    sumOf(state, (e) => (e.kind === 'goldenValue' ? e.add : null))
+  );
 }
 
 export function crewTakesGolden(state: Consultancy): boolean {
   return holds(state, 'goldenCrew');
+}
+
+/** Golden crew turn a share of their ordinary closes golden, not only take the player's. */
+export function crewGoldenConversion(state: Consultancy): number {
+  return crewTakesGolden(state) ? GOLDEN_CREW_CONVERSION : 0;
 }
 
 export function seniorsPreferTop(state: Consultancy): boolean {
@@ -345,7 +412,7 @@ export function canBuyIncome(state: Consultancy, id: TicketTypeId): boolean {
 
 /** A line is open once the tree has unlocked it — the rail sells the rest. */
 export function lineUnlocked(state: Consultancy, line: PurchaseId): boolean {
-  return state.levels[line] > 0;
+  return state.levels[line] > 0 || LINE_PLAN[line].open === true;
 }
 
 export function lineCost(state: Consultancy, line: PurchaseId): number {
@@ -625,6 +692,17 @@ export function autoCloses(state: Consultancy, type: TicketTypeId): boolean {
     (on, effect) =>
       on || (effect.kind === 'autoClose' && effect.target === type)
   );
+}
+
+export function autoRunners(state: Consultancy): number {
+  return (
+    AUTO_RUNNERS_BASE +
+    sumOf(state, (e) => (e.kind === 'runners' ? e.add : null))
+  );
+}
+
+export function autoClosesPerSec(state: Consultancy): number {
+  return autoRunners(state) * AUTO_RUNNER_PER_SEC;
 }
 
 export function autoCloseMs(state: Consultancy): number {
@@ -966,21 +1044,38 @@ export function mergeInvoices(
   };
 }
 
-export function velocitySkim(state: Consultancy): number {
-  const level = state.levels.velocity;
-  if (level === 0) return 0;
-  return approachCap(VELOCITY_SKIM_CAP, VELOCITY_SKIM_DECAY ** level);
-}
-
-export function velocityStoryPoints(
+/**
+ * SP a close pays at pickup; zero until the `velocity` row is bought. Priced
+ * off the ticket's base value, so the rail's income ranks lift euros but not
+ * SP: the reference's gum runs 1:1 with money early and far behind it late.
+ */
+export function pickupStoryPoints(
   state: Consultancy,
-  payout: number
+  id: TicketTypeId,
+  golden: boolean,
+  byCrew: boolean
 ): number {
-  return payout * velocitySkim(state) * VELOCITY_SP_PER_EURO;
+  if (state.levels.velocity === 0) return 0;
+  const type = TICKET_TYPES[id];
+  const tierScale = type.scalesWithTier ? Math.max(1, state.tier) : 1;
+  const base = type.value * tierScale * (golden ? goldenMultiplier(state) : 1);
+  const bonus = sumOf(state, (e) => (e.kind === 'spPerClose' ? e.add : null));
+  const crew = byCrew && holds(state, 'crewSp') ? CREW_SP_MULT : 1;
+  return (base * SP_PER_EURO + bonus) * crew;
 }
 
-export function velocityUnlocked(state: Consultancy): boolean {
-  return state.tier >= VELOCITY_UNLOCK_TIER;
+/** The offline estimate's SP: the same mix `unattendedEuroPerSec` prices, at base value. */
+export function unattendedSpPerSec(state: Consultancy): number {
+  let supply = 0;
+  let points = 0;
+  for (const id of TICKET_TYPE_IDS) {
+    if (TICKET_TYPES[id].effect !== 'value') continue;
+    const rate = closeRate(state, id);
+    supply += rate;
+    points += rate * pickupStoryPoints(state, id, false, true);
+  }
+  if (supply <= 0) return 0;
+  return (points / supply) * Math.min(supply, ceilingPerSec(state));
 }
 
 export function promotionCost(state: Consultancy): number {

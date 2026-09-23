@@ -1,4 +1,4 @@
-import type { RoundOutcome, RoundPhase } from './round.model';
+import type { Lane, RoundOutcome, RoundPhase } from './round.model';
 import { SPAWNER_FREE_AT_ADR_0 } from './spawner.model';
 import type { SeniorHire } from './senior.model';
 import { SKILL_ROOT_ID } from './skill.model';
@@ -27,6 +27,8 @@ export interface Consultancy {
   readonly tier: number;
 
   readonly sprintCount: number;
+  readonly lanes: readonly Lane[];
+  readonly laneCursor: number;
   readonly escalated: boolean;
   readonly escalationFiresAt: number;
   readonly hotfixUntil: number;
@@ -56,6 +58,8 @@ export function resumed(state: Consultancy, now: number): Consultancy {
     roundMs: 0,
     haulLeftMs: 0,
     sprintCount: 0,
+    lanes: [],
+    laneCursor: 0,
     escalated: false,
     escalationFiresAt: 0,
   };
@@ -89,6 +93,8 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     roster: [],
     tier: 0,
     sprintCount: 0,
+    lanes: [],
+    laneCursor: 0,
     escalated: false,
     escalationFiresAt: 0,
     hotfixUntil: 0,

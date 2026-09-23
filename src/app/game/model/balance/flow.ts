@@ -15,6 +15,13 @@ export const RELABEL_STEPS_BASE = 1;
 export const AUTO_CLOSE_MS = 3_000;
 
 /**
+ * The pipeline is a throughput, not a board-wide wipe: each runner files about
+ * one ticket a second, the pace of one of the reference's rats.
+ */
+export const AUTO_RUNNERS_BASE = 4;
+export const AUTO_RUNNER_PER_SEC = 1;
+
+/**
  * Work nobody reaches is closed as "won't fix" after this long. The debt
  * stays; it just leaves the board. What density the field shows is
  * spawn rate × this, so it tracks what the player bought.
@@ -30,3 +37,7 @@ export const TIER_BURST = { tier: 3, count: 10 } as const;
 export const GOLDEN_CHANCE_PER_RANK = 0.02;
 export const GOLDEN_CHANCE_CAP = 0.2;
 export const GOLDEN_VALUE_BASE = 100;
+/** Additive, as the reference has it: 100× → 300× over four ranks. */
+export const GOLDEN_VALUE_PER_RANK = 50;
+/** Once the crew take golden work, this share of what they close turns golden. */
+export const GOLDEN_CREW_CONVERSION = 0.05;

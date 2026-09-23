@@ -44,7 +44,8 @@ import {
 } from '../model/hazard.model';
 import type { RoundInvoice, SprintInvoice } from '../model/invoice.model';
 import { EMPTY_INVOICE } from '../model/invoice.model';
-import type { RoundOutcome } from '../model/round.model';
+import type { Lane, RoundOutcome } from '../model/round.model';
+import { EMPTY_LANE } from '../model/round.model';
 import type { SkillGate } from '../model/skill.model';
 import type { SkillLock } from '../model/skill.model';
 import {
@@ -53,6 +54,7 @@ import {
   SKILL_BY_ID,
   SKILL_NODES,
   skillLabelKey,
+  skillLevelCost,
   skillParent,
 } from '../model/skill.model';
 import { adrNodeId, tierAt } from '../model/tier.model';
@@ -305,7 +307,9 @@ export class GameStore {
     for (const [id, rank] of Object.entries(state.skills)) {
       const node = SKILL_BY_ID.get(id);
       if (!node || node.currency === 'eur') continue;
-      for (const level of node.levels.slice(0, rank)) spent += level.cost;
+      for (const level of node.levels.slice(0, rank)) {
+        spent += skillLevelCost(node, level);
+      }
     }
     return spent;
   }
@@ -352,6 +356,10 @@ export class GameStore {
   readonly autoValue = this.#autoValue.asReadonly();
 
   readonly sprint = this.#sprint.asReadonly();
+  readonly lanes = computed(() => economy.lanesOf(this.#state()));
+  readonly laneCapacity = computed(() =>
+    economy.laneCapacity(this.#state(), this.#sky())
+  );
 
   readonly roundSprint = this.#roundSlots.asReadonly();
   readonly achievements = computed(() => this.#state().achievements);
@@ -409,12 +417,11 @@ export class GameStore {
     const gross = economy.unattendedEuroPerSec(state) * seconds;
     const closed = Math.floor(economy.unattendedClosesPerSec(state) * seconds);
     const retainer = economy.retainerPerSec(state) * seconds;
-    const skimmed = gross * economy.velocitySkim(state);
-    const payout = gross - skimmed + retainer;
+    const payout = gross + retainer;
     if (payout <= 0) return;
 
     const points =
-      economy.velocityStoryPoints(state, gross) +
+      economy.unattendedSpPerSec(state) * seconds +
       economy.copilotSpPerClose(state) * closed;
 
     this.#retainerBilled += retainer;
@@ -424,8 +431,7 @@ export class GameStore {
       storyPoints: state.storyPoints + points,
       lifetimeClosed: state.lifetimeClosed + closed,
       lifetimeBilled: state.lifetimeBilled + payout,
-      lifetimeSkimmed: state.lifetimeSkimmed + skimmed,
-      lifetimeCrewBilled: state.lifetimeCrewBilled + gross - skimmed + retainer,
+      lifetimeCrewBilled: state.lifetimeCrewBilled + gross + retainer,
       lifetimeWorkBilled: state.lifetimeWorkBilled + gross + retainer,
       runMs: state.runMs + away,
     });
@@ -450,15 +456,15 @@ export class GameStore {
    * returns, and that wait is the whole cadence — nothing here is on a clock.
    * The money is already paid: it landed per ticket, at pickup.
    */
-  #startHaul(now: number): void {
+  #laneLeaves(now: number, cap: number): void {
     const state = this.#state();
     const outcome: RoundOutcome = {
       seq: state.roundSeq,
       billed: this.#cycleBilled,
       closed: state.lifetimeClosed - this.#opened.closed,
       closedByCrew: state.lifetimeCrewBilled - this.#opened.crewBilled,
-      filled: state.sprintCount,
-      capacity: economy.sprintSlots(state, this.#sky()),
+      filled: cap,
+      capacity: cap,
       filledAtMs: this.#filledAt,
       unbilled: this.#board.tickets.length,
       durationMs: state.roundMs,
@@ -477,23 +483,17 @@ export class GameStore {
       billed: outcome.billed,
     });
 
-    this.#state.set({
-      ...state,
-      phase: 'hauling',
-      haulLeftMs: economy.haulMs(state),
-      lastTick: now,
-      lastOutcome: outcome,
-    });
+    this.#state.set({ ...this.#state(), lastOutcome: outcome, lastTick: now });
     const finished = this.#outcome();
     if (finished) this.#previous.set(finished);
     this.#outcome.set(outcome);
   }
 
-  /** The truck is away: the can comes back empty and collection resumes. */
-  #finishHaul(now: number): void {
+  /** A lane's train is back: that lane is empty and takes work again. */
+  #laneReturns(lane: number): void {
     const state = this.#state();
-    this.#roundSlots.set([...this.#sprint()]);
-    this.#sprint.set([]);
+    this.#roundSlots.set(this.#sprint().filter((slot) => slot.lane === lane));
+    this.#sprint.update((held) => held.filter((slot) => slot.lane !== lane));
     this.#filledAt = -1;
     this.#opened = {
       closed: state.lifetimeClosed,
@@ -507,29 +507,37 @@ export class GameStore {
     this.#cycleRetainer = 0;
     this.#state.set({
       ...state,
-      phase: 'collecting',
-      haulLeftMs: 0,
       roundMs: 0,
       roundSeq: state.roundSeq + 1,
-      sprintCount: 0,
-      escalated: false,
-      escalationFiresAt: 0,
-      hotfixUntil: 0,
       lifetimeRounds: state.lifetimeRounds + 1,
-      lastTick: now,
     });
   }
 
-  /** Debug door: send the truck early. */
+  /** Debug door: send every train that is home. */
   endRoundNow(now: number): void {
-    if (this.#state().phase !== 'collecting') return;
-    this.#startHaul(now);
+    const state = this.#state();
+    if (state.phase !== 'collecting') return;
+    const cap = economy.laneCapacity(state, this.#sky());
+    const haul = economy.haulMs(state);
+    const lanes = economy.lanesOf(state).map((lane) => {
+      if (lane.releaseLeftMs > 0) return lane;
+      this.#laneLeaves(now, cap);
+      return { ...lane, releaseLeftMs: haul };
+    });
+    this.#settleLanes(lanes, now);
   }
 
-  /** Debug door: bring the truck back early. */
+  /** Debug door: bring every train back. */
   startRound(now: number): boolean {
-    if (this.#state().phase !== 'hauling') return false;
-    this.#finishHaul(now);
+    const state = this.#state();
+    const lanes = economy.lanesOf(state);
+    if (!lanes.some((lane) => lane.releaseLeftMs > 0)) return false;
+    const home = lanes.map((lane, index) => {
+      if (lane.releaseLeftMs <= 0) return lane;
+      this.#laneReturns(index);
+      return EMPTY_LANE;
+    });
+    this.#settleLanes(home, now);
     return true;
   }
 
@@ -598,7 +606,6 @@ export class GameStore {
       lifetimeCrewBilled: banked.next.lifetimeCrewBilled + retainer,
       lifetimeWorkBilled: banked.next.lifetimeWorkBilled + retainer,
       lifetimeWontFix: banked.next.lifetimeWontFix + this.#wontFixStep,
-      haulLeftMs: Math.max(0, state.haulLeftMs - dtMs),
       lastTick: now,
       runMs: state.runMs + dtMs,
       roundMs: state.roundMs + dtMs,
@@ -621,14 +628,47 @@ export class GameStore {
     this.#grantAwards();
     this.#note();
 
-    const settled = this.#state();
-    if (settled.phase === 'hauling') {
-      if (settled.haulLeftMs <= 0) this.#finishHaul(now);
-    } else if (
-      settled.sprintCount >= economy.sprintSlots(settled, this.#sky())
-    ) {
-      this.#startHaul(now);
-    }
+    this.#stepLanes(dtMs, now);
+  }
+
+  /**
+   * Each lane runs its own train: a full lane ships and is locked until the
+   * train is back, while the others keep taking. `hauling` is only the case
+   * where every train is away at once.
+   */
+  #stepLanes(dtMs: number, now: number): void {
+    const state = this.#state();
+    const cap = economy.laneCapacity(state, this.#sky());
+    const haul = economy.haulMs(state);
+    const lanes = economy.lanesOf(state).map((lane, index) => {
+      if (lane.releaseLeftMs > 0) {
+        const left = lane.releaseLeftMs - dtMs;
+        if (left > 0) return { ...lane, releaseLeftMs: left };
+        this.#laneReturns(index);
+        return EMPTY_LANE;
+      }
+      if (lane.count >= cap) {
+        this.#laneLeaves(now, cap);
+        return { ...lane, releaseLeftMs: haul };
+      }
+      return lane;
+    });
+    this.#settleLanes(lanes, now);
+  }
+
+  #settleLanes(lanes: readonly Lane[], now: number): void {
+    const state = this.#state();
+    const away = lanes.every((lane) => lane.releaseLeftMs > 0);
+    this.#state.set({
+      ...state,
+      lanes,
+      sprintCount: lanes.reduce((sum, lane) => sum + lane.count, 0),
+      phase: away ? 'hauling' : 'collecting',
+      haulLeftMs: away
+        ? Math.min(...lanes.map((lane) => lane.releaseLeftMs))
+        : 0,
+      lastTick: now,
+    });
   }
 
   #sampleBurndown(runMs: number): void {
@@ -853,11 +893,15 @@ export class GameStore {
     const copilotSp = economy.copilotSpPerClose(state) * closed.length;
     this.#roundSp.copilots += copilotSp;
 
-    if (banked.took.length > 0) {
-      this.#sprint.update((slots) => [...slots, ...banked.took]);
+    const fill = economy.fillLanes(state, banked.took.length, this.#sky());
+    if (fill.placed.length > 0) {
+      const slots = fill.placed.map((lane, at) => ({
+        ...banked.took[at]!,
+        lane,
+      }));
+      this.#sprint.update((held) => [...held, ...slots]);
     }
-
-    const count = state.sprintCount + banked.took.length;
+    const count = fill.lanes.reduce((sum, lane) => sum + lane.count, 0);
     if (
       this.#filledAt < 0 &&
       count >= economy.sprintSlots(state, this.#sky())
@@ -865,26 +909,25 @@ export class GameStore {
       this.#filledAt = state.roundMs;
     }
 
-    // Money lands here, per ticket, at pickup — the can only rate-limits.
-    const skimmed = banked.value * economy.velocitySkim(state);
-    const payout = banked.value - skimmed;
-    const velocitySp = economy.velocityStoryPoints(state, banked.value);
+    // Money and story points land here, per ticket, at pickup — the can only rate-limits.
+    const payout = banked.value;
+    const velocitySp = banked.sp;
     this.#billed += payout;
     this.#cycleBilled += payout;
     this.#roundSp.velocity += velocitySp;
-    this.#roundSp.skimmed += skimmed;
 
     return {
       next: {
         ...state,
         ...buffs,
         budget: state.budget + payout,
-        sprintCount: state.sprintCount + banked.took.length,
+        sprintCount: count,
+        lanes: fill.lanes,
+        laneCursor: fill.cursor,
         storyPoints: state.storyPoints + copilotSp + velocitySp,
         lifetimeClosed: state.lifetimeClosed + closed.length,
         lifetimeClosedByWomen: state.lifetimeClosedByWomen + byWomen,
         lifetimeBilled: state.lifetimeBilled + payout,
-        lifetimeSkimmed: state.lifetimeSkimmed + skimmed,
         lifetimeCrewBilled: state.lifetimeCrewBilled + banked.crew,
         lifetimeWorkBilled: state.lifetimeWorkBilled + banked.value,
       },
@@ -896,19 +939,29 @@ export class GameStore {
     state: Consultancy,
     closed: Closed,
     now: number
-  ): { value: number; crew: number; took: SprintSlot[] } {
+  ): {
+    value: number;
+    crew: number;
+    sp: number;
+    took: Omit<SprintSlot, 'lane'>[];
+  } {
     let value = 0;
     let crew = 0;
+    let sp = 0;
     let auto = 0;
     let autoCount = 0;
-    const took: SprintSlot[] = [];
+    const took: Omit<SprintSlot, 'lane'>[] = [];
 
     const goldenMult = economy.goldenMultiplier(state);
+    const conversion = economy.crewGoldenConversion(state);
     for (const { type, title, by, x, y, golden } of closed) {
       if (TICKET_TYPES[type].effect !== 'value') continue;
+      const gilded =
+        golden || (by !== 'you' && conversion > 0 && this.#rand() < conversion);
       const worth =
-        economy.closeValue(state, type, now) * (golden ? goldenMult : 1);
+        economy.closeValue(state, type, now) * (gilded ? goldenMult : 1);
       value += worth;
+      sp += economy.pickupStoryPoints(state, type, gilded, by !== 'you');
       took.push({ type, title });
       if (by === 'auto') {
         auto += worth;
@@ -922,7 +975,7 @@ export class GameStore {
       this.#autoClosed.update((n) => n + autoCount);
       this.#autoValue.update((n) => n + auto);
     }
-    return { value, crew, took };
+    return { value, crew, sp, took };
   }
 
   #billWholeBoard(now: number): number {
