@@ -5,7 +5,7 @@ and the parity pass that closed it.
 
 **Legend:** ✅ match · 🟡 partial · ❌ missing
 
-**How this was checked.** Garbage Growth: 18 screenshots, Martin's play notes, and
+**How this was checked.** Garbage Growth **(the Steam demo, which ends at the gorilla)**: 18 screenshots, Martin's play notes, and
 §12's rows from Martin playing both side by side. Debt
 Growth: read out of `src/`, asserted in specs, **and driven in the running app** — a
 Playwright session that clicks the title screen, sweeps the board by hand, approves all

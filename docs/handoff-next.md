@@ -57,7 +57,7 @@ rank above everything below. Numbers marked *ref* are his observations.
 |---|---|---|---|
 | F1 | Animations are slower and softer. A collected item **jumps high into the air, then drops into the can** | `HARVEST_MS` 460 with a 44 px arc; `FALL_MS` 460 (`stage/model/board.consts.ts`, `#leave` in `board-scene.ts`) | Lengthen the harvest flight into a tall hop and a fall into the slot; soften the landing |
 | F7 | **Litter vanishes about 15 s after it lands**, so the field is never full. Live litter settles at rate × 15 s | Tickets never expire; the board climbs to `BOARD_CAPACITY` 600 | Give every ticket a lifetime and fade it out when it ends. A missed ticket is lost money: that is the urgency, and it's what crew are for. **Theme, per Martin: an expired ticket is closed as "won't fix"**: the debt stays, just out of sight. CLAUDE.md's "the board is never wiped — the point of the title" must be rewritten with it |
-| F9 | **Gum is big and paid per pickup.** After gum is unlocked, a $1 item gives 1 gum. Per-litter nodes, **5 ranks of "+2 gum" per litter type**, push it hard. Late run: 18 103M gum | SP comes from the copilot crew plus the velocity skim, `payout × skim(≤0.35) × VELOCITY_SP_PER_EURO 0.0006` (`economy.ts` `velocityStoryPoints`). Best case €1 → 0.0002 SP. Velocity is a €25 000 rail row from tier 2 | Replace the skim with per-ticket SP at pickup: 1:1 with the € value on unlock, plus a `+2 SP` node per ticket type, 5 ranks, additive. Float the SP beside the €. Rescale every tree cost to match (the reference's gorilla unlock is 600 000 gum). Decide whether copilot SP survives |
+| F9 | **Gum is big and paid per pickup.** After gum is unlocked, a $1 item gives 1 gum. Per-litter nodes, **5 ranks of "+2 gum" per litter type**, push it hard. Late run: 18 103M gum | SP comes from the copilot crew plus the velocity skim, `payout × skim(≤0.35) × VELOCITY_SP_PER_EURO 0.0006` (`economy.ts` `velocityStoryPoints`). Best case €1 → 0.0002 SP. Velocity is a €25 000 rail row from tier 2 | Replace the skim with per-ticket SP at pickup: 1:1 with the € value on unlock, plus a `+2 SP` node per ticket type, 5 ranks, additive. Float the SP beside the €. Rescale every tree cost to match (the reference's gorilla unlock is 600 000 gum). **Gum is switched on by a rail purchase, the first "expensive" one at $25** (Martin). Ours: `velocity` is a €25 000 rail row gated at tier 2. Make the SP unlock a cheap, early rail row. That also removes the reason the first copilot ships with the run (it exists only because nothing else produced SP), so the bootstrap copilot can go |
 | F8 | One opening spawner drops about **1 ticket per 4 s** (2–3 on the field before the first expires) | One ADR-0 head: `lint` 0.6/s + `bug` 0.28/s after 90 s. That's 1 per 1.1–1.7 s | Drop the per-head `ratePerSec` about 3× at the opening. That also covers F4 |
 | F2 | **Trash can be caught mid-flight**, which feels good | A falling ticket is hidden until it lands (`heap.reveal` on `FLIGHT.drop` arrival). `#sweep` → `pickWithin` checks its *landing* spot, so for 460 ms you can collect an invisible card there, but not the visible one in the air | Sweep `FLIGHT.drop` flyers at their current position, harvest them, and cancel their landing. Stop the invisible landing-spot pick |
 | F3 | First spawner free, second costs *ref* 2 | ADR-0: first head free, then `cost: 4 × 1.15^n` (`game/model/spawner.model.ts`) | Opening price to 2 |
@@ -74,12 +74,12 @@ rank above everything below. Numbers marked *ref* are his observations.
 | F1 | **Done** (`5756587`). `HARVEST_MS` 1 100, `HARVEST_HOP` 150, peak at a quarter of the flight, smoothstep into the slot; `FALL_MS` 700 |
 | F2 | **Done** (`5756587`). `FlyerPool.fallingWithin` / `catch`; the landing-spot pick and hover skip anything still falling |
 | F7 | **Done** (`5756587`). `TICKET_LIFE_MS` 15 s, `expireTickets`, fades via `FLIGHT.fade`. Hand-only rares exempt; claimed cards hold their clock |
-| F3 | In the working tree. ADR-0 `cost` 2, and the free head no longer raises the price, so the first paid head is exactly 2 |
-| F8 | In the working tree. `lint` 0.18/s, `bug` 0.08/s (≈ 1 per 4 s from one head) |
-| F5 | In the working tree. `SPRINT_SLOTS_BASE` 100, `o2` +14. The `slots` ranks stay at +6…+18: scaling them ×7 took sign-off to 47 min. **Why the build showed 8 is still unexplained**: the base has been 14 since the first commit, and only weather shrinks it |
+| F3 | **Done** (`176b4b1`). ADR-0 `cost` 2, and the free head no longer raises the price, so the first paid head is exactly 2 |
+| F8 | **Done** (`176b4b1`). `lint` 0.18/s, `bug` 0.08/s (≈ 1 per 4 s from one head) |
+| F5 | **Done** (`176b4b1`). `SPRINT_SLOTS_BASE` 100, `o2` +14. The `slots` ranks stay at +6…+18: scaling them ×7 took sign-off to 47 min. **Why the build showed 8 is still unexplained**: the base has been 14 since the first commit, and only weather shrinks it |
 | F4, F6 | Follow from F8 + F5: first junior at 8.9 min (was 3.1), and the opening never meets the cap |
 
-**Open, and blocks committing F3/F5/F8.** With a 100-slot can the truck rarely gates, and
+**Open: automation takes the money mid-run.** With a 100-slot can the truck rarely gates, and
 auto-close files nearly everything within 3 s: automation is 90–95 % of the money from
 minute 20 to 35 (crew share floor still passes). Sign-off is 48.6 min. `leaves an attentive
 player ahead of an idle one` now passes or fails on `Math.random` (margin about 2 %). The
@@ -121,7 +121,88 @@ bought. Proposed:
   `Goldene Verschmutzung` (2 000 gum, 0/1, "+2 %: litter turns GOLDEN, 100× value, rats
   don't pick it up"). About 2 860 gum in all, a few minutes at 1 gum per $1. Ours:
   `golden` `requires: 'radius'`, **`gate: 'tier2'`**, 90 SP. One ADR later than the
-  reference. Move the gate to `tier1`. Ours matches in shape (tree unlock per crew
+  reference. Move the gate to `tier1`.
+- **The golden chain after it** (`gg-node-golden-mult.png`, `gg-node-bike.png`,
+  `gg-node-golden-rat.png`):
+
+  | Node | Rank | Cost | Effect | Ours |
+  |---|---|---|---|---|
+  | `Glänzenderer Goldmüll` | 0/4 | 2 000 gum (rank 1) | Golden multiplier **+50×** a rank: 100× → 300×, **additive** | `goldenValue` ×1.5 a rank, compounding: 100× → 506× |
+  | `Fahrrad freischalten` | 0/1 | 10 000 gum | Unlocks bikes and babies (the ADR-2 analogue) | `adr2` |
+  | *(gorilla, the ADR-3 analogue)* | 1/1 | 600 000 gum | Unlocks gorillas and bananas | `adr3` |
+  | `Goldene Ratte` | 1/1 | — | Rats become golden: they **take golden litter, and 5 % of what they collect turns golden** | `goldenCrew` lifts the exemption only; **no 5 % conversion** |
+
+  **Martin: the golden rat is late game**, behind the bike and gorilla nodes. Our
+  `goldenCrew` at `gate: 'tier6'` is late too, so keep it late. Match by *position in
+  the run*, not by ADR number: we have nine lines, and the reference's full count isn't
+  known yet. Two tasks: make `goldenValue` additive (+50× a rank), and give
+  `goldenCrew` the 5 % conversion, so that buying it turns the crew into a gold source
+  rather than just taking the player's.
+
+  **After the golden rat the cursor only speeds things up a bit** (Martin). That's the
+  reference's late game: the hand goes from essential (sweeping gold) to a bonus. So
+  the attentive-beats-idle assertion should hold **up to `goldenCrew`**, with a wide
+  margin. After it, a small margin is the design, not a regression.
+
+- **The park ends at the gorilla** (Martin). After the gorilla and the golden rat
+  there is little left to do; the reference thins out and moves to a second screen
+  (the areas, `comparrison.md` row 52). So the reference's first area has about four
+  lines (people, dog, bike, gorilla) against our nine. **ADR-4…8 have no reference
+  counterpart**: they're our own late game, tuned by our own feel. Areas stay
+  deferred until we get there.
+- **What Martin played is the demo.** It ends at the gorilla; the Discord and
+  `Wunschliste` (wishlist) buttons in the late-game shot are the demo's. Everything in
+  this section describes the demo, not the full game.
+- **The demo teases a Chad** (`gg-node-chad.png`, a wishlist-only node): a spawner
+  whose rare litter is a *super job application*. **When the player picks one up,
+  nearby rats get +500 % efficiency for a while.** A rare, player-triggered, local,
+  timed crew buff: the cursor's late-game reason to exist, after the golden rat.
+  **F12, theme decided: the engineering manager, who drops pizza-party vouchers**: sweep one and the crew around it work 5× faster
+  until the pizza's gone.
+- **The full game, beyond the demo.** From an AI summary Martin pasted, checked against
+  the Steam forum ([thread](https://steamcommunity.com/app/4680930/discussions/0/571541539431678612/),
+  [index](https://steamcommunity.com/app/4680930/discussions/)), September 2026:
+
+  | Claim | Status |
+  |---|---|
+  | Demo beaten in about **30 min**; full 1.0 with all achievements in **57–70 min** | **Confirmed** (thread) |
+  | Gorilla unlock 600K; the first ~25 gorillas are very cheap, banana upgrades far cheaper than the unlock | **Confirmed** (thread). The currency is **gum**, per Martin's screenshot; the summary's "$" is wrong |
+  | Chad, a hidden skill, and a Titanic spawn exist in the full game | Thread titles only |
+  | A second area, the sea, with its own collectors and a golden whale | Plausible (Titanic), unconfirmed |
+  | Tanks, dying dogs, police, "this guy" as a cash wall, $10M ending | **Unconfirmed**, and partly contradicted: the demo alone shows $4 000B |
+  | Dogs from ~$500 | **Confirmed** (Martin): the line's base price. The next head costs **574**, i.e. 500 × 1.15 rounded down, and it matches $2 326 at 11/50, since 500 × 1.15¹¹ ≈ 2 325. **The 1.15 step is confirmed from the first level** |
+  | Bikes from ~$3 500 on the rail | **Wrong**: **$15 000** (Martin, and `rework-garbage-growth.md` §2.5's `Fahrrad hinzufügen 0/50 $15 000`) |
+  | Rats from ~$10, golden fixed at 100× | **Wrong**: Martin saw rats $1 000, golden +50× × 4 |
+
+  **Spawner base prices are far apart.** On the rail: people free → 2, dogs **500**,
+  bikes **15 000**: ×250, then ×30. Ours: ADR-0 2, ADR-1 32, ADR-2 160: ×16, then
+  ×5, and roughly 5–9× a rung after (`spawner.model.ts`). The reference makes each
+  new line a long save; ours come quickly. That fits "we wait longer before we can
+  buy stuff" (F4).
+
+  **What it changes:** the park is about half of a one-hour run and the sea is the
+  other half. Our 67-minute, nine-line run covers both. ADR-0…3 map onto the park,
+  ADR-4…8 roughly onto the sea, which argues for keeping one board, with the late
+  ADRs as our "second area" in content if not in scenery.
+
+- **Two AI-written run guides** (a speedrun and a "normal" run; Martin pasted them,
+  September 2026). **Low confidence**: they repeat some of the summary's prices, not all of them right, and
+  the primary sources they cite (the itch.io devlog, the exophase achievement list)
+  returned 403, so nothing in them could be checked. Martin's measurements win
+  wherever they disagree. Useful only as a shape:
+  - **The run's arc:** rats first (min 0–10), then the gum engine (bike, angels,
+    min 10–20), then the gorilla spike (20–30), then the sea (30–45). That matches
+    Martin's order and the forum's timings.
+  - **"Expensive gate, cheap burst."** The gorilla costs 600K to unlock, then its
+    first ~25 heads and banana upgrades are almost free, so income jumps at once.
+    Players call it broken (confirmed in the forum) and seek it out: a
+    deliberate-feeling power spike. Compare our ADR-3 → ADR-4 `slop` spike (§6), which
+    we treat as a flaw. Maybe it's the reference's best moment.
+  - **A hidden node**: zoom the tree all the way out, bottom-right corner, "Wow you
+    found me!" A forum thread titled "Hidden skill??" backs its existence. A cheap joke
+    for our tree: *the undocumented endpoint*.
+  - **Early capacity beats early speed**: a generic idle-game tip, and a check for
+    the autoplayer policy (§1). Ours matches in shape (tree unlock per crew
   kind, rail hire, `headcount` +5). **Missing: a "crew-collected tickets pay SP ×2"
   node**, which only makes sense once F9 pays SP per ticket.
 
