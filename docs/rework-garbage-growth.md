@@ -3,7 +3,11 @@
 **Goal:** rebuild Debt Growth to match *Garbage Growth*'s structure 1:1, keeping our own
 content — consultancy, tickets, crew, ADRs — on top of it.
 
-**Status:** design locked, implementation staged in §9. Written September 2026.
+**Status:** delivered. Seven stages, all in — see §9. Written September 2026.
+
+The design as it now stands in the code is described in `docs/gamedesign.md`; the
+row-by-row audit against the reference is `docs/comparrison.md`; what is still open is
+`docs/handoff-next.md`. This file stays the contract and the record of building to it.
 
 ---
 
@@ -262,12 +266,14 @@ closed until it lands. The meeting is the bottleneck.
 
 ---
 
-## 8. Still open
+## 8. Still open — answered
 
-1. **What paces a 1-hour run.** Not answered by the reference; to be solved empirically with
-   the instruments in `balance.spec.ts` and asserted, rather than copied.
-2. **Do cans multiply the slot total, or carry their own slots?**
-3. **Areas** (the reference's park → moon). Our analogue is a new client. Out of scope.
+1. ~~**What paces a 1-hour run.**~~ Solved empirically: the ADR ladder is the SP sink and
+   the rates tab is the euro sink that keeps income compounding once every line caps.
+   `balance.spec.ts` asserts the result rather than the recipe.
+2. ~~**Do cans multiply the slot total, or carry their own slots?**~~ They multiply it —
+   `sprintSlots = (base + Σ slots) × 2^cans`.
+3. ~~**Areas.**~~ Out of scope, by Martin's call. Recorded as an accepted divergence.
 
 ---
 
@@ -284,34 +290,59 @@ truck, supplied by developers you hire, and ended by a purchase.
 | 4 | **The tree** — SP-only, golden chain, `signoff` ends the run | done |
 | 5 | **Crew** — file on arrival then recover, golden clearance | done |
 | 6 | **Balance** — retuned and asserted | done |
+| 7 | **Parity** — the fifteen open rows of `comparrison.md` | done |
+
+### Stage 7 — parity
+
+A seventh stage closed the fifteen rows `docs/comparrison.md` had left open. Three of
+them were Martin's to call, and he called them: ADR unlocks move onto the tree as SP
+nodes, offline progress goes in, new areas stay out.
+
+| What | Where |
+|---|---|
+| **ADRs are tree nodes** (§4's contract, finally) | `adr1`…`adr8`, chained, SP-priced from `DEBT_TIERS.spCost` |
+| **Two capacity axes** | `slots` became additive; `cans` doubles on top |
+| **Desks are a `+5` node** | `headcount`, five ranks; `OFFICE_PLAN` no longer seats anyone |
+| **The rates tab** | `state.income` per ticket, `0/10`, gated on owning its spawner |
+| **The lane crowds** | one walker per head bought, all nine lines mixed into one band |
+| **Refusal bounces** | `harvest` reports `refused`; the heap hops those cards in place |
+| **Flowers** | a second, untinted floor tile layer that is drawn and never in the model |
+| **`+`/`%` badges** | `skillBadge` reads the next rank's effects |
+| **Offline progress** | a bounded 4 h window at 40 %, estimated in one step |
+
+Two things had to move to make the ADR ladder work on the tree. The first copilot now
+ships with the run — the tree is bought in story points, and nothing produced any before
+ADR-1 handed one over. And `root` ships bought: it costs nothing, the whole tree hangs
+off it, and leaving it unclicked stranded the ADR panel's own button. That last one only
+showed up on playing the build.
 
 ### The measurement
 
 ```
-ADR-1  1.3   first junior 3.2   ADR-2  4.6   ADR-3 12.4   ADR-4 17.0
-ADR-5 22.1   ADR-6 29.7         ADR-7 48.0   ADR-8 66.6   (minutes)
+first junior 3.1   ADR-1  7.6   ADR-2 17.9   ADR-3 25.2   ADR-4 26.8
+ADR-5       32.0   ADR-6 42.3   ADR-7 50.8   ADR-8 60.7   signed off 67.1
 ```
 
-Against the build this started from — 23.7 min, `unbought: none`, 207 537 spare SP, crew
-share *shrinking* 28 % → 18.7 %:
+Against the build this started from — 23.7 min, 207 537 spare SP, crew share *shrinking*
+28 % → 18.7 %:
 
-- **66.6 min**, against the reference's ~1 h, on a curve whose gaps widen instead of
-  collapsing. `balance.spec.ts` now asserts both — a 35–100 min band and a floor on the
-  last three gaps. The design doc's §11.3 called that the single highest-value test in the
-  project; it exists now.
-- **The cadence is the truck**, ~5.6 s a cycle, produced by the player's own throughput.
-- **The crew read as working**: they file on contact and recover, rather than standing over
-  a card for 4–24 s.
+- **67.1 min to the purchase that ends the run**, against the reference's ~1 h, on a
+  curve whose gaps widen instead of collapsing. `balance.spec.ts` asserts the band, a
+  two-minute floor on the last five gaps, and that the tree finishes empty. The design
+  doc's §11.3 called that the single highest-value test in the project; it exists now.
+- **The cadence is the truck**, produced by the player's own throughput.
+- **The crew earn a growing share** — 15 % at minute 25, 26.5 % by the end — and
+  automation is a quarter of the money rather than a rounding error.
 
 ### What is deliberately parked
 
 - **Weather** is stashed behind `HAZARDS_ENABLED`, rows and specs intact. The crew-euro
   floor drops with the offshore headcount it used to staff, and says so in place.
-- **`tier.model.ts` still gates the spawner lines.** §4 wants ADR unlocks on the tree as
-  `Fahrrad freischalten` nodes; they are still `state.tier`. `baselinePerRound` is now
-  unread by anything.
-- **The rail has two tabs, not three** — no per-ticket income upgrades yet.
-- **No offline accrual.** `MAX_CATCHUP_MS` is still 5 s. The reference has offline
-  progress; Martin chose an active game, so this stays a deliberate divergence.
+- **New areas** (the reference's park → moon) stay out of scope. Our analogue is a second
+  client, which needs a design call nobody has taken. Recorded in `comparrison.md` as an
+  accepted divergence rather than a gap.
+- **The ADR panel duplicates the tree node it buys.** Parity only asks that the unlock
+  live on the tree; the panel is a shortcut to the same purchase, kept because deleting
+  the last route to a purchase is exactly how the previous pass shipped a broken build.
 - The supply/drain invariant band was widened when `ceilingPerSec` moved to the haul, and
   is marked in place.

@@ -1,5 +1,11 @@
 # Handoff — close the Garbage Growth parity gaps
 
+> **Done, September 2026.** All fifteen rows are closed bar #52, which Martin
+> ruled out of scope. See `docs/comparrison.md` for the row-by-row result and
+> `docs/rework-garbage-growth.md` §9 stage 7 for what moved. **For what to do
+> next, read `docs/handoff-next.md`, not this file.** The brief below is kept as
+> the record of what was asked for — several of its landmarks have since moved.
+
 Paste the block below into a fresh session.
 
 ---

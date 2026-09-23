@@ -1,11 +1,16 @@
 # Debt Growth — game design
 
-A reading of the design **as it exists in the code** (September 2026), written from
-`game/` — the simulation, the balance tables and the specs that guard them.
+A reading of the design **as it exists in the code** (September 2026, after the Garbage
+Growth rework and the parity pass that closed it), written from `game/` — the simulation,
+the balance tables and the specs that guard them.
 
 Facts here were read out of the source, not inferred from the pitch. Where a number is
 quoted, the file is named. Sections marked **Comment** are opinion: my read on what the
 design earns and where it is fighting itself. Everything else is description.
+
+`docs/rework-garbage-growth.md` is the contract this shape was built to;
+`docs/comparrison.md` is the row-by-row audit against the reference. This file describes
+the result.
 
 ---
 
@@ -15,69 +20,69 @@ A consultancy is **billed by the hour**. It closes tickets for money. Therefore 
 is an asset: more tickets, dearer tickets, more hours. The joke is that the studio invests
 in its own decay.
 
-This is not flavour text sitting on top of a generic incremental. Two mechanisms make the
-premise the actual economy:
+This is not flavour text sitting on top of a generic incremental. Three mechanisms make
+the premise the actual economy:
 
-- **Debt interest** (`util/supply.ts:33-36`). Every spawn rolls against
+- **Spawner lines** (`spawner.model.ts`, `economy.sourceMultiplier`). Nine lines, one per
+  ADR, capped at 50 heads and climbing 1.15× a head. A line with nobody on it produces
+  nothing. **You pay people to make the codebase worse, then bill the client to clean up
+  after them** — and that is the main euro sink for most of the run.
+- **Debt interest** (`util/supply.ts`). Every spawn rolls against
   `economy.debtInterest(state)`; on a hit, the ticket that arrives is **one rung dearer**
   than the one that was due (`interestTarget` → `ladderUp(id, 1, tier + 1)`). The
   `debtInterest` skill track buys that probability up toward a cap of `0.25`
-  (`balance/flow.ts`, via `approachCap`). You are literally paying to make the codebase
-  worse, and the payoff is a richer ticket mix.
-- **Tier-scaled value** (`economy.ts`, `ticketValue`). `incident` has
-  `scalesWithTier: true`, so the worse your accumulated debt tier, the more one fire is
-  worth.
+  (`balance/flow.ts`, via `approachCap`).
+- **Tier-scaled value** (`economy.ticketValue`). `incident` has `scalesWithTier: true`, so
+  the worse your accumulated debt, the more one fire is worth.
 
-**Comment — this is the design's strongest idea.** The theme and the growth curve are the
-same mechanism. Most incrementals would have implemented "debt" as a cosmetic multiplier;
-here it changes *which objects spawn*, which changes who on the crew can claim them, which
-changes what you need to buy next. The satire is load-bearing.
+**Comment — this is the design's strongest idea, and the rework promoted it.** It used to
+be a hidden probability roll; it is now the thing you spend money on and the thing you
+watch walking across the top of the screen. The theme and the growth curve are the same
+mechanism, and the satire is load-bearing.
 
 ---
 
 ## 2. The core loop
 
-Three nested clocks:
+Two clocks, not three. **There is no round timer.**
 
 | Clock | Length | Source |
 |---|---|---|
 | Sub-tick | `TICK_MS` 100 ms | `GameClock` → `store.advanceTo` |
-| **Round** | `ROUND_LENGTH_BASE_MS` 10 s, extended by `roundLength` skill effects | `economy.roundLengthMs` |
-| Run | until you stop | `runMs` |
+| Run | until you buy the last upgrade | `runMs` |
 
-A round runs, then flips to a **review** phase and waits for the player to start the next
-one (`game.store.ts:384` `#endRound`, `:444` `startRound`). Phase is `'running' | 'review'`
-— there is no third state.
+The cadence is the **can and the truck**:
 
-Within a round:
-
-1. **Tickets spawn** onto the board at `ratePerSec` per type, metered through
+1. **Tickets spawn** onto the board at `ratePerSec × heads on that line`, metered through
    `SpawnBudget` (fractional credit carried between ticks, burst-capped at
    `SPAWN_BURST_CAP` 12) so a lag spike cannot dump a hundred cards.
-2. **Work gets claimed and closed** — by the crew walking to cards, by the player
-   clicking, or by automation filing them.
-3. Each close consumes one **sprint slot**. `SPRINT_SLOTS_BASE` is 14.
-4. At round end the sprint is **invoiced**, the retainer is added, and the outcome is
-   recorded as a `RoundOutcome`.
-
-### The central tension
+2. **The board is never wiped.** Litter accumulates across the whole run and stalls
+   spawning at `BOARD_CAPACITY` 600. The mess *is* the progress bar.
+3. **Work is collected** — by the player sweeping a radius (everything under the cursor,
+   once a frame, `BoardScene.#sweep`), by the crew walking to cards, or by automation.
+   **Money lands per ticket, at pickup.**
+4. Each close consumes one **can slot**. When the can fills, `phase` flips to `'hauling'`
+   and **nothing can be collected until the truck returns** — `HAUL_MS` 4 s, floored at
+   `HAUL_MIN_MS` 2.5 s. Spawning and crew walking continue through it.
 
 ```
-ceilingPerSec = sprintSlots / (roundLengthMs / 1000)
+ceilingPerSec = sprintSlots / (haulMs / 1000)
 ```
 
-Slots are per **round**, not per second (`economy.ts`, `ceilingPerSec`; asserted in
-`economy.spec.ts` — *"drains at slots per ROUND, so time is capacity's rival"*). So buying
-raw throughput hits a wall that only `slots` or `roundLength` purchases can move.
+**Pattern — the cadence is an output of your power, not an input.** Get stronger, fill the
+can faster, cycle more often. There is no `ROUND_LENGTH_MS` anywhere, and a round boundary
+is something that *happens to you* rather than something you wait for.
 
-Overflow is **soft**, not a hard stop: past capacity, extra tickets still pay at
-`SPRINT_OVERFLOW_RATE` 0.35 (`economy.overflowFactor`).
+The cap is **hard**. There is no overflow rate: past capacity, `#withinCan` refuses the
+ticket, reports it as `refused`, and the scene bounces it where it lies
+(`REFUSAL_BOUNCE`). Legibility comes from the feedback, not from softness.
 
-**Comment — the best structural decision in the game.** A pure clicker cannot outrun the
-slot cap, and an idle build cannot ignore it either; both have to buy into the same two
-knobs. The soft overflow is the right call — a hard wall would make the last seconds of a
-round feel broken rather than merely inefficient. This is the mechanism I would protect
-hardest in any rebalance.
+**Comment — the best structural decision in the game, and the rework improved it.** The
+old soft overflow made the last seconds of a timed round merely inefficient; the hard cap
+plus a visible bounce makes the same fact readable in one frame, and it removes the wall
+clock the whole design was fighting. Both a clicker and an idle build still hit the same
+wall, and both have to buy into the same two knobs — which are now *two different shapes*
+of knob (see §6).
 
 ---
 
@@ -85,25 +90,31 @@ hardest in any rebalance.
 
 | | Symbol | Earned from | Spends on |
 |---|---|---|---|
-| **Budget** | € | Invoiced sprints, retainer, board bills | Crew lines, office, kit, tiers |
-| **Story Points** | SP | Velocity skim, copilots, awards | Most of the skill tree |
+| **Budget** | € | Every pickup, the retainer, board bills | The rail: spawner lines, crew heads, income rates |
+| **Story Points** | SP | Velocity skim, copilots, awards | The tree — **all of it**, ADRs included |
 
-€ is throughput. SP is the *progression* currency, and it has three sources
-(`RoundOutcome.spVelocity / spCopilots / spAwards`):
+**The tree unlocks, the rail buys.** That split is now clean: no node costs euros, and no
+rail row costs points.
+
+SP has three sources (`RoundOutcome.spVelocity / spCopilots / spAwards`):
 
 - **Velocity skim** (`economy.velocitySkim`) — you divert a fraction of revenue into SP.
-  `approachCap(0.35, 0.88 ** level)`: the cap is 35%, approached with diminishing returns,
-  so early velocity levels are the valuable ones. Converted at
+  `approachCap(0.35, 0.88 ** level)`: the cap is 35 %, approached with diminishing
+  returns, so early velocity levels are the valuable ones. Converted at
   `VELOCITY_SP_PER_EURO` 0.0006.
 - **Copilots** — flat SP per close, `COPILOT_SP_PER_CLOSE` 0.013 × copilots ×
   `copilot` multipliers.
-- **Awards** — one-off grants, 34 of them in `award.model.ts`.
+- **Awards** — one-off grants in `award.model.ts`.
 
-**Comment — the skim is the cleverest economy piece.** It is a *self-imposed tax*: you
-choose to be paid less now to progress faster. That is a real decision, unlike the usual
-"buy multiplier, get multiplier". Copilots are the boring-but-necessary floor that keeps
-SP flowing when you have not bought velocity yet — and the free copilot at tier 1
-(`FREE_COPILOT_AT_TIER`) exists precisely so SP is reachable without a purchase.
+**The first copilot ships with the run** (`FREE_COPILOTS` 1, granted in
+`freshConsultancy`). It has to: the tree is bought in story points and the ADR ladder is
+on the tree, so a run with no SP source has nothing it can do. It used to arrive with
+ADR-1, which was fine while ADR-1 cost euros and is a deadlock now.
+
+**Comment — the skim is still the cleverest economy piece.** It is a *self-imposed tax*:
+you choose to be paid less now to progress faster. Making the tree SP-only sharpened it —
+the skim is now the only bridge between the two currencies, so its level is the single
+number that decides how fast the run advances versus how fast it earns.
 
 ---
 
@@ -113,63 +124,70 @@ Fifteen types (`ticket.model.ts`). Two families.
 
 ### The value ladder — ten rungs, one per debt tier
 
-| Type | Value | Rate/s | Tier | Notes |
-|---|---|---|---|---|
-| `lint` | 1 | 0.60 | 0 | |
-| `bug` | 4 | 0.28 | 0 | held back until 90 s |
-| `legacy` | 12 | 0.90 | 1 | |
-| `flaky` | 30 | 1.60 | 2 | **respawns** |
-| `conflict` | 90 | 5.0 | 3 | |
-| `slop` | 260 | 7.0 | 4 | |
-| `rockstar` | 1 400 | 9.5 | 5 | |
-| `zombie` | 6 000 | 13 | 6 | **respawns** |
-| `rewrite` | 26 000 | 17 | 7 | |
-| `swarm` | 110 000 | 22 | 8 | |
+| Type | Value | Rate/s | Tier | Spawner | Notes |
+|---|---|---|---|---|---|
+| `lint` | 1 | 0.60 | 0 | ADR-0 | |
+| `bug` | 4 | 0.28 | 0 | ADR-0 | held back until 90 s |
+| `legacy` | 12 | 0.90 | 1 | ADR-1 | |
+| `flaky` | 30 | 1.60 | 2 | ADR-2 | **respawns** |
+| `conflict` | 90 | 5.0 | 3 | ADR-3 | |
+| `slop` | 260 | 7.0 | 4 | ADR-4 | |
+| `rockstar` | 1 400 | 9.5 | 5 | ADR-5 | |
+| `zombie` | 6 000 | 13 | 6 | ADR-6 | **respawns** |
+| `rewrite` | 26 000 | 17 | 7 | ADR-7 | |
+| `swarm` | 110 000 | 22 | 8 | ADR-8 | |
+
+`ratePerSec` is now a *per-head* rate: the actual arrival rate is
+`ratePerSec × spawnerCount(adr) × skill multipliers`. A rung with an approved ADR and an
+empty line produces nothing.
 
 This is `RETYPE_LADDER` (value-effect, non-hand-only types, sorted by tier) and it is what
-`ladderUp` walks for both debt interest and manager relabelling. Value and rate both climb,
-so nothing on the ladder is dominated — now asserted in
-`data/balance-invariants.spec.ts`.
+`ladderUp` walks for both debt interest and manager relabelling. Value and rate both
+climb, so nothing on the ladder is dominated — asserted in `data/balance-invariants.spec.ts`.
 
-`respawns: true` doubles effective close rate (`closeRate = spawnRate × 2`) — the card
-comes back, so it is worth twice its spawn rate in traffic.
+`respawns: true` doubles effective close rate (`closeRate = spawnRate × 2`).
 
 ### Hand-only events — the texture
 
 `handOnly: true` means **no purchase makes them arrive faster** (enforced by
-`economy.spec.ts`: *"does not let any € purchase make one arrive faster"*). Only the crew
-kind that `takesRares` — offshore — can claim them otherwise.
+`economy.spec.ts`). Only the crew kind that `takesRares` — offshore — can claim them
+otherwise.
 
 | Type | Effect | Rate/s | What it does |
 |---|---|---|---|
 | `incident` | `value` | 0.008 | Pays 150 × tier. ×100 rate in a `storm`, ×25 in a `page` |
-| `escalation` | `sprintMultiplier` | 0.0015 | Arms ×5 on the whole sprint after a hold |
+| `escalation` | `sprintMultiplier` | 0.0015 | Arms ×5 on every close in a 6 s window |
 | `hotfix` | `hotfixBuff` | 0.006 | ×2 ticket value for `HOTFIX_MS` 10 s |
 | `quarter` | `billBoard` | 0.0012 | Bills every resting ticket on the board at once |
-| `invite` | `decline` | — | The dismissable hazard invitation |
+| `invite` | `decline` | — | The dismissable hazard invitation (stashed, see §7) |
 
-**Escalation deserves attention.** It does not fire immediately: it sets
-`escalationFiresAt = now + ESCALATION_HOLD_MS` (6 s, i.e. `0.6 × round length`), and the
-×5 applies to the sprint. So the play is to *bank work into the window*.
+**Escalation is a live window now, not a bill.** It sets
+`escalationFiresAt = now + ESCALATION_HOLD_MS` (6 s) and the ×5 rides every close inside
+it, then lapses — it no longer multiplies a sprint at an invoice. The play is still to
+sweep hard into the window.
 
-**Comment — this is where the game's skill expression lives.** An idle game with one
-timed, anticipatory decision per round is far more alive than one with none, and deriving
-the hold from round length is the right coupling. My one worry: `escalation` at 0.0015/s is
-roughly one per 11 minutes, which is a long wait for the only mechanic that rewards
-attention. `spawnEscalation` (gated at tier 5) exists to raise it, but that is late. I
-would consider making escalation rarer *in value* and more frequent *in occurrence*.
+### Golden — the automation-exempt class
+
+A 2 %-per-rank roll on any arriving ticket (`goldenChance`, capped at
+`GOLDEN_CHANCE_CAP` 0.2) makes it worth `GOLDEN_VALUE_BASE` 100 × the `goldenValue`
+ladder — **and no crew kind may claim it**, offshore's `takesRares` included, until the
+late `goldenCrew` node sells the exemption back.
+
+**Comment — this is the mechanism that keeps the player's hand worth using.** Once
+automation works, the player needs work the machine refuses, and their attention gets
+*more* valuable as automation grows: more crew clears the white chaff, which makes the
+gold easier to spot. The verb turns from *sweep everything* into *scan for gold*. Then you
+buy your way out of it, as a reward. It is the single best idea taken from the reference.
 
 ### The first act is scripted
 
 `util/first-act.ts` withholds `incident` until 75 s and `bug` until 90 s, and force-spawns
-the first incident exactly when it becomes legal. The opening minutes are choreographed,
-not random.
+the first incident exactly when it becomes legal.
 
 **Comment — good instinct, wrong altitude.** Holding types back so the player meets one
 mechanic at a time is right. But it is an `if (type === 'incident')` ladder in code, so
 "reveal a type later" is a code change rather than a data change. A `revealAtMs?` field on
-`TicketType` would make the whole opening tunable. Flagged, not done — it was outside the
-extraction I ran.
+`TicketType` would make the whole opening tunable. Still flagged, still not done.
 
 ---
 
@@ -185,16 +203,21 @@ Four kinds, one row each in `CREW_STATS` (`game/model/balance/crew.ts`). The arr
 | **juniors** | 5 s | 90 | 1 | 40 | **0–3** | 4 | 20 | `levels.junior` |
 | **managers** | 24 s | 110 | 1 | 0 | 0–∞ | 3 | 420 | `levels.manager` |
 
+Crew **file on arrival and then recover** rather than standing over a card for the whole
+close time — the same verb the player has, rate-limited by a cooldown. A long
+walk-and-work animation reads as *nothing is happening*; instant-action-then-rest reads as
+*working fast and resting*.
+
 ### Bands are the division of labour
 
-Juniors work tiers 0–3 (extendable by the `stretch` skill). Seniors work **tier 2 and up**
-and cannot touch the cheap stuff. So seniors are not a strict upgrade — they are a
-different tool, and a senior on a fresh board has nothing to do.
+Juniors work tiers 0–3 (extendable by `juniorReach` and the `stretch` skill). Seniors work
+**tier 2 and up** and cannot touch the cheap stuff. So seniors are not a strict upgrade —
+they are a different tool, and a senior on a fresh board has nothing to do.
 
 **Comment — quietly excellent.** It converts "buy the better unit" into "buy the unit that
-matches your board", and it is why the debt tier climb matters beyond raw numbers: climbing
-tiers is what gives your expensive crew anything to claim. The overlap at tiers 2–3 is
-where the two bands compete, which is exactly where it should be.
+matches your board", and it is why the ADR climb matters beyond raw numbers: climbing it
+is what gives your expensive crew anything to claim. The overlap at tiers 2–3 is where the
+two bands compete, which is exactly where it should be.
 
 ### Seniors are individuals
 
@@ -204,14 +227,9 @@ Each seat gets a `SeniorHire` with one trait, cycling deterministically by seat 
 `closer` ×1.25 close · `sweeper` ×1.4 sweep · `runner` ×1.5 walk · `firefighter` claims
 top-of-band · `scout` claims nearest.
 
-Seat 0 is always a closer, seat 5 is always a closer again. Traits fold through the same
-`SkillEffect` union as skills, so a trait and a skill are the same kind of thing to the
-engine.
-
-**Comment — the determinism is the right trade.** Random traits would add variance to a
-purchase the player is *already* paying a lot for; a fixed cycle means the fifth senior is
-a known quantity and can be priced. The trait ceiling is guarded
-(`TRAIT_D21_CEILING` 1.25 in `balance.spec.ts`), which is a mature thing to have.
+Traits fold through the same `SkillEffect` union as skills, so a trait and a skill are the
+same kind of thing to the engine. The trait ceiling is guarded (`TRAIT_D21_CEILING` 1.25
+in `balance.spec.ts`).
 
 ### Managers do not close — they relabel
 
@@ -220,130 +238,149 @@ a known quantity and can be priced. The trait ceiling is guarded
 one for someone else to close. 24 s per action, the slowest unit in the game.
 
 **Comment — the best-themed unit, and the most at risk.** "Management converts small
-problems into big ones and bills for it" is the whole satire in one sprite. Mechanically it
-is a *force multiplier on other crew*, which is a genuinely different purchase shape. But
-its claim predicate is `transform(type) !== null` — a manager with nothing relabellable
-scans the entire board and finds nothing, and at 24 s per action it contributes very little
-while costing the most retainer (420/round). It is the unit I would watch hardest in a
-rebalance.
+problems into big ones and bills for it" is the whole satire in one sprite, and it is a
+genuinely different purchase shape: a force multiplier on other crew. But its claim
+predicate finds nothing on a board with no relabellable cards, and at 24 s per action it
+contributes very little while costing the most retainer. Still the unit I would watch
+hardest in a rebalance — more so now that a persistent board gives it far more to scan.
 
-### Desks, and the office
+### Desks
 
-Crew need desks. `desks = officePlates × DESKS_PER_PLATE (10)`, and
-`deskLimited` blocks a hire when there is no free desk. Plates come from the `O` skill
-track — an 8-plate floor (`OFFICE_PLAN`, a 4×2 grid), the first given free.
+`desks = DESKS_BASE (10) + Σ desk effects`, and `deskLimited` blocks a hire when there is
+no free desk. The only source of desks is the **`headcount` node** — five ranks of
+`DESKS_PER_RANK` +5, on the crew track, in SP. The office track no longer seats anyone.
 
-**Comment — a good throttle.** It stops "buy 400 juniors" and forces an occasional
-detour into a different currency (office nodes are €, most skills are SP). It also gives
-the board a visual read on your progress, which is free storytelling.
+**Comment — additive is the right shape, and it was worth the change.** Desks used to be
+`officePlates × 10`, which meant an office purchase multiplied your whole crew cap in one
+step; the reference's `Rattenpopulation` adds five at a time and the growth stays legible.
+The office track kept its own effects and its floor art, and lost a job it should never
+have had.
 
 ### The women-close-faster rule
 
 `WOMAN_CLOSE_RATE = 2`. Every *n*-th seat is a woman (per-kind `womanEvery`), and those
-seats close in **half** the time. It is tracked for the whole run
-(`lifetimeClosedByWomen`) and surfaced in the post-mortem.
+seats close in **half** the time. Tracked for the whole run (`lifetimeClosedByWomen`) and
+surfaced in the post-mortem.
 
-**Comment — a deliberate authorial statement, and it is implemented as a real mechanic
-rather than a label.** It changes `crewRate`, the ceiling maths, the cast pools and the
-sprite chosen. Worth knowing that it is *load-bearing*: because juniors are 1-in-4 and
-seniors 1-in-6, and promotion re-reads the bench at the junior ratio, the promotion
-decision has a throughput consequence. If that ratio is ever retuned, promotion value moves
-with it.
+**Comment — a deliberate authorial statement, implemented as a real mechanic rather than a
+label.** It changes `crewRate`, the ceiling maths, the cast pools and the sprite chosen.
+It is *load-bearing*: because juniors are 1-in-4 and seniors 1-in-6, and promotion re-reads
+the bench at the junior ratio, the promotion decision has a throughput consequence. If
+that ratio is ever retuned, promotion value moves with it.
 
 ---
 
 ## 6. Progression
 
-Four interlocking systems.
+Four interlocking systems, and they are now cleanly separated by currency.
 
-### Debt tiers — the spine
+### The ADR ladder — the spine, on the tree
 
-Eight rungs (`tier.model.ts`), each with an `unlockCost`, the `ticket` it unlocks, and a
-`baselinePerRound`:
+Eight rungs (`tier.model.ts`), each a chained tree node (`adr1`…`adr8`) that unlocks the
+spawner line **and** the ticket type together:
 
-| Tier | Unlock € | Unlocks | Baseline/round | unlock ÷ baseline |
-|---|---|---|---|---|
-| 1 | 130 | `legacy` | 203 | 0.64 |
-| 2 | 650 | `flaky` | 900 | 0.72 |
-| 3 | 3 500 | `conflict` | 6 300 | 0.56 |
-| 4 | 20 000 | `slop` | 34 600 | 0.58 |
-| 5 | 140 000 | `rockstar` | 281 000 | **0.50** |
-| 6 | 1 100 000 | `zombie` | 1 490 000 | 0.74 |
-| 7 | 9 500 000 | `rewrite` | 12 200 000 | 0.78 |
-| 8 | 90 000 000 | `swarm` | 77 000 000 | **1.17** |
+| ADR | SP | Unlocks | ×prev |
+|---|---|---|---|
+| 1 | 12 | `legacy` | — |
+| 2 | 110 | `flaky` | 9.2 |
+| 3 | 900 | `conflict` | 8.2 |
+| 4 | 16 000 | `slop` | 17.8 |
+| 5 | 130 000 | `rockstar` | 8.1 |
+| 6 | 440 000 | `zombie` | 3.4 |
+| 7 | 1 400 000 | `rewrite` | 3.2 |
+| 8 | 4 200 000 | `swarm` | 3.0 |
 
-`roundTarget = baselinePerRound × ROUND_TARGET_OF_BASELINE (0.75)` — the client's line you
-are asked to hit each round. Reaching a tier also fires a one-off **burst** of the new
-ticket type at tier 3 (`TIER_BURST`), so the unlock is visible immediately.
+`adrNodeId(n)` names the square. The nodes carry `{ kind: 'adr', adr: n }`, and
+`GameStore.buySkill` is what raises `state.tier`, fires the one-off `TIER_BURST` at tier 3
+and marks the burndown approval. `unlockNextTier()` still exists as the ADR panel's
+shortcut — it buys the same node.
+
+There is no `baselinePerRound` and no round target. The client's line is gone with the
+round it scored.
+
+**The last purchase ends the run.** `FINAL_SKILL_ID` is `signoff` (3 000 000 SP, gated on
+ADR-8 and `goldenCrew`); buying it sets `endedAt`.
 
 ### The skill tree — ten tracks
 
-`root` plus nine lettered tracks (`skill.model.ts`, 57 nodes):
+`root` plus ten lettered tracks (`skill.model.ts`). **Every node is SP.** `root` ships
+bought — it costs nothing, the whole tree hangs off it, and an unbought root strands the
+ADR ladder including the rail panel's own button.
 
 | Track | Theme |
 |---|---|
-| **A** | The hand — click radius, click duration, line of sight, sprint `capacity` |
-| **B** | Juniors — speed, reach, standup aura, ticket stacking |
+| **A** | The hand — click radius, `capacity` (slots), `cans`, haul `duration`, line of sight, the golden chain |
+| **B** | Juniors — `headcount` (desks), speed, reach, standup aura, ticket stacking |
 | **E** | Seniors — speed, reach, presence |
 | **H** | Managers — speed, relabel steps |
 | **F** | Tooling — copilots, and the `autoClose` automation chain |
 | **D** | Supply — debt interest, triage policy, per-type spawn rates |
 | **C** | Client — income, escalation, velocity, per-type ticket value |
-| **G** | Two late capstones — `assurance` (tier 6), `stretch` (tier 5) |
-| **O** | The office — seven plates plus the `kit` ladder, all € |
+| **G** | Late capstones — `assurance`, `stretch`, and `signoff` |
+| **N** | The ADR ladder — eight chained rungs |
+| **O** | The office — seven plates plus the `kit` ladder |
 | `secret` | Konami-gated, ×1.1 global |
 
-Nodes gate on tier (`tier1`…`tier8`) or on owning a crew line (`junior`/`senior`/
-`manager`). Costs are mostly SP; the six **purchase lines** and the whole office track are €.
+Nodes gate on tier (`tier1`…`tier8`) or on owning a crew line. Each square carries a
+`+`/`%` badge read off its next rank's effects (`skillBadge`), so additive and
+multiplicative are distinguishable before you click.
+
+### The can has two axes
+
+```
+sprintSlots = (SPRINT_SLOTS_BASE 14 + Σ slots.add) × 2 ^ (cans ranks)
+```
+
+`capacity` **adds** (+6 +8 +10 +14 +18). `cans` **doubles**, three ranks. Taken from the
+reference, which sells "more slots" and "more cans" as separate purchases.
+
+**Comment — the two shapes matter more than the numbers.** An additive ladder is a
+smooth, always-affordable trickle; a doubling is a rare, run-changing jump. Having both on
+the same resource gives the shop a rhythm that neither alone does.
+
+### The rail — three tabs, all euros
+
+| Tab | Holds | Cap | Cost |
+|---|---|---|---|
+| **Debt** | Nine spawner lines, one per ADR | 50 | base × 1.15^level |
+| **Rates** | Per-ticket income, ten rows | 10 | spawner base × 16 × 1.75^level |
+| **Crew** | The six `PURCHASE_IDS` lines | per line | `LINE_PLAN` × 1.15^level |
+
+A **rate** lifts one ticket type's value by `INCOME_VALUE_STEP` 1.3 a rank and opens only
+once that ticket's spawner has a head on it (`incomeUnlocked`).
+
+**Comment — the rates tab is what makes the late game a curve rather than a plateau.**
+Once every line has capped at 50 there is nothing else a euro can buy, and before the tab
+existed the measured run went flat from minute 120 onward with a budget climbing into the
+1e10 with nothing to spend it on. It is not decoration; it is the only compounding euro
+sink past the caps.
 
 ### Purchase lines
 
-`PURCHASE_IDS`: `junior`, `senior`, `copilot`, `velocity`, `kit`, `manager`. These are the
-repeatable "buy another one" ladders, each level emitting `{ kind: 'line', line }`.
-
-### Kit — six items, each fitted to the whole crew
-
-`KIT_PLAN` (`kit.model.ts`) now carries its own prices, and the `kit` skill node builds its
-levels from the plan, so the ladder cannot outrun the plan again (it previously had six
-items and five buyable levels, leaving the last one unreachable).
+`PURCHASE_IDS`: `junior`, `senior`, `copilot`, `velocity`, `kit`, `manager`. The tree opens
+each line once (`{ kind: 'line', line }`); every head after that is bought on the rail.
 
 ---
 
-## 7. Weather — one mechanism, ten flavours
+## 7. Weather — stashed, not deleted
+
+`HAZARDS_ENABLED` is **`false`**. The mechanism, the ten rows and their specs are intact;
+nothing drives them.
 
 A `Hazard` is a row with a `fromTier`, a `durationMs` and an optional
 `weather?: Partial<Weather>` patch. `Weather` has five fields: `meeting`, `incidentRate`,
-`slots`, `offshore`, `supply`.
+`slots`, `offshore`, `supply`. Two kinds arrive on separate cadences: **invitations**
+(`INVITATION_EVERY_MS` 120 s, a 4 s window to decline) and **facts** (`FACT_EVERY_MS`
+120 s, a 5 s countdown, not declinable).
 
-Two kinds arrive on separate cadences: **invitations** (`INVITATION_EVERY_MS` 120 s, a 4 s
-window to decline) and **facts** (`FACT_EVERY_MS` 120 s, a 5 s countdown, not declinable).
-
-| Hazard | From | For | Does |
-|---|---|---|---|
-| `all-hands`, `reorg` | 1 | 10 s | `meeting: true` — closers walk off the board |
-| `compliance` | 1 | 6 s | `meeting` |
-| `retro` | 1 | 8 s | `meeting` |
-| `offshore` | 2 | 60 s | Staffs 5 offshore crew who take the rares |
-| `freeze` | 3 | 25 s | `slots: 0.5` — halves sprint capacity |
-| `storm` | 3 | 30 s | `incidentRate: 100` |
-| `grooming` | 3 | 0 s | *nothing* |
-| `page` | 6 | 12 s | `incidentRate: 25` **and** `meeting` |
-| `migration` | 7 | 15 s | `supply: 0` — total spawn drought |
-
-**Comment — the right altitude, and I left it alone deliberately.** One general patch
-mechanism subsumes ten special cases; adding a hazard is adding a row. This is the part of
-the balance surface that was already designed rather than accumulated.
-
-Three notes, though:
-
-- **`grooming` is a no-op** — no duration, no patch. Either it is pure flavour (fine, but
-  it should say so) or it lost its effect at some point.
-- **`migration` is the meanest thing in the game.** `supply: 0` for 15 s means the board
-  stops refilling entirely. At tier 7 with a fast crew the board will *empty*, and a round
-  can end with the crew idle and the sprint unfilled. That is a strong effect to hand a
-  two-minute random timer with no counterplay beyond it being a "fact" you cannot decline.
-- **Invitations and facts share a 120 s cadence** as two independent constants that happen
-  to be equal. If they are meant to interleave rather than collide, that is currently luck.
+**Comment — the right altitude, and worth unstashing deliberately rather than by
+accident.** One general patch mechanism subsumes ten special cases; adding a hazard is
+adding a row. Three notes still stand from before the stash: `grooming` is a no-op,
+`migration`'s `supply: 0` is the meanest thing in the game with no counterplay, and the
+two 120 s cadences interleave by luck rather than by design. One new one: **the crew-euro
+floor in `balance.spec.ts` drops when hazards are off**, because the offshore headcount
+they staffed is gone — `CREW_EURO_WINDOW_FLOOR` reads `HAZARDS_ENABLED` and says so in
+place. Turning weather back on means re-measuring that floor, not just flipping the flag.
 
 ---
 
@@ -351,87 +388,113 @@ Three notes, though:
 
 The `F` track buys `autoClose` for one ticket type at a time (`autoLint` → `autoBug` →
 `autoLegacy`/`autoFlaky`/`autoConflict`, tier-gated). An automated ticket files itself
-after `AUTO_CLOSE_MS` 3 s, **consuming a sprint slot** like any other close
+after `AUTO_CLOSE_MS` 3 s, **consuming a can slot** like any other close
 (`util/supply.ts`, `fileAutomated`).
 
-Automation therefore *competes with your crew for capacity* rather than adding to it. There
-is a spec watching that the crew keeps earning a floor share of € across a simulated
-four-hour playthrough (`balance.spec.ts`).
+Automation therefore *competes with your crew for capacity* rather than adding to it. A
+spec watches that the crew keeps earning a floor share of € across a simulated
+playthrough (`balance.spec.ts`).
 
-**Comment — correct and non-obvious.** Making automation spend the same slots is what stops
-the endgame from being "automate everything, fire the crew". Keep that invariant.
+**Comment — correct and non-obvious.** Making automation spend the same slots is what
+stops the endgame from being "automate everything, fire the crew". Keep that invariant.
+The measured run has automation at 27.7 % of euros in the last window against the crew's
+33.9 % and the player's hand for the rest — three sources in the same order of magnitude,
+which is what the invariant is for.
 
-### The offline story: there isn't one
+### The offline story
 
-`MAX_CATCHUP_MS` is **5 000** — five seconds. `advanceTo` clamps catch-up to that, so a
-backgrounded tab resumes having simulated at most 5 s. And `resumed()` drops a restored
-save into `review` phase with `roundMs: 0`. The clock does not even start until
-`DoorService.opened()` — the title screen gates it.
+Bounded, estimated, and deliberately worse than playing:
 
-**Comment — this is the design's biggest open question.** The genre's core promise is that
-the numbers grow while you are away, and this build explicitly refuses that: close the tab
-and you lose nothing but you also gain nothing. That is a defensible, even principled
-choice — it makes the game an *active-session* game about a 10-second round loop, which is
-what all the other systems (escalation windows, hazard timers, clicking) are actually built
-for.
+```
+away    = min(elapsed, OFFLINE_MAX_MS 4 h) − MAX_CATCHUP_MS
+seconds = away / 1000 × OFFLINE_RATE 0.4
+gross   = unattendedEuroPerSec(state) × seconds
+```
 
-But "Debt Growth — an idle game" then sets the wrong expectation, and the review phase
-waiting for a manual `startRound` means it cannot even run unattended. I would pick a side
-explicitly: either lean in and stop calling it idle (the round loop is good enough to carry
-an active game), or add bounded offline accrual — and if the latter, the retainer is the
-natural vehicle, since it is already the "income that does not require clicking" line.
+`unattendedEuroPerSec` prices the mix the lines actually drop and clamps it by the can:
+`avg € per ticket × min(supply, ceilingPerSec)`. SP comes through the same skim and
+copilot rates as a live close. It is paid in **one step** — four hours of board stepped at
+10 Hz is 144 000 iterations and would freeze the tab, so past `MAX_CATCHUP_MS` the game
+stops simulating and starts estimating.
+
+Two non-obvious consequences, both easy to "fix" back by mistake:
+
+- **`resumed()` keeps `lastTick`.** It used to reset it to `now`, which is exactly what
+  erases the gap the accrual is measured from.
+- **The title screen is inside the window.** The clock only starts on
+  `DoorService.opened()`, so time spent on the splash counts as time away. Bounded by the
+  same 4 h cap, and arguably correct — you were not playing.
+
+**Comment — the genre's promise, honoured without letting it replace the game.** 40 % of
+measured throughput means coming back is worth something and playing is worth more, and
+capping at four hours stops a week away from skipping the run. The retainer was the
+natural vehicle and it is in there, but the bulk of the payout is the floor doing what it
+does when you watch it, discounted.
 
 ---
 
 ## 9. How money is actually computed
 
-One pricing chain, applied in a fixed order (`economy.ts`, `priceSprint`):
+**Money lands per ticket, at pickup.** There is no invoice, no sprint payout, no overflow
+step — the can is a hard cap, so nothing past capacity is ever priced.
 
 ```
-subtotal  = Σ held × ticketValue(unbuffed)
-→ hotfix      ×2 if within hotfixUntil
-→ overflow    soft-capped at 0.35 past sprintSlots
-→ escalation  ×5 (× escalation multipliers) if armed
-= gross
+ticketValue = type.value
+            × per-type skill multipliers
+            × income rate (1.3 ^ rank)
+            × tierScale (if scalesWithTier)
+            × global
+            × hotfix (×2 inside the window)
+
+closeValue  = ticketValue × escalation (×5 inside the window)
+            × golden (×100 × the goldenValue ladder, if the card rolled gold)
 ```
 
-`sprintPayout` takes the total; `sprintInvoice` names each step for the review screen. Both
-read the same chain, so the money and the receipt cannot drift.
+`velocitySkim` then takes its cut off the top and books it as SP; the remainder is the
+budget.
 
-`ticketValue` itself is `type.value × per-type skill multipliers × tierScale (if
-scalesWithTier) × global × hotfix`.
+Alongside pickups, two other income sources land:
 
-Alongside the sprint, two other income sources land at round end:
-
-- **Retainer** — `Σ headcount × retainer`, scaled by round length and by slots relative to
-  base. Crew bill *for existing*, not for working.
-- **Board bills** — the `quarter` ticket bills everything resting on the board at once.
+- **Retainer** — `Σ headcount × retainer`, scaled by slots relative to base, accrued per
+  second. Crew bill *for existing*, not for working.
+- **Board bills** — the `quarter` ticket bills everything resting on the board at once,
+  which on a persistent board is now a considerably bigger event than it was.
 
 **Comment — the retainer is doing quiet, important work.** It is the only income that does
-not depend on closing anything, which means a big crew is a floor under a bad round. It is
-also the closest thing the game has to an idle income line, which is why I would reach for
-it first if offline progress is ever added.
+not depend on closing anything, which means a big crew is a floor under a bad stretch. It
+is also what carries the offline window when the board is thin.
 
 ---
 
-## 10. Where the knobs live (after the September 2026 extraction)
+## 10. Where the knobs live
 
-The rule is now: **the mechanism's own table is its tuning unit.**
+The rule is: **the mechanism's own table is its tuning unit.**
 
 | Concern | Tuning unit |
 |---|---|
 | A crew kind | one row in `CREW_STATS` (`balance/crew.ts`) — pace, band, retainer, claim priority, which skill kinds reach it |
 | A ticket type | one row in `TICKET_TYPES` |
-| A debt tier | one row in `DEBT_TIERS` |
+| An ADR rung | one row in `DEBT_TIERS` — index, ticket, `spCost`; the tree node is derived from it |
+| A spawner line | one row in `SPAWNERS` — base cost, what it drops |
+| An income rate | `INCOME_*` in `balance/progression.ts`, priced off the spawner row |
+| A crew line | one row in `LINE_PLAN` |
 | A hazard | one row in `HAZARDS` |
 | A kit item | one row in `KIT_PLAN` (price included) |
 | A skill | one node in `SKILL_NODES` |
+| The can and the truck | `balance/round.ts` |
+| Offline | `OFFLINE_*` in `model/game.consts.ts` |
 | Cross-cutting coefficients | `balance/{curve,flow,progression,round,weather}.ts` |
+| The lane's look | `LANE` in `stage/model/board.consts.ts` |
 
 `data/balance-invariants.spec.ts` guards the *shape* rather than the values: ladders
-monotone, tiers numbered by position, each tier's ticket matching its rung, no dominated
-retype rung, the crew table actually read by the accessors, kit plan and kit ladder the same
-length.
+monotone, tiers numbered by position, each tier's ticket matching its rung, every rung
+hung on the tree and chained to the one below, no dominated retype rung, the crew table
+actually read by the accessors, kit plan and kit ladder the same length.
+
+`data/balance.spec.ts` guards the *pacing*: a simulated playthrough that has to reach
+sign-off inside 35–100 minutes, space the last five rungs more than two minutes apart, and
+leave nothing on the tree unbought. Its `CB_*` reports print the clock, the ladder, the
+income and SP curves and the crew share.
 
 ---
 
@@ -439,80 +502,88 @@ length.
 
 Ranked by how much they would distort a rebalance.
 
-1. **A senior seat has two prices, an order of magnitude apart.** The `senior` skill node
-   sells seats at `1 200 / 4 500 / 18 000 / 70 000 / 260 000`. Promotion sells the *same
-   seat* via `SENIOR_BUYOUT_STEPS × PROMOTION_PREMIUM (1.6)` — seat 5 costs ≈ 17 600 that
-   way versus 260 000 through the tree. Nothing ties the ladders and no test compares them.
-   Past the table's tenth rung the last step simply repeats, so promotion gets
-   progressively cheaper in relative terms. **Pick one ladder and derive the other.**
+1. **A senior seat still has two prices, and the rework inverted which is cheaper.** The
+   rail sells seats at `1 200 × 1.15^n` — seat 5 for ≈ 2 100. Promotion sells the *same
+   seats* via `SENIOR_BUYOUT_STEPS × PROMOTION_PREMIUM (1.6)` — five of them for ≈ 46 800.
+   Promotion used to be the bargain and is now the rip-off, which means the autoplayer
+   takes it only when starved. Nothing ties the ladders and no test compares them. **Pick
+   one and derive the other**, or delete promotion: §4 of the rework contract wanted it
+   replaced by the golden-crew node, and half of that happened.
 
-2. **`baselinePerRound` is an unverified guess that sets every round target.** It is the
-   number the client's line comes from (`× 0.75`), nothing in the game computes or checks
-   it, and its growth is erratic (×4.4, ×7.0, ×5.5, ×8.1, ×5.3, ×8.2, ×6.3) where
-   `unlockCost` grows smoothly. The `unlock ÷ baseline` ratio drifts from 0.50 at tier 5 to
-   **1.17 at tier 8** — the last rung costs more to enter than it claims to yield per
-   round. Either measure it from a simulated playthrough or store the target directly and
-   drop the indirection.
-
-3. **The pacing instruments assert nothing.** Five `it.runIf(process.env[…])` blocks
-   (`CB_SHARE`, `CB_CLOCK`, `CB_INCOME`, `CB_LADDER`, `CB_TARGET`) *print* the ladder
-   pacing, income curve and round-target miss rate. `pnpm test` never runs them, and
-   nothing fails if every round misses the client's line. `CB_TARGET` already computes
-   `missed/scored` — turning that into an assertion with a named tolerance band is the
-   single highest-value test in the project.
-
-4. **The autoplayer — the most important balance instrument — is trapped in a spec file.**
-   `class Playthrough` (~230 lines in `balance.spec.ts`) is a model of how a player spends,
+2. **The autoplayer — the most important balance instrument — is trapped in a spec file.**
+   `class Playthrough` (~270 lines in `balance.spec.ts`) is a model of how a player spends,
    with one hard-coded policy and a `switch` over `PurchaseId`. It is a balance artifact,
-   not a fixture. Extracted to `game/util/autoplay.ts` with the policy as data, the same bot
-   could be run across several policies and seeds, and driven from the debug door for
-   tuning sweeps.
+   not a fixture. Extracted to `game/util/autoplay.ts` with the policy as data, the same
+   bot could be run across several policies and seeds, and driven from the debug door for
+   tuning sweeps. **This is now the highest-value refactor in the project** — every number
+   in §6 was tuned through it, and it can only express one player.
 
-5. **The manager euro ladder has a broken rung.** `28 000 / 80 000 / 95 000 / 320 000 /
-   1 000 000` — ratios 2.86, **1.19**, 3.37, 3.13. Every other € ladder in the file holds
-   2.6–4.7 throughout. The 80k→95k step is the only sub-1.5 rung anywhere and reads as a
-   typo.
+3. **ADR-3 → ADR-4 is 1.6 minutes.** The measured gaps widen from ADR-4 onward (5.2, 10.3,
+   8.5, 9.9, 6.4) and the spec asserts a two-minute floor from there. The 3→4 step is
+   outside that assertion because income spikes hard when `slop` arrives and no cost I
+   tried moved it. It wants the *income* smoothed rather than the cost raised.
 
-6. **Buying `kit` grants a floor plate.** `officePlates` counts
-   `OFFICE_NODE_IDS` = *every* non-heading node on track `O`, which includes the `kit`
-   ladder alongside `o1`–`o7`. So a kit purchase widens the floor. The 8-plate cap absorbs
-   the overflow, which is why nothing has noticed. Almost certainly unintended.
+4. **`officePlates` still counts the `kit` node.** `OFFICE_NODE_IDS` is every non-heading
+   node on track `O`, kit included, so buying kit widens the office floor art by a plate.
+   Harmless now that plates no longer seat anyone — it was a real bug when they did — but
+   still wrong.
 
-7. **Some knobs are stored twice.** `VELOCITY_UNLOCK_TIER = 2` says what
-   `gate: 'tier2'` on the velocity node already says. `SkillGate` hand-writes
-   `'tier1'…'tier8'` and recovers the number with `Number(gate.slice(4))`, so a typo like
-   `'tier10'` parses as 10 with no tier behind it.
+5. **Some knobs are stored twice.** `VELOCITY_UNLOCK_TIER = 2` says what `gate: 'tier2'` on
+   the velocity node already says. `SkillGate` hand-writes `'tier1'…'tier8'` and recovers
+   the number with `Number(gate.slice(4))`, so a typo like `'tier10'` parses as 10 with no
+   tier behind it.
 
-8. **Per-crew skill effects are still spelled out per crew.** The `SkillEffect` union has
+6. **Per-crew skill effects are still spelled out per crew.** The `SkillEffect` union has
    `junior`/`juniorWalk`/`juniorSweep`/`juniorBatch` and again for `senior`, and again for
    `manager`. One `{ kind: 'pace', crew, field }` would collapse ~10 effect kinds to 3–4,
    halve the effect-copy switch in `stage/util/skill-copy.ts`, and remove eight
-   near-identical i18n keys per language. Not done here — it reaches into both catalogues,
-   so it wants its own pass.
+   near-identical i18n keys per language. It reaches into both catalogues, so it wants its
+   own pass.
 
-9. **`MIGRATION_SUPPLY_MULT` was a "multiplier" whose only sensible value was 0.** Now
-   inlined as `supply: 0` in the hazard row, which at least says what it means. The
-   mechanic itself still deserves a second look (see §7).
+7. **The ADR panel duplicates the tree node it buys.** Parity only asks that the unlock
+   live on the tree. The panel was kept because deleting the last route to a purchase is
+   exactly how the previous pass shipped a build with an unreachable tree — but two
+   surfaces for one purchase is a thing to decide on, not to inherit.
+
+### Resolved since the last reading
+
+- ~~`baselinePerRound` is an unverified guess that sets every round target.~~ Gone with the
+  round target.
+- ~~The pacing instruments assert nothing.~~ `balance.spec.ts` now asserts the band, the
+  gaps and an empty tree; the `CB_*` blocks are reports on top of assertions rather than
+  instead of them.
+- ~~The manager euro ladder has a broken rung.~~ Every rail line is `base × 1.15^n` now.
+- ~~Buying `kit` grants a desk.~~ Desks come from one node; see (4) for the art remnant.
 
 ---
 
 ## 12. What I would not touch
 
-- The **slot cap per round** and the soft overflow. This is the load-bearing tension.
+- **The hard cap and the haul.** The cadence falling out of your own throughput is the
+  load-bearing tension, and softening the cap puts the wall clock back.
 - **Bands.** They are what makes crew kinds different tools rather than tiers of the same
   tool.
-- **Hazards as a `Partial<Weather>` patch.** Already the right shape.
-- **Automation spending sprint slots.** Removing that unravels the endgame.
+- **Golden as an automation-exempt class.** It is what keeps the hand worth using after
+  the crew works.
+- **The tree/rail currency split.** One surface unlocks, the other buys; the skim is the
+  only bridge.
+- **Automation spending can slots.** Removing that unravels the endgame.
+- **Hazards as a `Partial<Weather>` patch.** Already the right shape, even switched off.
 - **`store.board` as a plain mutable object** and `game/util/board.ts` being stepped but
   never priced. These are performance boundaries, and the eslint rule that enforces the
   second one is load-bearing.
+- **`resumed()` keeping `lastTick`.** It looks like a bug and is the whole offline
+  mechanism.
 
 ---
 
 ### Sources
 
-`game/model/balance/*.ts`, `game/model/{ticket,tier,skill,kit,office,senior,hazard,crew,consultancy,round}.model.ts`,
+`game/model/balance/*.ts`,
+`game/model/{ticket,tier,spawner,skill,kit,office,senior,hazard,crew,consultancy,round}.model.ts`,
 `game/util/{economy,crew-rules,supply,board,first-act}.ts`, `game/data/game.store.ts`,
-`game/data/balance.spec.ts`, `README.md`. Performance leads live separately in
-`docs/performance.md` — that file is a static review, and its entries are leads rather than
-measurements.
+`game/data/{balance,balance-invariants}.spec.ts`, `stage/scene/{board-scene,tier-spawners}.ts`,
+`README.md`. The reference audit is `docs/comparrison.md`; the contract this shape was
+built to is `docs/rework-garbage-growth.md`. Performance leads live separately in
+`docs/performance.md` — that file is a static review, and its entries are leads rather
+than measurements.
