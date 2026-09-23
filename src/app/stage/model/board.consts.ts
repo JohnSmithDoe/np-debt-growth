@@ -16,11 +16,17 @@ export const CLAIM_TINT_STEPS = 8;
 
 export const CLAIM_SLOTS = 16;
 
-export const FLYER_CAPACITY = 160;
+export const FLYER_CAPACITY = 320;
 export const RARE_CAPACITY = 24;
 
-export const FALL_MS = 460;
-export const HARVEST_MS = 460;
+export const FALL_MS = 700;
+
+/** A taken card hops `HARVEST_HOP` px, then falls into its slot. */
+export const HARVEST_MS = 1_100;
+export const HARVEST_HOP = 150;
+
+/** A won't-fix card sinks this far as it fades; it is not taken anywhere. */
+export const WONT_FIX_FADE = { ms: 900, sink: 10 } as const;
 
 export const RARE_TITLE_WIDTH = 168;
 export const RARE_TITLE_OFFSET = 26;

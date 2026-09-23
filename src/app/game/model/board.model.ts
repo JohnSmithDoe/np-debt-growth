@@ -3,6 +3,7 @@ import type { CrewKind } from './crew.model';
 import { HEAP_OVERFLOW_ROWS, LOGICAL_BOARD, TICKET_SLOT } from './geometry';
 
 export const NO_TICKET = -1;
+export const NEVER_EXPIRES = -1;
 
 export type CrewPhase = 'idle' | 'toTicket' | 'toDesk' | 'closing' | 'meeting';
 
@@ -21,6 +22,8 @@ export interface BoardTicket {
   reborn: boolean;
   golden: boolean;
   autoLeftMs: number;
+  /** Counts down while unclaimed; `NEVER_EXPIRES` for hand-only cards. */
+  lifeLeftMs: number;
   relabelled: boolean;
   readonly x: number;
   readonly y: number;

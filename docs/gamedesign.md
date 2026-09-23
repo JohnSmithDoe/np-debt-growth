@@ -56,8 +56,11 @@ The cadence is the **can and the truck**:
 1. **Tickets spawn** onto the board at `ratePerSec × heads on that line`, metered through
    `SpawnBudget` (fractional credit carried between ticks, burst-capped at
    `SPAWN_BURST_CAP` 12) so a lag spike cannot dump a hundred cards.
-2. **The board is never wiped.** Litter accumulates across the whole run and stalls
-   spawning at `BOARD_CAPACITY` 600. The mess *is* the progress bar.
+2. **Unreached work is closed as "won't fix".** Every crew-workable card lives
+   `TICKET_LIFE_MS` 15 s unclaimed, then leaves (`expireTickets` in `util/board.ts`;
+   hand-only rares never expire, a claimed card holds its clock). Density is spawn rate ×
+   lifetime, so the field tracks what was bought; `BOARD_CAPACITY` 600 is only a safety cap.
+   Counted in `lifetimeWontFix`.
 3. **Work is collected** — by the player sweeping a radius (everything under the cursor,
    once a frame, `BoardScene.#sweep`), by the crew walking to cards, or by automation.
    **Money lands per ticket, at pickup.**

@@ -67,6 +67,11 @@ export class LifetimeStatsComponent {
     const perSprint = sprints === 0 ? 0 : billed / sprints;
     return [
       { label: 'Tickets closed', value: formatWhole(closed), tone: 'plain' },
+      {
+        label: 'Closed as won’t fix',
+        value: formatWhole(this.#store.lifetimeWontFix()),
+        tone: 'plain',
+      },
       { label: 'Sprints closed', value: formatWhole(sprints), tone: 'plain' },
       { label: 'Total billed', value: formatMoney(billed), tone: 'money' },
       {

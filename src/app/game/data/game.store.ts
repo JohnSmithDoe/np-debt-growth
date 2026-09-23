@@ -21,6 +21,7 @@ import {
   BURNDOWN_SAMPLES,
   BURNDOWN_SAMPLE_MS,
   CLOSE_FLOAT_BUFFER,
+  WONT_FIX_BUFFER,
   FEED_LIMIT,
   FEED_LINE_GAP_MS,
   MAX_CATCHUP_MS,
@@ -68,7 +69,13 @@ import {
   INVITATION_WINDOW_MS,
 } from '../model/balance/weather';
 import type { Closed, CrewWork } from '../util/board';
-import { addTicket, comeBack, removeTicket, stepBoard } from '../util/board';
+import {
+  addTicket,
+  comeBack,
+  expireTickets,
+  removeTicket,
+  stepBoard,
+} from '../util/board';
 import { crewRules } from '../util/crew-rules';
 import { fileAutomated, spawnInto } from '../util/supply';
 import { newNotes } from '../util/feed';
@@ -204,6 +211,8 @@ export class GameStore {
   #sprint = signal<readonly SprintSlot[]>([]);
   #mix = computed(() => ticketMix(this.#sprint()));
   #closeFloats: CloseFloat[] = [];
+  #wontFix: number[] = [];
+  #wontFixStep = 0;
   #seq = 0;
   #roundFrom = signal(0);
   #roundSlots = signal<readonly SprintSlot[]>([]);
@@ -319,6 +328,7 @@ export class GameStore {
   });
 
   readonly lifetimeClosed = computed(() => this.#state().lifetimeClosed);
+  readonly lifetimeWontFix = computed(() => this.#state().lifetimeWontFix);
   readonly lifetimeBilled = computed(() => this.#state().lifetimeBilled);
   readonly lifetimeRounds = computed(() => this.#state().lifetimeRounds);
   readonly lifetimeSkimmed = computed(() => this.#state().lifetimeSkimmed);
@@ -551,7 +561,25 @@ export class GameStore {
       weather,
       crews.closed.length
     );
+    this.#expire(dtMs);
     return { closed: [...crews.closed, ...filed], byWomen: crews.byWomen };
+  }
+
+  #expire(dtMs: number): void {
+    const gone: BoardTicket[] = [];
+    expireTickets(this.#board, dtMs, gone);
+    this.#wontFixStep = gone.length;
+    for (const ticket of gone) {
+      if (this.#wontFix.length >= WONT_FIX_BUFFER) break;
+      this.#wontFix.push(ticket.id);
+    }
+  }
+
+  /** Ids closed as won't fix since the last call; the stage fades them. */
+  takeWontFix(): readonly number[] {
+    const due = this.#wontFix;
+    this.#wontFix = [];
+    return due;
   }
 
   #advance(seconds: number, now: number): void {
@@ -569,6 +597,7 @@ export class GameStore {
       lifetimeBilled: banked.next.lifetimeBilled + retainer,
       lifetimeCrewBilled: banked.next.lifetimeCrewBilled + retainer,
       lifetimeWorkBilled: banked.next.lifetimeWorkBilled + retainer,
+      lifetimeWontFix: banked.next.lifetimeWontFix + this.#wontFixStep,
       haulLeftMs: Math.max(0, state.haulLeftMs - dtMs),
       lastTick: now,
       runMs: state.runMs + dtMs,

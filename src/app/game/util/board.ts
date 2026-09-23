@@ -11,6 +11,7 @@ import {
   HEAP_COLS,
   HEAP_ROWS,
   meetingSpot,
+  NEVER_EXPIRES,
   NOT_AUTOMATED,
   NO_TICKET,
 } from '../model/board.model';
@@ -20,6 +21,7 @@ import { TICKET_TYPES } from '../model/ticket.model';
 import type { CrewRules, CrewSeat, HirePace } from '../model/crew.model';
 import { FLAKY_COMEBACK_MS } from '../model/ticket.model';
 import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
+import { TICKET_LIFE_MS } from '../model/balance/flow';
 
 const OUT_OF_POOL = -1;
 const COLUMN_SAMPLES = 4;
@@ -131,6 +133,7 @@ export function addTicket(
     golden,
     relabelled,
     autoLeftMs: NOT_AUTOMATED,
+    lifeLeftMs: TICKET_TYPES[type].handOnly ? NEVER_EXPIRES : TICKET_LIFE_MS,
     x: cellX(col),
     y: cellY(cell - col * HEAP_ROWS),
     claimedBy: NO_TICKET,
@@ -153,6 +156,26 @@ export function removeTicket(board: Board, ticket: BoardTicket): void {
   freeCell(board, ticket.cell);
   swapOut(board.tickets, ticket.at, setAt);
   board.byId.delete(ticket.id);
+}
+
+/**
+ * Closes as "won't fix" whatever nobody reached in time. A claimed card holds
+ * its clock: someone is on the way. Won't-fix never comes back.
+ */
+export function expireTickets(
+  board: Board,
+  dtMs: number,
+  into: BoardTicket[]
+): void {
+  for (let at = board.tickets.length - 1; at >= 0; at--) {
+    const ticket = board.tickets[at];
+    if (!ticket || ticket.lifeLeftMs === NEVER_EXPIRES) continue;
+    if (ticket.claimedBy !== NO_TICKET) continue;
+    ticket.lifeLeftMs -= dtMs;
+    if (ticket.lifeLeftMs > 0) continue;
+    into.push(ticket);
+    removeTicket(board, ticket);
+  }
 }
 
 function returning(board: Board, dtMs: number, rand: () => number): void {

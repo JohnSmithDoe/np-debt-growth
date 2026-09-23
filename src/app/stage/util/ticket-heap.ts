@@ -100,7 +100,7 @@ export class TicketHeap {
   sync(
     board: Board,
     onLand: (id: number, type: TicketTypeId, x: number, y: number) => boolean,
-    onGone: (type: TicketTypeId, x: number, y: number) => void
+    onGone: (id: number, type: TicketTypeId, x: number, y: number) => void
   ): void {
     for (const ticket of board.tickets) {
       if (this.#drawnAs.get(ticket.id) !== ticket.type) {
@@ -124,7 +124,7 @@ export class TicketHeap {
 
     for (const [id, ticket] of this.#drawn) {
       if (board.byId.has(id)) continue;
-      onGone(ticket.type, this.px(ticket.x), this.py(ticket.y));
+      onGone(id, ticket.type, this.px(ticket.x), this.py(ticket.y));
       this.#drop(id);
     }
   }

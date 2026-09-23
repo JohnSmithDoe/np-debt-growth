@@ -35,6 +35,7 @@ export interface Consultancy {
   readonly endedAt: number;
 
   readonly lifetimeClosed: number;
+  readonly lifetimeWontFix: number;
   readonly lifetimeBilled: number;
   readonly lifetimeRounds: number;
   readonly lifetimeSkimmed: number;
@@ -94,6 +95,7 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     achievements: [],
     endedAt: 0,
     lifetimeClosed: 0,
+    lifetimeWontFix: 0,
     lifetimeBilled: 0,
     lifetimeRounds: 0,
     lifetimeSkimmed: 0,

@@ -14,6 +14,13 @@ export const RELABEL_STEPS_BASE = 1;
 
 export const AUTO_CLOSE_MS = 3_000;
 
+/**
+ * Work nobody reaches is closed as "won't fix" after this long. The debt
+ * stays; it just leaves the board. What density the field shows is
+ * spawn rate × this, so it tracks what the player bought.
+ */
+export const TICKET_LIFE_MS = 15_000;
+
 export const FIRST_INCIDENT_AT_MS = 75_000;
 export const BUG_REVEAL_AT_MS = 90_000;
 

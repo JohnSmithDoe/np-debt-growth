@@ -26,6 +26,7 @@ import {
   CLOSE_FLOAT,
   CLOSE_FLOATS_PER_FRAME,
   FALL_MS,
+  HARVEST_HOP,
   HARVEST_MS,
   HOVER_GROUND,
   HOVER_LINE_GAP,
@@ -36,6 +37,7 @@ import {
   RARE_CARD_WIDTH,
   RARE_LIFT,
   SPRINT_STRIP_HEIGHT,
+  WONT_FIX_FADE,
 } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
 import { cardFrame, buildBoardAtlas } from '../util/board-atlas';
@@ -178,7 +180,11 @@ export class BoardScene extends CbScene {
     if (pointer.worldY >= this.#boardHeight) return;
     this.#harvest(pointer.worldX, pointer.worldY);
   };
-  #onWake = (): void => void this.deps.takeCloseFloats();
+  #onWake = (): void => {
+    this.deps.takeCloseFloats();
+    this.deps.takeWontFix();
+  };
+  #wontFix = new Set<number>();
   #onPointerMove = (pointer: Phaser.Input.Pointer): void => {
     this.#readBoard(pointer.worldX, pointer.worldY);
     this.#placeRing(pointer.worldX, pointer.worldY);
@@ -278,10 +284,11 @@ export class BoardScene extends CbScene {
     parts.ground.tier(this.deps.tier());
     parts.spawners.sync((adr) => this.deps.spawnerCount(adr));
     this.#openSlots();
+    this.#wontFix = new Set(this.deps.takeWontFix());
     parts.heap.sync(
       board,
       (id, type, x, y) => this.#land(parts, id, type, x, y),
-      (type, x, y) => this.#leave(parts, type, x, y)
+      (id, type, x, y) => this.#leave(parts, id, type, x, y)
     );
     this.#preTint(parts, board);
     parts.crew.sync(board, board.juniors, this.deps.womanEvery('juniors'));
@@ -352,18 +359,39 @@ export class BoardScene extends CbScene {
     );
   }
 
-  #leave(parts: BoardParts, type: TicketTypeId, x: number, y: number): void {
+  #leave(
+    parts: BoardParts,
+    id: number,
+    type: TicketTypeId,
+    x: number,
+    y: number
+  ): void {
+    const from = parts.flyers.catch(id) ?? { x, y };
+    if (this.#wontFix.has(id)) {
+      parts.flyers.launch(
+        cardFrame(type),
+        FLIGHT.fade,
+        NONE,
+        from.x,
+        from.y,
+        from.x,
+        from.y + WONT_FIX_FADE.sink,
+        WONT_FIX_FADE.ms,
+        0
+      );
+      return;
+    }
     const slot = this.#claimSlot(type);
     parts.flyers.launch(
       cardFrame(type),
       FLIGHT.harvest,
       NONE,
-      x,
-      y,
+      from.x,
+      from.y,
       slot === NONE ? parts.strip.dropX : parts.strip.slotX(slot),
       slot === NONE ? parts.strip.dropY : parts.strip.slotY,
       HARVEST_MS,
-      44
+      HARVEST_HOP
     );
   }
 
@@ -473,7 +501,9 @@ export class BoardScene extends CbScene {
     const x = (px - this.#offX) / this.#scale;
     const y = (py - this.#offY) / this.#scale;
     const board = this.deps.board();
-    const near = pickWithin(board, x, y, PICK_RADIUS / this.#scale);
+    const near = pickWithin(board, x, y, PICK_RADIUS / this.#scale).filter(
+      (id) => !parts.flyers.isFalling(id)
+    );
     const id = cardAt(
       board,
       near,
@@ -552,23 +582,27 @@ export class BoardScene extends CbScene {
 
   /**
    * The verb: everything under the ring is taken as the pointer passes. A
-   * full can takes nothing, which is what the refusal tint says.
+   * falling card is taken where it is drawn, not where it will land. A full
+   * can takes nothing, which is what the refusal tint says.
    */
   #sweep(px: number, py: number): void {
     const parts = this.#parts;
     if (!parts) return;
+    const { flyers } = parts;
+    const radius = this.deps.radius();
     const ids = pickWithin(
       this.deps.board(),
       (px - this.#offX) / this.#scale,
       (py - this.#offY) / this.#scale,
-      this.deps.radius()
-    );
+      radius
+    ).filter((id) => !flyers.isFalling(id));
+    flyers.fallingWithin(px, py, radius * this.#scale, ids);
     if (ids.length === 0) return;
 
     const { taken, refused, value } = this.deps.harvest(ids);
     if (refused.length > 0) {
       this.#refusedUntil = this.time.now + REFUSED_MS;
-      parts.heap.bounce(refused);
+      parts.heap.bounce(refused.filter((id) => !flyers.isFalling(id)));
     }
     if (taken.length === 0) return;
     if (value > 0) this.floatPayout(px, py - 14, `+${formatMoney(value)}`);

@@ -42,6 +42,7 @@ export interface SceneDeps {
   haulMs(): number;
   takePayout(): number;
   takeCloseFloats(): readonly CloseFloat[];
+  takeWontFix(): readonly number[];
   unlockSecret(): void;
 
   skillView(): SkillView;

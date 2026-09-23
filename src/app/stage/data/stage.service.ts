@@ -225,6 +225,7 @@ export class StageService {
       womanEvery: (crew) => store.womanEvery(crew),
       takePayout: () => store.takePayout(),
       takeCloseFloats: () => store.takeCloseFloats(),
+      takeWontFix: () => store.takeWontFix(),
       unlockSecret: () => void store.unlockSecret(),
       skillView: () => this.#skillView(),
       buySkill: (id: string) => store.buySkill(id),

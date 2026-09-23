@@ -11,7 +11,7 @@ export const OFFLINE_FROM_MS = 60_000;
 export const OFFLINE_MAX_MS = 4 * 60 * 60 * 1000;
 export const OFFLINE_RATE = 0.4;
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export const FEED_LINES_PER_SEC = 2.5;
 export const FEED_LINE_GAP_MS = 1000 / FEED_LINES_PER_SEC;
@@ -22,3 +22,4 @@ export const BURNDOWN_SAMPLE_MS = 10_000;
 export const BURNDOWN_SAMPLES = 512;
 
 export const CLOSE_FLOAT_BUFFER = 64;
+export const WONT_FIX_BUFFER = 256;

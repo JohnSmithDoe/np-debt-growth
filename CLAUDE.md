@@ -54,8 +54,10 @@ Types within a domain: `feature` → `ui`/`data`/`util`/`model`, `data` → `sce
 
 There is no round timer. Money lands **per ticket at pickup**; the can (`sprintSlots`) is a hard
 cap, and filling it sends the truck (`haulMs`), which blocks collection but not spawning or crew.
-The cadence is an output of the player's throughput, not an input. The board is never wiped — it
-accumulates to `BOARD_CAPACITY`, which is the point of the title.
+The cadence is an output of the player's throughput, not an input. The board is never wiped at
+once, but work nobody reaches in `TICKET_LIFE_MS` is **closed as "won't fix"** (`expireTickets`):
+the debt stays, it just leaves the board. Density is spawn rate × lifetime, so it tracks what the
+player bought; `BOARD_CAPACITY` is a safety cap, not a state the board sits in.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included; every rail row costs euros. The velocity skim is the only
