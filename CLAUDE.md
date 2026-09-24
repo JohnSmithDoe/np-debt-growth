@@ -65,7 +65,7 @@ the debt stays, it just leaves the board. Density is spawn rate × lifetime, so 
 player bought; `BOARD_CAPACITY` is a safety cap, not a state the board sits in.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
-(`adr1`…`adr8`, track `N`) included, scaled by `SKILL_COST_SCALE` via `skillLevelCost`; every rail
+(`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
 row costs euros. SP is earned at pickup (`pickupStoryPoints`) from the ticket's **base** value,
 once the €25 `velocity` row is bought, plus planning-poker votes a ticket fell through
 (`voteBonus`, decided at spawn). Income ranks lift euros but not SP, so SP falls behind money late

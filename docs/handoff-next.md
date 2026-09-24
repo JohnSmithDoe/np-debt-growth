@@ -80,15 +80,16 @@ rank above everything below. Numbers marked *ref* are his observations.
 | F4, F6 | Follow from F8 + F5: first junior at 8.9 min (was 3.1), and the opening never meets the cap |
 | golden | **Done** (`c6bd2cf`). Gate `tier1`; `goldenValue` +50× a rank, additive (100× → 300×); `goldenCrew` turns 5 % of crew closes golden |
 | auto-close | **Resolved** (`c6bd2cf`). The pipeline is a throughput: `runners` node, `AUTO_RUNNERS_BASE` 4, ~1 close/s each. The crew-share floors count crew + pipeline as one automation share, like the reference's rats |
-| F9 | **Done** (`c6bd2cf`). SP at pickup off the ticket's *base* value (income ranks lift € only, so SP falls behind late, as gum does), once the €25 `velocity` row is bought; skim gone. Tree SP prices × `SKILL_COST_SCALE` 10. `estimates` (+2 SP a ticket, 5 ranks), `timesheets` (crew/pipeline SP ×2). The bootstrap copilot still ships; it's now redundant |
+| F9 | **Done** (`c6bd2cf`). SP at pickup off the ticket's *base* value (income ranks lift € only, so SP falls behind late, as gum does), once the €25 `velocity` row is bought; skim gone. Tree SP prices are written as charged; a ×10 `SKILL_COST_SCALE` briefly hid them and made the ADR panel disagree with the tree (`9542494`, then removed). `estimates` (+2 SP a ticket, 5 ranks), `timesheets` (crew/pipeline SP ×2). The bootstrap copilot still ships; it's now redundant |
 | F10 | **Done** (`c6bd2cf`). Lanes round-robin with their own release train; `cans` +1 lane (9 ranks), `capacity` WIP +25 (10 ranks). The strip draws the lanes and a train crossing each one that's away. `SAVE_VERSION` 4 |
 | prices | **Done** (`5ad5d25`). Spawner bases 2 / 500 / 15 000 …; ADR-1…5 at 75 / 2 500 / 12 000 / 40 000 / 150 000 SP; `headcount` behind `juniorSpeed` |
 | F11 | **Done** (`c502100`). `coaches` / `deck`, 10 ranks each; `voteBonus` decided at spawn, `voteLive` drawn by `stage/scene/vote-beams.ts`. Sweeps float their SP |
 | F12 | **Done** (`701d0f4`). `pizza` node from ADR-5; hand-only voucher; ×5 crew in a 240-unit circle for 12 s |
 
-**Pacing now:** first junior 4.6 min, ADR-1 6.0, ADR-4 13.8, ADR-8 50.2, **sign-off 57.3**,
-tree bought out. ADR-2…4 sit close together (10.3 → 13.8); ADR-5 → 6 and 7 → 8 are the long
-waits.
+**Pacing now** (reference prices where a node has a twin: radius 110, ADR-1 750, golden
+2 000, golden ×50 2 000, ADR-2 10 000, rat/junior unlock 1 200, rat speed 1 500, population
+20 000, slimy/timesheets 15 000, gorilla/ADR-3 600 000): ADR-1 7.2 min, first junior 8.2,
+ADR-2 11.6, ADR-3 17.9, ADR-8 55.8, **sign-off 64.3**, tree bought out.
 
 **Still open from this pass**
 - `CLAUDE.md` still says "the velocity skim is the only bridge" and describes one can and a

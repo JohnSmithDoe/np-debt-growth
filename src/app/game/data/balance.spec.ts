@@ -61,10 +61,9 @@ function everySkill(): Record<string, number> {
 }
 
 const MILESTONES = [
-  // The copilot ships with the run now — the tree is bought in story points,
-  // so SP has to flow before the first rung, not after it.
-  ['first junior', (s: Consultancy) => s.levels.junior >= 1],
+  // The reference's order: the first new spawner (750) before the rats (~1 200).
   ['tier 1', (s: Consultancy) => s.tier >= 1],
+  ['first junior', (s: Consultancy) => s.levels.junior >= 1],
   ['tier 2', (s: Consultancy) => s.tier >= 2],
   ['tier 3', (s: Consultancy) => s.tier >= 3],
   ['tier 4', (s: Consultancy) => s.tier >= 4],

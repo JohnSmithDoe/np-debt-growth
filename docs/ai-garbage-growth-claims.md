@@ -5,10 +5,10 @@ Hier ist die aktualisierte Liste für [Garbage Growth](https://store.steampowere
 |---|---|---|---|
 | Passanten / Menschen | 0 $ (Start-NPCs) | ~100 $ bis ~15.000 $ (Menge/Spawnrate) | Linear-exponentiell: Höhere Stufen spawnen mehr Fußgänger, die exponentiell mehr Müll fallen lassen. |
 | Raten (Rats) | Startet bei ~10 $ | Skaliert pro Kauf (+Kapazität & Tempo) | Stark exponentiell: Jede weitere Ratte wird deutlich teurer. Die Upgrades für Kapazität/Tempo kosten Kaugummis (Gum) aus dem Skill-Tree. |
-| Hunde[](https://www.google.com/search?kgmid=/m/0bt9lr&q=add+upgrade+costs+and+scaling) (Dogs) | ~500 $ | ~2.500 $ (Häufigkeit & Kacke-Wert) | Moderat: Hundehaufen bringen einen soliden Einkommensboost im Mid-Game. |
+| Hunde(Dogs) | ~500 $ | ~2.500 $ (Häufigkeit & Kacke-Wert) | Moderat: Hundehaufen bringen einen soliden Einkommensboost im Mid-Game. |
 | Fahrrad-/Motorradfahrer | ~3.500 $ | ~12.000 $ (Spawnrate von Babys) | Mittel: Babys sind wertvolle Ressourcen; Upgrades erhöhen die Frequenz, wie oft sie abgeworfen werden. |
 | Goldener Müll (Shiny) | Durch Skill-Tree | Zufälliger Spawn | Keine Skalierung: Ein Festpreis-Bonus (100x des normalen Müllwerts). |
-| Gorillas[](https://www.google.com/search?q=gorillas&kgmid=/m/02cy9l) | ~600.000 $ | Überraschend günstig (~10.000 $) | Unausgewogen (Broken): Die ersten 25 Gorillas sind extrem billig zu kaufen, und ihre Bananen-Upgrades kosten unverhältnismäßig wenig im Vergleich zur hohen Freischaltsumme. |
+| Gorillas | ~600.000 $ | Überraschend günstig (~10.000 $) | Unausgewogen (Broken): Die ersten 25 Gorillas sind extrem billig zu kaufen, und ihre Bananen-Upgrades kosten unverhältnismäßig wenig im Vergleich zur hohen Freischaltsumme. |
 | Gigachads | ~150.000 $ | ~50.000 $ | Hoch: Lassen riesige Müllberge fallen. Skaliert die Müllmenge rasant in die Höhe. |
 | Sterbende Hunde | ~350.000 $ | Keine direkten Upgrades | Statisch: Erhöht primär das globale Verschmutzungs-Level für den Zonenfortschritt. |
 | Polizisten | Automatisch | Keine direkten Upgrades | Statisch: Interagieren passiv mit dem Chaos auf dem Bildschirm. |

@@ -22,11 +22,7 @@ import {
 import type { SeniorHire, TraitId } from '../model/senior.model';
 import { TRAITS, hireFor } from '../model/senior.model';
 import type { SkillEffect } from '../model/skill.model';
-import {
-  OFFICE_NODE_IDS,
-  SKILL_BY_ID,
-  skillLevelCost,
-} from '../model/skill.model';
+import { OFFICE_NODE_IDS, SKILL_BY_ID } from '../model/skill.model';
 import type { TicketType, TicketTypeId } from '../model/ticket.model';
 import { ladderUp, TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
 import { approachCap } from '../model/balance/curve';
@@ -140,7 +136,7 @@ export function skillRank(state: Consultancy, id: string): number {
 export function skillRankCost(state: Consultancy, id: string): number {
   const node = SKILL_BY_ID.get(id);
   const level = node?.levels[skillRank(state, id)];
-  return node && level ? skillLevelCost(node, level) : Number.POSITIVE_INFINITY;
+  return level ? level.cost : Number.POSITIVE_INFINITY;
 }
 
 const EXPANDED = new WeakMap<object, readonly SkillEffect[]>();

@@ -54,7 +54,6 @@ import {
   SKILL_BY_ID,
   SKILL_NODES,
   skillLabelKey,
-  skillLevelCost,
   skillParent,
 } from '../model/skill.model';
 import { adrNodeId, tierAt } from '../model/tier.model';
@@ -313,7 +312,7 @@ export class GameStore {
       const node = SKILL_BY_ID.get(id);
       if (!node || node.currency === 'eur') continue;
       for (const level of node.levels.slice(0, rank)) {
-        spent += skillLevelCost(node, level);
+        spent += level.cost;
       }
     }
     return spent;

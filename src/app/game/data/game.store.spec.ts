@@ -8,10 +8,9 @@ import {
   SKILL_BY_ID,
   SKILL_ROOT_ID,
   adrPrice,
-  skillLevelCost,
 } from '../model/skill.model';
 import { adrNodeId, DEBT_TIERS, tierAt } from '../model/tier.model';
-import { FREE_COPILOTS, SKILL_COST_SCALE } from '../model/balance/progression';
+import { FREE_COPILOTS } from '../model/balance/progression';
 import { DESKS_BASE, DESKS_PER_RANK } from '../model/balance/crew';
 import { addTicket } from '../util/board';
 import { sprintSlots } from '../util/economy';
@@ -39,7 +38,7 @@ describe('the free Copilot (C3)', () => {
 
   it('opens the first rung on story points, not on budget', () => {
     const store = storeWith({
-      storyPoints: tierAt(1)!.spCost * SKILL_COST_SCALE,
+      storyPoints: tierAt(1)!.spCost,
       budget: 0,
       skills: { root: 1 },
     });
@@ -179,7 +178,7 @@ describe('purchases', () => {
   it('unlocks a line on the tree and sells the rest from the rail', () => {
     const node = SKILL_BY_ID.get('junior')!;
     const store = storeWith({
-      storyPoints: skillLevelCost(node, node.levels[0]!),
+      storyPoints: node.levels[0]!.cost,
       skills: { root: 1, crew: 1 },
     });
     expect(store.buySkill('junior')).toBe(true);
@@ -205,9 +204,7 @@ describe('purchases', () => {
     });
     expect(staffed.buySkill('juniorSpeed')).toBe(true);
     const speed = SKILL_BY_ID.get('juniorSpeed')!;
-    expect(staffed.storyPoints()).toBe(
-      10_000 - skillLevelCost(speed, speed.levels[0]!)
-    );
+    expect(staffed.storyPoints()).toBe(10_000 - speed.levels[0]!.cost);
   });
 
   it('never sells the easter egg', () => {
@@ -224,7 +221,7 @@ describe('purchases', () => {
     let last = 0;
     for (const [at, level] of node.levels.entries()) {
       const price = store.skillRankCost('radius');
-      expect(price).toBe(skillLevelCost(node, level));
+      expect(price).toBe(level.cost);
       expect(price).toBeGreaterThan(last);
       expect(store.buySkill('radius')).toBe(true);
       expect(store.skillRank('radius')).toBe(at + 1);
@@ -548,19 +545,14 @@ describe('an ADR is a tree node (parity #23)', () => {
   it('is priced the same on the panel as on the tree', () => {
     const store = storeWith({ skills: { root: 1 } });
     for (let index = 1; index <= DEBT_TIERS.length; index += 1) {
-      expect(adrPrice(index)).toBe(
-        skillLevelCost(
-          SKILL_BY_ID.get(adrNodeId(index))!,
-          SKILL_BY_ID.get(adrNodeId(index))!.levels[0]!
-        )
-      );
+      expect(adrPrice(index)).toBe(DEBT_TIERS[index - 1]!.spCost);
     }
     expect(adrPrice(1)).toBe(store.skillRankCost(adrNodeId(1)));
   });
 
   it('opens the rung, its spawner line and its ticket in one purchase', () => {
     const store = storeWith({
-      storyPoints: tierAt(1)!.spCost * SKILL_COST_SCALE,
+      storyPoints: tierAt(1)!.spCost,
       skills: { root: 1 },
     });
     expect(store.spawnerUnlocked(1)).toBe(false);

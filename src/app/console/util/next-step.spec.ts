@@ -4,7 +4,6 @@ import { SAVE_VERSION } from '../../game/model/game.consts';
 import type { Consultancy } from '../../game/model/consultancy.model';
 import { freshConsultancy } from '../../game/model/consultancy.model';
 import { PURCHASE_REVEAL_FRACTION } from '../../game/model/balance/progression';
-import { tierAt } from '../../game/model/tier.model';
 import type { NextStep } from '../model/step.model';
 import type { StepGates } from './next-step';
 import { nextSteps } from './next-step';

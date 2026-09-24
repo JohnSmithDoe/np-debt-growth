@@ -5,8 +5,6 @@ export const COPILOT_SP_PER_CLOSE = 0.013;
  * `velocity` row is bought — the reference's "1 gum per $1".
  */
 export const SP_PER_EURO = 1;
-/** Every node's SP price is scaled by this, so the tree keeps pace with 1:1 SP. */
-export const SKILL_COST_SCALE = 10;
 /** Crew and pipeline closes pay this much more SP once `timesheets` is bought. */
 export const CREW_SP_MULT = 2;
 
