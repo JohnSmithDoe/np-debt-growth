@@ -29,11 +29,29 @@ export interface IncomeRow {
   readonly add: number;
 }
 
-/** Measured off the reference: paper 250 / +3, dog 1 250 / +4. */
-export const INCOME_ROWS: Readonly<Partial<Record<TicketTypeId, IncomeRow>>> = {
-  lint: { first: 250, add: 3 },
-  legacy: { first: 1250, add: 4 },
-};
+/**
+ * Measured off the reference, paper 250 / +3 and dog 1 250 / +4, and carried
+ * up the lines on that step: the first rank ×5 a tier, the increment +1.
+ */
+const LINE_ROW_TICKETS: readonly TicketTypeId[] = [
+  'lint',
+  'legacy',
+  'flaky',
+  'conflict',
+  'slop',
+  'rockstar',
+  'zombie',
+  'rewrite',
+  'swarm',
+];
+
+export const INCOME_ROWS: Readonly<Partial<Record<TicketTypeId, IncomeRow>>> =
+  Object.fromEntries(
+    LINE_ROW_TICKETS.map((id, tier) => [
+      id,
+      { first: 250 * 5 ** tier, add: 3 + tier },
+    ])
+  );
 
 /** Rows not yet measured: this many of the spawner's first head, +3 a rank. */
 export const INCOME_COST_OF_SPAWNER = 125;

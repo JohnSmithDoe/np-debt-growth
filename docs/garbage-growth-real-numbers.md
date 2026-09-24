@@ -171,6 +171,15 @@ measured row. Rats are **1 000 $** on the rail (`LINE_PLAN.junior`).
 The steps are stored in single precision (`Math.fround`): 500 × float32(1.15) floors to the
 reference's 574. All 68 observed prices fit.
 
+## Extrapolated to every tier
+
+From the two measured tiers: value ×10 a tier, one throw rate (0.25/s), € prices ×5 a tier
+(rate row first rank; its increment +1), **gum prices ×2 a tier** (the defaults doubled
+1 100 → 2 200 and 2 200 → 4 400; a ×5 gum step starved the ADR ladder). Measured anchors
+stay: bike 15 000 € / 10 000 gum, gorilla 600 000 gum. ADR-4…8 and `signoff` are ours,
+sized to the SP a minute the collection throughput allows. Measured run: gorilla at 32 min
+(reference demo ~30), sign-off at 81 (reference full game 57–70).
+
 ## Open for the next session
 
 - Adopt floor rounding for heads (and income rows)? It's a one-line change, and it

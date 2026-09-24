@@ -130,13 +130,18 @@ Fifteen types (`ticket.model.ts`). Two families.
 | `lint` | 1 | 0.25 | 0 | ADR-0 | the whole opening: ≈ 1 per 4 s a head |
 | `bug` | 4 | 0.08 | 0 | ADR-0 | held back until ADR-1 (`BUG_REVEAL_TIER`) |
 | `legacy` | 10 | 0.25 | 1 | ADR-1 | the reference's dog: 10 $, thrown as often as paper |
-| `flaky` | 30 | 1.60 | 2 | ADR-2 | **respawns** |
-| `conflict` | 90 | 5.0 | 3 | ADR-3 | |
-| `slop` | 260 | 7.0 | 4 | ADR-4 | |
-| `rockstar` | 1 400 | 9.5 | 5 | ADR-5 | |
-| `zombie` | 6 000 | 13 | 6 | ADR-6 | **respawns** |
-| `rewrite` | 26 000 | 17 | 7 | ADR-7 | |
-| `swarm` | 110 000 | 22 | 8 | ADR-8 | |
+| `flaky` | 100 | 0.25 | 2 | ADR-2 | **respawns** |
+| `conflict` | 1 000 | 0.25 | 3 | ADR-3 | |
+| `slop` | 10 000 | 0.25 | 4 | ADR-4 | |
+| `rockstar` | 100 000 | 0.25 | 5 | ADR-5 | |
+| `zombie` | 1 000 000 | 0.25 | 6 | ADR-6 | **respawns** |
+| `rewrite` | 10 000 000 | 0.25 | 7 | ADR-7 | |
+| `swarm` | 100 000 000 | 0.25 | 8 | ADR-8 | |
+
+Past the two measured tiers the lines follow the rules read off them: value ×10 a tier, one
+throw rate, rate rows `250 × 5^t` / `+(3 + t)` (€-priced, ×5), and the gum-priced per-line
+nodes doubling a tier — ×2 then +50 % (`1 100 × 2^t`), double throw (`2 200 × 2^t`), +2 SP
+(`400 × 2^(t−1)`), all in `LINE_NODES` (`skill.model.ts`).
 
 `ratePerSec` is now a *per-head* rate: the actual arrival rate is
 `ratePerSec × spawnerCount(adr) × skill multipliers`. A rung with an approved ADR and an
@@ -280,16 +285,20 @@ Four interlocking systems, and they are now cleanly separated by currency.
 Eight rungs (`tier.model.ts`), each a chained tree node (`adr1`…`adr8`) that unlocks the
 spawner line **and** the ticket type together:
 
-| ADR | SP | Unlocks | ×prev |
+| ADR | SP | Unlocks | Source |
 |---|---|---|---|
-| 1 | 12 | `legacy` | — |
-| 2 | 110 | `flaky` | 9.2 |
-| 3 | 900 | `conflict` | 8.2 |
-| 4 | 16 000 | `slop` | 17.8 |
-| 5 | 130 000 | `rockstar` | 8.1 |
-| 6 | 440 000 | `zombie` | 3.4 |
-| 7 | 1 400 000 | `rewrite` | 3.2 |
-| 8 | 4 200 000 | `swarm` | 3.0 |
+| 1 | 750 | `legacy` | reference (dogs) |
+| 2 | 10 000 | `flaky` | reference (bike) |
+| 3 | 600 000 | `conflict` | reference (gorilla, the demo's end) |
+| 4 | 800 000 | `slop` | ours |
+| 5 | 1 500 000 | `rockstar` | ours |
+| 6 | 3 000 000 | `zombie` | ours |
+| 7 | 3 500 000 | `rewrite` | ours |
+| 8 | 6 000 000 | `swarm` | ours |
+
+`signoff` is 10 000 000 SP. Past the gorilla, SP runs at a steady rate set by how many
+tickets get collected (lanes × WIP × trains), not by what is bought, so ADR-4…8 are sized to
+that rate: the measured run reaches the gorilla at 32 min and signs off at 81.
 
 `adrNodeId(n)` names the square. The nodes carry `{ kind: 'adr', adr: n }`, and
 `GameStore.buySkill` is what raises `state.tier`, fires the one-off `TIER_BURST` at tier 3
