@@ -13,6 +13,7 @@ import {
 import { GameStore } from '../../../game/data/game.store';
 import { MAX_TIER, tierAt, tierNameKey } from '../../../game/model/tier.model';
 import { PanelComponent } from '../../ui/panel/panel.component';
+import { adrPrice } from '../../../game/model/skill.model';
 
 interface Stat {
   readonly label: string;
@@ -50,11 +51,12 @@ export class LifetimeStatsComponent {
         done: true,
       };
     }
+    const price = adrPrice(next.index);
     return {
       nameKey: tierNameKey(next.index),
       index: next.index,
-      cost: `${formatWhole(next.spCost)} SP`,
-      pct: Math.min(100, (state.storyPoints / next.spCost) * 100),
+      cost: `${formatWhole(price)} SP`,
+      pct: Math.min(100, (state.storyPoints / price) * 100),
       done: false,
     };
   });

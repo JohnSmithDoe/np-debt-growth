@@ -7,9 +7,10 @@ import {
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_ROOT_ID,
+  adrPrice,
   skillLevelCost,
 } from '../model/skill.model';
-import { adrNodeId, tierAt } from '../model/tier.model';
+import { adrNodeId, DEBT_TIERS, tierAt } from '../model/tier.model';
 import { FREE_COPILOTS, SKILL_COST_SCALE } from '../model/balance/progression';
 import { DESKS_BASE, DESKS_PER_RANK } from '../model/balance/crew';
 import { addTicket } from '../util/board';
@@ -544,6 +545,19 @@ describe('a full can refuses in place (parity #11)', () => {
 });
 
 describe('an ADR is a tree node (parity #23)', () => {
+  it('is priced the same on the panel as on the tree', () => {
+    const store = storeWith({ skills: { root: 1 } });
+    for (let index = 1; index <= DEBT_TIERS.length; index += 1) {
+      expect(adrPrice(index)).toBe(
+        skillLevelCost(
+          SKILL_BY_ID.get(adrNodeId(index))!,
+          SKILL_BY_ID.get(adrNodeId(index))!.levels[0]!
+        )
+      );
+    }
+    expect(adrPrice(1)).toBe(store.skillRankCost(adrNodeId(1)));
+  });
+
   it('opens the rung, its spawner line and its ticket in one purchase', () => {
     const store = storeWith({
       storyPoints: tierAt(1)!.spCost * SKILL_COST_SCALE,

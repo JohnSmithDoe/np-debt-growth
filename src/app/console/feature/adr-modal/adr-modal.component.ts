@@ -21,6 +21,7 @@ import { PanelComponent } from '../../ui/panel/panel.component';
 import { officeArtFor } from '../../util/office-art';
 import type { AdrCopy } from './adr-copy';
 import { ADR_COPY } from './adr-copy';
+import { adrPrice } from '../../../game/model/skill.model';
 
 interface AdrData {
   readonly tier: DebtTier;
@@ -82,8 +83,8 @@ export class AdrModalComponent {
       art: `assets/art/tier/${tier}.png`,
       office: officeArtFor(tier),
       signed,
-      cost: `${formatWhole(debtTier.spCost)} SP`,
-      affordable: this.#store.state().storyPoints >= debtTier.spCost,
+      cost: `${formatWhole(adrPrice(tier))} SP`,
+      affordable: this.#store.state().storyPoints >= adrPrice(tier),
     };
   }
 

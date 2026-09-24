@@ -877,6 +877,13 @@ export const SKILL_BY_ID: ReadonlyMap<string, SkillNode> = new Map(
   SKILL_NODES.map((node) => [node.id, node])
 );
 
+/** What approving ADR `index` costs: the node's own price, exactly as the tree shows it. */
+export function adrPrice(index: number): number {
+  const node = SKILL_BY_ID.get(adrNodeId(index));
+  const level = node?.levels[0];
+  return node && level ? skillLevelCost(node, level) : Number.POSITIVE_INFINITY;
+}
+
 export const SECRET_SKILL_ID = 'secret';
 
 /** Buying this closes the engagement — it is the run's last purchase. */

@@ -9,6 +9,7 @@ import type { NextStep } from '../model/step.model';
 import type { StepGates } from './next-step';
 import { nextSteps } from './next-step';
 import { reached } from './reached';
+import { adrPrice } from '../../game/model/skill.model';
 
 const gates: StepGates = {
   openSkills: [],
@@ -57,8 +58,7 @@ describe('nextSteps', () => {
   });
 
   it('names the rung before it is affordable, and what is short', () => {
-    const rung = tierAt(1);
-    const cost = rung?.spCost ?? 0;
+    const cost = adrPrice(1);
 
     const climbing = (storyPoints: number): NextStep | undefined =>
       nextSteps(

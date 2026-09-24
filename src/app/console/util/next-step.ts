@@ -1,6 +1,10 @@
 import type { Consultancy } from '../../game/model/consultancy.model';
 import { officeLabelKey } from '../../game/model/office.model';
-import { DESK_NODE_ID, skillLabelKey } from '../../game/model/skill.model';
+import {
+  adrPrice,
+  DESK_NODE_ID,
+  skillLabelKey,
+} from '../../game/model/skill.model';
 import { adrNodeId, tierAt, tierNameKey } from '../../game/model/tier.model';
 import { PURCHASE_REVEAL_FRACTION } from '../../game/model/balance/progression';
 import * as economy from '../../game/util/economy';
@@ -45,9 +49,10 @@ export function nextSteps(
 
   const tier = tierAt(state.tier + 1);
   const earned = (cost: number): boolean => state.storyPoints >= cost;
-  const inSight = tier && earned(tier.spCost * PURCHASE_REVEAL_FRACTION);
+  const price = tier ? adrPrice(tier.index) : Number.POSITIVE_INFINITY;
+  const inSight = tier && earned(price * PURCHASE_REVEAL_FRACTION);
   if (tier && inSight) {
-    const banked = earned(tier.spCost);
+    const banked = earned(price);
     steps.push({
       id: `adr:${tier.index}`,
       target: 'skills',
@@ -56,7 +61,7 @@ export function nextSteps(
       titleParams: { index: tier.index },
       detailKey: banked ? 'step.adr.detail' : 'step.adr.bank.detail',
       detailParams: { name: tierNameKey(tier.index) },
-      detailPoints: banked ? undefined : tier.spCost - state.storyPoints,
+      detailPoints: banked ? undefined : price - state.storyPoints,
     });
   }
 

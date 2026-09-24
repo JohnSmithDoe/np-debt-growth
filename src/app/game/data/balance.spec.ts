@@ -12,6 +12,7 @@ import {
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_NODES,
+  adrPrice,
 } from '../model/skill.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
@@ -848,7 +849,7 @@ describe('the session arc', () => {
       const perMin = (state.lifetimeBilled - (since?.lifetimeBilled ?? 0)) / 5;
       const spPerMin = (state.storyPoints - (since?.storyPoints ?? 0)) / 5;
       const next = DEBT_TIERS.find((tier) => tier.index === state.tier + 1);
-      const owes = next ? next.spCost / Math.max(spPerMin, 1) : 0;
+      const owes = next ? adrPrice(next.index) / Math.max(spPerMin, 1) : 0;
       return [
         String((n + 1) * 5).padStart(5),
         formatSci(perMin).padStart(12),
@@ -856,7 +857,7 @@ describe('the session arc', () => {
         formatSci(spPerMin).padStart(10),
         formatSci(state.storyPoints).padStart(10),
         String(state.tier).padStart(6),
-        (next ? formatSci(next.spCost) : '—').padStart(12),
+        (next ? formatSci(adrPrice(next.index)) : '—').padStart(12),
         (next ? owes.toFixed(1) : '—').padStart(9),
       ].join('');
     });
@@ -884,7 +885,7 @@ describe('the session arc', () => {
       const next = rungs[n + 1]?.tier;
       const owes =
         next && perRound !== undefined && perRound > 0
-          ? next.spCost / perRound
+          ? adrPrice(next.index) / perRound
           : undefined;
       if (reached) {
         fromRound = round;
@@ -892,7 +893,7 @@ describe('the session arc', () => {
       }
       return [
         `ADR-${tier.index}`.padStart(6),
-        formatSci(tier.spCost).padStart(13),
+        formatSci(adrPrice(tier.index)).padStart(13),
         (round === undefined ? '—' : String(round)).padStart(7),
         (gap === undefined ? '—' : String(gap)).padStart(5),
         (perRound === undefined ? '—' : formatSci(perRound)).padStart(12),

@@ -20,6 +20,7 @@ import {
 } from '../../../game/model/tier.model';
 import { AdrUiService } from '../../data/adr-ui.service';
 import { officeArtFor } from '../../util/office-art';
+import { adrPrice } from '../../../game/model/skill.model';
 
 interface NextRecord {
   readonly index: number;
@@ -51,19 +52,20 @@ export class AdrPanelComponent {
     const tier = tierAt(state.tier + 1);
     if (!tier) return null;
 
-    const affordable = state.storyPoints >= tier.spCost;
+    const price = adrPrice(tier.index);
+    const affordable = state.storyPoints >= price;
     const perSecond = this.#store.pointsPerSecond();
     return {
       index: tier.index,
       nameKey: tierNameKey(tier.index),
       blurbKey: tierBlurbKey(tier.index),
       ticketKey: ticketLabelKey(tier.ticket),
-      cost: `${formatWhole(tier.spCost)} SP`,
+      cost: `${formatWhole(price)} SP`,
       affordable,
       timeToAfford:
         affordable || perSecond <= 0
           ? '—'
-          : formatDuration((tier.spCost - state.storyPoints) / perSecond),
+          : formatDuration((price - state.storyPoints) / perSecond),
       art: officeArtFor(tier.index),
     };
   });
