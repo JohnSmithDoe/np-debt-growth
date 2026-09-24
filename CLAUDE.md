@@ -50,18 +50,26 @@ Types within a domain: `feature` → `ui`/`data`/`util`/`model`, `data` → `sce
 **Sheriff module roots are exactly `<domain>/<type>` — depth two.** A new folder beside
 `game/model/` is not a module and inherits no tag; nest new code under an existing pair.
 
-### The loop: a can, a truck, no wall clock
+### The loop: swimlanes, release trains, no wall clock
 
-There is no round timer. Money lands **per ticket at pickup**; the can (`sprintSlots`) is a hard
-cap, and filling it sends the truck (`haulMs`), which blocks collection but not spawning or crew.
-The cadence is an output of the player's throughput, not an input. The board is never wiped at
+There is no round timer. Money and story points land **per ticket at pickup**. Closed work fills
+**swimlanes** (`state.lanes`, dealt round-robin by `economy.fillLanes`); each lane has a WIP limit
+(`laneCapacity`) and, when full, ships on its own **release train** (`haulMs`) and takes nothing
+until it is back. The others keep taking; collection is refused only when every train is away
+(`phase: 'hauling'`). A "round" is one lane's release. `cans` adds a lane, `capacity` raises the
+WIP limit. The cadence is an output of the player's throughput, not an input. Player-facing copy
+never says "truck" or "can". Auto-close is a throughput too: CI `runners`, about a close a second
+each, not a board-wide wipe. The board is never wiped at
 once, but work nobody reaches in `TICKET_LIFE_MS` is **closed as "won't fix"** (`expireTickets`):
 the debt stays, it just leaves the board. Density is spawn rate × lifetime, so it tracks what the
 player bought; `BOARD_CAPACITY` is a safety cap, not a state the board sits in.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
-(`adr1`…`adr8`, track `N`) included; every rail row costs euros. The velocity skim is the only
-bridge between the two. Don't add a euro node or an SP rail row without meaning to.
+(`adr1`…`adr8`, track `N`) included, scaled by `SKILL_COST_SCALE` via `skillLevelCost`; every rail
+row costs euros. SP is earned at pickup (`pickupStoryPoints`) from the ticket's **base** value,
+once the €25 `velocity` row is bought, plus planning-poker votes a ticket fell through
+(`voteBonus`, decided at spawn). Income ranks lift euros but not SP, so SP falls behind money late
+by design. Don't add a euro node or an SP rail row without meaning to.
 
 ### The store is the only clock
 
@@ -100,9 +108,11 @@ Two things in the restore look like bugs and are not:
 
 - **`resumed()` keeps the saved `lastTick`.** The gap between it and now is what offline progress
   is measured from. Resetting it to `now` erases the whole mechanism.
-- **`freshConsultancy` ships `root` bought and one copilot.** The tree costs story points and the
-  ADR ladder lives on it, so a run with an unbought root or no SP source is stranded — including
-  the ADR panel's own buy button, which routes through `buySkill`.
+- **`freshConsultancy` ships `root` bought.** The tree costs story points and the ADR ladder lives
+  on it, so a run with an unbought root is stranded — including the ADR panel's own buy button,
+  which routes through `buySkill`. The `velocity` row is `open` on the rail for the same reason:
+  it is the SP source, so it cannot sit behind an SP node. The free first copilot predates it and
+  is now redundant.
 
 ### i18n
 
@@ -135,8 +145,9 @@ block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored 
 
 ## Debug doors
 
-- `globalThis.debtGrowth` — `grant`, `reset`, `endRound`, `startRound`. Always open; the viewport
-  and art harnesses drive the game through it.
+- `globalThis.debtGrowth` — `grant`, `reset`, `endRound` (send every train that is home),
+  `startRound` (bring them all back), `buySkill`, `buyLine`. Always open; the viewport and art
+  harnesses drive the game through it, and a whole run scripts in a few lines.
 - The in-app debug bar unlocks with the Konami code (`ServiceDoorService`).
 - `/demo` route renders `DemoScene` alone for floor-plate work.
 
