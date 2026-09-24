@@ -15,8 +15,11 @@ export interface Spawner {
 
 export const SPAWNER_CAP = 50;
 
-/** Each level costs this much more than the one before it. */
-export const SPAWNER_COST_STEP = 1.15;
+/**
+ * Each level costs this much more than the one before it. Single precision,
+ * as the reference stores it: 500 × 1.15 floors to its 574, not 575.
+ */
+export const SPAWNER_COST_STEP = Math.fround(1.15);
 
 /** ADR-0 arrives staffed, so the board is never empty on the first frame. */
 export const SPAWNER_FREE_AT_ADR_0 = 1;

@@ -57,10 +57,11 @@ import {
 import {
   COPILOT_SP_PER_CLOSE,
   CREW_SP_MULT,
-  SP_PER_EURO,
+  SP_PER_PICKUP,
   INCOME_CAP,
   INCOME_COST_OF_SPAWNER,
   INCOME_COST_STEP,
+  INCOME_ROWS,
   INCOME_VALUE_ADD,
   LINE_COST_STEP,
   LINE_PLAN,
@@ -383,8 +384,13 @@ export function incomeLevel(state: Consultancy, id: TicketTypeId): number {
   return Math.min(INCOME_CAP, state.income[id] ?? 0);
 }
 
+/** What one rank of `id`'s income row adds to its value. */
+export function incomeStep(id: TicketTypeId): number {
+  return INCOME_ROWS[id]?.add ?? INCOME_VALUE_ADD;
+}
+
 export function incomeBonus(state: Consultancy, id: TicketTypeId): number {
-  return INCOME_VALUE_ADD * incomeLevel(state, id);
+  return incomeStep(id) * incomeLevel(state, id);
 }
 
 /** An income line opens once its source is on the path, not before. */
@@ -397,9 +403,8 @@ export function incomeCost(state: Consultancy, id: TicketTypeId): number {
   const row = spawnerFor(id);
   const level = incomeLevel(state, id);
   if (!row || level >= INCOME_CAP) return Number.POSITIVE_INFINITY;
-  return Math.floor(
-    row.cost * INCOME_COST_OF_SPAWNER * INCOME_COST_STEP ** level
-  );
+  const first = INCOME_ROWS[id]?.first ?? row.cost * INCOME_COST_OF_SPAWNER;
+  return Math.floor(first * INCOME_COST_STEP ** level);
 }
 
 export function canBuyIncome(state: Consultancy, id: TicketTypeId): boolean {
@@ -1047,17 +1052,21 @@ export function mergeInvoices(
 
 /**
  * SP a close pays at pickup, in whole points; zero until the `velocity` row
- * is bought. One per euro the close billed, as the reference's gum is.
+ * is bought. Counted per ticket, not per euro: value nodes never touch it.
  */
 export function pickupStoryPoints(
   state: Consultancy,
-  worth: number,
+  id: TicketTypeId,
   byCrew: boolean
 ): number {
   if (!pickupsPaySp(state)) return 0;
-  const bonus = sumOf(state, (e) => (e.kind === 'spPerClose' ? e.add : null));
+  const bonus = sumOf(state, (e) =>
+    e.kind === 'spPerClose' && (e.target === undefined || e.target === id)
+      ? e.add
+      : null
+  );
   const crew = byCrew && holds(state, 'crewSp') ? CREW_SP_MULT : 1;
-  return Math.floor(worth * SP_PER_EURO + bonus) * crew;
+  return (SP_PER_PICKUP + bonus) * crew;
 }
 
 /** The live pizza party, if any, as the crew rules take it. */
@@ -1110,7 +1119,7 @@ export function unattendedSpPerSec(state: Consultancy): number {
     if (TICKET_TYPES[id].effect !== 'value') continue;
     const rate = closeRate(state, id);
     supply += rate;
-    points += rate * pickupStoryPoints(state, closeValue(state, id), true);
+    points += rate * pickupStoryPoints(state, id, true);
   }
   if (supply <= 0) return 0;
   return (points / supply) * Math.min(supply, ceilingPerSec(state));

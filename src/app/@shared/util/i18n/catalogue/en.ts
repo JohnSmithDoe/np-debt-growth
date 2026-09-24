@@ -121,7 +121,7 @@ export const EN: Readonly<Record<string, string>> = {
     'While the file is open, everything near it is in scope too.',
   'trait.sweeper.label': 'Clears a wider patch',
   'purchase.velocity.effect':
-    'every ticket closed also pays {{sp}} Story Point per euro it bills',
+    'every ticket closed also pays {{sp}} Story Point',
   'purchase.manager.effect': 'one ticket re-filed every {{seconds}}s',
   'purchase.manager.label': 'Account Manager',
   'purchase.senior.effect':
@@ -430,6 +430,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.valueIncident.1.label': 'Incident Payout',
   'skill.valueIncident.blurb': 'Incidents bill double.',
   'skill.valueLegacy.1.label': 'Defect Premium',
+  'skill.valueLegacy.2.label': 'Maintenance Contract',
   'skill.valueLegacy.blurb': 'Legacy tickets bill double.',
   'skill.valueLint.1.label': 'Double Lint',
   'skill.valueLint.2.label': 'Quadruple Lint',
@@ -444,8 +445,16 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.estimates.4.label': 'T-Shirt Sizes',
   'skill.estimates.5.label': 'Everything Is an XL',
   'skill.estimates.blurb':
-    'Estimate a little higher. Every ticket closed carries more story points.',
+    'Estimate a little higher. Every lint warning closed carries more story points.',
+  'skill.estimatesLegacy.1.label': 'Archaeology Surcharge',
+  'skill.estimatesLegacy.2.label': 'Undocumented Behaviour',
+  'skill.estimatesLegacy.3.label': 'Nobody Knows Why',
+  'skill.estimatesLegacy.4.label': 'Here Be Dragons',
+  'skill.estimatesLegacy.5.label': 'Rewrite Estimate',
+  'skill.estimatesLegacy.blurb':
+    'Nobody understands the old code, so every legacy defect is a big estimate.',
   'skill.effect.spPerClose': '+{{count}} SP per ticket',
+  'skill.effect.spPerClose.ticket': '+{{count}} SP per {{ticket}}',
   'skill.coaches.1.label': 'Hire an Agile Coach',
   'skill.coaches.2.label': 'Second Coach',
   'skill.coaches.3.label': 'Coaching Circle',

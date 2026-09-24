@@ -40,7 +40,12 @@ function describe(effect: SkillEffect): EffectText {
     case 'clickRadius':
       return { key: 'skill.effect.clickRadius', params: pct(effect.mult) };
     case 'spPerClose':
-      return { key: 'skill.effect.spPerClose', params: { count: effect.add } };
+      return effect.target === undefined
+        ? { key: 'skill.effect.spPerClose', params: { count: effect.add } }
+        : {
+            key: 'skill.effect.spPerClose.ticket',
+            params: { count: effect.add, ticket: effect.target },
+          };
     case 'crewSp':
       return { key: 'skill.effect.crewSp' };
     case 'pizza':

@@ -67,8 +67,8 @@ export const TICKET_TYPES: Readonly<Record<TicketTypeId, TicketType>> = {
   legacy: {
     id: 'legacy',
     prefix: 'LEG',
-    value: 12,
-    ratePerSec: 0.9,
+    value: 10,
+    ratePerSec: 0.25,
     tier: 1,
     handOnly: false,
     respawns: false,

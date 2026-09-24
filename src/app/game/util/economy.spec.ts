@@ -12,11 +12,7 @@ import {
   DESKS_PER_RANK,
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
-import {
-  INCOME_CAP,
-  INCOME_VALUE_ADD,
-  SENIOR_BUYOUT_STEPS,
-} from '../model/balance/progression';
+import { INCOME_CAP, SENIOR_BUYOUT_STEPS } from '../model/balance/progression';
 import {
   ceilingPerSec,
   desks,
@@ -459,7 +455,7 @@ describe('the rates tab (parity #25)', () => {
     const rated = staffed({ lint: 4 });
     const flat = staffed({});
     expect(ticketValue(rated, 'lint') - ticketValue(flat, 'lint')).toBeCloseTo(
-      INCOME_VALUE_ADD * 4,
+      3 * 4,
       6
     );
     expect(ticketValue(rated, 'bug')).toBe(ticketValue(flat, 'bug'));
@@ -471,6 +467,24 @@ describe('the rates tab (parity #25)', () => {
     );
     expect(prices).toEqual([2, 2, 2, 3, 3, 4, 4, 5, 6, 7]);
     expect(spawnerCost(consultancy({ spawners: { 0: 49 } }), 0)).toBe(1638);
+  });
+
+  it('prices the dog line as the reference does, from 500', () => {
+    const prices = Array.from({ length: 12 }, (_, head) =>
+      spawnerCost(consultancy({ spawners: { 1: head }, tier: 1 }), 1)
+    );
+    expect(prices).toEqual([
+      500, 574, 661, 760, 874, 1005, 1156, 1330, 1529, 1758, 2022, 2326,
+    ]);
+  });
+
+  it('prices the dog row at 1 250, 2 062 and adds 4 a rank', () => {
+    expect(incomeCost(staffed({}), 'legacy')).toBe(1250);
+    expect(incomeCost(staffed({ legacy: 1 }), 'legacy')).toBe(2062);
+    expect(
+      ticketValue(staffed({ legacy: 2 }), 'legacy') -
+        ticketValue(staffed({}), 'legacy')
+    ).toBeCloseTo(8, 6);
   });
 
   it('prices the paper row at the reference: 250, 412, 680, 1 123, 1 853', () => {

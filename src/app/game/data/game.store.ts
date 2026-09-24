@@ -984,7 +984,7 @@ export class GameStore {
         economy.closeValue(state, type, now) * (gilded ? goldenMult : 1);
       value += worth;
       sp +=
-        economy.pickupStoryPoints(state, worth, by !== 'you') +
+        economy.pickupStoryPoints(state, type, by !== 'you') +
         (economy.pickupsPaySp(state) ? spBonus : 0);
       took.push({ type, title });
       if (by === 'auto') {
@@ -1240,6 +1240,10 @@ export class GameStore {
 
   incomeLevel(id: TicketTypeId): number {
     return economy.incomeLevel(this.#state(), id);
+  }
+
+  incomeStep(id: TicketTypeId): number {
+    return economy.incomeStep(id);
   }
 
   incomeCost(id: TicketTypeId): number {

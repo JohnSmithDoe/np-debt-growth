@@ -94,14 +94,14 @@ of knob (see §6).
 | | Symbol | Earned from | Spends on |
 |---|---|---|---|
 | **Budget** | € | Every pickup, the retainer, board bills | The rail: spawner lines, crew heads, income rates |
-| **Story Points** | SP | Every pickup (1 per € billed, whole, once the €25 row is bought), planning-poker votes, copilots, awards | The tree — **all of it**, ADRs included |
+| **Story Points** | SP | Every pickup (1 a ticket, whatever it bills, once the €25 row is bought), planning-poker votes, copilots, awards | The tree — **all of it**, ADRs included |
 
 **The tree unlocks, the rail buys.** That split is now clean: no node costs euros, and no
 rail row costs points.
 
 SP has three sources (`RoundOutcome.spVelocity / spCopilots / spAwards`):
 
-- **SP at pickup** (`economy.pickupStoryPoints`) — each close pays ⌊€ billed⌋ in SP, plus `estimates` and any planning-poker votes it fell through; crew closes ×2 with `timesheets`. Income ranks and value nodes lift SP with the euros.
+- **SP at pickup** (`economy.pickupStoryPoints`) — each close pays `SP_PER_PICKUP` 1, plus the per-ticket `+2` nodes (`estimates`, `estimatesLegacy`) and any planning-poker votes it fell through; crew closes ×2 with `timesheets`. Value nodes, rate rows and golden lift euros only.
   `approachCap(0.35, 0.88 ** level)`: the cap is 35 %, approached with diminishing
   returns, so early velocity levels are the valuable ones. Converted at
   `VELOCITY_SP_PER_EURO` 0.0006.
@@ -129,7 +129,7 @@ Fifteen types (`ticket.model.ts`). Two families.
 |---|---|---|---|---|---|
 | `lint` | 1 | 0.25 | 0 | ADR-0 | the whole opening: ≈ 1 per 4 s a head |
 | `bug` | 4 | 0.08 | 0 | ADR-0 | held back until ADR-1 (`BUG_REVEAL_TIER`) |
-| `legacy` | 12 | 0.90 | 1 | ADR-1 | |
+| `legacy` | 10 | 0.25 | 1 | ADR-1 | the reference's dog: 10 $, thrown as often as paper |
 | `flaky` | 30 | 1.60 | 2 | ADR-2 | **respawns** |
 | `conflict` | 90 | 5.0 | 3 | ADR-3 | |
 | `slop` | 260 | 7.0 | 4 | ADR-4 | |

@@ -12,7 +12,7 @@ At the start there is 1 person, and the player can buy:
 - Rail:
   - person: 0 $ (the free one)
   - unlock gum: 25 $
-  - paper income +3: 250 $ → 412 $ → 680 $ -> 1123 $ -> 1853 $ … 10/10 MAX; at max,
+  - paper income +3: 250 $ → 412 $ → 680 $ -> 1123 $ -> 1853 $          … 10/10 MAX; at max,
     with all upgrades, the tooltip reads "Erhöht PAPIER-Einkommen um 14 (154)" and
     papers show $154
 - Skill tree:
@@ -135,7 +135,7 @@ The opening now runs on these numbers (`feature/garbage-growth-rework`, uncommit
 | One person, paper only, ~1 per 4 s | `lint` 0.25/s a head; `bug` held back until ADR-1 (`BUG_REVEAL_TIER`); no free copilot |
 | Unlock gum 25 $ | `velocity` 25 € (unchanged) |
 | Paper income +3, `floor(250 × 1.65^k)`, 10 ranks | `INCOME_VALUE_ADD` 3 before multipliers, `INCOME_COST_OF_SPAWNER` 125, `INCOME_COST_STEP` 1.65, floored |
-| 1 gum per 1 $, whole numbers | `pickupStoryPoints` = ⌊€ billed⌋ + bonuses; `formatPoints` shows whole points |
+| 1 gum per piece of trash, whatever it's worth (Martin) | `pickupStoryPoints` = `SP_PER_PICKUP` 1 + the `+2` nodes; `formatPoints` shows whole points |
 | Paper ×2, 25 gum, open | `valueLint` rank 1, 25 SP, the only open node under Client |
 | +2 gum, 75 → 112 | `estimates` 75 112 168 253 379, behind `valueLint` |
 | Paper ×2, 2 500 gum | `valueLint` rank 2, 2 500 SP |
@@ -149,6 +149,27 @@ at minute 5. **Everything after the opening is not tuned yet.** SP at the full �
 makes the ADR ladder collapse: ADR-3 at 8.7 min, sign-off at 12.4. Three whole-run guards
 fail on purpose until the mid-game is fitted to the reference: sign-off 35–100 min, late-rung
 spacing, and the crew's euro share (95.4 %).
+
+## The dogs (ADR-1), measured
+
+Radius → **dogs unlock 750 gum** → the bike (ADR-2) at **10 000 gum**. Dogs unlock:
+
+- +1 trashcan, 1 500 gum → `cans` rank 1, gated `tier1`
+- 2 % golden, 100×, rats can't take it, 2 000 gum → `golden` (unchanged)
+- shit income ×2, 1 500 gum → `valueLegacy` rank 1, gate moved to `tier1`. Behind it:
+  - 20 % chance to throw 2, 4 400 gum → `spawnLegacy`, +20 %, `tier1`
+  - shit +2, 400 gum → `estimatesLegacy`, +2 SP a legacy pickup, 5 ranks ×1.5 (read as
+    gum, like the paper's; `estimates` is now paper-only)
+  - +50 % shit income, 2 200 gum → `valueLegacy` rank 2, ×1.5
+
+Dog heads 500 574 661 760 874 1 005 1 156 1 330 1 529 1 758 2 022 2 326: `floor(500 ×
+1.15^k)`. **Shit is 10 $ and thrown as often as paper** → `legacy` value 10, 0.25/s a head.
+Shit income row **+4 a rank, 1 250 → 2 062** = `floor(1250 × 1.65^k)`: the first price
+isn't a fixed multiple of the head (paper 125×, dog 2.5×), so `INCOME_ROWS` holds each
+measured row. Rats are **1 000 $** on the rail (`LINE_PLAN.junior`).
+
+The steps are stored in single precision (`Math.fround`): 500 × float32(1.15) floors to the
+reference's 574. All 68 observed prices fit.
 
 ## Open for the next session
 

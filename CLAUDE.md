@@ -66,10 +66,10 @@ player bought; `BOARD_CAPACITY` is a safety cap, not a state the board sits in.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
-row costs euros. SP is earned at pickup (`pickupStoryPoints`), **one whole point per euro the
-close billed** (floored), once the €25 `velocity` row is bought, plus planning-poker votes a ticket
-fell through (`voteBonus`, decided at spawn). Every euro upgrade lifts SP with it, as the
-reference's gum does. Don't add a euro node or an SP rail row without meaning to.
+row costs euros. SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
+bills**, once the €25 `velocity` row is bought, plus the per-ticket `+2` nodes and planning-poker
+votes a ticket fell through (`voteBonus`, decided at spawn). Euro upgrades never touch SP, as the
+reference's gum works. Don't add a euro node or an SP rail row without meaning to.
 
 ### The store is the only clock
 

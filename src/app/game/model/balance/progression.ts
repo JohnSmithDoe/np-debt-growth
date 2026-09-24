@@ -1,10 +1,12 @@
+import type { TicketTypeId } from '../ticket.model';
+
 export const COPILOT_SP_PER_CLOSE = 0.013;
 
 /**
- * Story points land at pickup, one per euro the ticket bills, once the
- * `velocity` row is bought — the reference's "1 gum per $1".
+ * Story points land at pickup, a flat count per ticket whatever it bills, once
+ * the `velocity` row is bought — the reference's one gum per piece of trash.
  */
-export const SP_PER_EURO = 1;
+export const SP_PER_PICKUP = 1;
 /** Crew and pipeline closes pay this much more SP once `timesheets` is bought. */
 export const CREW_SP_MULT = 2;
 
@@ -14,16 +16,28 @@ export const FREE_COPILOTS = 0;
 export const PURCHASE_REVEAL_FRACTION = 0.6;
 
 /**
- * Per-ticket income lines — the rail's third tab. Each rank adds a flat
- * `INCOME_VALUE_ADD` before any multiplier: decisive on the cheapest work,
- * nothing on dear work, so it pays to move up a rung and fill old rows later.
+ * Per-ticket income lines — the rail's third tab. Each rank adds a flat amount
+ * before any multiplier: decisive on the cheapest work, nothing on dear work,
+ * so it pays to move up a rung and fill old rows later.
  */
 export const INCOME_CAP = 10;
-export const INCOME_VALUE_ADD = 3;
-export const INCOME_COST_STEP = 1.65;
+/** Single precision, as `SPAWNER_COST_STEP` is. */
+export const INCOME_COST_STEP = Math.fround(1.65);
 
-/** An income line's first rank costs this many of its spawner's first head. */
+export interface IncomeRow {
+  readonly first: number;
+  readonly add: number;
+}
+
+/** Measured off the reference: paper 250 / +3, dog 1 250 / +4. */
+export const INCOME_ROWS: Readonly<Partial<Record<TicketTypeId, IncomeRow>>> = {
+  lint: { first: 250, add: 3 },
+  legacy: { first: 1250, add: 4 },
+};
+
+/** Rows not yet measured: this many of the spawner's first head, +3 a rank. */
 export const INCOME_COST_OF_SPAWNER = 125;
+export const INCOME_VALUE_ADD = 3;
 
 export const PURCHASE_IDS = [
   'junior',
@@ -53,7 +67,7 @@ export const LINE_PLAN: Readonly<
     { readonly cost: number; readonly cap: number; readonly open?: boolean }
   >
 > = {
-  junior: { cost: 20, cap: 50 },
+  junior: { cost: 1000, cap: 50 },
   senior: { cost: 1_200, cap: 50 },
   manager: { cost: 28_000, cap: 50 },
   copilot: { cost: 150, cap: 50 },

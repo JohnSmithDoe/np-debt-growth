@@ -41,7 +41,11 @@ export type SkillEffect =
   | { readonly kind: 'autoClose'; readonly target: TicketTypeId }
   | { readonly kind: 'autoCloseSpeed'; readonly mult: number }
   | { readonly kind: 'runners'; readonly add: number }
-  | { readonly kind: 'spPerClose'; readonly add: number }
+  | {
+      readonly kind: 'spPerClose';
+      readonly add: number;
+      readonly target?: TicketTypeId;
+    }
   | { readonly kind: 'crewSp' }
   | { readonly kind: 'pizza' }
   | { readonly kind: 'coach'; readonly add: number }
@@ -180,8 +184,9 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'cans',
     track: 'A',
     requires: 'capacity',
+    gate: 'tier1',
     levels: [
-      600, 1800, 5400, 16_000, 48_000, 140_000, 420_000, 1_250_000, 3_750_000,
+      1500, 1800, 5400, 16_000, 48_000, 140_000, 420_000, 1_250_000, 3_750_000,
     ].map((cost) => ({ cost, effects: [{ kind: 'cans' as const, add: 1 }] })),
   },
   {
@@ -539,11 +544,11 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'spawnLegacy',
     track: 'D',
     requires: 'spawnBug',
-    gate: 'tier2',
+    gate: 'tier1',
     levels: [
       {
-        cost: 1200,
-        effects: [{ kind: 'spawnRate', target: 'legacy', mult: 1.35 }],
+        cost: 4400,
+        effects: [{ kind: 'spawnRate', target: 'legacy', mult: 1.2 }],
       },
     ],
   },
@@ -624,7 +629,21 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'valueLint',
     levels: [75, 112, 168, 253, 379].map((cost) => ({
       cost,
-      effects: [{ kind: 'spPerClose' as const, add: 2 }],
+      effects: [
+        { kind: 'spPerClose' as const, add: 2, target: 'lint' as const },
+      ],
+    })),
+  },
+  {
+    id: 'estimatesLegacy',
+    track: 'C',
+    requires: 'valueLegacy',
+    gate: 'tier1',
+    levels: [400, 600, 900, 1350, 2025].map((cost) => ({
+      cost,
+      effects: [
+        { kind: 'spPerClose' as const, add: 2, target: 'legacy' as const },
+      ],
     })),
   },
   {
@@ -690,11 +709,15 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'valueLegacy',
     track: 'C',
     requires: 'valueBug',
-    gate: 'tier2',
+    gate: 'tier1',
     levels: [
       {
         cost: 1500,
         effects: [{ kind: 'ticketValue', target: 'legacy', mult: 2 }],
+      },
+      {
+        cost: 2200,
+        effects: [{ kind: 'ticketValue', target: 'legacy', mult: 1.5 }],
       },
     ],
   },

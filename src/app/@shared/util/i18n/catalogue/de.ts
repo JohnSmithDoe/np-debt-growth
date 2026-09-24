@@ -121,7 +121,7 @@ export const DE: Readonly<Record<string, string>> = {
     'Wenn die Datei schon offen ist, ist alles daneben auch im Scope.',
   'trait.sweeper.label': 'Räumt weiter ab',
   'purchase.velocity.effect':
-    'jedes geschlossene Ticket zahlt zusätzlich {{sp}} Story Point pro abgerechnetem Euro',
+    'jedes geschlossene Ticket zahlt zusätzlich {{sp}} Story Point',
   'purchase.manager.effect': 'ein Ticket alle {{seconds}}s umgeschrieben',
   'purchase.manager.label': 'Kundenbetreuer',
   'purchase.senior.effect':
@@ -444,6 +444,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.valueIncident.1.label': 'Incident-Auszahlung',
   'skill.valueIncident.blurb': 'Incidents rechnen doppelt ab.',
   'skill.valueLegacy.1.label': 'Defektzuschlag',
+  'skill.valueLegacy.2.label': 'Wartungsvertrag',
   'skill.valueLegacy.blurb': 'Legacy-Tickets rechnen doppelt ab.',
   'skill.valueLint.1.label': 'Doppel-Lint',
   'skill.valueLint.2.label': 'Vierfach-Lint',
@@ -458,8 +459,16 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.estimates.4.label': 'T-Shirt-Größen',
   'skill.estimates.5.label': 'Alles ist XL',
   'skill.estimates.blurb':
-    'Ein bisschen höher schätzen. Jedes geschlossene Ticket bringt mehr Story Points.',
+    'Ein bisschen höher schätzen. Jede geschlossene Lint-Warnung bringt mehr Story Points.',
+  'skill.estimatesLegacy.1.label': 'Archäologie-Zuschlag',
+  'skill.estimatesLegacy.2.label': 'Undokumentiertes Verhalten',
+  'skill.estimatesLegacy.3.label': 'Keiner weiß, warum',
+  'skill.estimatesLegacy.4.label': 'Hier sind Drachen',
+  'skill.estimatesLegacy.5.label': 'Neuschreib-Schätzung',
+  'skill.estimatesLegacy.blurb':
+    'Keiner versteht den alten Code, also wird jeder Legacy-Defekt groß geschätzt.',
   'skill.effect.spPerClose': '+{{count}} SP pro Ticket',
+  'skill.effect.spPerClose.ticket': '+{{count}} SP pro {{ticket}}',
   'skill.coaches.1.label': 'Agile Coach einstellen',
   'skill.coaches.2.label': 'Zweiter Coach',
   'skill.coaches.3.label': 'Coaching-Kreis',
