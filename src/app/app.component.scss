@@ -177,6 +177,10 @@
   overscroll-behavior: contain;
 }
 
+.rail-tree {
+  flex: none;
+}
+
 .rail cb-activity-feed,
 .rail cb-achievements-panel {
   min-height: 7rem;

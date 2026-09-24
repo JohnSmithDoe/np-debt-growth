@@ -12,7 +12,6 @@ import { GameStore } from '../../../game/data/game.store';
 import type { PurchaseId } from '../../../game/model/balance/progression';
 import {
   INCOME_CAP,
-  INCOME_VALUE_ADD,
   PURCHASE_IDS,
 } from '../../../game/model/balance/progression';
 import { LINE_EFFECT_PARAMS } from '../../../game/model/purchase-copy.model';
@@ -34,6 +33,8 @@ type Tab = (typeof TABS)[number];
 const MAXED = 'MAX';
 
 /** One shop row, whatever tab it sits in. */
+const SP_UNLOCK: PurchaseId = 'velocity';
+
 interface Row {
   readonly key: string;
   readonly name: string;
@@ -68,6 +69,31 @@ export class SupplyPanelComponent {
 
   readonly supply = computed<readonly Row[]>(() => {
     this.#store.state();
+    return [...this.#unlockRow(), ...this.#spawnerRows()];
+  });
+
+  /** The SP unlock sits beside the first head until bought, then leaves the rail. */
+  #unlockRow(): readonly Row[] {
+    if (this.#store.levels()[SP_UNLOCK] > 0) return [];
+    return [
+      {
+        key: SP_UNLOCK,
+        name: this.#say(`purchase.${SP_UNLOCK}.label`),
+        blurb: this.#say(
+          `purchase.${SP_UNLOCK}.effect`,
+          LINE_EFFECT_PARAMS[SP_UNLOCK]
+        ),
+        locked: false,
+        held: 0,
+        cap: 1,
+        cost: formatCompactMoney(this.#store.lineCost(SP_UNLOCK)),
+        maxed: false,
+        affordable: this.#store.canBuyLine(SP_UNLOCK),
+      },
+    ];
+  }
+
+  #spawnerRows(): readonly Row[] {
     return SPAWNERS.filter((row) => this.#store.spawnerUnlocked(row.adr)).map(
       (row) => {
         const held = this.#store.spawnerCount(row.adr);
@@ -87,7 +113,7 @@ export class SupplyPanelComponent {
         };
       }
     );
-  });
+  }
 
   readonly locked = computed(() => {
     this.#store.state();
@@ -127,7 +153,7 @@ export class SupplyPanelComponent {
     this.#store.state();
     // Locked lines stay on show — an empty tab reads as broken, not as
     // "these open on the tree".
-    return PURCHASE_IDS.map((line) => {
+    return PURCHASE_IDS.filter((line) => line !== SP_UNLOCK).map((line) => {
       const locked = !this.#store.lineUnlocked(line);
       const held = this.#store.levels()[line];
       const cap = this.#store.lineCap(line);
@@ -168,7 +194,8 @@ export class SupplyPanelComponent {
   buy(key: string): void {
     switch (this.tab()) {
       case 'supply':
-        this.#store.buySpawner(Number(key));
+        if (key === SP_UNLOCK) this.#store.buyLine(SP_UNLOCK);
+        else this.#store.buySpawner(Number(key));
         return;
       case 'income':
         this.#store.buyIncome(key as TicketTypeId);
@@ -181,7 +208,7 @@ export class SupplyPanelComponent {
 
   #rateBlurb(id: TicketTypeId): string {
     return this.#say('rail.income.effect', {
-      pct: formatCompactMoney(INCOME_VALUE_ADD),
+      pct: formatCompactMoney(this.#store.incomeStep(id)),
       ticket: this.#say(ticketLabelKey(id)),
     });
   }

@@ -78,6 +78,8 @@ export class AppComponent {
   readonly engagement = ENGAGEMENT_NAME;
 
   readonly onTree = computed(() => this.#stage.mode() === 'skills');
+  /** The tree opens with the SP unlock, as the reference's gum row does. */
+  readonly treeOpen = computed(() => this.#store.levels().velocity > 0);
 
   goTo(step: NextStep): void {
     if (step.act === 'startRound') return this.startNextRound();
