@@ -432,6 +432,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.valueLegacy.1.label': 'Defect Premium',
   'skill.valueLegacy.blurb': 'Legacy tickets bill double.',
   'skill.valueLint.1.label': 'Double Lint',
+  'skill.valueLint.2.label': 'Quadruple Lint',
   'skill.valueLint.blurb': 'Lint warnings bill double.',
   'skill.valueSlop.1.label': 'Prompt Engineering',
   'skill.valueSlop.blurb': 'Slop bills more.',

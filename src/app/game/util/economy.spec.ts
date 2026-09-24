@@ -14,7 +14,7 @@ import {
 } from '../model/balance/crew';
 import {
   INCOME_CAP,
-  INCOME_VALUE_STEP,
+  INCOME_VALUE_ADD,
   SENIOR_BUYOUT_STEPS,
 } from '../model/balance/progression';
 import {
@@ -41,6 +41,7 @@ import {
   juniorBatch,
   juniorCloseMs,
   spawnRate,
+  spawnerCost,
   sprintSlots,
   totalSpawnRate,
 } from './economy';
@@ -454,14 +455,29 @@ describe('the rates tab (parity #25)', () => {
     expect(incomeUnlocked(staffed({}), 'swarm')).toBe(false);
   });
 
-  it('lifts only the ticket it names', () => {
+  it('adds a flat amount to only the ticket it names', () => {
     const rated = staffed({ lint: 4 });
     const flat = staffed({});
-    expect(ticketValue(rated, 'lint') / ticketValue(flat, 'lint')).toBeCloseTo(
-      INCOME_VALUE_STEP ** 4,
+    expect(ticketValue(rated, 'lint') - ticketValue(flat, 'lint')).toBeCloseTo(
+      INCOME_VALUE_ADD * 4,
       6
     );
     expect(ticketValue(rated, 'bug')).toBe(ticketValue(flat, 'bug'));
+  });
+
+  it('prices the opening heads as the reference does, rounded down', () => {
+    const prices = Array.from({ length: 10 }, (_, head) =>
+      spawnerCost(consultancy({ spawners: { 0: head + 1 } }), 0)
+    );
+    expect(prices).toEqual([2, 2, 2, 3, 3, 4, 4, 5, 6, 7]);
+    expect(spawnerCost(consultancy({ spawners: { 0: 49 } }), 0)).toBe(1638);
+  });
+
+  it('prices the paper row at the reference: 250, 412, 680, 1 123, 1 853', () => {
+    const prices = [0, 1, 2, 3, 4].map((rank) =>
+      incomeCost(staffed({ lint: rank }), 'lint')
+    );
+    expect(prices).toEqual([250, 412, 680, 1123, 1853]);
   });
 
   it('stops at the cap, and asks more for every rank up to it', () => {

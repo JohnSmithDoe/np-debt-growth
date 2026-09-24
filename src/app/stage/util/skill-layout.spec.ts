@@ -51,11 +51,11 @@ describe('skill layout', () => {
     expect(arms.map((square) => square.id).sort()).toEqual([
       'adr1',
       'copilot',
-      'income',
       'junior',
       'o1',
       'radius',
       'supply',
+      'valueLint',
     ]);
     const orphans = SKILL_GRAPH.squares.filter(
       (square) => square.parent === null
@@ -138,12 +138,12 @@ describe('skill reveal', () => {
     expect([...ranked({}).entries()].sort()).toEqual([
       ['adr1', 'box'],
       ['copilot', 'box'],
-      ['income', 'box'],
       ['junior', 'box'],
       ['o1', 'box'],
       ['radius', 'box'],
       [SKILL_ROOT_ID, 'open'],
       ['supply', 'box'],
+      ['valueLint', 'box'],
     ]);
   });
 
@@ -154,7 +154,7 @@ describe('skill reveal', () => {
     for (const arm of [
       'radius',
       'junior',
-      'income',
+      'valueLint',
       'supply',
       'copilot',
       'o1',

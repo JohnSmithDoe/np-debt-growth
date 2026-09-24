@@ -61,7 +61,7 @@ import {
   INCOME_CAP,
   INCOME_COST_OF_SPAWNER,
   INCOME_COST_STEP,
-  INCOME_VALUE_STEP,
+  INCOME_VALUE_ADD,
   LINE_COST_STEP,
   LINE_PLAN,
   SENIOR_BUYOUT_STEPS,
@@ -371,9 +371,8 @@ export function ticketValue(
   );
   const tierScale = type.scalesWithTier ? Math.max(1, state.tier) : 1;
   return (
-    type.value *
+    (type.value + incomeBonus(state, id)) *
     fromSkills *
-    incomeMultiplier(state, id) *
     tierScale *
     globalMultiplier(state) *
     hotfixMultiplier(state, now)
@@ -384,8 +383,8 @@ export function incomeLevel(state: Consultancy, id: TicketTypeId): number {
   return Math.min(INCOME_CAP, state.income[id] ?? 0);
 }
 
-export function incomeMultiplier(state: Consultancy, id: TicketTypeId): number {
-  return INCOME_VALUE_STEP ** incomeLevel(state, id);
+export function incomeBonus(state: Consultancy, id: TicketTypeId): number {
+  return INCOME_VALUE_ADD * incomeLevel(state, id);
 }
 
 /** An income line opens once its source is on the path, not before. */
@@ -398,7 +397,7 @@ export function incomeCost(state: Consultancy, id: TicketTypeId): number {
   const row = spawnerFor(id);
   const level = incomeLevel(state, id);
   if (!row || level >= INCOME_CAP) return Number.POSITIVE_INFINITY;
-  return Math.ceil(
+  return Math.floor(
     row.cost * INCOME_COST_OF_SPAWNER * INCOME_COST_STEP ** level
   );
 }
@@ -448,7 +447,7 @@ export function spawnerCost(state: Consultancy, adr: number): number {
   if (level >= SPAWNER_CAP) return Number.POSITIVE_INFINITY;
   // The head ADR-0 ships with was free; it does not raise the next one's price.
   const paid = adr === 0 ? Math.max(0, level - SPAWNER_FREE_AT_ADR_0) : level;
-  return Math.ceil(row.cost * SPAWNER_COST_STEP ** paid);
+  return Math.floor(row.cost * SPAWNER_COST_STEP ** paid);
 }
 
 export function spawnerUnlocked(state: Consultancy, adr: number): boolean {
@@ -1047,23 +1046,18 @@ export function mergeInvoices(
 }
 
 /**
- * SP a close pays at pickup; zero until the `velocity` row is bought. Priced
- * off the ticket's base value, so the rail's income ranks lift euros but not
- * SP: the reference's gum runs 1:1 with money early and far behind it late.
+ * SP a close pays at pickup, in whole points; zero until the `velocity` row
+ * is bought. One per euro the close billed, as the reference's gum is.
  */
 export function pickupStoryPoints(
   state: Consultancy,
-  id: TicketTypeId,
-  golden: boolean,
+  worth: number,
   byCrew: boolean
 ): number {
   if (!pickupsPaySp(state)) return 0;
-  const type = TICKET_TYPES[id];
-  const tierScale = type.scalesWithTier ? Math.max(1, state.tier) : 1;
-  const base = type.value * tierScale * (golden ? goldenMultiplier(state) : 1);
   const bonus = sumOf(state, (e) => (e.kind === 'spPerClose' ? e.add : null));
   const crew = byCrew && holds(state, 'crewSp') ? CREW_SP_MULT : 1;
-  return (base * SP_PER_EURO + bonus) * crew;
+  return Math.floor(worth * SP_PER_EURO + bonus) * crew;
 }
 
 /** The live pizza party, if any, as the crew rules take it. */
@@ -1108,7 +1102,7 @@ export function voteBonus(state: Consultancy, runMs: number): number {
   return live * voteBonusPerCrossing(state);
 }
 
-/** The offline estimate's SP: the same mix `unattendedEuroPerSec` prices, at base value. */
+/** The offline estimate's SP: the same mix `unattendedEuroPerSec` prices. */
 export function unattendedSpPerSec(state: Consultancy): number {
   let supply = 0;
   let points = 0;
@@ -1116,7 +1110,7 @@ export function unattendedSpPerSec(state: Consultancy): number {
     if (TICKET_TYPES[id].effect !== 'value') continue;
     const rate = closeRate(state, id);
     supply += rate;
-    points += rate * pickupStoryPoints(state, id, false, true);
+    points += rate * pickupStoryPoints(state, closeValue(state, id), true);
   }
   if (supply <= 0) return 0;
   return (points / supply) * Math.min(supply, ceilingPerSec(state));

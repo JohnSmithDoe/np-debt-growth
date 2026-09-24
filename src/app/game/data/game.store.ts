@@ -984,7 +984,7 @@ export class GameStore {
         economy.closeValue(state, type, now) * (gilded ? goldenMult : 1);
       value += worth;
       sp +=
-        economy.pickupStoryPoints(state, type, gilded, by !== 'you') +
+        economy.pickupStoryPoints(state, worth, by !== 'you') +
         (economy.pickupsPaySp(state) ? spBonus : 0);
       took.push({ type, title });
       if (by === 'auto') {

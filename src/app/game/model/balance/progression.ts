@@ -8,21 +8,22 @@ export const SP_PER_EURO = 1;
 /** Crew and pipeline closes pay this much more SP once `timesheets` is bought. */
 export const CREW_SP_MULT = 2;
 
-/** The tree is bought with story points, so the first copilot ships with the laptop. */
-export const FREE_COPILOTS = 1;
+/** The run opens with one developer and nothing else; SP comes from `velocity`. */
+export const FREE_COPILOTS = 0;
 
 export const PURCHASE_REVEAL_FRACTION = 0.6;
 
 /**
- * Per-ticket income lines — the rail's third tab. Each rank lifts what that
- * one ticket bills; the line only opens once its spawner is on the path.
+ * Per-ticket income lines — the rail's third tab. Each rank adds a flat
+ * `INCOME_VALUE_ADD` before any multiplier: decisive on the cheapest work,
+ * nothing on dear work, so it pays to move up a rung and fill old rows later.
  */
 export const INCOME_CAP = 10;
-export const INCOME_VALUE_STEP = 1.3;
-export const INCOME_COST_STEP = 1.75;
+export const INCOME_VALUE_ADD = 3;
+export const INCOME_COST_STEP = 1.65;
 
 /** An income line's first rank costs this many of its spawner's first head. */
-export const INCOME_COST_OF_SPAWNER = 16;
+export const INCOME_COST_OF_SPAWNER = 125;
 
 export const PURCHASE_IDS = [
   'junior',

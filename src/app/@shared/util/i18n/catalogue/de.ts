@@ -446,6 +446,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.valueLegacy.1.label': 'Defektzuschlag',
   'skill.valueLegacy.blurb': 'Legacy-Tickets rechnen doppelt ab.',
   'skill.valueLint.1.label': 'Doppel-Lint',
+  'skill.valueLint.2.label': 'Vierfach-Lint',
   'skill.valueLint.blurb': 'Lint-Warnungen rechnen doppelt ab.',
   'skill.valueSlop.1.label': 'Prompt Engineering',
   'skill.valueSlop.blurb': 'Slop rechnet mehr ab.',

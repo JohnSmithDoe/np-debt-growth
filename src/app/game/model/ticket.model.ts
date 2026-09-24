@@ -44,7 +44,7 @@ export const TICKET_TYPES: Readonly<Record<TicketTypeId, TicketType>> = {
     id: 'lint',
     prefix: 'LINT',
     value: 1,
-    ratePerSec: 0.18,
+    ratePerSec: 0.25,
     tier: 0,
     handOnly: false,
     respawns: false,

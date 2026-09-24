@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { BUG_REVEAL_AT_MS, FIRST_INCIDENT_AT_MS } from '../model/balance/flow';
+import { BUG_REVEAL_TIER, FIRST_INCIDENT_AT_MS } from '../model/balance/flow';
 import { heldBack, scriptedSpawns } from './first-act';
 
 describe('the first act', () => {
@@ -18,20 +18,20 @@ describe('the first act', () => {
   });
 
   it('holds the rate off until its own beat has landed', () => {
-    expect(heldBack('incident', 0)).toBe(true);
-    expect(heldBack('incident', FIRST_INCIDENT_AT_MS - 1)).toBe(true);
-    expect(heldBack('incident', FIRST_INCIDENT_AT_MS)).toBe(false);
+    expect(heldBack('incident', 0, 0)).toBe(true);
+    expect(heldBack('incident', FIRST_INCIDENT_AT_MS - 1, 0)).toBe(true);
+    expect(heldBack('incident', FIRST_INCIDENT_AT_MS, 0)).toBe(false);
   });
 
-  it('keeps Bug Report off the opening board, then lets it run (D14)', () => {
-    expect(heldBack('bug', 0)).toBe(true);
-    expect(heldBack('bug', BUG_REVEAL_AT_MS)).toBe(false);
-    expect(heldBack('lint', 0)).toBe(false);
+  it('keeps Bug Report off the board until ADR-1, however long the run', () => {
+    expect(heldBack('bug', 60 * 60_000, 0)).toBe(true);
+    expect(heldBack('bug', 0, BUG_REVEAL_TIER)).toBe(false);
+    expect(heldBack('lint', 0, 0)).toBe(false);
   });
 
   it('leaves every other type to its rate', () => {
     for (const type of ['legacy', 'flaky', 'conflict', 'escalation'] as const) {
-      expect(heldBack(type, 0)).toBe(false);
+      expect(heldBack(type, 0, 0)).toBe(false);
     }
   });
 });

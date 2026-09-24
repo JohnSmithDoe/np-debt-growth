@@ -12,7 +12,7 @@ import { GameStore } from '../../../game/data/game.store';
 import type { PurchaseId } from '../../../game/model/balance/progression';
 import {
   INCOME_CAP,
-  INCOME_VALUE_STEP,
+  INCOME_VALUE_ADD,
   PURCHASE_IDS,
 } from '../../../game/model/balance/progression';
 import { LINE_EFFECT_PARAMS } from '../../../game/model/purchase-copy.model';
@@ -181,7 +181,7 @@ export class SupplyPanelComponent {
 
   #rateBlurb(id: TicketTypeId): string {
     return this.#say('rail.income.effect', {
-      pct: `+${Math.round((INCOME_VALUE_STEP - 1) * 100)}%`,
+      pct: formatCompactMoney(INCOME_VALUE_ADD),
       ticket: this.#say(ticketLabelKey(id)),
     });
   }

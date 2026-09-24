@@ -66,10 +66,10 @@ player bought; `BOARD_CAPACITY` is a safety cap, not a state the board sits in.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
-row costs euros. SP is earned at pickup (`pickupStoryPoints`) from the ticket's **base** value,
-once the €25 `velocity` row is bought, plus planning-poker votes a ticket fell through
-(`voteBonus`, decided at spawn). Income ranks lift euros but not SP, so SP falls behind money late
-by design. Don't add a euro node or an SP rail row without meaning to.
+row costs euros. SP is earned at pickup (`pickupStoryPoints`), **one whole point per euro the
+close billed** (floored), once the €25 `velocity` row is bought, plus planning-poker votes a ticket
+fell through (`voteBonus`, decided at spawn). Every euro upgrade lifts SP with it, as the
+reference's gum does. Don't add a euro node or an SP rail row without meaning to.
 
 ### The store is the only clock
 
@@ -111,8 +111,8 @@ Two things in the restore look like bugs and are not:
 - **`freshConsultancy` ships `root` bought.** The tree costs story points and the ADR ladder lives
   on it, so a run with an unbought root is stranded — including the ADR panel's own buy button,
   which routes through `buySkill`. The `velocity` row is `open` on the rail for the same reason:
-  it is the SP source, so it cannot sit behind an SP node. The free first copilot predates it and
-  is now redundant.
+  it is the SP source, so it cannot sit behind an SP node. The run opens with one developer and
+  nothing else (`FREE_COPILOTS` 0), as the reference does.
 
 ### i18n
 
@@ -158,6 +158,7 @@ block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored 
 | `docs/gamedesign.md` | The design **as the code has it** — loop, currencies, crew, progression, where every knob lives. Read this before touching balance. |
 | `docs/rework-garbage-growth.md` | The contract the current shape was built to, and the staged record of building it. §9 is the status. |
 | `docs/comparrison.md` | Row-by-row audit against the reference, and which rows rest on a spec, a read, or having played it. |
+| `docs/garbage-growth-real-numbers.md` | The reference's opening as measured — accepted as real — with the fitted formulas and how ours differs. |
 | `docs/handoff-next.md` | What is open, ranked, with the traps that cost this project time. |
 | `docs/performance.md` | Unconfirmed stage-performance leads, ranked by how they scale, plus the measurement still owed. A static review — leads, not facts. |
 | `docs/handoff-parity.md` | Closed. Kept as the record of the parity brief. |

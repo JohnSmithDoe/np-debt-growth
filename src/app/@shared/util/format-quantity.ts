@@ -99,12 +99,13 @@ export function formatCompactWhole(value: number): string {
 
 const NO_POINTS = '0';
 
+/** Story points are whole, as the reference's gum is. */
 export function formatPoints(value: number): string {
-  return value === 0 ? NO_POINTS : formatCompact(value);
+  return value === 0 ? NO_POINTS : formatCompactWhole(Math.floor(value));
 }
 
 export function formatPointsExact(value: number): string {
-  return value === 0 ? NO_POINTS : formatQuantity(value);
+  return value === 0 ? NO_POINTS : formatWhole(Math.floor(value));
 }
 
 const NBSP = '\u00A0';

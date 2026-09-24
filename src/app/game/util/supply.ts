@@ -24,7 +24,7 @@ export function spawnInto(
   const golden = economy.goldenChance(state);
 
   for (const id of TICKET_TYPE_IDS) {
-    if (heldBack(id, from)) continue;
+    if (heldBack(id, from, state.tier)) continue;
     const storm = id === 'incident' ? weather.incidentRate : 1;
     const drought = TICKET_TYPES[id].handOnly ? 1 : weather.supply;
     const rate = economy.spawnRate(state, id) * storm * drought;

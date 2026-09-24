@@ -111,9 +111,10 @@ describe('the compact readout', () => {
 });
 
 describe('formatPoints', () => {
-  it('keeps the fraction a whole formatter rounded away', () => {
-    expect(formatPoints(0.013)).toBe('0.01');
-    expect(formatPoints(21)).toBe('21.0');
+  it('shows points whole, rounded down, never as a fraction', () => {
+    expect(formatPoints(0.9)).toBe('0');
+    expect(formatPoints(21)).toBe('21');
+    expect(formatPoints(21.7)).toBe('21');
     expect(formatPoints(1.5e6)).toBe('1.50M');
     expect(formatPointsExact(1.5e6)).toBe('1.50 million');
   });

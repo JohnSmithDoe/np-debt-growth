@@ -94,14 +94,14 @@ of knob (see §6).
 | | Symbol | Earned from | Spends on |
 |---|---|---|---|
 | **Budget** | € | Every pickup, the retainer, board bills | The rail: spawner lines, crew heads, income rates |
-| **Story Points** | SP | Every pickup (base value, once the €25 row is bought), planning-poker votes, copilots, awards | The tree — **all of it**, ADRs included |
+| **Story Points** | SP | Every pickup (1 per € billed, whole, once the €25 row is bought), planning-poker votes, copilots, awards | The tree — **all of it**, ADRs included |
 
 **The tree unlocks, the rail buys.** That split is now clean: no node costs euros, and no
 rail row costs points.
 
 SP has three sources (`RoundOutcome.spVelocity / spCopilots / spAwards`):
 
-- **SP at pickup** (`economy.pickupStoryPoints`) — each ticket pays its base value in SP, plus `estimates` and any planning-poker votes it fell through; crew closes ×2 with `timesheets`. Income ranks lift euros only, so SP falls behind money late.
+- **SP at pickup** (`economy.pickupStoryPoints`) — each close pays ⌊€ billed⌋ in SP, plus `estimates` and any planning-poker votes it fell through; crew closes ×2 with `timesheets`. Income ranks and value nodes lift SP with the euros.
   `approachCap(0.35, 0.88 ** level)`: the cap is 35 %, approached with diminishing
   returns, so early velocity levels are the valuable ones. Converted at
   `VELOCITY_SP_PER_EURO` 0.0006.
@@ -109,10 +109,8 @@ SP has three sources (`RoundOutcome.spVelocity / spCopilots / spAwards`):
   `copilot` multipliers.
 - **Awards** — one-off grants in `award.model.ts`.
 
-**The first copilot ships with the run** (`FREE_COPILOTS` 1, granted in
-`freshConsultancy`). It has to: the tree is bought in story points and the ADR ladder is
-on the tree, so a run with no SP source has nothing it can do. It used to arrive with
-ADR-1, which was fine while ADR-1 cost euros and is a deadlock now.
+**No copilot ships with the run** (`FREE_COPILOTS` 0). The €25 `velocity` row is the SP
+source and is `open` on the rail, so the tree is reachable without one.
 
 **Comment — the skim is still the cleverest economy piece.** It is a *self-imposed tax*:
 you choose to be paid less now to progress faster. Making the tree SP-only sharpened it —
@@ -129,8 +127,8 @@ Fifteen types (`ticket.model.ts`). Two families.
 
 | Type | Value | Rate/s | Tier | Spawner | Notes |
 |---|---|---|---|---|---|
-| `lint` | 1 | 0.60 | 0 | ADR-0 | |
-| `bug` | 4 | 0.28 | 0 | ADR-0 | held back until 90 s |
+| `lint` | 1 | 0.25 | 0 | ADR-0 | the whole opening: ≈ 1 per 4 s a head |
+| `bug` | 4 | 0.08 | 0 | ADR-0 | held back until ADR-1 (`BUG_REVEAL_TIER`) |
 | `legacy` | 12 | 0.90 | 1 | ADR-1 | |
 | `flaky` | 30 | 1.60 | 2 | ADR-2 | **respawns** |
 | `conflict` | 90 | 5.0 | 3 | ADR-3 | |
@@ -184,7 +182,7 @@ buy your way out of it, as a reward. It is the single best idea taken from the r
 
 ### The first act is scripted
 
-`util/first-act.ts` withholds `incident` until 75 s and `bug` until 90 s, and force-spawns
+`util/first-act.ts` withholds `incident` until 75 s and `bug` until ADR-1, and force-spawns
 the first incident exactly when it becomes legal.
 
 **Comment — good instinct, wrong altitude.** Holding types back so the player meets one
@@ -345,18 +343,23 @@ the same resource gives the shop a rhythm that neither alone does.
 
 | Tab | Holds | Cap | Cost |
 |---|---|---|---|
-| **Debt** | Nine spawner lines, one per ADR | 50 | base × 1.15^level |
-| **Rates** | Per-ticket income, ten rows | 10 | spawner base × 16 × 1.75^level |
+| **Debt** | Nine spawner lines, one per ADR | 50 | ⌊base × 1.15^level⌋ |
+| **Rates** | Per-ticket income, ten rows | 10 | ⌊spawner base × 125 × 1.65^level⌋ |
 | **Crew** | The six `PURCHASE_IDS` lines | per line | `LINE_PLAN` × 1.15^level |
 
-A **rate** lifts one ticket type's value by `INCOME_VALUE_STEP` 1.3 a rank and opens only
-once that ticket's spawner has a head on it (`incomeUnlocked`).
+A **rate** adds a flat `INCOME_VALUE_ADD` €3 a rank to one ticket type's value, before any
+multiplier, and opens only once that ticket's spawner has a head on it (`incomeUnlocked`).
+Flat on purpose: it is decisive on cheap work and nothing on dear work, so it pushes the
+player up a rung, and old rows are cheap to fill later. Prices and the +3 are the
+reference's, measured (`garbage-growth-real-numbers.md`).
 
 **Comment — the rates tab is what makes the late game a curve rather than a plateau.**
 Once every line has capped at 50 there is nothing else a euro can buy, and before the tab
 existed the measured run went flat from minute 120 onward with a budget climbing into the
-1e10 with nothing to spend it on. It is not decoration; it is the only compounding euro
-sink past the caps.
+1e10 with nothing to spend it on. It was the only compounding euro sink past the caps.
+**Open (September 2026):** with the flat +3 it no longer compounds (the whole tab is about
+6 M € of sinks), so past the caps the euros have nothing left to buy again. The measured
+€/min flattens at about 17 M from minute 40.
 
 ### Purchase lines
 

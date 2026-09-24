@@ -160,7 +160,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'A',
     requires: 'hand',
     levels: [
-      { cost: 110, effects: [{ kind: 'clickRadius', mult: 1.35 }] },
+      { cost: 100, effects: [{ kind: 'clickRadius', mult: 1.25 }] },
       { cost: 440, effects: [{ kind: 'clickRadius', mult: 1.28 }] },
       { cost: 1650, effects: [{ kind: 'clickRadius', mult: 1.22 }] },
     ],
@@ -475,11 +475,11 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'D',
     requires: 'debt',
     levels: [
-      { cost: 30, effects: [{ kind: 'spawnRate', mult: 1.3 }] },
-      { cost: 110, effects: [{ kind: 'spawnRate', mult: 1.28 }] },
-      { cost: 400, effects: [{ kind: 'spawnRate', mult: 1.25 }] },
-      { cost: 500, effects: [{ kind: 'spawnRate', mult: 1.22 }] },
-      { cost: 2250, effects: [{ kind: 'spawnRate', mult: 1.2 }] },
+      { cost: 2200, effects: [{ kind: 'spawnRate', mult: 1.2 }] },
+      { cost: 3300, effects: [{ kind: 'spawnRate', mult: 1.28 }] },
+      { cost: 4950, effects: [{ kind: 'spawnRate', mult: 1.25 }] },
+      { cost: 7425, effects: [{ kind: 'spawnRate', mult: 1.22 }] },
+      { cost: 11_137, effects: [{ kind: 'spawnRate', mult: 1.2 }] },
     ],
   },
   {
@@ -599,10 +599,10 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'income',
     track: 'C',
-    requires: 'client',
+    requires: 'valueLint',
     levels: [
-      { cost: 250, effects: [{ kind: 'global', mult: 1.12 }] },
-      { cost: 850, effects: [{ kind: 'global', mult: 1.1 }] },
+      { cost: 1100, effects: [{ kind: 'global', mult: 1.5 }] },
+      { cost: 1375, effects: [{ kind: 'global', mult: 1.5 }] },
       { cost: 2600, effects: [{ kind: 'global', mult: 1.1 }] },
       { cost: 7500, effects: [{ kind: 'global', mult: 1.1 }] },
       { cost: 20_000, effects: [{ kind: 'global', mult: 1.12 }] },
@@ -621,8 +621,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'estimates',
     track: 'C',
-    requires: 'income',
-    levels: [40, 200, 900, 4000, 18_000].map((cost) => ({
+    requires: 'valueLint',
+    levels: [75, 112, 168, 253, 379].map((cost) => ({
       cost,
       effects: [{ kind: 'spPerClose' as const, add: 2 }],
     })),
@@ -666,10 +666,14 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'valueLint',
     track: 'C',
-    requires: 'income',
+    requires: 'client',
     levels: [
       {
-        cost: 150,
+        cost: 25,
+        effects: [{ kind: 'ticketValue', target: 'lint', mult: 2 }],
+      },
+      {
+        cost: 2500,
         effects: [{ kind: 'ticketValue', target: 'lint', mult: 2 }],
       },
     ],
