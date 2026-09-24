@@ -24,3 +24,13 @@ export const AWARD_DURATION_S = 0.16;
 
 export const PURCHASE_GAIN = 0.06;
 export const PURCHASE_DURATION_S = 0.09;
+
+export interface MusicTrack {
+  readonly src: string;
+  readonly volume: number;
+}
+
+export const MUSIC_TRACKS: readonly MusicTrack[] = [
+  { src: 'assets/audio/uptempo-chiptune.ogg', volume: 0.12 },
+  { src: 'assets/audio/boss-battle-2.ogg', volume: 0.12 },
+];

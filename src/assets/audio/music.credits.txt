@@ -1,0 +1,21 @@
+=== uptempo-chiptune.ogg ===
+"Uptempo Chiptune", shipped unmodified as c64_uptempo_chiptune.ogg
+	- Licenses:
+		- CC0 1.0
+	- Authors:
+		- Skrjablin (GoatTracker, rendered with sidplayfp)
+	- Links:
+		- https://opengameart.org/content/6-genuinely-c64-soundtracks-released-as-public-domain-may-2017
+
+=== boss-battle-2.ogg ===
+"C64 fanmade version of nene's Boss Battle #2 [8 bit]", shipped unmodified as C64 - BossBattle2_2.ogg
+	- Licenses:
+		- CC0 1.0
+	- Authors:
+		- TheOuterLinux (C64 arrangement)
+		- nene (composition, "Boss Battle #2 [8 bit]", CC0 1.0)
+	- Links:
+		- https://opengameart.org/content/c64-fanmade-version-of-nenes-boss-battle-2-8-bit
+		- https://opengameart.org/content/boss-battle-2-8-bit
+
+CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/

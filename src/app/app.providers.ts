@@ -20,6 +20,7 @@ import {
   bootLocale,
 } from './@shared/util/i18n/language.boot';
 import { bundledTranslateLoader } from './@shared/util/i18n/translate.loader';
+import { AudioService } from './audio/data/audio.service';
 import { DoorService } from './console/data/door.service';
 import { GameClock } from './game/data/game-clock.service';
 import { HarnessDoor } from './game/data/harness-door.service';
@@ -43,12 +44,14 @@ export function provideAppKernel(): Array<Provider | EnvironmentProviders> {
       const save = inject(SaveService);
       const clock = inject(GameClock);
       const door = inject(DoorService);
+      const audio = inject(AudioService);
       inject(HarnessDoor).open();
       save.restore();
       effect(() => {
         if (!door.opened()) return;
         save.start();
         clock.start();
+        audio.startMusic();
       });
     }),
   ];

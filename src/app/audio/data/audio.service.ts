@@ -6,6 +6,7 @@ import {
   MASTER_GAIN,
   MAX_CLICKS_PER_TICK,
   MAX_VOICES_PER_WINDOW,
+  MUSIC_TRACKS,
   VOICE_WINDOW_MS,
 } from '../model/audio.consts';
 import {
@@ -36,11 +37,20 @@ export class AudioService {
   #prevEscalated = false;
   #prevHotfixUntil = 0;
 
+  #music: HTMLAudioElement | null = null;
+  #track = 0;
+  #musicOn = signal(false);
+
   readonly muted = signal(this.#loadMuted());
 
   constructor() {
     window.addEventListener('pointerdown', this.#unlock);
     window.addEventListener('keydown', this.#unlock);
+
+    effect(() => {
+      if (this.#musicOn() && !this.muted()) this.#playMusic();
+      else this.#music?.pause();
+    });
 
     effect(() => {
       const closed = this.#store.lifetimeClosed();
@@ -82,6 +92,10 @@ export class AudioService {
     });
   }
 
+  startMusic(): void {
+    this.#musicOn.set(true);
+  }
+
   setMuted(value: boolean): void {
     this.muted.set(value);
     try {
@@ -118,6 +132,46 @@ export class AudioService {
       this.#ctx = null;
       this.#master = null;
     }
+  }
+
+  #playMusic(): void {
+    const music = this.#music ?? this.#createMusic();
+    if (!music) return;
+    Promise.resolve()
+      .then(() => music.play())
+      .catch(() => this.#retryMusicOnGesture());
+  }
+
+  #createMusic(): HTMLAudioElement | null {
+    if (typeof Audio === 'undefined') return null;
+    const music = new Audio();
+    music.preload = 'auto';
+    music.addEventListener('ended', () => {
+      this.#track = (this.#track + 1) % MUSIC_TRACKS.length;
+      this.#load(music);
+      if (this.#musicOn() && !this.muted()) this.#playMusic();
+    });
+    this.#load(music);
+    this.#music = music;
+    return music;
+  }
+
+  #load(music: HTMLAudioElement): void {
+    const track = MUSIC_TRACKS[this.#track];
+    if (!track) return;
+    music.src = track.src;
+    music.volume = track.volume;
+  }
+
+  // Autoplay policy: a play() outside a user gesture is refused, so try again on the next one.
+  #retryMusicOnGesture(): void {
+    const retry = (): void => {
+      window.removeEventListener('pointerdown', retry);
+      window.removeEventListener('keydown', retry);
+      if (this.#musicOn() && !this.muted()) this.#playMusic();
+    };
+    window.addEventListener('pointerdown', retry);
+    window.addEventListener('keydown', retry);
   }
 
   #play(voice: Voice): void {

@@ -72,8 +72,14 @@ export const CREDITS: readonly Credit[] = [
     url: 'https://github.com/filipstrand/mflux',
   },
   {
-    what: 'Sound',
-    who: 'synthesised in the browser at run time — the game ships no samples',
+    what: 'Music — “Uptempo Chiptune”, “Boss Battle #2” (C64)',
+    who: 'Skrjablin; TheOuterLinux, after nene',
+    license: 'CC0-1.0',
+    url: 'assets/audio/music.credits.txt',
+  },
+  {
+    what: 'Sound effects',
+    who: 'synthesised in the browser at run time',
     license: 'AGPL-3.0-only',
   },
   {

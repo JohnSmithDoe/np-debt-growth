@@ -35,6 +35,7 @@ Thumbs.db
 
 # locally generated image takes — staged art is not shipped art
 /image-staging/
+/audio-staging/
 
 # demo-only floor candidates — harness art, not shipped art
 /src/assets/board/demo/

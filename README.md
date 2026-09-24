@@ -124,5 +124,8 @@ self-hosted because the packaged CSP is `font-src 'self' data:`.
 
 ### Sound
 
-Synthesised in the browser at run time (`src/app/audio/util/synth.ts`). The game
-ships no samples, so there is no third-party audio licence to honour.
+Effects are synthesised in the browser at run time (`src/app/audio/util/synth.ts`).
+The music is two SID chiptunes shipped unmodified in `src/assets/audio/`, both
+**CC0 1.0**: "Uptempo Chiptune" by Skrjablin, and TheOuterLinux's C64 arrangement
+of nene's "Boss Battle #2" (itself CC0). CC0 asks for no credit; the footer gives
+it anyway, and `music.credits.txt` beside the files records the sources.

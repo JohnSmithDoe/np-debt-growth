@@ -42,7 +42,7 @@ Sheriff (`sheriff.config.ts`) turns the layering into a build error:
   templates or Phaser. Depends on nothing but `@shared`.
 - **`stage`** — Phaser. A view and an input surface: no state, no clock.
 - **`console`** — the DOM chrome around the canvas (panels, modals, feed, credits).
-- **`audio`** — synthesised at run time; the game ships no samples.
+- **`audio`** — effects synthesised at run time; music is two CC0 `.ogg` tracks in `assets/audio/`.
 
 Types within a domain: `feature` → `ui`/`data`/`util`/`model`, `data` → `scene`/`util`/`model`,
 `util` → `model`. `model` may only reach sibling `model`. `game` cannot see `stage` or `console`.
