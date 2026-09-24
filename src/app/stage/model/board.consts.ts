@@ -20,7 +20,7 @@ export const FLYER_CAPACITY = 320;
 export const RARE_CAPACITY = 24;
 
 /** New work is thrown on the same hop a harvest takes, slow enough to catch mid-air. */
-export const DROP_MS = 1_600;
+export const DROP_MS = 1_850;
 export const DROP_HOP = 90;
 
 /** A taken card hops `HARVEST_HOP` px, then falls into its slot. */
