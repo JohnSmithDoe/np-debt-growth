@@ -9,6 +9,7 @@ import {
   cellX,
   cellY,
   HEAP_COLS,
+  HEAP_FIELD_ROWS,
   HEAP_ROWS,
   meetingSpot,
   NEVER_EXPIRES,
@@ -25,6 +26,7 @@ import { TICKET_LIFE_MS } from '../model/balance/flow';
 
 const OUT_OF_POOL = -1;
 const COLUMN_SAMPLES = 4;
+const SCATTER_SAMPLES = 8;
 const CLAIM_SAMPLES = 4;
 
 export type Closed = readonly Close[];
@@ -284,6 +286,7 @@ function pickUp(
 ): void {
   const taken = sweep(board, rules, pace, target, pace.batch);
   worker.carrying = taken.map((ticket) => ({
+    id: ticket.id,
     type: ticket.type,
     title: ticket.title,
     golden: ticket.golden,
@@ -495,7 +498,13 @@ function release(board: Board, crewId: number): void {
   if (worker) worker.leftMs = 0;
 }
 
+/** Work lands anywhere on the field; it only stacks once the field is crowded. */
 function claimCell(board: Board, rand: () => number): number {
+  for (let sample = 0; sample < SCATTER_SAMPLES; sample++) {
+    const col = Math.floor(rand() * HEAP_COLS);
+    const cell = col * HEAP_ROWS + Math.floor(rand() * HEAP_FIELD_ROWS);
+    if (board.grid[cell] === NO_TICKET) return cell;
+  }
   const sampled = lowestFreeCell(board, chooseColumn(board, rand));
   if (sampled !== NO_TICKET) return sampled;
 

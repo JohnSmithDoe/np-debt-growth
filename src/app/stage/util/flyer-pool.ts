@@ -173,27 +173,11 @@ export class FlyerPool {
 
 function ease(kind: number, progress: number): number {
   if (kind === FLIGHT.fade) return progress;
-  if (kind === FLIGHT.harvest) return progress * progress * (3 - 2 * progress);
-  return bounceOut(progress);
+  return progress * progress * (3 - 2 * progress);
 }
 
-/** A harvest hops: the peak comes at a quarter of the flight, the rest is the fall. */
+/** A hop: the peak comes at a quarter of the flight, the rest is the fall. */
 function lift(kind: number, progress: number): number {
-  if (kind === FLIGHT.harvest) return Math.sin(Math.PI * Math.sqrt(progress));
   if (kind === FLIGHT.fade) return 0;
-  return Math.sin(Math.PI * progress);
-}
-
-function bounceOut(progress: number): number {
-  if (progress < 1 / 2.75) return 7.5625 * progress * progress;
-  if (progress < 2 / 2.75) {
-    const t = progress - 1.5 / 2.75;
-    return 7.5625 * t * t + 0.75;
-  }
-  if (progress < 2.5 / 2.75) {
-    const t = progress - 2.25 / 2.75;
-    return 7.5625 * t * t + 0.9375;
-  }
-  const t = progress - 2.625 / 2.75;
-  return 7.5625 * t * t + 0.984375;
+  return Math.sin(Math.PI * Math.sqrt(progress));
 }

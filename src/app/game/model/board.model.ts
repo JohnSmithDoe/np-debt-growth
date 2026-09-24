@@ -8,6 +8,7 @@ export const NEVER_EXPIRES = -1;
 export type CrewPhase = 'idle' | 'toTicket' | 'toDesk' | 'closing' | 'meeting';
 
 export interface Carried {
+  readonly id: number;
   readonly type: TicketTypeId;
   readonly title: string;
   readonly golden: boolean;
@@ -116,8 +117,11 @@ export interface Board {
 }
 
 export const HEAP_COLS = Math.floor(LOGICAL_BOARD.width / TICKET_SLOT.width);
-export const HEAP_ROWS =
-  Math.floor(LOGICAL_BOARD.height / TICKET_SLOT.height) + HEAP_OVERFLOW_ROWS;
+/** Rows that lie on the visible field; the overflow rows stack above it. */
+export const HEAP_FIELD_ROWS = Math.floor(
+  LOGICAL_BOARD.height / TICKET_SLOT.height
+);
+export const HEAP_ROWS = HEAP_FIELD_ROWS + HEAP_OVERFLOW_ROWS;
 
 const HEAP_LEFT = (LOGICAL_BOARD.width - HEAP_COLS * TICKET_SLOT.width) / 2;
 const HEAP_FLOOR = LOGICAL_BOARD.height - TICKET_SLOT.height / 2;

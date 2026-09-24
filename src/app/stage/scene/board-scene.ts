@@ -28,7 +28,8 @@ import {
   REFUSED_MS,
   CLOSE_FLOAT,
   CLOSE_FLOATS_PER_FRAME,
-  FALL_MS,
+  DROP_HOP,
+  DROP_MS,
   HARVEST_HOP,
   HARVEST_MS,
   HOVER_GROUND,
@@ -383,8 +384,8 @@ export class BoardScene extends CbScene {
       source?.y ?? -40,
       x,
       y,
-      FALL_MS,
-      0
+      DROP_MS,
+      DROP_HOP
     );
   }
 
@@ -410,6 +411,7 @@ export class BoardScene extends CbScene {
       );
       return;
     }
+    if (this.#carried(id)) return;
     const slot = this.#claimSlot(type);
     parts.flyers.launch(
       cardFrame(type),
@@ -417,8 +419,8 @@ export class BoardScene extends CbScene {
       NONE,
       from.x,
       from.y,
-      slot === NONE ? parts.strip.dropX : parts.strip.slotX(slot),
-      slot === NONE ? parts.strip.dropY : parts.strip.slotY,
+      slot === NONE ? parts.strip.nextLaneX : parts.strip.slotX(slot),
+      parts.strip.slotY,
       HARVEST_MS,
       HARVEST_HOP
     );
@@ -487,6 +489,22 @@ export class BoardScene extends CbScene {
     this.#slotFrom = Math.min(this.#seenSlots, filled);
     this.#seenSlots = filled;
     this.#claimedSlots.clear();
+  }
+
+  /** A crew pickup is carried off by hand; it reaches its lane on delivery. */
+  #carried(id: number): boolean {
+    const board = this.deps.board();
+    for (const crew of [
+      board.juniors,
+      board.seniors,
+      board.managers,
+      board.offshore,
+    ]) {
+      for (const member of crew) {
+        if (member.carrying.some((card) => card.id === id)) return true;
+      }
+    }
+    return false;
   }
 
   #claimSlot(type: TicketTypeId): number {

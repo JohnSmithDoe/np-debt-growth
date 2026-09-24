@@ -183,7 +183,7 @@ describe('the crew, told how to work', () => {
     const board = emptyBoard();
     const state = junior({ ticketStacking: 1 });
     const rand = cycling();
-    fill(board, 'lint', 60, rand);
+    fill(board, 'lint', 400, rand);
 
     const closed = firstClose(board, state, rand);
     expect(closed.length).toBe(2);
@@ -578,6 +578,16 @@ describe('the board fills up', () => {
 
   it('has more cells in the grid than the cap it enforces', () => {
     expect(HEAP_COLS * HEAP_ROWS).toBeGreaterThan(BOARD_CAPACITY);
+  });
+
+  it('scatters a sparse board over the field instead of the floor', () => {
+    const board = emptyBoard();
+    fill(board, 'lint', 30, cycling());
+    const ys = board.tickets.map((ticket) => ticket.y);
+    const high = ys.filter((y) => y < LOGICAL_BOARD.height / 2).length;
+
+    expect(high).toBeGreaterThan(5);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
   });
 });
 
