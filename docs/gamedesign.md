@@ -62,7 +62,7 @@ not played.
    pushed out.
 4. **Collect.** The player's cursor sweeps a radius (everything under it, once a frame) and the
    crew walk to cards. **Money and SP land per ticket, at pickup.** A taken card hops into its
-   lane (`HARVEST_MS` 1 100, `HARVEST_HOP` 150).
+   lane on two parabolas meeting at the apex (`HARVEST_MS` 1 600, `HARVEST_HOP` 150).
 5. **Lanes and release trains.** Closed work is dealt round-robin into **swimlanes**
    (`economy.fillLanes`), skipping lanes that are away. A full lane ships on its own release
    train for `haulMs` and takes nothing until it is back; the rest keep taking. Collection is
@@ -73,7 +73,7 @@ not played.
 laneCapacity   = SPRINT_SLOTS_BASE 100 + Σ slots        (capacity node, +25 a rank ×10; o2 +14)
 laneCount      = LANES_BASE 1 + Σ cans                  (cans node, +1 a rank ×9)
 sprintSlots    = laneCapacity × laneCount
-haulMs         = max(HAUL_MIN_MS 2 500, HAUL_MS 4 000 − Σ duration seconds)
+haulMs         = max(HAUL_MIN_MS 2 500, HAUL_MS 4 000 − duration ranks × 300)
 ceilingPerSec  = sprintSlots / haulMs
 ```
 
@@ -229,7 +229,7 @@ value<T>  ×2 ──┬── spawn<T>      5 × +20 % throw-two  → ×2 spawn
 A fully bought line earns ×14 per ticket (before rate rows) and throws twice as often.
 Additive ranks are stored as ratios — rank *k* multiplies by (1 + k·step) / (1 + (k−1)·step) — so
 five +20 % ranks end at exactly ×2. First-rank prices double a tier: `value` 25 / 1 500 then
-`LINE_DOUBLE_COST`; `spawn` `2 200 × 2^t` (ranks ×1.5); `income` `1 100 × 2^t` (ranks ×1.25);
+`LINE_DOUBLE_COST`; `spawn` `2 200 × 2^t` (ranks ×1.25); `income` `1 100 × 2^t` (ranks ×1.25);
 `estimates` 75 / `400 × 2^(t−1)` (ranks ×1.5); `double` `2 500 × 2^t`.
 
 | Track | Holds |
@@ -263,13 +263,13 @@ ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR modal's approve butto
 | 1 | 750 | `legacy` | reference (dogs) |
 | 2 | 10 000 | `flaky` | reference (bike) |
 | 3 | 600 000 | `conflict` | reference (gorilla) |
-| 4 | 800 000 | `slop` | ours |
-| 5 | 1 500 000 | `rockstar` | ours |
-| 6 | 3 000 000 | `zombie` | ours |
-| 7 | 3 500 000 | `rewrite` | ours |
-| 8 | 6 000 000 | `swarm` | ours |
+| 4 | 700 000 | `slop` | ours |
+| 5 | 1 000 000 | `rockstar` | ours |
+| 6 | 1 500 000 | `zombie` | ours |
+| 7 | 2 000 000 | `rewrite` | ours |
+| 8 | 2 500 000 | `swarm` | ours |
 
-**`signoff`** (10 000 000 SP, tier 8, behind `goldenCrew`) is `FINAL_SKILL_ID`: buying it sets
+**`signoff`** (3 000 000 SP, tier 8, behind `goldenCrew`) is `FINAL_SKILL_ID`: buying it sets
 `endedAt` and ends the run. No prestige.
 
 Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buySpawner`,
@@ -318,7 +318,9 @@ game uses:
 - All of it clamped by `ceilingPerSec`; € and SP priced as at pickup.
 
 Not counted: hotfix, escalation, quarter bills, pizza and manager relabels. `data/sim.spec.ts`
-plays the same states on a real board and holds the sim within ×1.6 (it runs 1.2–1.45× high).
+plays the same states on a real board and holds the sim within ×1.35 (it runs 1.04–1.25× high).
+Only the 476 field cells are sweepable; the rest of the 600 stack in overflow rows above the
+field, and the sim counts that.
 
 `util/autoplay.ts` plays a whole run on the sim: earn for a second, spend like a player
 (`DEFAULT_POLICY`: 1 sweep/s, a quarter of the budget per purchase, cheapest first) through
@@ -349,7 +351,9 @@ plays the same states on a real board and holds the sim within ×1.6 (it runs 1.
 - `data/balance-invariants.spec.ts` guards the **shape**: monotone ladders, tiers numbered by
   position, every rung on the tree and chained, no dominated retype rung.
 - `data/balance.spec.ts` guards the **pacing** on the autoplayer: sign-off in 35–100 min, the
-  last five ADR gaps over two minutes, the tree bought out, the crew's € share. Run with the
+  last five ADR gaps over two minutes, the tree bought out, and the crew's share — at least 15 %
+  of the closes before `goldenCrew` (the hand's gold outweighs their euros until then, as in the
+  reference) and 4 % of the euros after it. Run with the
   reports:
 
   ```bash
@@ -358,16 +362,13 @@ plays the same states on a real board and holds the sim within ×1.6 (it runs 1.
 
 - `data/sim.spec.ts` guards the **sim** against a real board.
 
-**Measured run** (25 Sep 2026, autoplayer, not yet retuned after the economy rework):
+**Measured run** (25 Sep 2026, autoplayer):
 
 ```
-ADR-1 12.3   first junior 15.2   ADR-2 28.0   ADR-3 40.4   ADR-4 42.9
-ADR-5 48.8   ADR-6 59.9          ADR-7 66.2   ADR-8 82.8   signed off 110.8   tree bought out
-crew: ~50 % of closes, 2.5–30 % of euros (the hand takes the gold)
+ADR-1 12.3   first junior 15.2   ADR-2 28.0   ADR-3 41.6   ADR-4 44.2
+ADR-5 46.5   ADR-6 53.9          ADR-7 63.8   ADR-8 71.4   signed off 87.1   tree bought out
+golden crew 57.4 · crew: 45–58 % of closes, 2–5 % of euros before golden crew, 26–31 % after
 ```
-
-Two guards fail on it: sign-off is past 100 min, and the crew's € share dips under 4 % between
-minutes 30 and 60. Both are open in `next-steps.md`.
 
 ### Load-bearing, do not undo
 
@@ -410,7 +411,7 @@ These are accepted as real and go in as they are.
 | Litter lifetime | ~15 s | `TICKET_LIFE_MS` |
 | Opening throw | ~1 item per 4 s from one person | `lint` 0.25/s |
 | Golden rat | late; takes golden, turns 5 % golden | `goldenCrew` |
-| Run length | demo ~30 min to the gorilla; full game 57–70 min | gorilla 40.4, sign-off 110.8 |
+| Run length | demo ~30 min to the gorilla; full game 57–70 min | gorilla 41.6, sign-off 87.1 |
 
 Only rank 1 of each line's throw-two and +50 % nodes is measured; ranks 2–5, the second ×2 above
 paper, and every tier above the dog are extrapolated (value ×10 a tier, € prices ×5, SP prices

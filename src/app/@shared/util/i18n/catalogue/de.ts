@@ -21,7 +21,7 @@ export const DE: Readonly<Record<string, string>> = {
   'strip.collecting': 'SAMMELN',
   'strip.releasing': 'ZUG {{seconds}}s',
   'skill.effect.slots': 'WIP-Limit +{{count}} pro Swimlane',
-  'skill.effect.roundLength': '+{{seconds}}s Sprint-Dauer',
+  'skill.effect.haulShave': '−{{seconds}} s für jeden Release-Train',
   'skill.effect.spawnRate': '{{pct}} Ticket-Spawnrate',
   'skill.effect.spawnRate.ticket': '{{pct}} Spawnrate von {{ticket}}',
   'skill.effect.standupAura': '{{each}} Junior-Tempo je Junior, bis {{cap}}',
@@ -153,12 +153,6 @@ export const DE: Readonly<Record<string, string>> = {
   'kit.ci-tier.blurb':
     'Abrechnung nach Build-Minuten. Die flaky Suite läuft, bis sie grün ist.',
   'kit.ci-tier.label': 'CI-Tarif: Enterprise',
-  'adr.adds': 'Bringt aufs Board',
-  'adr.heading': 'Architecture Decision Record',
-  'adr.open': 'Record öffnen',
-  'adr.progress': '{{tier}}/{{total}} abgenommen',
-  'adr.whole':
-    'Alle Entscheidungen sind abgenommen. Es gibt nichts mehr zu verschlimmern — schließ das Mandat ab.',
   'kit.ide-licence.blurb':
     'Pro Platz, pro Jahr. Sie versteht das alte Framework — sonst niemand.',
   'kit.ide-licence.label': 'IDE-Lizenzen',

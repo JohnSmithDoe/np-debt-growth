@@ -20,7 +20,7 @@ export const EN: Readonly<Record<string, string>> = {
   'strip.collecting': 'COLLECTING',
   'strip.releasing': 'TRAIN {{seconds}}s',
   'skill.effect.slots': 'WIP limit +{{count}} per swimlane',
-  'skill.effect.roundLength': '+{{seconds}}s sprint length',
+  'skill.effect.haulShave': '−{{seconds}}s on every release train',
   'skill.effect.spawnRate': '{{pct}} ticket spawn rate',
   'skill.effect.spawnRate.ticket': '{{pct}} {{ticket}} spawn rate',
   'skill.effect.standupAura': '{{each}} junior speed per junior, to {{cap}}',
@@ -149,12 +149,6 @@ export const EN: Readonly<Record<string, string>> = {
   'office.war-room.blurb':
     'Whiteboards on every wall. Seniors clear a wider patch from here.',
   'office.war-room.label': 'War Room',
-  'adr.adds': 'Puts on the board',
-  'adr.heading': 'Architecture Decision Record',
-  'adr.open': 'Open the record',
-  'adr.progress': '{{tier}}/{{total}} approved',
-  'adr.whole':
-    'Every decision has been approved. There is nothing left to make worse — close the engagement.',
   'kit.ci-tier.blurb':
     'Billed per minute of build. The flaky suite reruns until it passes.',
   'kit.ci-tier.label': 'CI Tier: Enterprise',

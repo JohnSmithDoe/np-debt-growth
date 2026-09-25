@@ -30,7 +30,8 @@ const CREW_EURO_CAP = 0.95;
 
 /** Re-measure when the weather comes back: it staffs offshore crew. */
 const CREW_EURO_WINDOW_FLOOR = HAZARDS_ENABLED ? 0.05 : 0.04;
-const WINDOW_MARKS = 4;
+const CREW_CLOSE_WINDOW_FLOOR = 0.15;
+const WINDOW_MS = 2 * 60_000;
 
 const CLICKS_PER_SEC = Number(
   process.env['CB_CPS'] ?? DEFAULT_POLICY.clicksPerSec
@@ -67,6 +68,7 @@ const MILESTONES = [
 
 const UNORDERED_MILESTONES = [
   ['faster truck', (s: Consultancy) => (s.skills['duration'] ?? 0) >= 1],
+  ['golden crew', (s: Consultancy) => (s.skills['goldenCrew'] ?? 0) >= 1],
   [
     'tree opened',
     (s: Consultancy) =>
@@ -147,13 +149,27 @@ describe('the crew earns its keep, and never all of it', () => {
     );
   });
 
-  it('holds the floor across the back half of the run', () => {
+  // Until the crew take gold, the hand's gold outweighs everything they bill,
+  // as in the reference; what they carry then is the closes, not the euros.
+  it('carries the closes before it is cleared for gold', () => {
+    const firstJunior = run.reached.get('first junior')!;
+    const cleared = run.reached.get('golden crew')!;
     const marks = run.ledger.filter(
-      (mark) => mark.at >= (run.ledger.at(-1)?.at ?? 0) / 2
+      (mark) => mark.at > firstJunior + WINDOW_MS && mark.at <= cleared
     );
-    for (const [at, mark] of marks.entries()) {
-      if (at < WINDOW_MARKS) continue;
-      expect(crewEuroShare(marks[at - WINDOW_MARKS]!, mark)).toBeGreaterThan(
+    for (const mark of marks) {
+      expect(crewShare(markAt(mark.at - WINDOW_MS), mark)).toBeGreaterThan(
+        CREW_CLOSE_WINDOW_FLOOR
+      );
+    }
+  });
+
+  it('holds a floor of the money once it takes gold', () => {
+    const cleared = run.reached.get('golden crew')!;
+    const marks = run.ledger.filter((mark) => mark.at >= cleared + WINDOW_MS);
+    expect(marks.length).toBeGreaterThan(0);
+    for (const mark of marks) {
+      expect(crewEuroShare(markAt(mark.at - WINDOW_MS), mark)).toBeGreaterThan(
         CREW_EURO_WINDOW_FLOOR
       );
     }

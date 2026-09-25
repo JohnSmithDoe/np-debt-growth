@@ -65,9 +65,9 @@ function describe(effect: SkillEffect): EffectText {
       return { key: 'skill.effect.desks', params: { count: effect.add } };
     case 'adr':
       return { key: 'skill.effect.adr', params: { adr: effect.adr } };
-    case 'roundLength':
+    case 'haulShave':
       return {
-        key: 'skill.effect.roundLength',
+        key: 'skill.effect.haulShave',
         params: { seconds: effect.seconds },
       };
     case 'junior':
@@ -207,7 +207,7 @@ export function skillBadge(node: SkillNode, level: number): SkillBadge | null {
   let badge: SkillBadge | null = null;
   for (const effect of effects) {
     if ('mult' in effect) return '%';
-    if ('add' in effect || effect.kind === 'roundLength') badge = '+';
+    if ('add' in effect || effect.kind === 'haulShave') badge = '+';
   }
   return badge;
 }

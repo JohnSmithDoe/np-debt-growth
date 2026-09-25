@@ -146,7 +146,7 @@ export const LANE = {
   height: 62,
   margin: 34,
   scale: 0.62,
-  perLine: 14,
+  perLine: 50,
 } as const;
 
 export const BOARD_INK = {

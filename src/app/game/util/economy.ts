@@ -289,12 +289,12 @@ export function fillLanes(
 }
 
 /**
- * The truck, and the only forced wait in the game. `roundLength` effects
+ * The truck, and the only forced wait in the game. `haulShave` effects
  * hurry it, floored by `HAUL_MIN_MS` so the cadence stays a real gate.
  */
 export function haulMs(state: Consultancy): number {
   const shaved = sumOf(state, (e) =>
-    e.kind === 'roundLength' ? e.seconds : null
+    e.kind === 'haulShave' ? e.seconds : null
   );
   return Math.max(HAUL_MIN_MS, HAUL_MS - shaved * 1_000);
 }

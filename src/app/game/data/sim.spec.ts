@@ -13,7 +13,7 @@ import { flow } from '../util/sim';
 
 const SPAN_MS = 5 * 60_000;
 /** The sim is a model, not a replay: it has to land within this factor of the board. */
-const TOLERANCE = 1.6;
+const TOLERANCE = 1.35;
 
 const seeded = (): GameStore => {
   const store = new GameStore();

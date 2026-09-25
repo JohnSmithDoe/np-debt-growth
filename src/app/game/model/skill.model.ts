@@ -6,7 +6,7 @@ import {
   GOLDEN_VALUE_PER_RANK,
   VOTE_BONUS_PER_RANK,
 } from './balance/flow';
-import { WIP_LIMIT_STEP } from './balance/round';
+import { HAUL_SHAVE_PER_RANK, WIP_LIMIT_STEP } from './balance/round';
 import { DESKS_PER_RANK } from './balance/crew';
 import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from './tier.model';
 
@@ -17,7 +17,7 @@ export type SkillEffect =
   | { readonly kind: 'cans'; readonly add: number }
   | { readonly kind: 'desks'; readonly add: number }
   | { readonly kind: 'adr'; readonly adr: number }
-  | { readonly kind: 'roundLength'; readonly seconds: number }
+  | { readonly kind: 'haulShave'; readonly seconds: number }
   | { readonly kind: 'junior'; readonly mult: number }
   | { readonly kind: 'juniorWalk'; readonly mult: number }
   | {
@@ -210,7 +210,7 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
         requires: value,
         gate,
         levels: additiveRanks(LINE_RANKS, 0.2).map((mult, rank) => ({
-          cost: priced(perTier(2200, tier), 1.5, rank),
+          cost: priced(perTier(2200, tier), 1.25, rank),
           effects: [{ kind: 'spawnRate' as const, target: ticket, mult }],
         })),
       },
@@ -310,13 +310,10 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'duration',
     track: 'A',
     requires: 'radius',
-    levels: [
-      { cost: 80, effects: [{ kind: 'roundLength', seconds: 3 }] },
-      { cost: 300, effects: [{ kind: 'roundLength', seconds: 5 }] },
-      { cost: 900, effects: [{ kind: 'roundLength', seconds: 7 }] },
-      { cost: 2600, effects: [{ kind: 'roundLength', seconds: 9 }] },
-      { cost: 7000, effects: [{ kind: 'roundLength', seconds: 11 }] },
-    ],
+    levels: [80, 300, 900, 2600, 7000].map((cost) => ({
+      cost,
+      effects: [{ kind: 'haulShave' as const, seconds: HAUL_SHAVE_PER_RANK }],
+    })),
   },
   {
     id: 'lineOfSight',
@@ -748,7 +745,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'G',
     requires: 'goldenCrew',
     gate: 'tier8',
-    levels: [{ cost: 10_000_000, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 3_000_000, effects: [{ kind: 'none' }] }],
   },
 
   {

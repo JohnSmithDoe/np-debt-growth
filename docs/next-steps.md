@@ -19,45 +19,37 @@ What is open, ranked. The design as it stands is `gamedesign.md`. Checked agains
 
 ---
 
-## 1. Retune the curve after the economy rework
+## 1. Bring the pace closer to the reference
 
-Offline, retainer, copilots and the auto-close pipeline went; the tree moved to five nodes per
-line; a full board displaces. The measured run (`gamedesign.md` §10) has not been tuned since,
-and two guards in `balance.spec.ts` fail:
+The run passes every guard (`gamedesign.md` §10: sign-off at 87.1 min) but is slower than the
+reference in the part that is measured:
 
-- **Sign-off at 110.8 min**, against the 35–100 band and the full game's 57–70. The long gaps are
-  ADR-1 → 2 (15.8 min), ADR-2 → 3 (12.3), ADR-6 (11.1) and ADR-7 → 8 (16.7), and 28 min from
-  ADR-8 to sign-off.
-- **The crew's € share falls to 2.5–4 % between minutes 30 and 60** (floor 4 %). The crew do half
-  the closes, but the hand's gold outweighs everything they bill until `goldenCrew`. That is the
-  reference's shape; decide whether the floor or the golden numbers move.
+- **The gorilla (ADR-3) lands at 41.6 min**, against about 30 in the demo. ADR-1 → 2 takes
+  15.8 min and ADR-2 → 3 13.6, on the reference's own prices (10 000 and 600 000 SP). The
+  autoplayer buys every cheaper node before an ADR; check that against how the reference is
+  actually played before moving a measured price.
+- **Sign-off at 87.1 min**, against the full game's 57–70. ADR-4…8, `signoff` and the throw-two
+  rank step (×1.25) are ours and were sized to fit the band, not measured.
+- ADR-4 → 5 is 2.3 min, just over the two-minute floor.
 
 Apply measured reference values where they exist (§11 of the design) before inventing a curve.
 
-## 2. The sim runs slightly high
+## 2. Dead or broken purchases
 
-`util/sim.ts` lands 1.2–1.45× above the board on € and SP (`data/sim.spec.ts` allows ×1.6). The
-hand is the likely rest: the sim gives it about 18 closes/s where the board shows about 16. Tighten
-it before trusting sub-minute pacing numbers.
-
-## 3. Dead or broken purchases
-
-- **`duration` ranks 2–5 do nothing.** `haulMs = max(2 500, 4 000 − Σ seconds)`, and rank 1
-  alone takes off 3 s. Ranks 2–5 sell 10 800 SP of nothing.
 - **Offshore never staffs.** Its headcount comes only from weather, and weather is off.
 - **Promotion and the rail price the same senior seats differently.** Seat 5 on the rail is about
   2 100 € (`1 200 × 1.15^n`); five seats by promotion about 46 800 (`SENIOR_BUYOUT_STEPS ×
   PROMOTION_PREMIUM`). The autoplayer promotes the whole bench and never hires a junior again.
 - **`officePlates` counts the `kit` node**, so kit widens the office floor art by a plate.
 
-## 4. 71 skill icons are never drawn
+## 3. 71 skill icons are never drawn
 
 `src/assets/skills/` holds 71 PNGs named `a1`…`h4`. `SkillScene` preloads all of them, but
 `#stampIcon` matches by node id, and only `root` matches. Map node ids to icon ids in
 `stage/model/skill-icon.model.ts`, or delete the assets and the preload. `README.md` advertises
 them.
 
-## 5. Copy and art
+## 4. Copy and art
 
 - The per-line `income<T>` / `double<T>` labels and the `spawn<T>` rank 2–5 labels are
   placeholders ("Lint Warning Uplift II", "Skip the Review III"). Write real names, both
@@ -66,7 +58,7 @@ them.
   lane actors (`stage/util/board-atlas.ts`). Pipeline: `tools/art-batch.mjs` →
   `pixelate.mjs` / `icon-knockout.mjs`.
 
-## 6. Measure the stage
+## 5. Measure the stage
 
 No profile exists. The board now sits at 600 cards for most of the run (displacement keeps it
 full), so the heap leads matter again:
@@ -83,24 +75,22 @@ full), so the heap leads matter again:
 
 Capture: reach ADR-5+ with a full board, 20 s of Chrome DevTools → Performance while sweeping.
 
-## 7. Unstash the weather
+## 6. Unstash the weather
 
 This is more than flipping `HAZARDS_ENABLED`: `meeting` was tuned against a 10 s round;
 `CREW_EURO_WINDOW_FLOOR` needs re-measuring; `grooming` is a no-op; `migration`'s `supply: 0`
 has no counterplay; the two 120 s cadences coincide by accident.
 
-## 8. Cleanups
+## 7. Cleanups
 
-- The `roundLength` effect kind now shortens the haul; rename it.
 - `SkillGate` hand-writes `'tier1'…'tier8'`, parsed back with `Number(gate.slice(4))` in
   `util/purchase.ts`.
 - Per-crew effect kinds (`junior`/`juniorWalk`/`juniorSweep`/`juniorBatch`, again for seniors and
   managers) could become one `{ kind: 'pace', crew, field }`.
 - `util/first-act.ts` holds back types by name; a `revealAtMs?` / `revealAtTier?` field on
   `TicketType` would make it data.
-- `console/feature/adr-panel/` is no longer mounted anywhere; delete it, with its i18n keys.
 
-## 9. Needs a design call
+## 8. Needs a design call
 
 - **Areas.** The reference's second screen (the sea) comes after the gorilla; ours would be a
   second client or engagement.

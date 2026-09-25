@@ -2,6 +2,7 @@ import type { Consultancy } from '../model/consultancy.model';
 import type { CrewKind } from '../model/crew.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
+import { HEAP_COLS, HEAP_FIELD_ROWS } from '../model/board.model';
 import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
 import {
   TICKET_LIFE_MS,
@@ -50,6 +51,8 @@ interface Stream {
 
 const BOARD_AREA = LOGICAL_BOARD.width * LOGICAL_BOARD.height;
 const DENSITY_PASSES = 8;
+/** Cards past this stack in the overflow rows above the field, out of the sweep. */
+const FIELD_CELLS = HEAP_COLS * HEAP_FIELD_ROWS;
 
 /** Closer kinds in claim order; managers relabel rather than close. */
 const CLOSERS: readonly CrewKind[] = ['seniors', 'juniors'];
@@ -200,7 +203,8 @@ function collect(
     aimed -= take;
   }
   const radius = economy.clickRadius(state);
-  const perSweep = (density * Math.PI * radius * radius) / BOARD_AREA;
+  const onField = Math.min(density, FIELD_CELLS);
+  const perSweep = (onField * Math.PI * radius * radius) / BOARD_AREA;
   takeMixed(all, policy.clicksPerSec * Math.max(0, perSweep - 1), 'hand');
 }
 
