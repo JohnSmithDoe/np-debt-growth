@@ -11,9 +11,9 @@ export const TRAIT_IDS: readonly TraitId[] = [
 ];
 
 export const TRAITS: Readonly<Record<TraitId, readonly SkillEffect[]>> = {
-  closer: [{ kind: 'senior', mult: 1.25 }],
-  sweeper: [{ kind: 'seniorSweep', mult: 1.4 }],
-  runner: [{ kind: 'seniorWalk', mult: 1.5 }],
+  closer: [{ kind: 'pace', crew: 'seniors', field: 'close', mult: 1.25 }],
+  sweeper: [{ kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.4 }],
+  runner: [{ kind: 'pace', crew: 'seniors', field: 'walk', mult: 1.5 }],
   firefighter: [{ kind: 'topOfBand' }],
   scout: [{ kind: 'nearestClaim' }],
 };

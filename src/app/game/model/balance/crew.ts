@@ -1,5 +1,4 @@
 import type { CrewKind, CrewMode } from '../crew.model';
-import type { SkillEffect } from '../skill.model';
 import type { PurchaseId } from './progression';
 
 /**
@@ -17,14 +16,6 @@ export interface CrewBand {
   readonly to: number;
 }
 
-/** Which `SkillEffect` kind tunes each pace field; `null` = no skill reaches it. */
-export interface CrewPaceEffects {
-  readonly close: SkillEffect['kind'] | null;
-  readonly walk: SkillEffect['kind'] | null;
-  readonly batch: SkillEffect['kind'] | null;
-  readonly sweep: SkillEffect['kind'] | null;
-}
-
 export interface CrewStats {
   readonly closeMs: number;
   readonly walkSpeed: number;
@@ -35,7 +26,6 @@ export interface CrewStats {
   readonly band: CrewBand;
   readonly mode: CrewMode;
   readonly levelKey: PurchaseId;
-  readonly effects: CrewPaceEffects;
   /** Meetings pull this crew off the board. */
   readonly interruptible: boolean;
   /** Junior-only: standup aura scales with headcount. */
@@ -55,12 +45,6 @@ export const CREW_STATS = {
     band: { from: 0, to: 3 },
     mode: 'closer',
     levelKey: 'junior',
-    effects: {
-      close: 'junior',
-      walk: 'juniorWalk',
-      batch: 'juniorBatch',
-      sweep: 'juniorSweep',
-    },
     interruptible: true,
     aura: true,
     perSeat: false,
@@ -75,12 +59,6 @@ export const CREW_STATS = {
     band: { from: 2, to: Infinity },
     mode: 'closer',
     levelKey: 'senior',
-    effects: {
-      close: 'senior',
-      walk: 'seniorWalk',
-      batch: 'seniorBatch',
-      sweep: 'seniorSweep',
-    },
     interruptible: true,
     aura: false,
     perSeat: true,
@@ -95,12 +73,6 @@ export const CREW_STATS = {
     band: { from: 0, to: Infinity },
     mode: 'refiler',
     levelKey: 'manager',
-    effects: {
-      close: 'manager',
-      walk: 'managerWalk',
-      batch: null,
-      sweep: null,
-    },
     interruptible: false,
     aura: false,
     perSeat: false,

@@ -3,21 +3,11 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.clickRadius': '{{pct}} Klick-Radius',
   'skill.effect.escalation': '{{pct}} Eskalations-Auszahlung',
   'skill.effect.global': '{{pct}} auf alles Abgerechnete',
-  'skill.effect.junior': '{{pct}} Junior-Tempo',
-  'skill.effect.juniorBatch':
-    '+{{count}} Ticket pro Abschluss, {{slower}} Bearbeitungszeit',
   'skill.effect.nearestClaim':
     'Nimmt das nächstgelegene Ticket, nicht irgendeins',
   'skill.effect.juniorBand': 'Juniors reichen {{count}} Stufe höher',
-  'skill.effect.juniorSweep': '{{pct}} Junior-Reichweite',
-  'skill.effect.juniorWalk': '{{pct}} Junior-Lauftempo',
   'skill.effect.none': 'Eröffnet das Programm',
   'skill.effect.topOfBand': 'Seniors nehmen zuerst das größte Ticket',
-  'skill.effect.senior': '{{pct}} Senior-Tempo',
-  'skill.effect.seniorBatch.many': '+{{count}} Tickets pro Durchgang',
-  'skill.effect.seniorBatch.one': '+{{count}} Ticket pro Durchgang',
-  'skill.effect.seniorSweep': '{{pct}} Durchgangs-Radius',
-  'skill.effect.seniorWalk': '{{pct}} Senior-Lauftempo',
   'strip.collecting': 'SAMMELN',
   'strip.releasing': 'ZUG {{seconds}}s',
   'skill.effect.slots': 'WIP-Limit +{{count}} pro Swimlane',
@@ -119,8 +109,6 @@ export const DE: Readonly<Record<string, string>> = {
   'purchase.manager.label': 'Kundenbetreuer',
   'purchase.senior.effect':
     'räumt alle {{seconds}}s den ganzen Fleck ab und ist die einzige Einstellung, die einen P0 anfasst',
-  'skill.effect.manager': '{{pct}} Tempo der Kundenbetreuung',
-  'skill.effect.managerWalk': '{{pct}} Lauftempo der Kundenbetreuung',
   'skill.effect.relabelFillerFirst':
     'Kundenbetreuer schreiben das billigste Ticket um',
   'skill.effect.relabelSteps': '+{{count}} Stufe pro Umschreibung',
@@ -686,4 +674,17 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.lock.needs-maxed': 'Erst {{by}} voll ausbauen',
   'skill.o4.1.label': 'Serverraum',
   'skill.o4.blurb': 'Er brummt. Mehr tut er nicht.',
+  'skill.effect.pace.juniors.close': '{{pct}} Junior-Tempo',
+  'skill.effect.pace.juniors.walk': '{{pct}} Junior-Lauftempo',
+  'skill.effect.pace.juniors.sweep': '{{pct}} Junior-Reichweite',
+  'skill.effect.pace.seniors.close': '{{pct}} Senior-Tempo',
+  'skill.effect.pace.seniors.walk': '{{pct}} Senior-Lauftempo',
+  'skill.effect.pace.seniors.sweep': '{{pct}} Durchgangs-Radius',
+  'skill.effect.pace.managers.close': '{{pct}} Tempo der Kundenbetreuung',
+  'skill.effect.pace.managers.walk': '{{pct}} Lauftempo der Kundenbetreuung',
+  'skill.effect.pace.managers.sweep': '{{pct}} Reichweite der Kundenbetreuung',
+  'skill.effect.batch.one': '+{{count}} Ticket pro Durchgang',
+  'skill.effect.batch.many': '+{{count}} Tickets pro Durchgang',
+  'skill.effect.batch.slower':
+    '+{{count}} Ticket pro Abschluss, {{slower}} Bearbeitungszeit',
 };

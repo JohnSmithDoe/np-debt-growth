@@ -10,6 +10,9 @@ import { HAUL_SHAVE_PER_RANK, WIP_LIMIT_STEP } from './balance/round';
 import { DESKS_PER_RANK } from './balance/crew';
 import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from './tier.model';
 
+/** What a crew pace effect speeds up. */
+export type PaceField = 'close' | 'walk' | 'sweep';
+
 export type SkillEffect =
   | { readonly kind: 'none' }
   | { readonly kind: 'clickRadius'; readonly mult: number }
@@ -18,19 +21,24 @@ export type SkillEffect =
   | { readonly kind: 'desks'; readonly add: number }
   | { readonly kind: 'adr'; readonly adr: number }
   | { readonly kind: 'haulShave'; readonly seconds: number }
-  | { readonly kind: 'junior'; readonly mult: number }
-  | { readonly kind: 'juniorWalk'; readonly mult: number }
   | {
       readonly kind: 'standupAura';
       readonly perJunior: number;
       readonly cap: number;
     }
   | {
-      readonly kind: 'juniorBatch';
-      readonly add: number;
-      readonly closeMult: number;
+      readonly kind: 'pace';
+      readonly crew: CrewKind;
+      readonly field: PaceField;
+      readonly mult: number;
     }
-  | { readonly kind: 'juniorSweep'; readonly mult: number }
+  | {
+      readonly kind: 'batch';
+      readonly crew: CrewKind;
+      readonly add: number;
+      /** Carrying more costs time: the close takes this much longer. */
+      readonly closeMult?: number;
+    }
   | { readonly kind: 'juniorBand'; readonly add: number }
   | {
       readonly kind: 'triagePolicy';
@@ -47,13 +55,7 @@ export type SkillEffect =
   | { readonly kind: 'pizza' }
   | { readonly kind: 'coach'; readonly add: number }
   | { readonly kind: 'deck'; readonly add: number }
-  | { readonly kind: 'senior'; readonly mult: number }
-  | { readonly kind: 'seniorWalk'; readonly mult: number }
-  | { readonly kind: 'seniorBatch'; readonly add: number }
-  | { readonly kind: 'seniorSweep'; readonly mult: number }
   | { readonly kind: 'topOfBand' }
-  | { readonly kind: 'manager'; readonly mult: number }
-  | { readonly kind: 'managerWalk'; readonly mult: number }
   | { readonly kind: 'relabelSteps'; readonly add: number }
   | { readonly kind: 'relabelFillerFirst' }
   | {
@@ -337,22 +339,22 @@ export const SKILL_NODES: readonly SkillNode[] = [
       {
         cost: 1500,
         effects: [
-          { kind: 'junior', mult: 1.25 },
-          { kind: 'juniorWalk', mult: 1.2 },
+          { kind: 'pace', crew: 'juniors', field: 'close', mult: 1.25 },
+          { kind: 'pace', crew: 'juniors', field: 'walk', mult: 1.2 },
         ],
       },
       {
         cost: 4000,
         effects: [
-          { kind: 'junior', mult: 1.22 },
-          { kind: 'juniorWalk', mult: 1.18 },
+          { kind: 'pace', crew: 'juniors', field: 'close', mult: 1.22 },
+          { kind: 'pace', crew: 'juniors', field: 'walk', mult: 1.18 },
         ],
       },
       {
         cost: 10_000,
         effects: [
-          { kind: 'junior', mult: 1.2 },
-          { kind: 'juniorWalk', mult: 1.15 },
+          { kind: 'pace', crew: 'juniors', field: 'close', mult: 1.2 },
+          { kind: 'pace', crew: 'juniors', field: 'walk', mult: 1.15 },
         ],
       },
     ],
@@ -363,15 +365,21 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'junior',
     gate: 'junior',
     levels: [
-      { cost: 120, effects: [{ kind: 'juniorSweep', mult: 1.3 }] },
+      {
+        cost: 120,
+        effects: [{ kind: 'pace', crew: 'juniors', field: 'sweep', mult: 1.3 }],
+      },
       {
         cost: 450,
         effects: [
-          { kind: 'juniorSweep', mult: 1.25 },
+          { kind: 'pace', crew: 'juniors', field: 'sweep', mult: 1.25 },
           { kind: 'juniorBand', add: 1 },
         ],
       },
-      { cost: 1500, effects: [{ kind: 'juniorSweep', mult: 1.2 }] },
+      {
+        cost: 1500,
+        effects: [{ kind: 'pace', crew: 'juniors', field: 'sweep', mult: 1.2 }],
+      },
     ],
   },
   {
@@ -396,7 +404,10 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'juniorPresence',
     gate: 'junior',
     levels: [
-      { cost: 700, effects: [{ kind: 'juniorBatch', add: 1, closeMult: 2 }] },
+      {
+        cost: 700,
+        effects: [{ kind: 'batch', crew: 'juniors', add: 1, closeMult: 2 }],
+      },
     ],
   },
 
@@ -415,22 +426,22 @@ export const SKILL_NODES: readonly SkillNode[] = [
       {
         cost: 400,
         effects: [
-          { kind: 'senior', mult: 1.22 },
-          { kind: 'seniorWalk', mult: 1.2 },
+          { kind: 'pace', crew: 'seniors', field: 'close', mult: 1.22 },
+          { kind: 'pace', crew: 'seniors', field: 'walk', mult: 1.2 },
         ],
       },
       {
         cost: 1300,
         effects: [
-          { kind: 'senior', mult: 1.2 },
-          { kind: 'seniorWalk', mult: 1.18 },
+          { kind: 'pace', crew: 'seniors', field: 'close', mult: 1.2 },
+          { kind: 'pace', crew: 'seniors', field: 'walk', mult: 1.18 },
         ],
       },
       {
         cost: 4000,
         effects: [
-          { kind: 'senior', mult: 1.18 },
-          { kind: 'seniorWalk', mult: 1.15 },
+          { kind: 'pace', crew: 'seniors', field: 'close', mult: 1.18 },
+          { kind: 'pace', crew: 'seniors', field: 'walk', mult: 1.15 },
         ],
       },
     ],
@@ -441,9 +452,22 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'senior',
     gate: 'senior',
     levels: [
-      { cost: 550, effects: [{ kind: 'seniorSweep', mult: 1.25 }] },
-      { cost: 1700, effects: [{ kind: 'seniorSweep', mult: 1.2 }] },
-      { cost: 5000, effects: [{ kind: 'seniorSweep', mult: 1.18 }] },
+      {
+        cost: 550,
+        effects: [
+          { kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.25 },
+        ],
+      },
+      {
+        cost: 1700,
+        effects: [{ kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.2 }],
+      },
+      {
+        cost: 5000,
+        effects: [
+          { kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.18 },
+        ],
+      },
     ],
   },
   {
@@ -452,8 +476,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'senior',
     gate: 'senior',
     levels: [
-      { cost: 900, effects: [{ kind: 'seniorBatch', add: 1 }] },
-      { cost: 2600, effects: [{ kind: 'seniorBatch', add: 1 }] },
+      { cost: 900, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
+      { cost: 2600, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
       { cost: 7500, effects: [{ kind: 'topOfBand' }] },
     ],
   },
@@ -473,22 +497,22 @@ export const SKILL_NODES: readonly SkillNode[] = [
       {
         cost: 700,
         effects: [
-          { kind: 'manager', mult: 1.25 },
-          { kind: 'managerWalk', mult: 1.2 },
+          { kind: 'pace', crew: 'managers', field: 'close', mult: 1.25 },
+          { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.2 },
         ],
       },
       {
         cost: 2000,
         effects: [
-          { kind: 'manager', mult: 1.22 },
-          { kind: 'managerWalk', mult: 1.18 },
+          { kind: 'pace', crew: 'managers', field: 'close', mult: 1.22 },
+          { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.18 },
         ],
       },
       {
         cost: 6000,
         effects: [
-          { kind: 'manager', mult: 1.2 },
-          { kind: 'managerWalk', mult: 1.15 },
+          { kind: 'pace', crew: 'managers', field: 'close', mult: 1.2 },
+          { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.15 },
         ],
       },
     ],
@@ -666,7 +690,12 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'o3',
     track: 'O',
     requires: 'o1',
-    levels: [{ cost: 1000, effects: [{ kind: 'juniorWalk', mult: 1.2 }] }],
+    levels: [
+      {
+        cost: 1000,
+        effects: [{ kind: 'pace', crew: 'juniors', field: 'walk', mult: 1.2 }],
+      },
+    ],
   },
   {
     id: 'o4',
@@ -678,7 +707,12 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'o5',
     track: 'O',
     requires: 'o1',
-    levels: [{ cost: 15_000, effects: [{ kind: 'seniorSweep', mult: 1.2 }] }],
+    levels: [
+      {
+        cost: 15_000,
+        effects: [{ kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.2 }],
+      },
+    ],
   },
   {
     id: 'o6',

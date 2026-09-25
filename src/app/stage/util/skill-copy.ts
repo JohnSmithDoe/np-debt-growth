@@ -70,10 +70,6 @@ function describe(effect: SkillEffect): EffectText {
         key: 'skill.effect.haulShave',
         params: { seconds: effect.seconds },
       };
-    case 'junior':
-      return { key: 'skill.effect.junior', params: pct(effect.mult) };
-    case 'juniorWalk':
-      return { key: 'skill.effect.juniorWalk', params: pct(effect.mult) };
     case 'standupAura':
       return {
         key: 'skill.effect.standupAura',
@@ -82,13 +78,25 @@ function describe(effect: SkillEffect): EffectText {
           cap: percent(effect.cap),
         },
       };
-    case 'juniorBatch':
+    case 'pace':
       return {
-        key: 'skill.effect.juniorBatch',
-        params: { count: effect.add, slower: percent(effect.closeMult) },
+        key: `skill.effect.pace.${effect.crew}.${effect.field}`,
+        params: pct(effect.mult),
       };
-    case 'juniorSweep':
-      return { key: 'skill.effect.juniorSweep', params: pct(effect.mult) };
+    case 'batch':
+      if (effect.closeMult !== undefined) {
+        return {
+          key: 'skill.effect.batch.slower',
+          params: { count: effect.add, slower: percent(effect.closeMult) },
+        };
+      }
+      return {
+        key:
+          effect.add === 1
+            ? 'skill.effect.batch.one'
+            : 'skill.effect.batch.many',
+        params: { count: effect.add },
+      };
     case 'juniorBand':
       return {
         key: 'skill.effect.juniorBand',
@@ -101,26 +109,8 @@ function describe(effect: SkillEffect): EffectText {
       };
     case 'nearestClaim':
       return { key: 'skill.effect.nearestClaim' };
-    case 'senior':
-      return { key: 'skill.effect.senior', params: pct(effect.mult) };
-    case 'seniorWalk':
-      return { key: 'skill.effect.seniorWalk', params: pct(effect.mult) };
-    case 'seniorBatch':
-      return {
-        key:
-          effect.add === 1
-            ? 'skill.effect.seniorBatch.one'
-            : 'skill.effect.seniorBatch.many',
-        params: { count: effect.add },
-      };
-    case 'seniorSweep':
-      return { key: 'skill.effect.seniorSweep', params: pct(effect.mult) };
     case 'topOfBand':
       return { key: 'skill.effect.topOfBand' };
-    case 'manager':
-      return { key: 'skill.effect.manager', params: pct(effect.mult) };
-    case 'managerWalk':
-      return { key: 'skill.effect.managerWalk', params: pct(effect.mult) };
     case 'relabelSteps':
       return {
         key: 'skill.effect.relabelSteps',

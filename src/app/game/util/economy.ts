@@ -20,7 +20,7 @@ import {
 } from '../model/spawner.model';
 import type { SeniorHire, TraitId } from '../model/senior.model';
 import { TRAITS, hireFor } from '../model/senior.model';
-import type { SkillEffect } from '../model/skill.model';
+import type { PaceField, SkillEffect } from '../model/skill.model';
 import { OFFICE_NODE_IDS, SKILL_BY_ID } from '../model/skill.model';
 import type { TicketType, TicketTypeId } from '../model/ticket.model';
 import { ladderUp, TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
@@ -499,10 +499,34 @@ function auraMultiplier(state: Consultancy): number {
   return total;
 }
 
-/** Batch effects trade throughput for a slower close; only some crews carry one. */
-function batchPenalty(state: Consultancy, kind: EffectKind): number {
+const paceOf = (
+  effect: SkillEffect,
+  crew: CrewKind,
+  field: PaceField
+): number | null =>
+  effect.kind === 'pace' && effect.crew === crew && effect.field === field
+    ? effect.mult
+    : null;
+
+/** A crew's pace multiplier for one field: its skills, then a senior seat's traits. */
+function paceMult(
+  state: Consultancy,
+  crew: CrewKind,
+  field: PaceField,
+  hire?: SeniorHire
+): number {
+  let total = productOf(state, (e) => paceOf(e, crew, field));
+  for (const trait of hire?.traits ?? []) {
+    for (const effect of TRAITS[trait])
+      total *= paceOf(effect, crew, field) ?? 1;
+  }
+  return total;
+}
+
+/** Carrying more per trip slows the close down. */
+function batchPenalty(state: Consultancy, crew: CrewKind): number {
   return productOf(state, (e) =>
-    e.kind === kind && 'closeMult' in e ? e.closeMult : null
+    e.kind === 'batch' && e.crew === crew ? (e.closeMult ?? null) : null
   );
 }
 
@@ -512,22 +536,16 @@ export function crewCloseMs(
   hire?: SeniorHire
 ): number {
   const stats = CREW_STATS[crew];
-  const { close, batch } = stats.effects;
   const aura = stats.aura ? auraMultiplier(state) : 1;
-  const faster = scaled(multOf(state, close), hire, close) * aura;
-  return (stats.closeMs * batchPenalty(state, batch)) / faster;
+  const faster = paceMult(state, crew, 'close', hire) * aura;
+  return (stats.closeMs * batchPenalty(state, crew)) / faster;
 }
 
-export function crewBatch(
-  state: Consultancy,
-  crew: CrewKind,
-  hire?: SeniorHire
-): number {
-  const stats = CREW_STATS[crew];
-  const { batch } = stats.effects;
-  return Math.floor(
-    scaled(additive(state, batch, stats.batchBase), hire, batch)
+export function crewBatch(state: Consultancy, crew: CrewKind): number {
+  const added = sumOf(state, (e) =>
+    e.kind === 'batch' && e.crew === crew ? e.add : null
   );
+  return Math.floor(CREW_STATS[crew].batchBase + added);
 }
 
 export function crewSweepRadius(
@@ -535,9 +553,7 @@ export function crewSweepRadius(
   crew: CrewKind,
   hire?: SeniorHire
 ): number {
-  const stats = CREW_STATS[crew];
-  const { sweep } = stats.effects;
-  return stats.sweepRadius * scaled(multOf(state, sweep), hire, sweep);
+  return CREW_STATS[crew].sweepRadius * paceMult(state, crew, 'sweep', hire);
 }
 
 export function crewWalkSpeed(
@@ -545,9 +561,7 @@ export function crewWalkSpeed(
   crew: CrewKind,
   hire?: SeniorHire
 ): number {
-  const stats = CREW_STATS[crew];
-  const { walk } = stats.effects;
-  return stats.walkSpeed * scaled(multOf(state, walk), hire, walk);
+  return CREW_STATS[crew].walkSpeed * paceMult(state, crew, 'walk', hire);
 }
 
 /** Which claim heuristic a crew follows — policy per kind, not a tuning number. */
@@ -574,7 +588,7 @@ export function crewPace(
   return {
     closeMs: crewCloseMs(state, crew, hire),
     speed: crewWalkSpeed(state, crew, hire),
-    batch: crewBatch(state, crew, hire),
+    batch: crewBatch(state, crew),
     sweep: crewSweepRadius(state, crew, hire),
     pick: crewPick(state, crew, hire),
   };
@@ -700,21 +714,6 @@ export function hireAt(
   return state.roster[seat];
 }
 
-function scaled(
-  base: number,
-  hire: SeniorHire | undefined,
-  kind: EffectKind
-): number {
-  if (kind === null || !hire) return base;
-  let total = base;
-  for (const trait of hire.traits) {
-    for (const effect of TRAITS[trait]) {
-      if (effect.kind === kind && 'mult' in effect) total *= effect.mult;
-    }
-  }
-  return total;
-}
-
 function hireHolds(
   hire: SeniorHire | undefined,
   kind: SkillEffect['kind']
@@ -732,8 +731,8 @@ export function seniorWalkSpeed(state: Consultancy, hire?: SeniorHire): number {
   return crewWalkSpeed(state, 'seniors', hire);
 }
 
-export function seniorBatch(state: Consultancy, hire?: SeniorHire): number {
-  return crewBatch(state, 'seniors', hire);
+export function seniorBatch(state: Consultancy): number {
+  return crewBatch(state, 'seniors');
 }
 
 export function seniorSweepRadius(
@@ -766,11 +765,7 @@ export function seniorCeilingPerSec(state: Consultancy): number {
   for (let seat = 0; seat < seniors; seat += 1) {
     const hire = hireAt(state, seat);
     const rate = hireIsWoman(seat, every) ? WOMAN_CLOSE_RATE : 1;
-    total += closesPerSec(
-      rate,
-      seniorBatch(state, hire),
-      seniorCloseMs(state, hire)
-    );
+    total += closesPerSec(rate, seniorBatch(state), seniorCloseMs(state, hire));
   }
   return total;
 }
@@ -778,7 +773,7 @@ export function seniorCeilingPerSec(state: Consultancy): number {
 export function traitFactor(state: Consultancy, trait: TraitId): number {
   const hire: SeniorHire = { poolSeat: 0, traits: [trait] };
   const bare = seniorBatch(state) / seniorCloseMs(state);
-  return seniorBatch(state, hire) / seniorCloseMs(state, hire) / bare;
+  return seniorBatch(state) / seniorCloseMs(state, hire) / bare;
 }
 
 export function seniorPoolSeat(state: Consultancy, seat: number): number {

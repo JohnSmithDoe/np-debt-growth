@@ -132,7 +132,9 @@ describe('what the crew can close', () => {
       juniorCeilingPerSec(crew(100, 0))
     );
     const speed = SKILL_BY_ID.get('juniorSpeed')!.levels[0]!.effects.reduce(
-      (all, effect) => all * (effect.kind === 'junior' ? effect.mult : 1),
+      (all, effect) =>
+        all *
+        (effect.kind === 'pace' && effect.field === 'close' ? effect.mult : 1),
       1
     );
     const aura = SKILL_BY_ID.get('juniorPresence')!.levels[0]!.effects.reduce(
@@ -151,7 +153,11 @@ describe('what the crew can close', () => {
       (total, level) =>
         total *
         level.effects.reduce(
-          (each, effect) => each * (effect.kind === 'junior' ? effect.mult : 1),
+          (each, effect) =>
+            each *
+            (effect.kind === 'pace' && effect.field === 'close'
+              ? effect.mult
+              : 1),
           1
         ),
       1
