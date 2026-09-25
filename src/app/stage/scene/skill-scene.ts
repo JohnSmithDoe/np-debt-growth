@@ -14,9 +14,10 @@ import { IconPool } from '../util/icon-pool';
 import { LabelPool } from '../util/label-pool';
 import { GLYPH_CELL, PIXEL_FONT } from '../util/pixel-font';
 import {
-  SKILL_ICON_IDS,
+  SKILL_ICON_FILES,
   SKILL_ICON_SIZE,
   skillIconKey,
+  skillIconOf,
   skillIconUrl,
 } from '../model/skill-icon.model';
 import { SKILL_ROOT_ID } from '../../game/model/skill.model';
@@ -106,8 +107,8 @@ export class SkillScene extends PanZoomScene {
   }
 
   preload(): void {
-    for (const id of SKILL_ICON_IDS) {
-      this.load.image(skillIconKey(id), skillIconUrl(id));
+    for (const icon of SKILL_ICON_FILES) {
+      this.load.image(skillIconKey(icon), skillIconUrl(icon));
     }
   }
 
@@ -352,13 +353,13 @@ export class SkillScene extends PanZoomScene {
   }
 
   #stampIcon(square: SkillSquare, state: SquareState): boolean {
-    const id = square.node.id;
-    if (!SKILL_ICON_IDS.has(id)) return false;
+    const icon = skillIconOf(square.node.id);
+    if (icon === null) return false;
     if (!this.labelsVisible(CODE_SCALE)) return true;
     this.#icons?.stamp(
       square.x + SQUARE / 2,
       square.y + ICON_CY,
-      skillIconKey(id),
+      skillIconKey(icon),
       ICON_BOX,
       state === 'owned' ? 1 : ICON_DIM
     );
