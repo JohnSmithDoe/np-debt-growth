@@ -35,6 +35,10 @@ export interface TicketType {
   readonly effect: TicketEffect;
   readonly scalesWithTier: boolean;
   readonly colour: number;
+  /** Held back until this run time, then the first one is placed exactly then. */
+  readonly revealAtMs?: number;
+  /** Held back until this ADR is approved. */
+  readonly revealAtTier?: number;
 }
 
 export const ticketLabelKey = (id: string): string => `ticket.type.${id}`;
@@ -63,6 +67,7 @@ export const TICKET_TYPES: Readonly<Record<TicketTypeId, TicketType>> = {
     effect: 'value',
     scalesWithTier: false,
     colour: 0xe05252,
+    revealAtTier: 1,
   },
   legacy: {
     id: 'legacy',
@@ -171,6 +176,7 @@ export const TICKET_TYPES: Readonly<Record<TicketTypeId, TicketType>> = {
     effect: 'value',
     scalesWithTier: true,
     colour: 0xff3b30,
+    revealAtMs: 75_000,
   },
   escalation: {
     id: 'escalation',

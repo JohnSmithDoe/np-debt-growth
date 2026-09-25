@@ -40,10 +40,6 @@ export const VOTE_SPREAD_MS = 37;
  */
 export const TICKET_LIFE_MS = 15_000;
 
-export const FIRST_INCIDENT_AT_MS = 75_000;
-/** Bug Report stays off the board until ADR-1: the opening is lint alone, as the reference's paper is. */
-export const BUG_REVEAL_TIER = 1;
-
 export const TIER_BURST = { tier: 3, count: 10 } as const;
 
 /** Golden: rare, worth a fortune, and the crew will not touch it. */

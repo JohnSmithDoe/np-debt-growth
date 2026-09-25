@@ -35,12 +35,10 @@ function gateReason(
       return state.levels.manager === 0
         ? { key: 'skill.lock.needs-manager' }
         : null;
-    default: {
-      const needed = Number(gate.slice(4));
-      return state.tier < needed
-        ? { key: 'skill.lock.needs-adr', params: { adr: needed } }
+    default:
+      return state.tier < gate.tier
+        ? { key: 'skill.lock.needs-adr', params: { adr: gate.tier } }
         : null;
-    }
   }
 }
 

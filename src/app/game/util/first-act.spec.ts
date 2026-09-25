@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { BUG_REVEAL_TIER, FIRST_INCIDENT_AT_MS } from '../model/balance/flow';
+import { TICKET_TYPES } from '../model/ticket.model';
 import { heldBack, scriptedSpawns } from './first-act';
+
+const FIRST_INCIDENT_AT_MS = TICKET_TYPES.incident.revealAtMs!;
+const BUG_REVEAL_TIER = TICKET_TYPES.bug.revealAtTier!;
 
 describe('the first act', () => {
   it('places the first P0 exactly once, however the span is walked', () => {

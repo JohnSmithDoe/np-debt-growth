@@ -74,18 +74,9 @@ export type SkillEffect =
   | { readonly kind: 'goldenCrew' }
   | { readonly kind: 'line'; readonly line: PurchaseId };
 
+/** A crew line that must be staffed, or the ADR that must be approved. */
 export type SkillGate =
-  | 'junior'
-  | 'senior'
-  | 'manager'
-  | 'tier1'
-  | 'tier2'
-  | 'tier3'
-  | 'tier4'
-  | 'tier5'
-  | 'tier6'
-  | 'tier7'
-  | 'tier8';
+  'junior' | 'senior' | 'manager' | { readonly tier: number };
 
 export type SkillTrack =
   'root' | 'A' | 'B' | 'C' | 'D' | 'E' | 'G' | 'H' | 'N' | 'O' | 'secret';
@@ -184,7 +175,7 @@ const capitalised = (id: string): string => id[0]!.toUpperCase() + id.slice(1);
 const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
   (ticket, tier) => {
     const name = capitalised(ticket);
-    const gate = tier === 0 ? undefined : (`tier${tier}` as SkillGate);
+    const gate: SkillGate | undefined = tier === 0 ? undefined : { tier };
     const value = `value${name}`;
     const spawn = `spawn${name}`;
     const income = `income${name}`;
@@ -301,7 +292,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'cans',
     track: 'A',
     requires: 'capacity',
-    gate: 'tier1',
+    gate: { tier: 1 },
     levels: [
       1500, 1800, 5400, 16_000, 48_000, 140_000, 420_000, 1_250_000, 3_750_000,
     ].map((cost) => ({ cost, effects: [{ kind: 'cans' as const, add: 1 }] })),
@@ -552,7 +543,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'spawnEscalation',
     track: 'D',
     requires: 'debtInterest',
-    gate: 'tier5',
+    gate: { tier: 5 },
     levels: [
       {
         cost: 8500,
@@ -564,7 +555,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'spawnIncident',
     track: 'D',
     requires: 'debtInterest',
-    gate: 'tier6',
+    gate: { tier: 6 },
     levels: [
       {
         cost: 14_000,
@@ -587,7 +578,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'coaches',
     track: 'C',
     requires: 'estimatesLint',
-    gate: 'tier2',
+    gate: { tier: 2 },
     levels: [
       2000, 5000, 12_000, 30_000, 75_000, 180_000, 450_000, 1_100_000,
       2_700_000, 6_500_000,
@@ -609,14 +600,14 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'pizza',
     track: 'B',
     requires: 'timesheets',
-    gate: 'tier5',
+    gate: { tier: 5 },
     levels: [{ cost: 200_000, effects: [{ kind: 'pizza' }] }],
   },
   {
     id: 'timesheets',
     track: 'B',
     requires: 'juniorSpeed',
-    gate: 'tier2',
+    gate: { tier: 2 },
     levels: [{ cost: 15_000, effects: [{ kind: 'crewSp' }] }],
   },
   {
@@ -631,7 +622,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'valueIncident',
     track: 'C',
     requires: 'valueBug',
-    gate: 'tier6',
+    gate: { tier: 6 },
     levels: [
       {
         cost: 20_000,
@@ -644,7 +635,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'assurance',
     track: 'G',
     requires: 'escalation',
-    gate: 'tier6',
+    gate: { tier: 6 },
     levels: [
       { cost: 7000, effects: [{ kind: 'global', mult: 1.15 }] },
       { cost: 18_000, effects: [{ kind: 'global', mult: 1.15 }] },
@@ -655,7 +646,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'stretch',
     track: 'G',
     requires: 'juniorReach',
-    gate: 'tier5',
+    gate: { tier: 5 },
     levels: [{ cost: 10_000, effects: [{ kind: 'juniorBand', add: 1 }] }],
   },
 
@@ -712,7 +703,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'golden',
     track: 'A',
     requires: 'radius',
-    gate: 'tier1',
+    gate: { tier: 1 },
     levels: [{ cost: 2000, effects: [{ kind: 'goldenChance', add: 0.02 }] }],
   },
   {
@@ -742,7 +733,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'goldenCrew',
     track: 'A',
     requires: 'goldenValue',
-    gate: 'tier6',
+    gate: { tier: 6 },
     levels: [{ cost: 400_000, effects: [{ kind: 'goldenCrew' }] }],
   },
 
@@ -750,7 +741,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'signoff',
     track: 'G',
     requires: 'goldenCrew',
-    gate: 'tier8',
+    gate: { tier: 8 },
     levels: [{ cost: 3_000_000, effects: [{ kind: 'none' }] }],
   },
 
