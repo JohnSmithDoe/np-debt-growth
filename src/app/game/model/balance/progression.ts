@@ -62,10 +62,6 @@ export const PURCHASE_IDS = [
 
 export type PurchaseId = (typeof PURCHASE_IDS)[number];
 
-export const SENIOR_BUYOUT_STEPS = [
-  2_400, 3_480, 5_050, 7_320, 11_000, 15_000, 22_000, 32_000, 47_000, 68_000,
-] as const;
-
 /**
  * The rail's repeatable lines. The tree unlocks a line once; every head
  * after that is bought here with euros, on the same 1.15x climb the

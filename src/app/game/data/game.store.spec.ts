@@ -365,15 +365,6 @@ describe('desks gate the crew (D36, D56)', () => {
     }
   });
 
-  it('never blocks the Promotion Round on a full floor', () => {
-    const store = storeWith({
-      budget: 100_000_000,
-      levels: { junior: DESKS_BASE - 1, senior: 1 },
-    });
-    expect(store.freeDesks()).toBe(0);
-    expect(store.promote()).toBe(true);
-    expect(store.levels().senior).toBe(DESKS_BASE);
-  });
 });
 
 describe('the feed', () => {
@@ -438,7 +429,6 @@ describe('the feed', () => {
   it('says nothing about a restored save', () => {
     const store = storeWith({
       tier: 8,
-      promoted: true,
       levels: { junior: 200 },
       skills: rooms(8),
     });
@@ -494,21 +484,6 @@ describe('the senior hire (D34)', () => {
     expect(store.snapshot().roster).toEqual([]);
   });
 
-  it('gives a promoted senior no traits, and no code says so (D33)', () => {
-    const store = storeWith({
-      budget: 1e7,
-      storyPoints: 1e6,
-      levels: { junior: 4 },
-      skills: { ...rooms(8), root: 1, crew: 1, junior: 1 },
-    });
-    expect(store.buySkill('senior')).toBe(true);
-    expect(store.promote()).toBe(true);
-
-    const state = store.snapshot();
-    expect(state.levels.senior).toBe(5);
-    expect(state.roster.length).toBe(1);
-    expect(state.roster[3]).toBeUndefined();
-  });
 });
 
 describe('a full can refuses in place (parity #11)', () => {

@@ -12,30 +12,9 @@ export interface MomentCopy {
   readonly sections: readonly MomentSection[];
 }
 
-export type MomentId = 'promotion' | 'secret';
+export type MomentId = 'secret';
 
 export const MOMENT_COPY: Readonly<Record<MomentId, MomentCopy>> = {
-  promotion: {
-    heading: 'Promotion Round',
-    subheading: 'Compensation Review — Confidential',
-    chip: 'Irreversible',
-    art: 'assets/art/screen/promotion.png',
-    action: 'Acknowledge',
-    sections: [
-      {
-        title: 'Context',
-        body: 'The junior bench has grown to a size where the org chart is flat and no one on it is accountable for the others. Retention was raised at the last three leadership meetings and minuted each time. A salary review was scoped and rejected on cost.',
-      },
-      {
-        title: 'Decision',
-        body: 'Every Junior Developer is retitled Senior Developer, effective immediately. No training was commissioned and none is planned. The Junior Dev requisition line is closed for the remainder of the engagement.',
-      },
-      {
-        title: 'Consequences',
-        body: 'The bench now clears a whole patch at a time and will take a P0. Nobody’s day changed. The word "senior" means one thing less than it did this morning, and the client is billed at the new rate from Monday.',
-      },
-    ],
-  },
   secret: {
     heading: 'You read the code',
     subheading: 'Undocumented',

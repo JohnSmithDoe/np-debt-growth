@@ -219,7 +219,6 @@ export class StageService {
       relabelTarget: (type) => economy.relabelTarget(store.state(), type),
       crewCeiling: (crew) => economy.crewCeiling(store.state(), crew),
       hazardNotice: () => store.hazardNotice(),
-      promoted: () => store.promoted(),
       seniorPoolSeat: (seat) => store.seniorPoolSeat(seat),
       harvest: (ids: readonly number[]) => store.harvest(ids),
       running: () => store.running(),

@@ -33,7 +33,6 @@ import {
   CREW_STATS,
   DESKS_BASE,
   DESK_LINES,
-  PROMOTION_PREMIUM,
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
 import {
@@ -60,7 +59,6 @@ import {
   INCOME_VALUE_ADD,
   LINE_COST_STEP,
   LINE_PLAN,
-  SENIOR_BUYOUT_STEPS,
 } from '../model/balance/progression';
 import {
   HAUL_MIN_MS,
@@ -602,10 +600,8 @@ export function hirePoolSeat(index: number, every: number): number {
   return hireIsWoman(index, every) ? women - 1 : index - women;
 }
 
-/** Promotion refills the senior bench from the junior pool, so it inherits that ratio. */
 export function crewWomanEvery(state: Consultancy, crew: CrewKind): number {
-  const promotedIn = crew === 'seniors' && state.promoted;
-  return CREW_STATS[promotedIn ? 'juniors' : crew].womanEvery;
+  return CREW_STATS[crew].womanEvery;
 }
 
 export function crewClaims(
@@ -940,22 +936,6 @@ export function voteBonus(state: Consultancy, runMs: number): number {
     if (voteLive(state, index, runMs)) live += 1;
   }
   return live * voteBonusPerCrossing(state);
-}
-
-export function promotionCost(state: Consultancy): number {
-  const juniors = state.levels.junior;
-  if (juniors === 0) return Number.POSITIVE_INFINITY;
-  const steps = SENIOR_BUYOUT_STEPS;
-  const last = steps[steps.length - 1] ?? 0;
-  let total = 0;
-  for (let n = 0; n < juniors; n += 1) {
-    total += steps[state.levels.senior + n] ?? last;
-  }
-  return total * PROMOTION_PREMIUM;
-}
-
-export function promotionOffered(state: Consultancy): boolean {
-  return !state.promoted && state.levels.senior > 0 && state.levels.junior > 0;
 }
 
 function awardGranted(state: Consultancy, id: string): boolean {

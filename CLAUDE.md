@@ -168,7 +168,7 @@ Docs describe the current state only — no history; git has that.
 
 The economy runs without a board: `game/util/sim.ts` prices any state per second (supply,
 density, crew walk, hand sweep, lanes), and `game/util/autoplay.ts` plays a whole run on it in
-about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.35 of a real board — if you
+about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.5 of a real board — if you
 change how the board collects, change the sim with it.
 
 `game/data/balance.spec.ts` runs the autoplayer and **fails** if it does not reach sign-off in

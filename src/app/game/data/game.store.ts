@@ -331,7 +331,6 @@ export class GameStore {
   readonly lifetimeClosedByWomen = computed(
     () => this.#state().lifetimeClosedByWomen
   );
-  readonly promoted = computed(() => this.#state().promoted);
   readonly officePlates = computed(() => economy.officePlates(this.#state()));
 
   readonly awarded = this.#awarded.asReadonly();
@@ -1026,18 +1025,6 @@ export class GameStore {
 
   deskLimited(line: PurchaseId): boolean {
     return economy.deskLimited(this.#state(), line);
-  }
-
-  promotionCost(): number {
-    return economy.promotionCost(this.#state());
-  }
-
-  promotionOffered(): boolean {
-    return economy.promotionOffered(this.#state());
-  }
-
-  promote(): boolean {
-    return this.#commit(purchase.promote(this.#state()));
   }
 
   /** The rung is a tree node; this is the same purchase, reached from the rail. */

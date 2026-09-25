@@ -123,11 +123,6 @@ function earn(
 /** Buys greedily, cheapest first, until nothing affordable is left. */
 export function spend(state: Consultancy, policy: AutoplayPolicy): Consultancy {
   let next = state;
-  // Promotion only when it is cheap, or when the juniors have nothing to do.
-  const share = economy.juniorSpawnRate(next) === 0 ? 1 : policy.spendFraction;
-  if (economy.promotionCost(next) <= next.budget * share) {
-    next = purchase.promote(next) ?? next;
-  }
   if ((next.skills['duration'] ?? 0) < 1) {
     for (const id of policy.openingPath)
       next = purchase.buySkill(next, id) ?? next;

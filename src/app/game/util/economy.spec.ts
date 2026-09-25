@@ -12,7 +12,7 @@ import {
   DESKS_PER_RANK,
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
-import { INCOME_CAP, SENIOR_BUYOUT_STEPS } from '../model/balance/progression';
+import { INCOME_CAP } from '../model/balance/progression';
 import {
   ceilingPerSec,
   desks,
@@ -40,22 +40,6 @@ import {
   sprintSlots,
   totalSpawnRate,
 } from './economy';
-
-const LADDER_MIN_RATIO = 1.15;
-
-describe('the senior buyout ladder (D33)', () => {
-  it('climbs faster than a linear effect does', () => {
-    for (let n = 1; n < SENIOR_BUYOUT_STEPS.length; n += 1) {
-      expect(
-        SENIOR_BUYOUT_STEPS[n]! / SENIOR_BUYOUT_STEPS[n - 1]!
-      ).toBeGreaterThan(LADDER_MIN_RATIO);
-    }
-  });
-
-  it('prices more seats than the tree can sell', () => {
-    expect(SENIOR_BUYOUT_STEPS.length).toBeGreaterThan(5);
-  });
-});
 
 describe('the can (C4)', () => {
   it('is bounded by the haul, because the truck is the only forced wait', () => {
@@ -201,18 +185,6 @@ describe('what the crew can close', () => {
     );
     expect(juniorCeilingPerSec(crew(4, 0))).toBeGreaterThan(
       juniorCeilingPerSec(crew(3, 0)) * (4 / 3)
-    );
-  });
-
-  it('reads a promoted bench at the juniors ratio', () => {
-    const bench = { ...crew(0, 12), promoted: false };
-    const promoted = { ...bench, promoted: true };
-    expect(seniorCeilingPerSec(promoted)).toBeGreaterThan(
-      seniorCeilingPerSec(bench)
-    );
-    expect(seniorCeilingPerSec(promoted)).toBeCloseTo(
-      (heads(12) * seniorBatch(promoted) * 1000) / seniorCloseMs(promoted),
-      6
     );
   });
 

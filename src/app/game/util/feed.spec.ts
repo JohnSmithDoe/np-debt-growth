@@ -32,9 +32,8 @@ describe('the news an award cannot carry', () => {
     expect(newNotes(armed, { ...armed, escalationFiresAt: 2000 })).toEqual([]);
   });
 
-  it('leaves tiers and the promotion to the awards', () => {
+  it('leaves tiers to the awards', () => {
     const before = fresh();
     expect(newNotes(before, { ...before, tier: before.tier + 3 })).toEqual([]);
-    expect(newNotes(before, { ...before, promoted: true })).toEqual([]);
   });
 });

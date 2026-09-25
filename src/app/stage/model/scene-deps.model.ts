@@ -37,7 +37,6 @@ export interface SceneDeps {
   relabelTarget(type: TicketTypeId): TicketTypeId | null;
   crewCeiling(crew: CrewKind): TicketTypeId | null;
   hazardNotice(): HazardNotice | null;
-  promoted(): boolean;
   seniorPoolSeat(seat: number): number;
 
   escalationMultiplier(): number;

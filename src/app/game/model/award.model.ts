@@ -181,14 +181,6 @@ export const AWARDS: readonly Award[] = [
     when: (s) => s.levels.velocity >= 1,
   },
   {
-    id: 'a-promotion',
-    kind: 'achievement',
-    label: 'Everyone is senior now',
-    blurb: 'Run the Promotion Round. Titles are cheaper than training.',
-    sp: 25,
-    when: (s) => s.promoted,
-  },
-  {
     id: 'a-million',
     kind: 'achievement',
     label: 'Seven figures billed',

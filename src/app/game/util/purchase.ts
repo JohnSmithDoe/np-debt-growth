@@ -184,18 +184,3 @@ export function buyIncome(
     income: { ...state.income, [id]: economy.incomeLevel(state, id) + 1 },
   };
 }
-
-export function promote(state: Consultancy): Consultancy | null {
-  const cost = economy.promotionCost(state);
-  if (!economy.promotionOffered(state) || state.budget < cost) return null;
-  return {
-    ...state,
-    budget: state.budget - cost,
-    promoted: true,
-    levels: {
-      ...state.levels,
-      junior: 0,
-      senior: state.levels.senior + state.levels.junior,
-    },
-  };
-}

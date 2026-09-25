@@ -678,6 +678,12 @@ export const SKILL_NODES: readonly SkillNode[] = [
     levels: [{ cost: 1000, effects: [{ kind: 'juniorWalk', mult: 1.2 }] }],
   },
   {
+    id: 'o4',
+    track: 'O',
+    requires: 'o1',
+    levels: [{ cost: 3750, effects: [{ kind: 'none' }] }],
+  },
+  {
     id: 'o5',
     track: 'O',
     requires: 'o1',
@@ -806,8 +812,9 @@ export const DESK_NODE_ID = 'headcount';
 
 export const OFFICE_HEADING_ID = 'office';
 
+/** The office plates; `kit` sits on the office track but is a rail line, not a plate. */
 export const OFFICE_NODE_IDS: readonly string[] = SKILL_NODES.filter(
-  (node) => node.track === 'O' && node.heading !== true
+  (node) => node.track === 'O' && node.heading !== true && node.id !== 'kit'
 ).map((node) => node.id);
 
 export const SKILL_ROOT_ID = 'root';

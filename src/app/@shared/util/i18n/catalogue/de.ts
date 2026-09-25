@@ -686,4 +686,6 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.estimatesLint.blurb':
     'Ein bisschen höher schätzen. Jede geschlossene Lint-Warnung bringt mehr Story Points.',
   'skill.lock.needs-maxed': 'Erst {{by}} voll ausbauen',
+  'skill.o4.1.label': 'Serverraum',
+  'skill.o4.blurb': 'Er brummt. Mehr tut er nicht.',
 };

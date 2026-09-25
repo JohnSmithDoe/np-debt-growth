@@ -29,7 +29,6 @@ export interface Consultancy {
   readonly skills: Readonly<Record<string, number>>;
   readonly spawners: Readonly<Record<string, number>>;
   readonly income: Readonly<Record<string, number>>;
-  readonly promoted: boolean;
   readonly roster: readonly SeniorHire[];
   readonly tier: number;
 
@@ -91,7 +90,6 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     skills: { [SKILL_ROOT_ID]: 1 },
     spawners: { 0: SPAWNER_FREE_AT_ADR_0 },
     income: {},
-    promoted: false,
     roster: [],
     tier: 0,
     sprintCount: 0,

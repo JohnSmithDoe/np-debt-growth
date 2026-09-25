@@ -29,7 +29,6 @@ export class MomentModalComponent {
     () => (this.#store.skills()[SECRET_SKILL_ID] ?? 0) > 0
   );
 
-  #seenPromoted = this.#store.promoted();
   #seenSecret = this.#secretFound();
   #showing = signal<MomentId | null>(null);
 
@@ -39,11 +38,6 @@ export class MomentModalComponent {
   });
 
   constructor() {
-    effect(() => {
-      const promoted = this.#store.promoted();
-      if (promoted && !this.#seenPromoted) this.#showing.set('promotion');
-      this.#seenPromoted = promoted;
-    });
     effect(() => {
       const found = this.#secretFound();
       if (found && !this.#seenSecret) this.#showing.set('secret');
