@@ -242,7 +242,7 @@ five +20 % ranks end at exactly ×2. First-rank prices double a tier: `value` 25
 | **C** Client | the per-line `value` / `income` / `estimates` / `double` nodes, `valueBug`, `valueIncident`, `escalation`, `coaches`, `deck` |
 | **D** Debt | the per-line `spawn` nodes, `debtInterest`, `triagePolicy`, `spawnEscalation`, `spawnIncident` |
 | **G** Capstones | `assurance`, `stretch`, `signoff` |
-| **N** ADRs | `adr1` … `adr8`, chained |
+| **N** ADRs | `adr1` … `adr8`, chained; each rung is the parent of its line's `value` node (Lint's hangs off the client heading) |
 | **O** Office | `o1`–`o7` (the floor plates; `o1` and `o4` are cosmetic), `kit` |
 | `secret` | Konami-granted, ×1.1 global |
 

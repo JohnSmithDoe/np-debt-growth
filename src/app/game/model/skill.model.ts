@@ -127,7 +127,7 @@ const ADR_NODES: readonly SkillNode[] = DEBT_TIERS.map((tier) => ({
   ],
 }));
 
-/** The line each ADR opens, by tier; the per-line nodes below follow one shape. */
+/** The line each ADR opens, by tier; a line's nodes hang off its ADR. */
 const LINE_TICKETS: readonly TicketTypeId[] = [
   'lint',
   'legacy',
@@ -177,7 +177,6 @@ const capitalised = (id: string): string => id[0]!.toUpperCase() + id.slice(1);
 const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
   (ticket, tier) => {
     const name = capitalised(ticket);
-    const gate: SkillGate | undefined = tier === 0 ? undefined : { tier };
     const value = `value${name}`;
     const spawn = `spawn${name}`;
     const income = `income${name}`;
@@ -186,8 +185,7 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
       {
         id: value,
         track: 'C' as const,
-        requires: tier === 0 ? 'client' : 'valueBug',
-        gate,
+        requires: tier === 0 ? 'client' : adrNodeId(tier),
         levels: [
           {
             cost: LINE_DOUBLE_COST[tier]!,
@@ -201,7 +199,6 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
         id: spawn,
         track: 'D' as const,
         requires: value,
-        gate,
         levels: additiveRanks(LINE_RANKS, 0.2).map((mult, rank) => ({
           cost: priced(perTier(2200, tier), 1.25, rank),
           effects: [{ kind: 'spawnRate' as const, target: ticket, mult }],
@@ -211,7 +208,6 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
         id: income,
         track: 'C' as const,
         requires: value,
-        gate,
         levels: additiveRanks(LINE_RANKS, 0.5).map((mult, rank) => ({
           cost: priced(perTier(1100, tier), 1.25, rank),
           effects: [{ kind: 'ticketValue' as const, target: ticket, mult }],
@@ -221,7 +217,6 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
         id: estimates,
         track: 'C' as const,
         requires: value,
-        gate,
         levels: Array.from({ length: LINE_RANKS }, (_, rank) => ({
           cost: priced(lineEstimate(tier), 1.5, rank),
           effects: [{ kind: 'spPerClose' as const, add: 2, target: ticket }],
@@ -232,7 +227,6 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
         track: 'C' as const,
         requires: estimates,
         maxed: [spawn, income, estimates],
-        gate,
         levels: [
           {
             cost: perTier(2500, tier),
