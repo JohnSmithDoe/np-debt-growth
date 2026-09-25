@@ -21,35 +21,22 @@ What is open, ranked. The design as it stands is `gamedesign.md`. Checked agains
 
 ## 1. Bring the pace closer to the reference
 
-The run passes every guard (`gamedesign.md` §10: sign-off at 87.1 min) but is slower than the
+The run passes every guard (`gamedesign.md` §10: sign-off at 89.4 min) but is slower than the
 reference in the part that is measured:
 
-- **The gorilla (ADR-3) lands at 41.6 min**, against about 30 in the demo. ADR-1 → 2 takes
-  15.8 min and ADR-2 → 3 13.6, on the reference's own prices (10 000 and 600 000 SP). The
+- **The gorilla (ADR-3) lands at 43.4 min**, against about 30 in the demo. ADR-1 → 2 takes
+  15.8 min and ADR-2 → 3 15.4, on the reference's own prices (10 000 and 600 000 SP). The
   autoplayer buys every cheaper node before an ADR; check that against how the reference is
   actually played before moving a measured price.
-- **Sign-off at 87.1 min**, against the full game's 57–70. ADR-4…8, `signoff` and the throw-two
+- **Sign-off at 89.4 min**, against the full game's 57–70. ADR-4…8, `signoff` and the throw-two
   rank step (×1.25) are ours and were sized to fit the band, not measured.
-- ADR-4 → 5 is 2.3 min, just over the two-minute floor.
+- ADR-4 → 5 is 2.4 min, just over the two-minute floor.
+- The crew's € share after `goldenCrew` is 14–19 %; before it 2–4 % (the hand's gold). The
+  guard asks 4 % after and 15 % of the closes before.
 
 Apply measured reference values where they exist (§11 of the design) before inventing a curve.
 
-## 2. Dead or broken purchases
-
-- **Offshore never staffs.** Its headcount comes only from weather, and weather is off.
-- **Promotion and the rail price the same senior seats differently.** Seat 5 on the rail is about
-  2 100 € (`1 200 × 1.15^n`); five seats by promotion about 46 800 (`SENIOR_BUYOUT_STEPS ×
-  PROMOTION_PREMIUM`). The autoplayer promotes the whole bench and never hires a junior again.
-- **`officePlates` counts the `kit` node**, so kit widens the office floor art by a plate.
-
-## 3. 71 skill icons are never drawn
-
-`src/assets/skills/` holds 71 PNGs named `a1`…`h4`. `SkillScene` preloads all of them, but
-`#stampIcon` matches by node id, and only `root` matches. Map node ids to icon ids in
-`stage/model/skill-icon.model.ts`, or delete the assets and the preload. `README.md` advertises
-them.
-
-## 4. Copy and art
+## 2. Copy and art
 
 - The per-line `income<T>` / `double<T>` labels and the `spawn<T>` rank 2–5 labels are
   placeholders ("Lint Warning Uplift II", "Skip the Review III"). Write real names, both
@@ -58,7 +45,7 @@ them.
   lane actors (`stage/util/board-atlas.ts`). Pipeline: `tools/art-batch.mjs` →
   `pixelate.mjs` / `icon-knockout.mjs`.
 
-## 5. Measure the stage
+## 3. Measure the stage
 
 No profile exists. The board now sits at 600 cards for most of the run (displacement keeps it
 full), so the heap leads matter again:
@@ -76,25 +63,15 @@ full), so the heap leads matter again:
 
 Capture: reach ADR-5+ with a full board, 20 s of Chrome DevTools → Performance while sweeping.
 
-## 6. Unstash the weather
+## 4. Unstash the weather
 
 This is more than flipping `HAZARDS_ENABLED`: `meeting` was tuned against a 10 s round;
 `CREW_EURO_WINDOW_FLOOR` needs re-measuring; `grooming` is a no-op; `migration`'s `supply: 0`
-has no counterplay; the two 120 s cadences coincide by accident.
+has no counterplay; the two 120 s cadences coincide by accident. Offshore contractors, which
+only weather ever staffed, were removed with `3524a98`; the `offshore` hazard went with them.
 
-## 7. Cleanups
+## 5. Needs a design call
 
-- `SkillGate` hand-writes `'tier1'…'tier8'`, parsed back with `Number(gate.slice(4))` in
-  `util/purchase.ts`.
-- Per-crew effect kinds (`junior`/`juniorWalk`/`juniorSweep`/`juniorBatch`, again for seniors and
-  managers) could become one `{ kind: 'pace', crew, field }`.
-- `util/first-act.ts` holds back types by name; a `revealAtMs?` / `revealAtTier?` field on
-  `TicketType` would make it data.
-
-## 8. Needs a design call
-
-- **Areas.** The reference's second screen (the sea) comes after the gorilla; ours would be a
-  second client or engagement.
 - **The hidden node.** The reference hides a "Wow you found me!" node at the zoomed-out corner of
   its tree. Ours: *the undocumented endpoint*.
 - **Tree badges.** The reference uses four (`+`, `↑`, `%`, `✕`) by node kind; we stamp `+`/`%`.
@@ -121,3 +98,28 @@ design, so it can come back; the last commit that has it is `1a4254c`.
   express simply.
 - **Before it returns:** decide how it shares work with the crew (today it takes their types
   away), whether it reaches the late tiers, and model it in `util/sim.ts` first.
+
+## Parked: the Promotion Round
+
+Removed on 25 Sep 2026 (`e47648e`; the last commit that has it is `65cffd1`).
+
+- **What it was:** one irreversible purchase that retitled every junior as a senior, closed the
+  junior line for the rest of the run, and made the new seniors inherit the junior 1-in-4 women
+  ratio. It had its own moment modal (`assets/art/screen/promotion.png` is still on disk), an
+  award, and a post-mortem line.
+- **Why removed:** it sold the same senior seats as the rail at about twenty times the price
+  (`SENIOR_BUYOUT_STEPS × PROMOTION_PREMIUM 1.6` against `1 200 × 1.15^n`), and nothing in the UI
+  could reach it any more; only the autoplayer bought it.
+- **Before it returns:** price it off the rail (the seats it converts, at the rail's price, times
+  a small premium), give it a button, and decide what happens to the junior line and the bands
+  once the bench is all seniors.
+
+## Parked: a second area
+
+The reference moves to a second screen after the gorilla (the sea: new litter, new collectors, a
+golden whale). Our run keeps one board and uses ADR-4…8 as its "second half" in content.
+
+- **Our analogue** would be a second client or engagement: a new board, its own ticket set and
+  spawner lines, a transition, and a second pass over the whole curve.
+- **Before it starts:** decide what carries over (budget, SP, crew, tree), whether the first board
+  keeps running, and how `sim.ts` prices two boards at once.

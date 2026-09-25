@@ -116,7 +116,7 @@ Value nodes and rate rows lift euros only. The only other SP source is one-off a
 | Type | € | Rate/s a head | Tier | Line | |
 |---|---|---|---|---|---|
 | `lint` | 1 | 0.25 | 0 | ADR-0 | the whole opening |
-| `bug` | 4 | 0.08 | 0 | ADR-0 | held back until ADR-1 (`BUG_REVEAL_TIER`) |
+| `bug` | 4 | 0.08 | 0 | ADR-0 | held back until ADR-1 (`revealAtTier`) |
 | `legacy` | 10 | 0.25 | 1 | ADR-1 | |
 | `flaky` | 100 | 0.25 | 2 | ADR-2 | respawns |
 | `conflict` | 1 000 | 0.25 | 3 | ADR-3 | |
@@ -137,14 +137,15 @@ displaced.
 
 | Type | Rate/s | Effect |
 |---|---|---|
-| `incident` | 0.008 | 150 € × tier (`scalesWithTier`). First one forced at 75 s (`FIRST_INCIDENT_AT_MS`) |
+| `incident` | 0.008 | 150 € × tier (`scalesWithTier`). First one placed at 75 s (`revealAtMs`) |
 | `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 6 s |
 | `hotfix` | 0.006 | ×2 ticket value for `HOTFIX_MS` 10 s |
 | `quarter` | 0.0012 | Bills every resting ticket on the board at once (from tier 2) |
 | `pizza` | — | The pizza-party voucher (§5), from the `pizza` node |
 | `invite` | — | Hazard invitation; unused while weather is off (§8) |
 
-The opening's reveal order is in `util/first-act.ts` (`heldBack`, `scriptedSpawns`).
+The opening's reveal order is ticket data: a row's `revealAtMs` / `revealAtTier` holds it back,
+and `util/first-act.ts` places the first card on its beat.
 
 ### Golden
 
@@ -162,7 +163,6 @@ One row per kind in `CREW_STATS` (`balance/crew.ts`). The row order is claim pri
 
 | | close | walk | batch | sweep | band | woman every | headcount |
 |---|---|---|---|---|---|---|---|
-| offshore | 4 s | 130 | 1 | 0 | 0–∞ | 4 | weather only |
 | seniors | 10 s | 70 | 3 | 70 | 2–∞ | 6 | `levels.senior` |
 | juniors | 5 s | 90 | 1 | 40 | 0–3 | 4 | `levels.junior` |
 | managers | 24 s | 110 | 1 | 0 | 0–∞ | 3 | `levels.manager` |
@@ -177,17 +177,18 @@ One row per kind in `CREW_STATS` (`balance/crew.ts`). The row order is claim pri
   `sweeper`, `runner`, `firefighter` (top of band), `scout` (nearest).
 - **Managers relabel** (`mode: 'refiler'`): they walk a card `relabelSteps` rungs up the ladder.
 - **Women close twice as fast** (`WOMAN_CLOSE_RATE` 2), every *n*-th seat per kind; counted in
-  `lifetimeClosedByWomen` and shown in the post-mortem. Promotion reads the bench at the junior
-  ratio, so the ratio is a balance knob.
+  `lifetimeClosedByWomen` and shown in the post-mortem.
+- **Crew skills are two effect kinds**: `{ kind: 'pace', crew, field: 'close' | 'walk' | 'sweep',
+  mult }` and `{ kind: 'batch', crew, add, closeMult? }`. Senior traits use the same shape.
 - **Desks** = `DESKS_BASE` 10 + `headcount` ranks × `DESKS_PER_RANK` 5. `headcount` sits behind
   `juniorSpeed` (unlock → improve → raise the cap, as the reference orders it).
-- **Offshore** only arrives through weather, which is off (§8), so it never staffs today.
 - **Pizza party** (`pizza` node, ADR-5): the engineering manager drops a hand-only voucher;
   sweeping it makes crew inside `PIZZA_RADIUS` 240 work ×`PIZZA_RUSH` 5 for `PIZZA_MS` 12 s. The
   reference's Chad.
 
-The crew are the only automation. There is no auto-close pipeline (parked, see
-`next-steps.md`).
+The crew are the only automation and the only kinds are juniors, seniors and managers.
+Hand-only cards are the player's alone. The auto-close pipeline, offshore contractors and the
+Promotion Round are gone (see *Parked* in `next-steps.md`).
 
 ---
 
@@ -242,10 +243,15 @@ five +20 % ranks end at exactly ×2. First-rank prices double a tier: `value` 25
 | **D** Debt | the per-line `spawn` nodes, `debtInterest`, `triagePolicy`, `spawnEscalation`, `spawnIncident` |
 | **G** Capstones | `assurance`, `stretch`, `signoff` |
 | **N** ADRs | `adr1` … `adr8`, chained |
-| **O** Office | `o1`–`o3`, `o5`–`o7`, `kit` |
+| **O** Office | `o1`–`o7` (the floor plates; `o1` and `o4` are cosmetic), `kit` |
 | `secret` | Konami-granted, ×1.1 global |
 
-There are no global spawn-rate or income nodes: a line only grows through its own nodes.
+There are no global spawn-rate or income nodes: a line only grows through its own nodes. Gates
+are typed (`SkillGate`: a crew line, or `{ tier }` for an ADR).
+
+**Icons.** Every square draws `assets/skills/<nodeId>.png`; the five per-line kinds share
+`line-<kind>.png` (`stage/model/skill-icon.model.ts`). The files are generated from
+`tools/art-batch.mjs` rows of the same names; `spare-*.png` are generated but unused.
 
 **Planning poker** (`coaches`, `deck`, 10 ranks each, from ADR-2): coaches on the lane edge hold
 votes live for `VOTE_ON_MS` 1.4 s of every `VOTE_CYCLE_MS` 4 s, offset from each other. A
@@ -273,7 +279,7 @@ ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR modal's approve butto
 `endedAt` and ends the run. No prestige.
 
 Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buySpawner`,
-`buyIncome`, `promote`); `GameStore` commits the result and handles the side effects.
+`buyIncome`); `GameStore` commits the result and handles the side effects.
 
 ---
 
@@ -296,7 +302,7 @@ Paid at pickup. There is no invoice; nothing past lane capacity is ever priced.
 ## 8. Weather — stashed
 
 `HAZARDS_ENABLED = false` (`model/hazard.model.ts`). Ten rows, each a `Partial<Weather>` patch
-(`meeting`, `incidentRate`, `slots`, `offshore`, `supply`), arriving as declinable invitations
+(`meeting`, `incidentRate`, `slots`, `supply`), arriving as declinable invitations
 (`INVITATION_EVERY_MS` 120 s) and undeclinable facts (`FACT_EVERY_MS` 120 s). Rows and specs are
 intact; nothing drives them. `CREW_EURO_WINDOW_FLOOR` in `balance.spec.ts` reads the flag.
 
@@ -318,7 +324,8 @@ game uses:
 - All of it clamped by `ceilingPerSec`; € and SP priced as at pickup.
 
 Not counted: hotfix, escalation, quarter bills, pizza and manager relabels. `data/sim.spec.ts`
-plays the same states on a real board and holds the sim within ×1.35 (it runs 1.04–1.25× high).
+plays the same states on a real board and holds the sim within ×1.5 (it runs 1.07–1.38× high;
+late euros ride on a few gold tickets, so one seeded run is noisy).
 Only the 476 field cells are sweepable; the rest of the 600 stack in overflow rows above the
 field, and the sim counts that.
 
@@ -365,9 +372,9 @@ field, and the sim counts that.
 **Measured run** (25 Sep 2026, autoplayer):
 
 ```
-ADR-1 12.3   first junior 15.2   ADR-2 28.0   ADR-3 41.6   ADR-4 44.2
-ADR-5 46.5   ADR-6 53.9          ADR-7 63.8   ADR-8 71.4   signed off 87.1   tree bought out
-golden crew 57.4 · crew: 45–58 % of closes, 2–5 % of euros before golden crew, 26–31 % after
+ADR-1 12.3   first junior 15.2   ADR-2 28.0   ADR-3 43.4   ADR-4 46.1
+ADR-5 48.5   ADR-6 56.1          ADR-7 66.2   ADR-8 73.8   signed off 89.4   tree bought out
+golden crew 59.7 · crew: 38–59 % of closes, 2–4 % of euros before golden crew, 14–19 % after
 ```
 
 ### Load-bearing, do not undo
@@ -411,7 +418,7 @@ These are accepted as real and go in as they are.
 | Litter lifetime | ~15 s | `TICKET_LIFE_MS` |
 | Opening throw | ~1 item per 4 s from one person | `lint` 0.25/s |
 | Golden rat | late; takes golden, turns 5 % golden | `goldenCrew` |
-| Run length | demo ~30 min to the gorilla; full game 57–70 min | gorilla 41.6, sign-off 87.1 |
+| Run length | demo ~30 min to the gorilla; full game 57–70 min | gorilla 43.4, sign-off 89.4 |
 
 Only rank 1 of each line's throw-two and +50 % nodes is measured; ranks 2–5, the second ×2 above
 paper, and every tier above the dog are extrapolated (value ×10 a tier, € prices ×5, SP prices
