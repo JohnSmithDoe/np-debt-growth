@@ -1,4 +1,4 @@
-export const AUDIO_MUTE_KEY = 'np-clickbait/muted';
+export const AUDIO_MUTE_KEY = 'np-debt-growth/muted';
 
 export const MASTER_GAIN = 0.5;
 

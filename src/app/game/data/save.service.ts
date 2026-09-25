@@ -5,7 +5,7 @@ import { freshConsultancy, resumed } from '../model/consultancy.model';
 import { SAVE_VERSION } from '../model/game.consts';
 import { GameStore } from './game.store';
 
-const STORAGE_KEY = 'np-clickbait/save';
+const STORAGE_KEY = 'np-debt-growth/save';
 const AUTOSAVE_MS = 10_000;
 
 interface SaveFile {

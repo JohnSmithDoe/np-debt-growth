@@ -1,4 +1,4 @@
-export const SETTINGS_KEY = 'np-clickbait/settings';
+export const SETTINGS_KEY = 'np-debt-growth/settings';
 
 export interface Settings {
   readonly showClickRadius?: boolean;

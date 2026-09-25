@@ -5,7 +5,7 @@ export interface Credit {
   readonly url?: string;
 }
 
-export const SOURCE_URL = 'https://github.com/JohnSmithDoe/np-clickbait';
+export const SOURCE_URL = 'https://github.com/JohnSmithDoe/np-debt-growth';
 
 export const COPYRIGHT = '© 2026 Martin Stärk';
 

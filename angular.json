@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "np-clickbait": {
+    "np-debt-growth": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -80,10 +80,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "np-clickbait:build:production"
+              "buildTarget": "np-debt-growth:build:production"
             },
             "development": {
-              "buildTarget": "np-clickbait:build:development"
+              "buildTarget": "np-debt-growth:build:development"
             }
           },
           "defaultConfiguration": "development"

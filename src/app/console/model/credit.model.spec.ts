@@ -17,7 +17,7 @@ interface AssetEntry {
 }
 
 const buildAssets = (): AssetEntry[] =>
-  JSON.parse(readFileSync('angular.json', 'utf8')).projects['np-clickbait']
+  JSON.parse(readFileSync('angular.json', 'utf8')).projects['np-debt-growth']
     .architect.build.options.assets;
 
 const sources = (url: string): string[] =>
