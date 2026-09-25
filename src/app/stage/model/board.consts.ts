@@ -24,7 +24,7 @@ export const DROP_MS = 1_850;
 export const DROP_HOP = 90;
 
 /** A taken card hops `HARVEST_HOP` px, then falls into its slot. */
-export const HARVEST_MS = 1_100;
+export const HARVEST_MS = 1_600;
 export const HARVEST_HOP = 150;
 
 /** A won't-fix card sinks this far as it fades; it is not taken anywhere. */

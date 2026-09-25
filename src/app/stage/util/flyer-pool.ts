@@ -176,8 +176,19 @@ function ease(kind: number, progress: number): number {
   return progress * progress * (3 - 2 * progress);
 }
 
+/** Share of a harvest spent rising; the apex eases in, the fall accelerates out. */
+const HARVEST_APEX = 0.42;
+
 /** A hop: the peak comes at a quarter of the flight, the rest is the fall. */
 function lift(kind: number, progress: number): number {
   if (kind === FLIGHT.fade) return 0;
+  if (kind === FLIGHT.harvest) return arc(progress, HARVEST_APEX);
   return Math.sin(Math.PI * Math.sqrt(progress));
+}
+
+/** Two parabolas meeting at `apex`: finite launch speed, zero speed at the top. */
+function arc(progress: number, apex: number): number {
+  const t =
+    progress < apex ? 1 - progress / apex : (progress - apex) / (1 - apex);
+  return 1 - t * t;
 }

@@ -17,7 +17,6 @@ import {
   formatQuantity,
 } from './@shared/util/format-quantity';
 import { AdrModalComponent } from './console/feature/adr-modal/adr-modal.component';
-import { AdrPanelComponent } from './console/feature/adr-panel/adr-panel.component';
 import { AwardBannerComponent } from './console/feature/award-banner/award-banner.component';
 import { MomentModalComponent } from './console/feature/moment-modal/moment-modal.component';
 import { DebugBarComponent } from './console/feature/debug-bar/debug-bar.component';
@@ -59,7 +58,6 @@ const STEP_MODE: Partial<Record<NoticeTarget, StageMode>> = {
     SupplyPanelComponent,
     DebugBarComponent,
     AdrModalComponent,
-    AdrPanelComponent,
     AwardBannerComponent,
     MomentModalComponent,
     TitleScreenComponent,
