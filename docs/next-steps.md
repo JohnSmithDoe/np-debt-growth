@@ -63,8 +63,9 @@ them.
 No profile exists. The board now sits at 600 cards for most of the run (displacement keeps it
 full), so the heap leads matter again:
 
-1. `stage/scene/tier-spawners.ts` moves up to 126 lane `Image`s a frame (9 × `LANE.perLine` 14)
-   and calls `setFlipX` unconditionally. This is the only cost that scales with purchases.
+1. `stage/scene/tier-spawners.ts` moves up to 450 lane `Image`s a frame (9 × `LANE.perLine` 50,
+   one per head bought) and calls `setFlipX` unconditionally. This is the only cost that scales
+   with purchases.
 2. `cb-scene.ts` `floatPayout` allocates a `Phaser.Text` and a tween per payout, with no cap.
 3. `supply-panel`: all three tab `computed`s read `store.state()` and recompute at 10 Hz.
 4. `ticket-heap.ts`: `sync` diffs the whole board twice a frame; 48 `repeat: -1` tweens run for
