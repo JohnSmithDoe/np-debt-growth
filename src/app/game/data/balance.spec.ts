@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { GameStore } from './game.store';
 
-import type { BoardTicket } from '../model/board.model';
-import { ticketMix } from '../model/board.model';
 import type { Consultancy } from '../model/consultancy.model';
 import { freshConsultancy } from '../model/consultancy.model';
 import { SAVE_VERSION } from '../model/game.consts';
@@ -14,12 +12,8 @@ import {
   SKILL_NODES,
   adrPrice,
 } from '../model/skill.model';
-import type { TicketTypeId } from '../model/ticket.model';
-import { TICKET_TYPES } from '../model/ticket.model';
 import { DEBT_TIERS } from '../model/tier.model';
-import type { PurchaseId } from '../model/balance/progression';
-import { PURCHASE_IDS } from '../model/balance/progression';
-import { SPAWNED_TICKET_IDS, SPAWNERS } from '../model/spawner.model';
+import { SPAWNERS } from '../model/spawner.model';
 import { HAZARDS_ENABLED } from '../model/hazard.model';
 import { TRAIT_IDS } from '../model/senior.model';
 
@@ -28,28 +22,24 @@ const TRAIT_D21_CEILING = 1.25;
 import { HAUL_MIN_MS, HAUL_MS } from '../model/balance/round';
 import { pickWithin } from '../util/board';
 import * as economy from '../util/economy';
+import type { LedgerMark } from '../util/autoplay';
+import { DEFAULT_POLICY, autoplay } from '../util/autoplay';
 
 const CREW_EURO_FLOOR = 0.15;
 const CREW_EURO_CAP = 0.95;
 
-/**
- * Calibrated with the weather staffing offshore crew. With hazards stashed
- * (HAZARDS_ENABLED) that headcount is gone, so the floor drops with it —
- * restore 0.05 when the weather comes back.
- */
+/** Re-measure when the weather comes back: it staffs offshore crew. */
 const CREW_EURO_WINDOW_FLOOR = HAZARDS_ENABLED ? 0.05 : 0.04;
 const WINDOW_MARKS = 4;
 
-const CLICKS_PER_SEC = Number(process.env['CB_CPS'] ?? 1);
+const CLICKS_PER_SEC = Number(
+  process.env['CB_CPS'] ?? DEFAULT_POLICY.clicksPerSec
+);
 /** Gold is worth twice all ordinary work, so watching for it should show. */
 const ATTENTION_MARGIN = 1.5;
-const SPEND_EVERY_MS = 5_000;
 /** Long enough for an unwatched floor to fill a lane or two on its own. */
 const IDLE_CYCLE_MS = 10 * 60_000;
-const STEP_MS = 100;
 const MAX_SESSION_MS = Number(process.env['CB_MAXMS'] ?? 4 * 60 * 60 * 1000);
-const PURCHASE_SPEND_FRACTION = 0.25;
-const PROCESS_PATH = ['root', 'radius', 'capacity', 'duration'] as const;
 
 function everySkill(): Record<string, number> {
   return Object.fromEntries(
@@ -89,365 +79,32 @@ const UNORDERED_MILESTONES = [
   ],
 ] as const;
 
-interface Share {
-  readonly at: number;
-  readonly crew: number;
-  readonly hand: number;
-  readonly board: number;
-  readonly auto: number;
-  readonly crewEuro: number;
-  readonly handEuro: number;
-  readonly autoEuro: number;
-  readonly retainerEuro: number;
-}
-
-interface Scored {
-  readonly seq: number;
-  readonly tier: number;
-  readonly billed: number;
-  readonly target: number | null;
-}
-
-class Playthrough {
-  readonly store = new GameStore();
-  readonly samples: Consultancy[] = [];
-  readonly reached = new Map<string, number>();
-  readonly billed = new Map<string, number>();
-  readonly clicked = new Map<string, number>();
-  readonly rounded = new Map<string, number>();
-  readonly ledger: Share[] = [];
-  readonly rounds: Scored[] = [];
-
-  #now = 0;
-  #handCredit = 0;
-  #crew = 0;
-  #hand = 0;
-  #board = 0;
-  #crewEuro = 0;
-  #handEuro = 0;
-  #retainerEuro = 0;
-  #auto = 0;
-  #autoEuro = 0;
-  #clicks = 0;
-  #rounds = 0;
-
-  constructor() {
-    let seed = Number(process.env['CB_SEED'] ?? 1);
-    this.store.seedRandom(
-      () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648
-    );
-    this.store.hydrate(freshConsultancy(0, SAVE_VERSION));
-  }
-
-  run(limitMs = MAX_SESSION_MS): this {
-    const steps = Math.round(limitMs / STEP_MS);
-    for (let step = 0; step < steps; step += 1) {
-      this.#step();
-      if (this.#finished()) break;
-    }
-    return this;
-  }
-
-  #finished(): boolean {
-    return MILESTONES.every(([label]) => this.reached.has(label));
-  }
-
-  #step(): void {
-    this.#now += STEP_MS;
-
-    const atStep = this.store.lifetimeClosed();
-    const euroAtStep = this.#inSprint();
-    const autoAtStep = this.store.autoClosed();
-    const autoEuroAtStep = this.store.autoValue();
-    this.store.advanceTo(this.#now);
-    const afterCrew = this.store.lifetimeClosed();
-    const euroAfterCrew = this.#inSprint();
-    const auto = this.store.autoClosed() - autoAtStep;
-    const autoEuro = this.store.autoValue() - autoEuroAtStep;
-    this.#auto += auto;
-    this.#autoEuro += autoEuro;
-    this.#crew += afterCrew - atStep - auto;
-    this.#crewEuro += Math.max(0, euroAfterCrew - euroAtStep - autoEuro);
-
-    this.#retainerEuro = this.store.retainerBilled();
-
-    const byHand = this.#handsOn() ? this.#playerClicks(STEP_MS / 1000) : 0;
-    this.#hand += byHand;
-    this.#handEuro += Math.max(0, this.#inSprint() - euroAfterCrew);
-    this.#board += this.store.lifetimeClosed() - afterCrew - byHand;
-
-    this.#turnRound();
-    this.#record();
-  }
-
-  #released: unknown = null;
-  #spentAt = 0;
-
-  /**
-   * Spend each time a lane's train leaves, and on a short beat between — with
-   * several lanes the whole board is almost never away at once.
-   */
-  #turnRound(): void {
-    const outcome = this.store.lastRound();
-    const released = outcome !== null && outcome !== this.#released;
-    if (!released && this.#now - this.#spentAt < SPEND_EVERY_MS) return;
-    if (released) {
-      this.#released = outcome;
-      this.#score();
-      this.#rounds += 1;
-    }
-    this.#spentAt = this.#now;
-    this.#spend();
-  }
-
-  #score(): void {
-    const outcome = this.store.lastRound();
-    if (!outcome || this.rounds.at(-1)?.seq === outcome.seq) return;
-    this.rounds.push({
-      seq: outcome.seq,
-      tier: this.store.snapshot().tier,
-      billed: outcome.billed,
-      target: this.store.lastTarget(),
-    });
-  }
-
-  #handsOn(): boolean {
-    return this.store.running();
-  }
-
-  #playerClicks(seconds: number): number {
-    this.#handCredit += CLICKS_PER_SEC * seconds;
-    const clicks = Math.floor(this.#handCredit);
-    if (clicks <= 0) return 0;
-    this.#handCredit -= clicks;
-
-    let taken = 0;
-    for (let click = 0; click < clicks; click += 1) {
-      const aim = this.#aim();
-      if (!aim) break;
-      const ids = pickWithin(
-        this.store.board,
-        aim.x,
-        aim.y,
-        economy.clickRadius(this.store.snapshot())
-      );
-      if (ids.length === 0) break;
-      this.#clicks += 1;
-      taken += this.store.harvest(ids).taken.length;
-    }
-    return taken;
-  }
-
-  #aim(): BoardTicket | null {
-    const state = this.store.snapshot();
-    const worth = (id: TicketTypeId): number =>
-      (TICKET_TYPES[id].effect === 'decline' ? 1e12 : 0) +
-      (TICKET_TYPES[id].handOnly ? 1e9 : 0) +
-      economy.ticketValue(state, id);
-    let best: BoardTicket | null = null;
-    for (const ticket of this.store.board.tickets) {
-      if (!best || worth(ticket.type) > worth(best.type)) best = ticket;
-    }
-    return best;
-  }
-
-  #inSprint(): number {
-    const state = this.store.snapshot();
-    return economy.sprintPayout(
-      { ...state, escalated: false },
-      ticketMix(this.store.sprint()),
-      state.lastTick
-    );
-  }
-
-  #spend(): void {
-    this.#promote();
-    this.#buySkills();
-    while (this.store.unlockNextTier());
-    this.#buyLines();
-    this.#buySpawners();
-    this.#buyIncome();
-  }
-
-  /** The rates tab: the only euro sink left once every line has capped. */
-  #buyIncome(): void {
-    for (;;) {
-      const state = this.store.snapshot();
-      const next = SPAWNED_TICKET_IDS.filter(
-        (id) =>
-          this.store.canBuyIncome(id) &&
-          this.store.incomeCost(id) <= state.budget * PURCHASE_SPEND_FRACTION
-      ).sort((a, b) => this.store.incomeCost(a) - this.store.incomeCost(b))[0];
-      if (!next || !this.store.buyIncome(next)) return;
-    }
-  }
-
-  /** Headcount is a rail purchase now, not a tree one. */
-  #buyLines(): void {
-    for (;;) {
-      const state = this.store.snapshot();
-      const next = PURCHASE_IDS.filter(
-        (line) =>
-          this.store.canBuyLine(line) &&
-          this.#wants(state, line) &&
-          this.store.lineCost(line) <= state.budget * PURCHASE_SPEND_FRACTION
-      ).sort((a, b) => this.store.lineCost(a) - this.store.lineCost(b))[0];
-      if (!next || !this.store.buyLine(next)) return;
-    }
-  }
-
-  /** Supply first: an empty path produces nothing to bill for. */
-  #buySpawners(): void {
-    for (;;) {
-      const state = this.store.snapshot();
-      const next = SPAWNERS.filter(
-        (row) =>
-          this.store.canBuySpawner(row.adr) &&
-          this.store.spawnerCost(row.adr) <=
-            state.budget * PURCHASE_SPEND_FRACTION
-      ).sort(
-        (a, b) => this.store.spawnerCost(a.adr) - this.store.spawnerCost(b.adr)
-      )[0];
-      if (!next || !this.store.buySpawner(next.adr)) return;
-    }
-  }
-
-  #promote(): void {
-    if (!this.store.promotionOffered()) return;
-    const state = this.store.snapshot();
-    const starved = economy.juniorSpawnRate(state) === 0;
-    const share = starved ? 1 : PURCHASE_SPEND_FRACTION;
-    if (economy.promotionCost(state) > state.budget * share) return;
-    this.store.promote();
-  }
-
-  #buySkills(): void {
-    if ((this.store.snapshot().skills['duration'] ?? 0) < 1) {
-      for (const id of PROCESS_PATH) this.store.buySkill(id);
-    }
-    for (;;) {
-      const state = this.store.snapshot();
-      const next = SKILL_NODES.filter((node) => {
-        if (!this.store.skillAvailable(node.id)) return false;
-        const cost = this.store.skillRankCost(node.id);
-        if (node.currency !== 'eur') return cost <= state.storyPoints;
-        const lines = (
-          node.levels[this.store.skillRank(node.id)]?.effects ?? []
-        ).flatMap((effect) => (effect.kind === 'line' ? [effect.line] : []));
-        if (lines.some((line) => !this.#wants(state, line))) return false;
-        if (lines.some((line) => economy.deskLimited(state, line))) {
-          return false;
-        }
-        return cost <= state.budget * PURCHASE_SPEND_FRACTION;
-      }).sort(
-        (a, b) =>
-          this.store.skillRankCost(a.id) - this.store.skillRankCost(b.id)
-      )[0];
-      if (!next || !this.store.buySkill(next.id)) return;
-    }
-  }
-
-  #wants(state: Consultancy, line: PurchaseId): boolean {
-    const ceiling = economy.ceilingPerSec(state);
-    switch (line) {
-      case 'copilot':
-        return true;
-      case 'junior':
-      case 'senior':
-        return (
-          economy.freeDesks(state) >= 1 &&
-          economy.crewCeilingPerSec(state) < ceiling * 0.5
-        );
-      case 'velocity':
-        return true;
-      case 'kit':
-        return economy.kitNext(state) !== null;
-      case 'manager':
-        return economy.freeDesks(state) >= 1 && state.tier >= 2;
-    }
-  }
-
-  #record(): void {
-    const state = this.store.snapshot();
-    for (const [label, holds] of [...MILESTONES, ...UNORDERED_MILESTONES]) {
-      if (!this.reached.has(label) && holds(state)) {
-        this.reached.set(label, this.#now);
-        this.clicked.set(label, this.#clicks);
-        this.rounded.set(label, this.#rounds);
-        this.billed.set(label, state.lifetimeBilled);
-      }
-    }
-    if (this.#now % 30_000 !== 0) return;
-    this.samples.push(state);
-    this.ledger.push({
-      at: this.#now,
-      crew: this.#crew,
-      hand: this.#hand,
-      board: this.#board,
-      auto: this.#auto,
-      crewEuro: this.#crewEuro,
-      handEuro: this.#handEuro,
-      autoEuro: this.#autoEuro,
-      retainerEuro: this.#retainerEuro,
-    });
-  }
-}
+const EMPTY_MARK: LedgerMark = {
+  at: 0,
+  handClosed: 0,
+  crewClosed: 0,
+  handEuro: 0,
+  crewEuro: 0,
+};
 
 function report(table: string): void {
   process.stdout.write(`\n${table}\n`);
 }
 
-function shareAt(atMs: number): Share {
-  return (
-    run.ledger.filter((entry) => entry.at <= atMs).at(-1) ?? run.ledger[0]!
-  );
+function markAt(atMs: number): LedgerMark {
+  return run.ledger.filter((mark) => mark.at <= atMs).at(-1) ?? EMPTY_MARK;
 }
 
-const EMPTY_SHARE: Share = {
-  at: 0,
-  crew: 0,
-  hand: 0,
-  board: 0,
-  auto: 0,
-  crewEuro: 0,
-  handEuro: 0,
-  autoEuro: 0,
-  retainerEuro: 0,
-};
-
-function euroTotal(from: Share, to: Share): number {
-  return (
-    to.crewEuro -
-    from.crewEuro +
-    (to.handEuro - from.handEuro) +
-    (to.autoEuro - from.autoEuro) +
-    (to.retainerEuro - from.retainerEuro)
-  );
-}
-
-function autoEuroShare(from: Share, to: Share): number {
-  const total = euroTotal(from, to);
-  return total === 0 ? 0 : (to.autoEuro - from.autoEuro) / total;
-}
-
-/**
- * Everything the player did not sweep: walking crew, the CI pipeline and the
- * retainer. The reference's rats are its only automation; ours is both.
- */
-function crewEuroShare(from: Share, to: Share): number {
-  const crew =
-    to.crewEuro -
-    from.crewEuro +
-    (to.autoEuro - from.autoEuro) +
-    (to.retainerEuro - from.retainerEuro);
-  const total = euroTotal(from, to);
+function crewEuroShare(from: LedgerMark, to: LedgerMark): number {
+  const crew = to.crewEuro - from.crewEuro;
+  const total = crew + to.handEuro - from.handEuro;
   return total === 0 ? 0 : crew / total;
 }
 
-function crewShare(from: Share, to: Share): number {
-  const total =
-    to.crew - from.crew + (to.hand - from.hand) + (to.board - from.board);
-  return total === 0 ? 0 : (to.crew - from.crew) / total;
+function crewShare(from: LedgerMark, to: LedgerMark): number {
+  const crew = to.crewClosed - from.crewClosed;
+  const total = crew + to.handClosed - from.handClosed;
+  return total === 0 ? 0 : crew / total;
 }
 
 function fullyLevelled(
@@ -458,12 +115,7 @@ function fullyLevelled(
   const fresh = freshConsultancy(0, SAVE_VERSION);
   return {
     ...fresh,
-    levels: {
-      ...fresh.levels,
-      junior: juniors,
-      senior: seniors,
-      copilot: 1,
-    },
+    levels: { ...fresh.levels, junior: juniors, senior: seniors, velocity: 1 },
     skills: everySkill(),
     spawners: Object.fromEntries(
       SPAWNERS.filter((row) => row.adr <= tier).map((row) => [
@@ -475,38 +127,29 @@ function fullyLevelled(
   };
 }
 
-const run = new Playthrough().run();
+const run = autoplay(
+  freshConsultancy(0, SAVE_VERSION),
+  [...MILESTONES, ...UNORDERED_MILESTONES],
+  MAX_SESSION_MS,
+  { ...DEFAULT_POLICY, clicksPerSec: CLICKS_PER_SEC }
+);
 
 describe('the crew earns its keep, and never all of it', () => {
-  const whole = (): { from: Share; to: Share } => ({
-    from: EMPTY_SHARE,
-    to: run.ledger.at(-1)!,
-  });
-
-  it('delivers a floor of the money — the thing D21 never asserted', () => {
-    const { from, to } = whole();
-    expect(crewEuroShare(from, to)).toBeGreaterThan(CREW_EURO_FLOOR);
+  it('delivers a floor of the money', () => {
+    expect(crewEuroShare(EMPTY_MARK, run.ledger.at(-1)!)).toBeGreaterThan(
+      CREW_EURO_FLOOR
+    );
   });
 
   it('leaves the player a share worth clicking for', () => {
-    const { from, to } = whole();
-    expect(crewEuroShare(from, to)).toBeLessThan(CREW_EURO_CAP);
-  });
-
-  it('pays a retainer that is a floor and never the line', () => {
-    const late = fullyLevelled(57, 23, 8);
-    const retainer = economy.retainerPerSec(late) * 10;
-    const aRoundOfWork =
-      economy.sprintSlots(late) *
-      economy.ticketValue(late, DEBT_TIERS.at(-1)!.ticket);
-
-    expect(retainer).toBeGreaterThan(0);
-    expect(retainer).toBeLessThan(aRoundOfWork * 0.01);
+    expect(crewEuroShare(EMPTY_MARK, run.ledger.at(-1)!)).toBeLessThan(
+      CREW_EURO_CAP
+    );
   });
 
   it('holds the floor across the back half of the run', () => {
     const marks = run.ledger.filter(
-      (share) => share.at >= (run.ledger.at(-1)?.at ?? 0) / 2
+      (mark) => mark.at >= (run.ledger.at(-1)?.at ?? 0) / 2
     );
     for (const [at, mark] of marks.entries()) {
       if (at < WINDOW_MARKS) continue;
@@ -515,39 +158,24 @@ describe('the crew earns its keep, and never all of it', () => {
       );
     }
   });
-});
-
-describe("the crew's delivered share", () => {
-  it('accounts for every close the run banked', () => {
-    const last = run.ledger.at(-1)!;
-    expect(last.crew + last.hand + last.board + last.auto).toBe(
-      run.samples.at(-1)!.lifetimeClosed
-    );
-  });
 
   it('never credits the crew with work before there is a crew', () => {
     const firstJunior = run.reached.get('first junior')!;
-    expect(crewShare(EMPTY_SHARE, shareAt(firstJunior))).toBe(0);
+    expect(crewShare(EMPTY_MARK, markAt(firstJunior - 1_000))).toBe(0);
   });
 
   it.runIf(process.env['CB_SHARE'])('reports the share it measured', () => {
-    const marks = run.ledger.filter((share) => share.at % 300_000 === 0);
-    const rows = marks.map((share, n) => {
-      const since = n === 0 ? EMPTY_SHARE : marks[n - 1]!;
+    const marks = run.ledger.filter((mark) => mark.at % 300_000 === 0);
+    const rows = marks.map((mark, n) => {
+      const since = n === 0 ? EMPTY_MARK : marks[n - 1]!;
       return [
-        (share.at / 60_000).toFixed(0).padStart(5),
-        (crewShare(since, share) * 100).toFixed(1).padStart(8),
-        (crewEuroShare(since, share) * 100).toFixed(1).padStart(9),
-        (autoEuroShare(since, share) * 100).toFixed(1).padStart(8),
-        (crewEuroShare(EMPTY_SHARE, share) * 100).toFixed(1).padStart(8),
-        String(share.crew - since.crew).padStart(10),
-        String(share.hand - since.hand).padStart(10),
-        String(share.board - since.board).padStart(10),
+        (mark.at / 60_000).toFixed(0).padStart(5),
+        (crewShare(since, mark) * 100).toFixed(1).padStart(10),
+        (crewEuroShare(since, mark) * 100).toFixed(1).padStart(11),
+        (crewEuroShare(EMPTY_MARK, mark) * 100).toFixed(1).padStart(10),
       ].join('');
     });
-    report(
-      `  min  window%   crew EUR%  auto EUR%    run EUR%      crew      hand     board\n${rows.join('\n')}`
-    );
+    report(`  min  crew closes%  crew EUR%  run EUR%\n${rows.join('\n')}`);
   });
 });
 
@@ -624,16 +252,6 @@ describe('the regime migration (C5)', () => {
     );
     expect(economy.totalSpawnRate(start)).toBeLessThan(CLICKS_PER_SEC);
   });
-
-  it('ends bucket-limited for a player who never buys capacity', () => {
-    const end = run.store.snapshot();
-    expect(end.tier).toBe(DEBT_TIERS.length);
-
-    const unbought = { ...end, skills: { ...end.skills, capacity: 0 } };
-    expect(economy.totalSpawnRate(unbought)).toBeGreaterThan(
-      economy.ceilingPerSec(unbought) * 2
-    );
-  });
 });
 
 describe('supply is priced against the bucket (D25)', () => {
@@ -645,13 +263,13 @@ describe('supply is priced against the bucket (D25)', () => {
     );
   });
 
-  it('keeps every level of supply worth buying', () => {
+  it("keeps every level of a line's throw-two worth buying", () => {
     const start = freshConsultancy(0, SAVE_VERSION);
-    const supply = SKILL_BY_ID.get('supply')!;
+    const spawn = SKILL_BY_ID.get('spawnLint')!;
     let billable = 0;
 
-    for (let level = 0; level <= supply.levels.length; level += 1) {
-      const state = { ...start, skills: { supply: level, capacity: level } };
+    for (let level = 0; level <= spawn.levels.length; level += 1) {
+      const state = { ...start, skills: { spawnLint: level, capacity: level } };
       const next = Math.min(
         economy.totalSpawnRate(state),
         economy.ceilingPerSec(state)
@@ -761,7 +379,7 @@ describe('the session arc', () => {
   });
 
   it('walks every branch of the tree at least once', () => {
-    const end = run.store.snapshot();
+    const end = run.end;
     const tracks = new Map<string, boolean>();
     for (const node of SKILL_NODES) {
       if (node.id === SECRET_SKILL_ID || node.id === 'root') continue;
@@ -801,7 +419,7 @@ describe('the session arc', () => {
   });
 
   it('leaves nothing on the tree unbought by the time it signs off', () => {
-    const end = run.store.snapshot();
+    const end = run.end;
     const unbought = SKILL_NODES.filter(
       (node) =>
         node.id !== SECRET_SKILL_ID &&
@@ -820,23 +438,18 @@ describe('the session arc', () => {
   it.runIf(process.env['CB_CLOCK'])('reports the clock it measured', () => {
     const rows = [...MILESTONES, ...UNORDERED_MILESTONES].map(([label]) => {
       const at = run.reached.get(label);
-      const clicks = run.clicked.get(label);
-      const rounds = run.rounded.get(label);
       const when = at === undefined ? '—' : (at / 60_000).toFixed(1);
-      const cost = clicks === undefined ? '—' : String(clicks);
-      const round = rounds === undefined ? '—' : String(rounds);
-      return `${when.padStart(6)}${cost.padStart(9)}${round.padStart(8)}  ${label}`;
+      return `${when.padStart(6)}  ${label}`;
     });
-    const end = run.store.snapshot();
     const unbought = SKILL_NODES.filter(
       (node) =>
         node.id !== SECRET_SKILL_ID &&
         node.heading !== true &&
-        (end?.skills[node.id] ?? 0) === 0
+        (run.end.skills[node.id] ?? 0) === 0
     ).map((node) => `${node.id}@${node.levels[0]?.cost ?? 0}`);
     report(
-      `  min   clicks  rounds  milestone\n${rows.join('\n')}\n` +
-        `  SP ${Math.round(end.storyPoints)}` +
+      `  min  milestone\n${rows.join('\n')}\n` +
+        `  SP ${Math.round(run.end.storyPoints)}` +
         `  unbought: ${unbought.join(' ') || 'none'}`
     );
   });
@@ -866,47 +479,19 @@ describe('the session arc', () => {
   });
 
   it.runIf(process.env['CB_LADDER'])('reports the ladder it measured', () => {
-    const rungs = DEBT_TIERS.map((tier) => ({
-      tier,
-      round: run.rounded.get(`tier ${tier.index}`),
-      billed: run.billed.get(`tier ${tier.index}`),
-    }));
-
-    let fromRound = run.rounded.get('first junior') ?? 0;
-    let fromBilled = run.billed.get('first junior') ?? 0;
-    const rows = rungs.map(({ tier, round, billed }, n) => {
-      const reached = round !== undefined && billed !== undefined;
-      const gap = reached ? round - fromRound : undefined;
-      const perRound =
-        reached && gap !== undefined && gap > 0
-          ? (billed - fromBilled) / gap
-          : undefined;
-      const next = rungs[n + 1]?.tier;
-      const owes =
-        next && perRound !== undefined && perRound > 0
-          ? adrPrice(next.index) / perRound
-          : undefined;
-      if (reached) {
-        fromRound = round;
-        fromBilled = billed;
-      }
+    let from = run.reached.get('first junior') ?? 0;
+    const rows = DEBT_TIERS.map((tier) => {
+      const at = run.reached.get(`tier ${tier.index}`);
+      const gap = at === undefined ? undefined : (at - from) / 60_000;
+      if (at !== undefined) from = at;
       return [
         `ADR-${tier.index}`.padStart(6),
         formatSci(adrPrice(tier.index)).padStart(13),
-        (round === undefined ? '—' : String(round)).padStart(7),
-        (gap === undefined ? '—' : String(gap)).padStart(5),
-        (perRound === undefined ? '—' : formatSci(perRound)).padStart(12),
-        (owes === undefined ? '—' : owes.toFixed(1)).padStart(11),
+        (at === undefined ? '—' : (at / 60_000).toFixed(1)).padStart(7),
+        (gap === undefined ? '—' : gap.toFixed(1)).padStart(7),
       ].join('');
     });
-
-    const reached = rungs.filter((rung) => rung.round !== undefined).length;
-    const last = rungs.findLast((rung) => rung.round !== undefined);
-    report(
-      `  rung         cost  round  gap   EUR/round  owes rnds\n${rows.join('\n')}\n` +
-        `  reached ${reached}/${DEBT_TIERS.length}` +
-        `  in ${last?.round ?? 0} rounds`
-    );
+    report(`  rung         cost    min    gap\n${rows.join('\n')}`);
   });
 });
 

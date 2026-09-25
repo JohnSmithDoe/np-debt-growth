@@ -12,14 +12,6 @@ export const DEBT_INTEREST_CAP = 0.25;
 
 export const RELABEL_STEPS_BASE = 1;
 
-export const AUTO_CLOSE_MS = 3_000;
-
-/**
- * The pipeline is a throughput, not a board-wide wipe: each runner files about
- * one ticket a second, the pace of one of the reference's rats.
- */
-export const AUTO_RUNNERS_BASE = 4;
-
 /**
  * The pizza party, the reference's Chad: a rare voucher only the player can
  * sweep. The crew near where it was picked up work `PIZZA_RUSH` times faster
@@ -40,7 +32,6 @@ export const VOTE_BONUS_BASE = 30;
 export const VOTE_BONUS_PER_RANK = 15;
 /** Arrivals inside one step are spread by this, so a burst doesn't share one vote. */
 export const VOTE_SPREAD_MS = 37;
-export const AUTO_RUNNER_PER_SEC = 1;
 
 /**
  * Work nobody reaches is closed as "won't fix" after this long. The debt

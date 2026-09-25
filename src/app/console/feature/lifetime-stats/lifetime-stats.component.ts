@@ -65,7 +65,6 @@ export class LifetimeStatsComponent {
     const closed = this.#store.lifetimeClosed();
     const billed = this.#store.lifetimeBilled();
     const sprints = this.#store.lifetimeRounds();
-    const skimmed = this.#store.lifetimeSkimmed();
     const perSprint = sprints === 0 ? 0 : billed / sprints;
     return [
       { label: 'Tickets closed', value: formatWhole(closed), tone: 'plain' },
@@ -79,11 +78,6 @@ export class LifetimeStatsComponent {
       {
         label: 'Mean per sprint',
         value: formatMoney(perSprint),
-        tone: 'money',
-      },
-      {
-        label: 'Skimmed to SP',
-        value: skimmed > 0 ? formatMoney(skimmed) : '—',
         tone: 'money',
       },
       {

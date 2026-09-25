@@ -38,7 +38,6 @@ export interface CrewStats {
   readonly mode: CrewMode;
   /** `null` = headcount comes from the weather, not a bought line. */
   readonly levelKey: PurchaseId | null;
-  readonly retainer: number;
   readonly effects: CrewPaceEffects;
   readonly leaves: number;
   /** Meetings pull this crew off the board. */
@@ -61,7 +60,6 @@ export const CREW_STATS = {
     takesRares: false,
     mode: 'closer',
     levelKey: 'junior',
-    retainer: 20,
     effects: {
       close: 'junior',
       walk: 'juniorWalk',
@@ -84,7 +82,6 @@ export const CREW_STATS = {
     takesRares: false,
     mode: 'closer',
     levelKey: 'senior',
-    retainer: 280,
     effects: {
       close: 'senior',
       walk: 'seniorWalk',
@@ -107,7 +104,6 @@ export const CREW_STATS = {
     takesRares: false,
     mode: 'refiler',
     levelKey: 'manager',
-    retainer: 420,
     effects: {
       close: 'manager',
       walk: 'managerWalk',
@@ -130,7 +126,6 @@ export const CREW_STATS = {
     takesRares: true,
     mode: 'closer',
     levelKey: null,
-    retainer: 0,
     effects: { close: null, walk: null, batch: null, sweep: null },
     leaves: 1,
     interruptible: false,

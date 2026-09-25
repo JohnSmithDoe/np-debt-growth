@@ -8,14 +8,13 @@ import {
   HEAP_ROWS,
   NO_TICKET,
 } from '../model/board.model';
-import type { Board, Close } from '../model/board.model';
+import type { Board, BoardTicket, Close } from '../model/board.model';
 import type { Consultancy } from '../model/consultancy.model';
 import { freshConsultancy } from '../model/consultancy.model';
 import { SAVE_VERSION } from '../model/game.consts';
 import { CALM } from '../model/hazard.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { CREW_STATS } from '../model/balance/crew';
-import { AUTO_CLOSE_MS } from '../model/balance/flow';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPRINT_SLOTS_BASE } from '../model/balance/round';
 import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
@@ -26,13 +25,15 @@ const SENIOR_WALK_MS =
 const WALK_AND_CLOSE_LIMIT_MS = 120_000;
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
-import { addTicket, removeTicket, workCrews as stepCrews } from './board';
+import {
+  addTicket,
+  expireTickets,
+  removeTicket,
+  workCrews as stepCrews,
+} from './board';
 import { crewRules } from './crew-rules';
-import { fileAutomated } from './supply';
 
 import {
-  autoCloseMs,
-  crewClaims,
   crewCeilingPerSec,
   juniorCloseMs,
   managerCloseMs,
@@ -85,12 +86,8 @@ function run(
   const closed: string[] = [];
   for (let at = 0; at < ms; at += STEP_MS) {
     const took = workCrews(board, state, STEP_MS, rand).closed;
-    const filed = fileAutomated(board, state, STEP_MS, CALM, took.length);
-    closed.push(...[...took, ...filed].map((close) => close.type));
-    state = {
-      ...state,
-      sprintCount: state.sprintCount + took.length + filed.length,
-    };
+    closed.push(...took.map((close) => close.type));
+    state = { ...state, sprintCount: state.sprintCount + took.length };
   }
   return closed;
 }
@@ -444,52 +441,6 @@ describe('a senior closing a patch', () => {
   );
 });
 
-describe('a ticket that closes itself', () => {
-  const automated = (skills: Record<string, number>): Consultancy =>
-    stateWith({ levels: { ...BARE, junior: 4 }, tier: 4, skills });
-
-  it('lands, waits, and files itself into the sprint', () => {
-    const board = emptyBoard();
-    const state = automated({ autoLint: 1 });
-    fill(board, 'lint', 6, cycling());
-
-    expect(run(board, state, autoCloseMs(state) / 2)).toEqual([]);
-    expect(board.tickets.length).toBe(6);
-
-    const closed = run(board, state, autoCloseMs(state) * 2);
-    expect(closed.length).toBeGreaterThan(0);
-    expect(closed.every((type) => type === 'lint')).toBe(true);
-  });
-
-  it('does nothing to a type nobody automated', () => {
-    const board = emptyBoard();
-    fill(board, 'lint', 6, cycling());
-
-    const bare = stateWith({ levels: { ...BARE }, tier: 4 });
-    expect(run(board, bare, AUTO_CLOSE_MS * 4)).toEqual([]);
-    expect(board.tickets.length).toBe(6);
-  });
-
-  it('is not claimed by the crew any more', () => {
-    const state = automated({ autoLint: 1 });
-    expect(crewClaims(state, 'juniors')('lint')).toBe(false);
-    expect(crewClaims(state, 'offshore')('lint')).toBe(false);
-  });
-
-  it('waits for room rather than billing past a full sprint', () => {
-    const board = emptyBoard();
-    const state = {
-      ...automated({ autoLint: 1 }),
-      sprintCount: sprintSlots(stateWith()) + 99,
-      lanes: [{ count: 999, releaseLeftMs: 0 }],
-    };
-    fill(board, 'lint', 6, cycling());
-
-    expect(run(board, state, autoCloseMs(state) * 3)).toEqual([]);
-    expect(board.tickets.length).toBe(6);
-  });
-});
-
 describe('a full sprint (C1)', () => {
   it('keeps closing past capacity rather than standing still', () => {
     const board = emptyBoard();
@@ -560,10 +511,25 @@ describe('the player and the crew race for the same board (D5)', () => {
 });
 
 describe('the board fills up', () => {
-  it('drops the overflow rather than queueing it', () => {
+  it('pushes the oldest card out for new work once full', () => {
     const board = emptyBoard();
-    for (let n = 0; n < BOARD_CAPACITY + 50; n++) addTicket(board, 'lint');
+    for (let n = 0; n < BOARD_CAPACITY; n++) addTicket(board, 'lint');
+    const oldest = board.tickets[0]!;
+    oldest.lifeLeftMs = 1;
+    const newest = addTicket(board, 'legacy');
+
+    expect(newest).not.toBeNull();
     expect(board.tickets.length).toBe(BOARD_CAPACITY);
+    expect(board.byId.has(oldest.id)).toBe(false);
+
+    const gone: BoardTicket[] = [];
+    expireTickets(board, 0, gone);
+    expect(gone).toEqual([oldest]);
+  });
+
+  it('never pushes out a claimed or hand-only card', () => {
+    const board = emptyBoard();
+    for (let n = 0; n < BOARD_CAPACITY; n++) addTicket(board, 'incident');
     expect(addTicket(board, 'lint')).toBeNull();
   });
 

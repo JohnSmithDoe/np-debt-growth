@@ -3,11 +3,11 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { freshConsultancy } from '../model/consultancy.model';
-import { OFFLINE_MAX_MS, SAVE_VERSION } from '../model/game.consts';
+import { SAVE_VERSION } from '../model/game.consts';
 import { GameStore } from './game.store';
 import { SaveService } from './save.service';
 
-const STORAGE_KEY = 'np-clickbait/save';
+const STORAGE_KEY = 'np-debt-growth/save';
 
 describe('restoring a save', () => {
   beforeEach(() => {
@@ -17,52 +17,26 @@ describe('restoring a save', () => {
     });
   });
 
-  it('keeps where the save left off, so the gap can be paid out', () => {
+  it('does not play the time away', () => {
     const store = TestBed.inject(GameStore);
     const fresh = freshConsultancy(0, SAVE_VERSION);
-    const left = Date.now() - 2 * 60 * 60 * 1000;
     store.hydrate({
       ...fresh,
-      lastTick: left,
+      lastTick: Date.now() - 2 * 60 * 60 * 1000,
       budget: 500,
       tier: 1,
       skills: { root: 1, radius: 1, capacity: 1 },
-      levels: { ...fresh.levels, junior: 200, copilot: 1 },
+      levels: { ...fresh.levels, junior: 20 },
       spawners: { 0: 4, 1: 4 },
     });
     TestBed.inject(SaveService).save();
     TestBed.inject(SaveService).restore();
 
-    expect(store.snapshot().lastTick).toBe(left);
-
-    // Two hours away are estimated in one step, not stepped at 10 Hz.
-    store.advanceTo(Date.now());
-    expect(store.budget()).toBeGreaterThan(500);
-    expect(store.lifetimeRounds()).toBe(0);
-  });
-
-  it('never pays out more than the offline window, however long the gap', () => {
-    const store = TestBed.inject(GameStore);
-    const fresh = freshConsultancy(0, SAVE_VERSION);
-    const staffed = {
-      ...fresh,
-      budget: 0,
-      tier: 1,
-      skills: { root: 1, radius: 1, capacity: 1 },
-      levels: { ...fresh.levels, junior: 200, copilot: 1 },
-      spawners: { 0: 4, 1: 4 },
-    };
     const now = Date.now();
-
-    store.hydrate({ ...staffed, lastTick: now - OFFLINE_MAX_MS });
+    expect(store.snapshot().lastTick).toBeGreaterThanOrEqual(now - 1000);
     store.advanceTo(now);
-    const capped = store.budget();
-
-    const longer = new GameStore();
-    longer.hydrate({ ...staffed, lastTick: now - 40 * OFFLINE_MAX_MS });
-    longer.advanceTo(now);
-    // The live catch-up window still spawns at random, so allow for it.
-    expect(longer.budget() / capped).toBeCloseTo(1, 2);
+    expect(store.budget()).toBeCloseTo(500, 0);
+    expect(store.snapshot().runMs).toBeLessThan(1000);
   });
 
   it('resumes with an empty sprint', () => {

@@ -25,7 +25,6 @@ export interface BoardTicket {
   golden: boolean;
   /** SP the planning-poker votes it fell through add at pickup. */
   spBonus: number;
-  autoLeftMs: number;
   /** Counts down while unclaimed; `NEVER_EXPIRES` for hand-only cards. */
   lifeLeftMs: number;
   relabelled: boolean;
@@ -48,9 +47,8 @@ export interface CrewMember {
 }
 
 export const NO_SEAT = -1;
-export const NOT_AUTOMATED = -1;
 
-export type CloseAuthor = 'you' | 'auto' | CrewKind;
+export type CloseAuthor = 'you' | CrewKind;
 
 export interface Close {
   readonly type: TicketTypeId;
@@ -106,14 +104,14 @@ export interface Board {
   readonly managers: CrewMember[];
   readonly offshore: CrewMember[];
   readonly pending: Comeback[];
+  /** Cards a full board pushed out for newer work; drained as won't fix. */
+  readonly displaced: BoardTicket[];
   readonly byId: Map<number, BoardTicket>;
   readonly crewById: Map<number, CrewMember>;
   readonly grid: Int32Array;
   readonly lowFree: Int32Array;
   nextId: number;
   nextCrewId: number;
-  /** Pipeline closes owed but not yet filed; refilled by the runners each step. */
-  autoCredit: number;
 }
 
 export const HEAP_COLS = Math.floor(LOGICAL_BOARD.width / TICKET_SLOT.width);
@@ -163,12 +161,12 @@ export function emptyBoard(): Board {
     managers: [],
     offshore: [],
     pending: [],
+    displaced: [],
     byId: new Map(),
     crewById: new Map(),
     grid: new Int32Array(HEAP_COLS * HEAP_ROWS).fill(NO_TICKET),
     lowFree: new Int32Array(HEAP_COLS),
     nextId: 1,
     nextCrewId: 0,
-    autoCredit: 0,
   };
 }

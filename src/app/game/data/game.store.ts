@@ -25,9 +25,6 @@ import {
   FEED_LIMIT,
   FEED_LINE_GAP_MS,
   MAX_CATCHUP_MS,
-  OFFLINE_FROM_MS,
-  OFFLINE_MAX_MS,
-  OFFLINE_RATE,
   SAVE_VERSION,
   TICK_MS,
 } from '../model/game.consts';
@@ -42,21 +39,16 @@ import {
   HAZARD_BY_ID,
   hazardDurationMs,
 } from '../model/hazard.model';
-import type { RoundInvoice, SprintInvoice } from '../model/invoice.model';
-import { EMPTY_INVOICE } from '../model/invoice.model';
 import type { Lane, RoundOutcome } from '../model/round.model';
 import { EMPTY_LANE } from '../model/round.model';
-import type { SkillGate } from '../model/skill.model';
 import type { SkillLock } from '../model/skill.model';
 import {
   FINAL_SKILL_ID,
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_NODES,
-  skillLabelKey,
-  skillParent,
 } from '../model/skill.model';
-import { adrNodeId, tierAt } from '../model/tier.model';
+import { tierAt } from '../model/tier.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
@@ -78,9 +70,10 @@ import {
   stepBoard,
 } from '../util/board';
 import { crewRules } from '../util/crew-rules';
-import { fileAutomated, spawnInto } from '../util/supply';
+import { spawnInto } from '../util/supply';
 import { newNotes } from '../util/feed';
 import * as economy from '../util/economy';
+import * as purchase from '../util/purchase';
 import { SpawnBudget } from '../util/spawn-budget';
 
 type Buffs = Pick<
@@ -212,8 +205,6 @@ export class GameStore {
   #state = signal<Consultancy>(freshConsultancy(Date.now(), SAVE_VERSION));
   #log = signal<readonly FeedLine[]>([]);
   #awarded = signal<readonly string[]>([]);
-  #autoClosed = signal(0);
-  #autoValue = signal(0);
   #sprint = signal<readonly SprintSlot[]>([]);
   #mix = computed(() => ticketMix(this.#sprint()));
   #closeFloats: CloseFloat[] = [];
@@ -225,9 +216,6 @@ export class GameStore {
   #lastLineAt = 0;
   #seen = freshConsultancy(Date.now(), SAVE_VERSION);
   #billed = 0;
-  #roundBoardBilled = signal(0);
-  #roundSprintInvoice: SprintInvoice = EMPTY_INVOICE;
-  #invoice = signal<RoundInvoice | null>(null);
   #board = emptyBoard();
   #budget = new SpawnBudget();
   #rand: () => number = Math.random;
@@ -242,11 +230,9 @@ export class GameStore {
   #sampleEvery = BURNDOWN_SAMPLE_MS;
 
   #filledAt = -1;
-  #retainerBilled = 0;
   #cycleBilled = 0;
-  #cycleRetainer = 0;
   #opened = { closed: 0, crewBilled: 0 };
-  #roundSp = { velocity: 0, copilots: 0, awards: 0, skimmed: 0 };
+  #roundSp = { velocity: 0, awards: 0 };
   #outcome = signal<RoundOutcome | null>(null);
   #previous = signal<RoundOutcome | null>(null);
   #lastTarget = signal<number | null>(null);
@@ -254,10 +240,6 @@ export class GameStore {
   readonly lastRound = this.#outcome.asReadonly();
   readonly previousRound = this.#previous.asReadonly();
   readonly lastTarget = this.#lastTarget.asReadonly();
-
-  retainerBilled(): number {
-    return this.#retainerBilled;
-  }
 
   #assisted = signal(false);
 
@@ -273,7 +255,7 @@ export class GameStore {
     economy.sprintSlots(this.#state(), this.#sky())
   );
   readonly sprintValue = computed(() =>
-    economy.sprintPayout(this.#state(), this.#mix(), this.#state().lastTick)
+    economy.laneWorth(this.#state(), this.#mix(), this.#state().lastTick)
   );
   readonly hauling = computed(() => this.#state().phase === 'hauling');
   readonly haulLeftMs = computed(() => this.#state().haulLeftMs);
@@ -339,7 +321,6 @@ export class GameStore {
   readonly lifetimeWontFix = computed(() => this.#state().lifetimeWontFix);
   readonly lifetimeBilled = computed(() => this.#state().lifetimeBilled);
   readonly lifetimeRounds = computed(() => this.#state().lifetimeRounds);
-  readonly lifetimeSkimmed = computed(() => this.#state().lifetimeSkimmed);
   readonly lifetimeCrewBilled = computed(
     () => this.#state().lifetimeCrewBilled
   );
@@ -355,9 +336,6 @@ export class GameStore {
 
   readonly awarded = this.#awarded.asReadonly();
   readonly awardCount = computed(() => this.#awarded().length);
-
-  readonly autoClosed = this.#autoClosed.asReadonly();
-  readonly autoValue = this.#autoValue.asReadonly();
 
   readonly sprint = this.#sprint.asReadonly();
   readonly lanes = computed(() => economy.lanesOf(this.#state()));
@@ -413,7 +391,6 @@ export class GameStore {
       this.#state.set({ ...state, lastTick: now });
       return;
     }
-    if (elapsed >= OFFLINE_FROM_MS) this.#accrueOffline(elapsed);
 
     let at = now - Math.min(elapsed, MAX_CATCHUP_MS);
     while (at < now) {
@@ -422,46 +399,6 @@ export class GameStore {
       at = to;
     }
     this.#state.set({ ...this.#state(), lastTick: now });
-  }
-
-  /**
-   * The hours away, paid out in one step. Bounded by `OFFLINE_MAX_MS` and
-   * discounted by `OFFLINE_RATE`: the floor runs without you, worse than
-   * with you.
-   */
-  #accrueOffline(elapsed: number): void {
-    const state = this.#state();
-    const away = Math.min(elapsed, OFFLINE_MAX_MS) - MAX_CATCHUP_MS;
-    if (away <= 0) return;
-
-    const seconds = (away / 1000) * OFFLINE_RATE;
-    const gross = economy.unattendedEuroPerSec(state) * seconds;
-    const closed = Math.floor(economy.unattendedClosesPerSec(state) * seconds);
-    const retainer = economy.retainerPerSec(state) * seconds;
-    const payout = gross + retainer;
-    if (payout <= 0) return;
-
-    const points =
-      economy.unattendedSpPerSec(state) * seconds +
-      economy.copilotSpPerClose(state) * closed;
-
-    this.#retainerBilled += retainer;
-    this.#state.set({
-      ...state,
-      budget: state.budget + payout,
-      storyPoints: state.storyPoints + points,
-      lifetimeClosed: state.lifetimeClosed + closed,
-      lifetimeBilled: state.lifetimeBilled + payout,
-      lifetimeCrewBilled: state.lifetimeCrewBilled + gross + retainer,
-      lifetimeWorkBilled: state.lifetimeWorkBilled + gross + retainer,
-      runMs: state.runMs + away,
-    });
-    this.#write({
-      kind: 'note',
-      note: 'offline',
-      count: Math.round(away / 60_000),
-      money: payout,
-    });
   }
 
   haulMs(): number {
@@ -489,20 +426,9 @@ export class GameStore {
       filledAtMs: this.#filledAt,
       unbilled: this.#board.tickets.length,
       durationMs: state.roundMs,
-      skimmed: this.#roundSp.skimmed,
       spVelocity: this.#roundSp.velocity,
-      spCopilots: this.#roundSp.copilots,
       spAwards: this.#roundSp.awards,
     };
-
-    this.#invoice.set({
-      ...this.#roundSprintInvoice,
-      skimmed: -this.#roundSp.skimmed,
-      storyPoints: this.#roundSp.velocity,
-      retainer: this.#cycleRetainer,
-      board: this.#roundBoardBilled(),
-      billed: outcome.billed,
-    });
 
     this.#state.set({ ...this.#state(), lastOutcome: outcome, lastTick: now });
     const finished = this.#outcome();
@@ -520,12 +446,9 @@ export class GameStore {
       closed: state.lifetimeClosed,
       crewBilled: state.lifetimeCrewBilled,
     };
-    this.#roundSp = { velocity: 0, copilots: 0, awards: 0, skimmed: 0 };
-    this.#roundBoardBilled.set(0);
-    this.#roundSprintInvoice = EMPTY_INVOICE;
+    this.#roundSp = { velocity: 0, awards: 0 };
     this.#roundFrom.set(this.#seq);
     this.#cycleBilled = 0;
-    this.#cycleRetainer = 0;
     this.#state.set({
       ...state,
       roundMs: 0,
@@ -583,15 +506,8 @@ export class GameStore {
             this.#rand,
             economy.sprintRoom(state, weather)
           );
-    const filed = fileAutomated(
-      this.#board,
-      state,
-      dtMs,
-      weather,
-      crews.closed.length
-    );
     this.#expire(dtMs);
-    return { closed: [...crews.closed, ...filed], byWomen: crews.byWomen };
+    return crews;
   }
 
   #expire(dtMs: number): void {
@@ -616,16 +532,9 @@ export class GameStore {
     const dtMs = seconds * 1000;
     const work = this.#stepBoard(state, dtMs);
     const banked = this.#bank(state, work, now);
-    const retainer = economy.retainerPerSec(state) * seconds;
-    this.#retainerBilled += retainer;
-    this.#cycleRetainer += retainer;
 
     this.#state.set({
       ...banked.next,
-      budget: banked.next.budget + retainer,
-      lifetimeBilled: banked.next.lifetimeBilled + retainer,
-      lifetimeCrewBilled: banked.next.lifetimeCrewBilled + retainer,
-      lifetimeWorkBilled: banked.next.lifetimeWorkBilled + retainer,
       lifetimeWontFix: banked.next.lifetimeWontFix + this.#wontFixStep,
       lastTick: now,
       runMs: state.runMs + dtMs,
@@ -716,8 +625,6 @@ export class GameStore {
   }
 
   readonly burndown = this.#burndown.asReadonly();
-
-  readonly invoice = this.#invoice.asReadonly();
 
   #stepWeather(runMs: number, now: number): void {
     const state = this.#state();
@@ -911,8 +818,6 @@ export class GameStore {
 
     const banked = this.#bankWork(state, closed, now);
     const buffs = armBuffs(state, closed, now);
-    const copilotSp = economy.copilotSpPerClose(state) * closed.length;
-    this.#roundSp.copilots += copilotSp;
 
     const fill = economy.fillLanes(state, banked.took.length, this.#sky());
     if (fill.placed.length > 0) {
@@ -945,7 +850,7 @@ export class GameStore {
         sprintCount: count,
         lanes: fill.lanes,
         laneCursor: fill.cursor,
-        storyPoints: state.storyPoints + copilotSp + velocitySp,
+        storyPoints: state.storyPoints + velocitySp,
         lifetimeClosed: state.lifetimeClosed + closed.length,
         lifetimeClosedByWomen: state.lifetimeClosedByWomen + byWomen,
         lifetimeBilled: state.lifetimeBilled + payout,
@@ -970,8 +875,6 @@ export class GameStore {
     let value = 0;
     let crew = 0;
     let sp = 0;
-    let auto = 0;
-    let autoCount = 0;
     const took: Omit<SprintSlot, 'lane'>[] = [];
 
     const goldenMult = economy.goldenMultiplier(state);
@@ -987,17 +890,10 @@ export class GameStore {
         economy.pickupStoryPoints(state, type, by !== 'you') +
         (economy.pickupsPaySp(state) ? spBonus : 0);
       took.push({ type, title });
-      if (by === 'auto') {
-        auto += worth;
-        autoCount += 1;
-      } else if (by !== 'you') {
+      if (by !== 'you') {
         crew += worth;
         this.#addCloseFloat(x, y, worth);
       }
-    }
-    if (autoCount > 0) {
-      this.#autoClosed.update((n) => n + autoCount);
-      this.#autoValue.update((n) => n + auto);
     }
     return { value, crew, sp, took };
   }
@@ -1020,7 +916,6 @@ export class GameStore {
     }
 
     this.#billed += payout;
-    this.#roundBoardBilled.update((paid) => paid + payout);
     this.#state.set({
       ...state,
       budget: state.budget + payout,
@@ -1142,26 +1037,13 @@ export class GameStore {
   }
 
   promote(): boolean {
-    const state = this.#state();
-    const cost = economy.promotionCost(state);
-    if (!economy.promotionOffered(state) || state.budget < cost) return false;
-    this.#state.set({
-      ...state,
-      budget: state.budget - cost,
-      promoted: true,
-      levels: {
-        ...state.levels,
-        junior: 0,
-        senior: state.levels.senior + state.levels.junior,
-      },
-    });
-    return true;
+    return this.#commit(purchase.promote(this.#state()));
   }
 
   /** The rung is a tree node; this is the same purchase, reached from the rail. */
   unlockNextTier(): boolean {
-    const next = tierAt(this.#state().tier + 1);
-    return next !== undefined && this.buySkill(adrNodeId(next.index));
+    const id = purchase.nextAdrNodeId(this.#state());
+    return id !== null && this.buySkill(id);
   }
 
   /** The rung landed: the board gets its first cards of the new type. */
@@ -1190,20 +1072,7 @@ export class GameStore {
 
   /** Another head on an already-open line, bought live from the rail. */
   buyLine(line: PurchaseId): boolean {
-    const state = this.#state();
-    if (!economy.canBuyLine(state, line)) return false;
-    const cost = economy.lineCost(state, line);
-    const levels = { ...state.levels, [line]: state.levels[line] + 1 };
-    this.#state.set({
-      ...state,
-      budget: state.budget - cost,
-      levels,
-      roster:
-        line === 'senior'
-          ? [...state.roster, economy.nextSeniorHire(state)]
-          : state.roster,
-    });
-    return true;
+    return this.#commit(purchase.buyLine(this.#state(), line));
   }
 
   spawnerCount(adr: number): number {
@@ -1224,18 +1093,7 @@ export class GameStore {
 
   /** Hire another developer: more of them, more debt, more to bill for. */
   buySpawner(adr: number): boolean {
-    const state = this.#state();
-    if (!economy.canBuySpawner(state, adr)) return false;
-    const cost = economy.spawnerCost(state, adr);
-    this.#state.set({
-      ...state,
-      budget: state.budget - cost,
-      spawners: {
-        ...state.spawners,
-        [String(adr)]: economy.spawnerCount(state, adr) + 1,
-      },
-    });
-    return true;
+    return this.#commit(purchase.buySpawner(this.#state(), adr));
   }
 
   incomeLevel(id: TicketTypeId): number {
@@ -1260,17 +1118,12 @@ export class GameStore {
 
   /** Bill more for one kind of work — the rail's third tab. */
   buyIncome(id: TicketTypeId): boolean {
-    const state = this.#state();
-    if (!economy.canBuyIncome(state, id)) return false;
-    const cost = economy.incomeCost(state, id);
-    this.#state.set({
-      ...state,
-      budget: state.budget - cost,
-      income: {
-        ...state.income,
-        [id]: economy.incomeLevel(state, id) + 1,
-      },
-    });
+    return this.#commit(purchase.buyIncome(this.#state(), id));
+  }
+
+  #commit(next: Consultancy | null): boolean {
+    if (next === null) return false;
+    this.#state.set(next);
     return true;
   }
 
@@ -1300,113 +1153,18 @@ export class GameStore {
   }
 
   skillAvailable(id: string): boolean {
-    const state = this.#state();
-    const node = SKILL_BY_ID.get(id);
-    if (!node || node.granted === true) return false;
-    if (economy.skillRank(state, id) >= node.levels.length) return false;
-    const parent = skillParent(id);
-    if (parent !== null && economy.skillRank(state, parent) === 0) {
-      return false;
-    }
-    if (this.#deskShort(id)) return false;
-    return this.#gateReason(node.gate) === null;
-  }
-
-  #deskShort(id: string): boolean {
-    const state = this.#state();
-    const node = SKILL_BY_ID.get(id);
-    const next = node?.levels[economy.skillRank(state, id)];
-    return (next?.effects ?? []).some(
-      (effect) =>
-        effect.kind === 'line' && economy.deskLimited(state, effect.line)
-    );
+    return purchase.skillAvailable(this.#state(), id);
   }
 
   skillLockReason(id: string): SkillLock | null {
-    const state = this.#state();
-    const node = SKILL_BY_ID.get(id);
-    if (!node) return { key: 'skill.lock.unknown' };
-    if (economy.skillRank(state, id) >= node.levels.length) return null;
-
-    const gate = this.#gateReason(node.gate);
-    if (gate !== null) return gate;
-    if (this.#deskShort(id)) return { key: 'skill.lock.needs-desk' };
-    const parent = skillParent(id);
-    if (parent !== null && economy.skillRank(state, parent) === 0) {
-      return {
-        key: 'skill.lock.blocked',
-        params: { by: skillLabelKey(parent) },
-        resolveParams: ['by'],
-      };
-    }
-    const cost = economy.skillRankCost(state, id);
-    const held =
-      SKILL_BY_ID.get(id)?.currency === 'eur'
-        ? state.budget
-        : state.storyPoints;
-    if (held < cost) return { key: 'skill.lock.underfunded' };
-    return null;
-  }
-
-  #gateReason(gate: SkillGate | undefined): SkillLock | null {
-    const state = this.#state();
-    switch (gate) {
-      case undefined:
-        return null;
-      case 'junior':
-        return state.levels.junior === 0
-          ? { key: 'skill.lock.needs-junior' }
-          : null;
-      case 'senior':
-        return state.levels.senior === 0
-          ? { key: 'skill.lock.needs-senior' }
-          : null;
-      case 'manager':
-        return state.levels.manager === 0
-          ? { key: 'skill.lock.needs-manager' }
-          : null;
-      default: {
-        const needed = Number(gate.slice(4));
-        return state.tier < needed
-          ? { key: 'skill.lock.needs-adr', params: { adr: needed } }
-          : null;
-      }
-    }
+    return purchase.skillLockReason(this.#state(), id);
   }
 
   buySkill(id: string): boolean {
-    const state = this.#state();
-    const cost = economy.skillRankCost(state, id);
-    if (!this.skillAvailable(id)) return false;
-
-    const eur = SKILL_BY_ID.get(id)?.currency === 'eur';
-    if (eur ? state.budget < cost : state.storyPoints < cost) return false;
-
-    const node = SKILL_BY_ID.get(id);
-    const bought = node?.levels[economy.skillRank(state, id)];
-    const levels = { ...state.levels };
-    let tier = state.tier;
-    for (const effect of bought?.effects ?? []) {
-      if (effect.kind === 'line') levels[effect.line] += 1;
-      if (effect.kind === 'adr') tier = Math.max(tier, effect.adr);
-    }
-
-    const roster =
-      levels.senior > state.levels.senior
-        ? [...state.roster, economy.nextSeniorHire(state)]
-        : state.roster;
-
-    this.#state.set({
-      ...state,
-      budget: eur ? state.budget - cost : state.budget,
-      storyPoints: eur ? state.storyPoints : state.storyPoints - cost,
-      levels,
-      roster,
-      tier,
-      skills: { ...state.skills, [id]: economy.skillRank(state, id) + 1 },
-      endedAt: id === FINAL_SKILL_ID ? state.lastTick : state.endedAt,
-    });
-    if (tier > state.tier) this.#approve(tier);
+    const before = this.#state().tier;
+    if (!this.#commit(purchase.buySkill(this.#state(), id))) return false;
+    const tier = this.#state().tier;
+    if (tier > before) this.#approve(tier);
     return true;
   }
 
@@ -1445,19 +1203,13 @@ export class GameStore {
     this.#sampleEvery = BURNDOWN_SAMPLE_MS;
     this.#assisted.set(false);
     this.#billed = 0;
-    this.#roundBoardBilled.set(0);
-    this.#roundSprintInvoice = EMPTY_INVOICE;
-    this.#invoice.set(null);
     this.#seq = 0;
     this.#roundFrom.set(0);
     this.#roundSlots.set([]);
     this.#lastLineAt = 0;
     this.#log.set([]);
     this.#awarded.set([]);
-    this.#autoClosed.set(0);
-    this.#autoValue.set(0);
     this.#sprint.set([]);
-    this.#retainerBilled = 0;
     this.#filledAt = -1;
     this.#opened = { closed: 0, crewBilled: 0 };
     this.#outcome.set(null);

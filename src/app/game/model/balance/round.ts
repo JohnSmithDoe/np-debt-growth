@@ -18,6 +18,3 @@ export const HAUL_MS = 4_000;
  * stops being a gate and the can stops meaning anything.
  */
 export const HAUL_MIN_MS = 2_500;
-
-/** `CREW_STATS.retainer` figures are quoted per this window. */
-export const RETAINER_PERIOD_MS = 10_000;

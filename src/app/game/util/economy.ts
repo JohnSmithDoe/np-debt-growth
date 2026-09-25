@@ -9,7 +9,6 @@ import type { Weather } from '../model/hazard.model';
 import type { Lane } from '../model/round.model';
 import { EMPTY_LANE } from '../model/round.model';
 import { CALM } from '../model/hazard.model';
-import type { InvoiceLine, SprintInvoice } from '../model/invoice.model';
 import type { KitItem } from '../model/kit.model';
 import { boughtKit, nextKitItem } from '../model/kit.model';
 import {
@@ -38,14 +37,11 @@ import {
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
 import {
-  AUTO_CLOSE_MS,
-  AUTO_RUNNERS_BASE,
   PIZZA_RADIUS,
   PIZZA_RUSH,
   VOTE_BONUS_BASE,
   VOTE_CYCLE_MS,
   VOTE_ON_MS,
-  AUTO_RUNNER_PER_SEC,
   CLICK_RADIUS_BASE,
   CLICK_RADIUS_MAX,
   DEBT_INTEREST_CAP,
@@ -55,7 +51,6 @@ import {
   RELABEL_STEPS_BASE,
 } from '../model/balance/flow';
 import {
-  COPILOT_SP_PER_CLOSE,
   CREW_SP_MULT,
   SP_PER_PICKUP,
   INCOME_CAP,
@@ -70,7 +65,6 @@ import {
 import {
   HAUL_MIN_MS,
   HAUL_MS,
-  RETAINER_PERIOD_MS,
   LANES_BASE,
   SPRINT_SLOTS_BASE,
 } from '../model/balance/round';
@@ -294,17 +288,6 @@ export function fillLanes(
   return { lanes, cursor, placed };
 }
 
-export function retainerPerSec(state: Consultancy): number {
-  const heads = CREW_KINDS.reduce(
-    (total, crew) => total + crewSize(state, crew) * CREW_STATS[crew].retainer,
-    0
-  );
-  return (
-    (heads * (sprintSlots(state) / SPRINT_SLOTS_BASE)) /
-    (RETAINER_PERIOD_MS / 1000)
-  );
-}
-
 /**
  * The truck, and the only forced wait in the game. `roundLength` effects
  * hurry it, floored by `HAUL_MIN_MS` so the cadence stays a real gate.
@@ -498,28 +481,6 @@ export function totalSpawnRate(state: Consultancy): number {
   return TICKET_TYPE_IDS.reduce((sum, id) => sum + closeRate(state, id), 0);
 }
 
-/**
- * What the floor bills per second when nobody is watching: supply, clamped by
- * the can, priced at the mix the lines actually drop. No board to walk, so it
- * is arithmetic — the only way to pay out hours in one frame.
- */
-export function unattendedEuroPerSec(state: Consultancy): number {
-  let supply = 0;
-  let worth = 0;
-  for (const id of TICKET_TYPE_IDS) {
-    if (TICKET_TYPES[id].effect !== 'value') continue;
-    const rate = closeRate(state, id);
-    supply += rate;
-    worth += rate * ticketValue(state, id);
-  }
-  if (supply <= 0) return 0;
-  return (worth / supply) * Math.min(supply, ceilingPerSec(state));
-}
-
-export function unattendedClosesPerSec(state: Consultancy): number {
-  return Math.min(totalSpawnRate(state), ceilingPerSec(state));
-}
-
 export function juniorSpawnRate(state: Consultancy): number {
   const claims = crewClaims(state, 'juniors');
   return TICKET_TYPE_IDS.reduce(
@@ -654,15 +615,11 @@ export function crewClaims(
   const skipped = triageSkips(state, crew);
   const rares = crewTakesRares(state, crew);
   const band = crewBand(state, crew);
-  const automated = new Set(
-    TICKET_TYPE_IDS.filter((type) => autoCloses(state, type))
-  );
   return (type) => {
     const ticket = TICKET_TYPES[type];
     if (ticket.effect !== 'value') return false;
     if (ticket.handOnly && !rares) return false;
     if (ticket.tier < band.from || ticket.tier > band.to) return false;
-    if (automated.has(type)) return false;
     return !skipped.has(type);
   };
 }
@@ -689,30 +646,6 @@ function crewBand(state: Consultancy, crew: CrewKind): CrewBand {
   const { band } = CREW_STATS[crew];
   if (crew !== 'juniors') return band;
   return { from: band.from, to: additive(state, 'juniorBand', band.to) };
-}
-
-export function autoCloses(state: Consultancy, type: TicketTypeId): boolean {
-  return foldRanks(
-    state,
-    false,
-    (on, effect) =>
-      on || (effect.kind === 'autoClose' && effect.target === type)
-  );
-}
-
-export function autoRunners(state: Consultancy): number {
-  return (
-    AUTO_RUNNERS_BASE +
-    sumOf(state, (e) => (e.kind === 'runners' ? e.add : null))
-  );
-}
-
-export function autoClosesPerSec(state: Consultancy): number {
-  return autoRunners(state) * AUTO_RUNNER_PER_SEC;
-}
-
-export function autoCloseMs(state: Consultancy): number {
-  return AUTO_CLOSE_MS * multOf(state, 'autoCloseSpeed');
 }
 
 function triageSkips(
@@ -925,12 +858,6 @@ export function relabelTarget(
   return ladderUp(id, relabelSteps(state), state.tier);
 }
 
-export function copilotSpPerClose(state: Consultancy): number {
-  const copilots = state.levels.copilot;
-  if (copilots === 0) return 0;
-  return copilots * COPILOT_SP_PER_CLOSE * multOf(state, 'copilot');
-}
-
 export function escalationMultiplier(state: Consultancy): number {
   return ESCALATION_MULTIPLIER * multOf(state, 'escalation');
 }
@@ -944,110 +871,14 @@ export function closeValue(
   return state.escalated ? base * escalationMultiplier(state) : base;
 }
 
-/**
- * The one pricing chain: hotfix, then escalation. There is no overflow step —
- * the can is a hard cap, so nothing past capacity is ever priced.
- */
-interface PricedSprint {
-  readonly subtotal: number;
-  readonly count: number;
-  readonly hotfix: number;
-  readonly escalation: number;
-  readonly gross: number;
-}
-
-function priceSprint(
-  state: Consultancy,
-  subtotal: number,
-  count: number,
-  now: number
-): PricedSprint {
-  const hotfix = subtotal * (hotfixMultiplier(state, now) - 1);
-  const buffed = subtotal + hotfix;
-  const escalation = state.escalated
-    ? buffed * (escalationMultiplier(state) - 1)
-    : 0;
-  return {
-    subtotal,
-    count,
-    hotfix,
-    escalation,
-    gross: buffed + escalation,
-  };
-}
-
-export function sprintPayout(
-  state: Consultancy,
-  mix: TicketMix,
-  now = 0
-): number {
-  const unbuffed: Consultancy = { ...state, hotfixUntil: 0 };
-  let subtotal = 0;
-  let count = 0;
+/** What the tickets held in the lanes were worth; already paid at pickup. */
+export function laneWorth(state: Consultancy, mix: TicketMix, now = 0): number {
+  let worth = 0;
   for (const id of TICKET_TYPE_IDS) {
     const held = mix[id] ?? 0;
-    if (held > 0) {
-      subtotal += held * ticketValue(unbuffed, id, now);
-      count += held;
-    }
+    if (held > 0) worth += held * closeValue(state, id, now);
   }
-  return priceSprint(state, subtotal, count, now).gross;
-}
-
-export function sprintInvoice(
-  state: Consultancy,
-  mix: TicketMix,
-  now = 0
-): SprintInvoice {
-  const unbuffed: Consultancy = { ...state, hotfixUntil: 0 };
-  const lines: InvoiceLine[] = [];
-  let subtotal = 0;
-  let count = 0;
-  for (const id of TICKET_TYPE_IDS) {
-    const held = mix[id] ?? 0;
-    if (held <= 0) continue;
-    const each = ticketValue(unbuffed, id, now);
-    const total = held * each;
-    lines.push({ type: id, count: held, each, total });
-    subtotal += total;
-    count += held;
-  }
-  lines.sort((a, b) => b.total - a.total);
-
-  return {
-    lines,
-    capacity: sprintSlots(state),
-    ...priceSprint(state, subtotal, count, now),
-  };
-}
-
-export function mergeInvoices(
-  first: SprintInvoice,
-  next: SprintInvoice
-): SprintInvoice {
-  const byType = new Map(first.lines.map((line) => [line.type, line]));
-  for (const line of next.lines) {
-    const held = byType.get(line.type);
-    byType.set(
-      line.type,
-      held
-        ? {
-            ...held,
-            count: held.count + line.count,
-            total: held.total + line.total,
-          }
-        : line
-    );
-  }
-  return {
-    lines: [...byType.values()].sort((a, b) => b.total - a.total),
-    count: first.count + next.count,
-    capacity: next.capacity,
-    subtotal: first.subtotal + next.subtotal,
-    hotfix: first.hotfix + next.hotfix,
-    escalation: first.escalation + next.escalation,
-    gross: first.gross + next.gross,
-  };
+  return worth;
 }
 
 /**
@@ -1109,20 +940,6 @@ export function voteBonus(state: Consultancy, runMs: number): number {
     if (voteLive(state, index, runMs)) live += 1;
   }
   return live * voteBonusPerCrossing(state);
-}
-
-/** The offline estimate's SP: the same mix `unattendedEuroPerSec` prices. */
-export function unattendedSpPerSec(state: Consultancy): number {
-  let supply = 0;
-  let points = 0;
-  for (const id of TICKET_TYPE_IDS) {
-    if (TICKET_TYPES[id].effect !== 'value') continue;
-    const rate = closeRate(state, id);
-    supply += rate;
-    points += rate * pickupStoryPoints(state, id, true);
-  }
-  if (supply <= 0) return 0;
-  return (points / supply) * Math.min(supply, ceilingPerSec(state));
 }
 
 export function promotionCost(state: Consultancy): number {

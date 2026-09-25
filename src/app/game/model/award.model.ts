@@ -1,5 +1,5 @@
 import type { Consultancy } from './consultancy.model';
-import { AUTO_CLOSE_NODE_IDS, OFFICE_NODE_IDS } from './skill.model';
+import { OFFICE_NODE_IDS } from './skill.model';
 
 export interface Award {
   readonly id: string;
@@ -157,14 +157,6 @@ export const AWARDS: readonly Award[] = [
     when: (s) => s.lifetimeClosed >= 1_000,
   },
   {
-    id: 'a-automated',
-    kind: 'achievement',
-    label: 'Ceremony automated',
-    blurb: 'Automate every rung a junior could have worked.',
-    sp: 10,
-    when: (s) => AUTO_CLOSE_NODE_IDS.every((id) => (s.skills[id] ?? 0) > 0),
-  },
-  {
     id: 'a-war-room',
     kind: 'achievement',
     label: 'Standing war room',
@@ -258,7 +250,7 @@ export const AWARDS: readonly Award[] = [
     label: 'The rate card, revised',
     blurb: 'Five revisions. It has still never gone down.',
     sp: 200_000,
-    when: (s) => (s.skills['income'] ?? 0) >= 5,
+    when: (s) => (s.skills['incomeLint'] ?? 0) >= 5,
   },
   {
     id: 'a-secret',

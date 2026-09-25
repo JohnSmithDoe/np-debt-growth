@@ -10,7 +10,6 @@ import {
   adrPrice,
 } from '../model/skill.model';
 import { adrNodeId, DEBT_TIERS, tierAt } from '../model/tier.model';
-import { FREE_COPILOTS } from '../model/balance/progression';
 import { DESKS_BASE, DESKS_PER_RANK } from '../model/balance/crew';
 import { addTicket } from '../util/board';
 import { sprintSlots } from '../util/economy';
@@ -27,15 +26,7 @@ function click(store: GameStore, id: Parameters<typeof addTicket>[1]): boolean {
   return store.harvest([ticket.id]).taken.length === 1;
 }
 
-describe('the free Copilot (C3)', () => {
-  // The tree is bought with story points now, so the first copilot has to
-  // ship with the laptop: without it the first ADR is unreachable.
-  it('ships with the run, so Story Points flow from the first close', () => {
-    const store = storeWith();
-    expect(store.levels().copilot).toBe(FREE_COPILOTS);
-    expect(store.tier()).toBe(0);
-  });
-
+describe('the first rung', () => {
   it('opens the first rung on story points, not on budget', () => {
     const store = storeWith({
       storyPoints: tierAt(1)!.spCost,
@@ -258,7 +249,7 @@ describe('advancing the clock (S3)', () => {
     const store = storeWith({
       tier: 1,
       skills: { ...AUTOMATED, capacity: 5 },
-      levels: { junior: 200, copilot: 1 },
+      levels: { junior: 200 },
     });
     for (let n = 0; n < 40; n += 1) click(store, 'lint');
     return store;
@@ -304,7 +295,7 @@ describe('advancing the clock (S3)', () => {
     const store = storeWith({
       tier: 1,
       skills: { ...AUTOMATED, capacity: 5 },
-      levels: { junior: 200, copilot: 1 },
+      levels: { junior: 200 },
     });
     store.advanceTo(-5_000);
     expect(store.budget()).toBe(0);
@@ -331,7 +322,7 @@ describe('juniors and the sprint', () => {
     const store = storeWith({
       tier: 1,
       skills: { ...AUTOMATED, capacity: 5 },
-      levels: { junior: 200, copilot: 1 },
+      levels: { junior: 200 },
       spawners: { 0: 20 },
     });
     for (let ms = 100; ms <= 600_000; ms += 100) store.advanceTo(ms);
@@ -369,7 +360,7 @@ describe('desks gate the crew (D36, D56)', () => {
       budget: 1_000_000,
       levels: { junior: DESKS_BASE },
     });
-    for (const line of ['copilot', 'velocity', 'kit'] as const) {
+    for (const line of ['velocity', 'kit'] as const) {
       expect(store.deskLimited(line)).toBe(false);
     }
   });
@@ -403,7 +394,7 @@ describe('the feed', () => {
     const store = storeWith({
       tier: 1,
       skills: { ...AUTOMATED, capacity: 5 },
-      levels: { junior: 200, copilot: 1 },
+      levels: { junior: 200 },
     });
 
     for (let ms = 100; ms <= 20_000; ms += 100) {
@@ -433,7 +424,7 @@ describe('the feed', () => {
     const store = storeWith({
       tier: 1,
       skills: { ...AUTOMATED, capacity: 5 },
-      levels: { junior: 200, copilot: 1 },
+      levels: { junior: 200 },
     });
     for (let ms = 100; ms <= 20_000; ms += 100) store.advanceTo(ms);
 

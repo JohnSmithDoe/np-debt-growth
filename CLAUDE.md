@@ -58,11 +58,13 @@ There is no round timer. Money and story points land **per ticket at pickup**. C
 until it is back. The others keep taking; collection is refused only when every train is away
 (`phase: 'hauling'`). A "round" is one lane's release. `cans` adds a lane, `capacity` raises the
 WIP limit. The cadence is an output of the player's throughput, not an input. Player-facing copy
-never says "truck" or "can". Auto-close is a throughput too: CI `runners`, about a close a second
-each, not a board-wide wipe. The board is never wiped at
-once, but work nobody reaches in `TICKET_LIFE_MS` is **closed as "won't fix"** (`expireTickets`):
-the debt stays, it just leaves the board. Density is spawn rate × lifetime, so it tracks what the
-player bought; `BOARD_CAPACITY` is a safety cap, not a state the board sits in.
+never says "truck" or "can". The board is never wiped at once, but work nobody reaches in
+`TICKET_LIFE_MS` is **closed as "won't fix"** (`expireTickets`): the debt stays, it just leaves
+the board. At `BOARD_CAPACITY` a full board **displaces** — each arrival pushes out the unclaimed
+card nearest expiry (`displaceOldest`) — so the field's mix always matches what was bought. Never
+make it refuse arrivals instead: spawns run cheapest type first, so refusing starves the late
+lines. The hand and the crew are the only collectors; there is no income that doesn't come from
+a pickup, and no offline progress.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
@@ -71,13 +73,17 @@ bills**, once the €25 `velocity` row is bought, plus the per-ticket `+2` nodes
 votes a ticket fell through (`voteBonus`, decided at spawn). Euro upgrades never touch SP, as the
 reference's gum works. Don't add a euro node or an SP rail row without meaning to.
 
+Every line has the same five tree nodes (`LINE_NODES`): `value` ×2 opens `spawn` (5 × +20 %),
+`income` (5 × +50 %) and `estimates` (5 × +2 SP); all three maxed (`SkillNode.maxed`) open
+`double` ×2. There are no global spawn or income nodes. Every purchase is a pure step in
+`game/util/purchase.ts`; the store commits it and adds the side effects.
+
 ### The store is the only clock
 
 `GameStore` (`game/data/game.store.ts`) holds the whole `Consultancy` in one signal and is the sole
 mutator. `GameClock` ticks `advanceTo(Date.now())` every `TICK_MS` (100 ms); `advanceTo` walks
-fixed sub-ticks and clamps *simulation* to `MAX_CATCHUP_MS`. A gap longer than `OFFLINE_FROM_MS` is
-**estimated, not simulated** — `#accrueOffline` pays out up to `OFFLINE_MAX_MS` at `OFFLINE_RATE`
-in one step, because four hours at 10 Hz is 144 000 iterations and would freeze the tab.
+fixed sub-ticks and clamps simulation to `MAX_CATCHUP_MS`; anything longer (a hidden tab, a closed
+app) is not played. The game is active-only.
 
 Two deliberate exceptions to "everything is a signal":
 
@@ -104,15 +110,13 @@ the autosave and the clock **only once `DoorService.opened()`** — the title sc
 so a restored save does not tick behind the splash. Save is `localStorage`, version-gated
 (`SAVE_VERSION`); a version bump silently discards old saves rather than migrating.
 
-Two things in the restore look like bugs and are not:
+One thing in the restore looks like a bug and is not:
 
-- **`resumed()` keeps the saved `lastTick`.** The gap between it and now is what offline progress
-  is measured from. Resetting it to `now` erases the whole mechanism.
 - **`freshConsultancy` ships `root` bought.** The tree costs story points and the ADR ladder lives
   on it, so a run with an unbought root is stranded — including the ADR panel's own buy button,
   which routes through `buySkill`. The `velocity` row is `open` on the rail for the same reason:
   it is the SP source, so it cannot sit behind an SP node. The run opens with one developer and
-  nothing else (`FREE_COPILOTS` 0), as the reference does.
+  nothing else, as the reference does.
 
 ### i18n
 
@@ -155,19 +159,21 @@ block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored 
 
 | File | What it is |
 |---|---|
-| `docs/gamedesign.md` | The design **as the code has it** — loop, currencies, crew, progression, where every knob lives. Read this before touching balance. |
-| `docs/rework-garbage-growth.md` | The contract the current shape was built to, and the staged record of building it. §9 is the status. |
-| `docs/comparrison.md` | Row-by-row audit against the reference, and which rows rest on a spec, a read, or having played it. |
-| `docs/garbage-growth-real-numbers.md` | The reference's opening as measured — accepted as real — with the fitted formulas and how ours differs. |
-| `docs/handoff-next.md` | What is open, ranked, with the traps that cost this project time. |
-| `docs/performance.md` | Unconfirmed stage-performance leads, ranked by how they scale, plus the measurement still owed. A static review — leads, not facts. |
-| `docs/handoff-parity.md` | Closed. Kept as the record of the parity brief. |
+| `docs/gamedesign.md` | The design **as the code has it** — loop, currencies, crew, progression, where every knob lives, the current measured run, and the reference's measured numbers (§11). Read this before touching balance. |
+| `docs/next-steps.md` | What is open, ranked, including the stage-performance leads and the traps that cost this project time. |
+
+Docs describe the current state only — no history; git has that.
 
 ## Balance is measured, not asserted by eye
 
-`game/data/balance.spec.ts` simulates a whole playthrough and **fails** if it does not reach
-sign-off in 35–100 minutes, space the last five ADR rungs more than two minutes apart, or finish
-with the tree bought out. After any economy change, re-run it with the reports on:
+The economy runs without a board: `game/util/sim.ts` prices any state per second (supply,
+density, crew walk, hand sweep, lanes), and `game/util/autoplay.ts` plays a whole run on it in
+about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.6 of a real board — if you
+change how the board collects, change the sim with it.
+
+`game/data/balance.spec.ts` runs the autoplayer and **fails** if it does not reach sign-off in
+35–100 minutes, space the last five ADR rungs more than two minutes apart, or finish with the tree
+bought out. After any economy change, re-run it with the reports on:
 
 ```bash
 CB_CLOCK=1 CB_LADDER=1 CB_SHARE=1 CB_INCOME=1 pnpm vitest run src/app/game/data/balance.spec.ts

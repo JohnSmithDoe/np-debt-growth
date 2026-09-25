@@ -25,8 +25,6 @@ export interface RoundOutcome {
   readonly filledAtMs: number;
   readonly unbilled: number;
   readonly durationMs: number;
-  readonly skimmed: number;
   readonly spVelocity: number;
-  readonly spCopilots: number;
   readonly spAwards: number;
 }

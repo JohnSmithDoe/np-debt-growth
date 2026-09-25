@@ -108,23 +108,13 @@ export class PostMortemComponent {
     ];
   });
 
-  readonly wentBadly = computed<readonly string[]>(() => {
-    const skimmed = this.#store.lifetimeSkimmed();
-    const items: string[] = [];
-    if (skimmed > 0) {
-      items.push(
-        `${formatMoney(skimmed)} of billed revenue was rebooked as Story Points rather than profit. Finance was not consulted.`
-      );
-    }
-    items.push(
-      `Every Architecture Decision Record made the codebase permanently worse. None were reverted, none were on the agenda to be, and each was approved in writing by ${CLIENT_NAME}.`,
-      'The backlog was, at no point during the engagement, empty.',
-      this.#store.promoted()
-        ? 'The entire junior bench was retitled senior in a single afternoon. No training occurred.'
-        : 'Headcount was added faster than the backlog shrank, at every tier.'
-    );
-    return items;
-  });
+  readonly wentBadly = computed<readonly string[]>(() => [
+    `Every Architecture Decision Record made the codebase permanently worse. None were reverted, none were on the agenda to be, and each was approved in writing by ${CLIENT_NAME}.`,
+    'The backlog was, at no point during the engagement, empty.',
+    this.#store.promoted()
+      ? 'The entire junior bench was retitled senior in a single afternoon. No training occurred.'
+      : 'Headcount was added faster than the backlog shrank, at every tier.',
+  ]);
 
   readonly genderSplit = computed<{
     readonly women: HeadRate;

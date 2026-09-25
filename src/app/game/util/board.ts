@@ -13,7 +13,6 @@ import {
   HEAP_ROWS,
   meetingSpot,
   NEVER_EXPIRES,
-  NOT_AUTOMATED,
   NO_TICKET,
 } from '../model/board.model';
 import { pickTicketTitle } from '../model/ticket-copy.model';
@@ -121,7 +120,7 @@ export function addTicket(
   golden = false
 ): BoardTicket | null {
   if (board.tickets.length >= BOARD_CAPACITY && !admittedPastCap(type)) {
-    return null;
+    if (!displaceOldest(board)) return null;
   }
   const cell = claimCell(board, rand);
   if (cell === NO_TICKET) return null;
@@ -135,7 +134,6 @@ export function addTicket(
     golden,
     spBonus: 0,
     relabelled,
-    autoLeftMs: NOT_AUTOMATED,
     lifeLeftMs: TICKET_TYPES[type].handOnly ? NEVER_EXPIRES : TICKET_LIFE_MS,
     x: cellX(col),
     y: cellY(cell - col * HEAP_ROWS),
@@ -165,11 +163,30 @@ export function removeTicket(board: Board, ticket: BoardTicket): void {
  * Closes as "won't fix" whatever nobody reached in time. A claimed card holds
  * its clock: someone is on the way. Won't-fix never comes back.
  */
+/**
+ * A full board makes room for new work by closing the card nearest its own
+ * expiry. Claimed and hand-only cards are never pushed out.
+ */
+function displaceOldest(board: Board): boolean {
+  let oldest: BoardTicket | null = null;
+  for (const ticket of board.tickets) {
+    if (ticket.lifeLeftMs === NEVER_EXPIRES) continue;
+    if (ticket.claimedBy !== NO_TICKET) continue;
+    if (!oldest || ticket.lifeLeftMs < oldest.lifeLeftMs) oldest = ticket;
+  }
+  if (!oldest) return false;
+  removeTicket(board, oldest);
+  board.displaced.push(oldest);
+  return true;
+}
+
 export function expireTickets(
   board: Board,
   dtMs: number,
   into: BoardTicket[]
 ): void {
+  into.push(...board.displaced);
+  board.displaced.length = 0;
   for (let at = board.tickets.length - 1; at >= 0; at--) {
     const ticket = board.tickets[at];
     if (!ticket || ticket.lifeLeftMs === NEVER_EXPIRES) continue;

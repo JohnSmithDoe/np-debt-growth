@@ -50,11 +50,11 @@ describe('skill layout', () => {
     );
     expect(arms.map((square) => square.id).sort()).toEqual([
       'adr1',
-      'copilot',
+      'debtInterest',
       'junior',
       'o1',
       'radius',
-      'supply',
+      'triagePolicy',
       'valueLint',
     ]);
     const orphans = SKILL_GRAPH.squares.filter(
@@ -137,12 +137,12 @@ describe('skill reveal', () => {
   it('opens as the root, readable, with a box on each arm it would open', () => {
     expect([...ranked({}).entries()].sort()).toEqual([
       ['adr1', 'box'],
-      ['copilot', 'box'],
+      ['debtInterest', 'box'],
       ['junior', 'box'],
       ['o1', 'box'],
       ['radius', 'box'],
       [SKILL_ROOT_ID, 'open'],
-      ['supply', 'box'],
+      ['triagePolicy', 'box'],
       ['valueLint', 'box'],
     ]);
   });
@@ -155,8 +155,8 @@ describe('skill reveal', () => {
       'radius',
       'junior',
       'valueLint',
-      'supply',
-      'copilot',
+      'debtInterest',
+      'triagePolicy',
       'o1',
       'adr1',
     ]) {

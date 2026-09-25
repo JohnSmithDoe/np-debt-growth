@@ -6,7 +6,7 @@ import { RETYPE_LADDER, TICKET_TYPES } from '../model/ticket.model';
 import { SKILL_BY_ID } from '../model/skill.model';
 import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from '../model/tier.model';
 import { CREW_KINDS, CREW_STATS } from '../model/balance/crew';
-import { LINE_PLAN, PURCHASE_IDS } from '../model/balance/progression';
+import { LINE_PLAN } from '../model/balance/progression';
 import * as economy from '../util/economy';
 
 /**
@@ -90,14 +90,6 @@ describe('the crew table', () => {
       expect(pace.speed).toBeCloseTo(CREW_STATS[kind].walkSpeed, 6);
       expect(pace.batch).toBe(CREW_STATS[kind].batchBase);
       expect(pace.sweep).toBeCloseTo(CREW_STATS[kind].sweepRadius, 6);
-    }
-  });
-
-  it('only charges a retainer for a crew the player bought', () => {
-    for (const kind of CREW_KINDS) {
-      const { levelKey, retainer } = CREW_STATS[kind];
-      if (levelKey === null) expect(retainer).toBe(0);
-      else expect(PURCHASE_IDS).toContain(levelKey);
     }
   });
 });

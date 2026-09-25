@@ -1,17 +1,12 @@
 import type { TicketTypeId } from '../ticket.model';
 
-export const COPILOT_SP_PER_CLOSE = 0.013;
-
 /**
  * Story points land at pickup, a flat count per ticket whatever it bills, once
  * the `velocity` row is bought — the reference's one gum per piece of trash.
  */
 export const SP_PER_PICKUP = 1;
-/** Crew and pipeline closes pay this much more SP once `timesheets` is bought. */
+/** Crew closes pay this much more SP once `timesheets` is bought. */
 export const CREW_SP_MULT = 2;
-
-/** The run opens with one developer and nothing else; SP comes from `velocity`. */
-export const FREE_COPILOTS = 0;
 
 export const PURCHASE_REVEAL_FRACTION = 0.6;
 
@@ -60,7 +55,6 @@ export const INCOME_VALUE_ADD = 3;
 export const PURCHASE_IDS = [
   'junior',
   'senior',
-  'copilot',
   'velocity',
   'kit',
   'manager',
@@ -88,7 +82,6 @@ export const LINE_PLAN: Readonly<
   junior: { cost: 1000, cap: 50 },
   senior: { cost: 1_200, cap: 50 },
   manager: { cost: 28_000, cap: 50 },
-  copilot: { cost: 150, cap: 50 },
   velocity: { cost: 25, cap: 1, open: true },
   kit: { cost: 400, cap: 6 },
 };

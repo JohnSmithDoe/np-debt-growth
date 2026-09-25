@@ -38,9 +38,6 @@ export type SkillEffect =
       readonly target: TicketTypeId;
     }
   | { readonly kind: 'nearestClaim' }
-  | { readonly kind: 'autoClose'; readonly target: TicketTypeId }
-  | { readonly kind: 'autoCloseSpeed'; readonly mult: number }
-  | { readonly kind: 'runners'; readonly add: number }
   | {
       readonly kind: 'spPerClose';
       readonly add: number;
@@ -55,7 +52,6 @@ export type SkillEffect =
   | { readonly kind: 'seniorBatch'; readonly add: number }
   | { readonly kind: 'seniorSweep'; readonly mult: number }
   | { readonly kind: 'topOfBand' }
-  | { readonly kind: 'copilot'; readonly mult: number }
   | { readonly kind: 'manager'; readonly mult: number }
   | { readonly kind: 'managerWalk'; readonly mult: number }
   | { readonly kind: 'relabelSteps'; readonly add: number }
@@ -92,7 +88,7 @@ export type SkillGate =
   | 'tier8';
 
 export type SkillTrack =
-  'root' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'N' | 'O' | 'secret';
+  'root' | 'A' | 'B' | 'C' | 'D' | 'E' | 'G' | 'H' | 'N' | 'O' | 'secret';
 
 export type SkillCurrency = 'sp' | 'eur';
 
@@ -106,6 +102,8 @@ export interface SkillNode {
   readonly track: SkillTrack;
   readonly currency?: SkillCurrency;
   readonly requires: string | null;
+  /** Nodes that must be fully bought first, on top of `requires`. */
+  readonly maxed?: readonly string[];
   readonly gate?: SkillGate;
   readonly granted?: boolean;
   readonly heading?: boolean;
@@ -149,28 +147,53 @@ const LINE_TICKETS: readonly TicketTypeId[] = [
   'swarm',
 ];
 
-/** First rank of each line's ×2 node, ADR-2 on; ADR-0 and ADR-1 are measured. */
+/** First price of each line's first ×2; ADR-0 and ADR-1 are measured. */
 const LINE_DOUBLE_COST = [
-  0, 0, 3000, 6000, 11_000, 20_000, 35_000, 70_000, 140_000,
+  25, 1500, 3000, 6000, 11_000, 20_000, 35_000, 70_000, 140_000,
 ];
 
-/** The reference's defaults double a tier: +50 % income 1 100 → 2 200, double throw 2 200 → 4 400. */
-const lineDefault = (base: number, tier: number): number => base * 2 ** tier;
+/** First-rank prices double a tier, as the reference's do (+50 % income 1 100 → 2 200). */
+const perTier = (base: number, tier: number): number => base * 2 ** tier;
 
-/** The +2 SP node's first rank: the dog's 400, doubling a tier as every gum price does. */
-const lineEstimate = (tier: number): number => 400 * 2 ** (tier - 1);
+/** The +2 SP node's first rank: paper 75, dog 400, then doubling a tier. */
+const lineEstimate = (tier: number): number =>
+  tier === 0 ? 75 : 400 * 2 ** (tier - 1);
+
+/**
+ * `ranks` steps of `+step`, additive: rank k multiplies by (1 + k·step) /
+ * (1 + (k−1)·step), so five +20 % ranks end at exactly ×2.
+ */
+const additiveRanks = (ranks: number, step: number): readonly number[] =>
+  Array.from(
+    { length: ranks },
+    (_, k) => (1 + (k + 1) * step) / (1 + k * step)
+  );
+
+const priced = (first: number, step: number, rank: number): number =>
+  Math.floor(first * step ** rank);
+
+const LINE_RANKS = 5;
 
 const capitalised = (id: string): string => id[0]!.toUpperCase() + id.slice(1);
 
-const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.slice(2).flatMap(
-  (ticket, at) => {
-    const tier = at + 2;
-    const gate = `tier${tier}` as SkillGate;
+/**
+ * Every line's upgrades, one shape: `value` ×2 opens `spawn` (5 × +20 %,
+ * ending at ×2), `income` (5 × +50 %, ×3.5) and `estimates` (5 × +2 SP); all
+ * three maxed open `double`, a second ×2.
+ */
+const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
+  (ticket, tier) => {
+    const name = capitalised(ticket);
+    const gate = tier === 0 ? undefined : (`tier${tier}` as SkillGate);
+    const value = `value${name}`;
+    const spawn = `spawn${name}`;
+    const income = `income${name}`;
+    const estimates = `estimates${name}`;
     return [
       {
-        id: `value${capitalised(ticket)}`,
+        id: value,
         track: 'C' as const,
-        requires: 'valueBug',
+        requires: tier === 0 ? 'client' : 'valueBug',
         gate,
         levels: [
           {
@@ -179,34 +202,49 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.slice(2).flatMap(
               { kind: 'ticketValue' as const, target: ticket, mult: 2 },
             ],
           },
-          {
-            cost: lineDefault(1100, tier),
-            effects: [
-              { kind: 'ticketValue' as const, target: ticket, mult: 1.5 },
-            ],
-          },
         ],
       },
       {
-        id: `estimates${capitalised(ticket)}`,
-        track: 'C' as const,
-        requires: `value${capitalised(ticket)}`,
+        id: spawn,
+        track: 'D' as const,
+        requires: value,
         gate,
-        levels: [0, 1, 2, 3, 4].map((rank) => ({
-          cost: Math.floor(lineEstimate(tier) * 1.5 ** rank),
+        levels: additiveRanks(LINE_RANKS, 0.2).map((mult, rank) => ({
+          cost: priced(perTier(2200, tier), 1.5, rank),
+          effects: [{ kind: 'spawnRate' as const, target: ticket, mult }],
+        })),
+      },
+      {
+        id: income,
+        track: 'C' as const,
+        requires: value,
+        gate,
+        levels: additiveRanks(LINE_RANKS, 0.5).map((mult, rank) => ({
+          cost: priced(perTier(1100, tier), 1.25, rank),
+          effects: [{ kind: 'ticketValue' as const, target: ticket, mult }],
+        })),
+      },
+      {
+        id: estimates,
+        track: 'C' as const,
+        requires: value,
+        gate,
+        levels: Array.from({ length: LINE_RANKS }, (_, rank) => ({
+          cost: priced(lineEstimate(tier), 1.5, rank),
           effects: [{ kind: 'spPerClose' as const, add: 2, target: ticket }],
         })),
       },
       {
-        id: `spawn${capitalised(ticket)}`,
-        track: 'D' as const,
-        requires: 'spawnBug',
+        id: `double${name}`,
+        track: 'C' as const,
+        requires: estimates,
+        maxed: [spawn, income, estimates],
         gate,
         levels: [
           {
-            cost: lineDefault(2200, tier),
+            cost: perTier(2500, tier),
             effects: [
-              { kind: 'spawnRate' as const, target: ticket, mult: 1.2 },
+              { kind: 'ticketValue' as const, target: ticket, mult: 2 },
             ],
           },
         ],
@@ -225,7 +263,6 @@ export const SKILL_NODES: readonly SkillNode[] = [
 
   { id: 'hand', track: 'A', requires: 'root', heading: true, levels: [] },
   { id: 'crew', track: 'B', requires: 'root', heading: true, levels: [] },
-  { id: 'tooling', track: 'F', requires: 'root', heading: true, levels: [] },
   { id: 'debt', track: 'D', requires: 'root', heading: true, levels: [] },
   { id: 'client', track: 'C', requires: 'root', heading: true, levels: [] },
   { id: 'office', track: 'O', requires: 'root', heading: true, levels: [] },
@@ -481,96 +518,9 @@ export const SKILL_NODES: readonly SkillNode[] = [
   },
 
   {
-    id: 'copilot',
-    track: 'F',
-    requires: 'tooling',
-    levels: [{ cost: 200, effects: [{ kind: 'line', line: 'copilot' }] }],
-  },
-  {
-    id: 'copilotYield',
-    track: 'F',
-    requires: 'copilot',
-    levels: [
-      { cost: 40, effects: [{ kind: 'copilot', mult: 1.4 }] },
-      { cost: 160, effects: [{ kind: 'copilot', mult: 1.3 }] },
-      { cost: 550, effects: [{ kind: 'copilot', mult: 1.25 }] },
-      { cost: 1800, effects: [{ kind: 'copilot', mult: 1.2 }] },
-      { cost: 5500, effects: [{ kind: 'copilot', mult: 1.18 }] },
-    ],
-  },
-  {
-    id: 'automationSpeed',
-    track: 'F',
-    requires: 'autoLint',
-    levels: [
-      { cost: 800, effects: [{ kind: 'autoCloseSpeed', mult: 0.8 }] },
-      { cost: 2400, effects: [{ kind: 'autoCloseSpeed', mult: 0.8 }] },
-      { cost: 7000, effects: [{ kind: 'autoCloseSpeed', mult: 0.8 }] },
-    ],
-  },
-  {
-    id: 'runners',
-    track: 'F',
-    requires: 'autoLint',
-    levels: [600, 2200, 8000, 28_000, 90_000].map((cost) => ({
-      cost,
-      effects: [{ kind: 'runners' as const, add: 3 }],
-    })),
-  },
-  {
-    id: 'autoLint',
-    track: 'F',
-    requires: 'copilot',
-    levels: [{ cost: 350, effects: [{ kind: 'autoClose', target: 'lint' }] }],
-  },
-  {
-    id: 'autoBug',
-    track: 'F',
-    requires: 'autoLint',
-    levels: [{ cost: 1100, effects: [{ kind: 'autoClose', target: 'bug' }] }],
-  },
-  {
-    id: 'autoLegacy',
-    track: 'F',
-    requires: 'autoLint',
-    gate: 'tier3',
-    levels: [
-      { cost: 3000, effects: [{ kind: 'autoClose', target: 'legacy' }] },
-    ],
-  },
-  {
-    id: 'autoFlaky',
-    track: 'F',
-    requires: 'autoLint',
-    gate: 'tier4',
-    levels: [{ cost: 3800, effects: [{ kind: 'autoClose', target: 'flaky' }] }],
-  },
-  {
-    id: 'autoConflict',
-    track: 'F',
-    requires: 'autoLint',
-    gate: 'tier5',
-    levels: [
-      { cost: 8000, effects: [{ kind: 'autoClose', target: 'conflict' }] },
-    ],
-  },
-
-  {
-    id: 'supply',
-    track: 'D',
-    requires: 'debt',
-    levels: [
-      { cost: 2200, effects: [{ kind: 'spawnRate', mult: 1.2 }] },
-      { cost: 3300, effects: [{ kind: 'spawnRate', mult: 1.28 }] },
-      { cost: 4950, effects: [{ kind: 'spawnRate', mult: 1.25 }] },
-      { cost: 7425, effects: [{ kind: 'spawnRate', mult: 1.22 }] },
-      { cost: 11_137, effects: [{ kind: 'spawnRate', mult: 1.2 }] },
-    ],
-  },
-  {
     id: 'debtInterest',
     track: 'D',
-    requires: 'supply',
+    requires: 'debt',
     levels: [
       {
         cost: 600,
@@ -589,7 +539,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'triagePolicy',
     track: 'D',
-    requires: 'supply',
+    requires: 'debt',
     levels: [
       {
         cost: 500,
@@ -602,40 +552,9 @@ export const SKILL_NODES: readonly SkillNode[] = [
     ],
   },
   {
-    id: 'spawnLint',
-    track: 'D',
-    requires: 'supply',
-    levels: [
-      {
-        cost: 120,
-        effects: [{ kind: 'spawnRate', target: 'lint', mult: 1.4 }],
-      },
-    ],
-  },
-  {
-    id: 'spawnBug',
-    track: 'D',
-    requires: 'spawnLint',
-    levels: [
-      { cost: 400, effects: [{ kind: 'spawnRate', target: 'bug', mult: 1.4 }] },
-    ],
-  },
-  {
-    id: 'spawnLegacy',
-    track: 'D',
-    requires: 'spawnBug',
-    gate: 'tier1',
-    levels: [
-      {
-        cost: 4400,
-        effects: [{ kind: 'spawnRate', target: 'legacy', mult: 1.2 }],
-      },
-    ],
-  },
-  {
     id: 'spawnEscalation',
     track: 'D',
-    requires: 'spawnBug',
+    requires: 'debtInterest',
     gate: 'tier5',
     levels: [
       {
@@ -647,7 +566,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'spawnIncident',
     track: 'D',
-    requires: 'spawnBug',
+    requires: 'debtInterest',
     gate: 'tier6',
     levels: [
       {
@@ -658,21 +577,9 @@ export const SKILL_NODES: readonly SkillNode[] = [
   },
 
   {
-    id: 'income',
-    track: 'C',
-    requires: 'valueLint',
-    levels: [
-      { cost: 1100, effects: [{ kind: 'global', mult: 1.5 }] },
-      { cost: 1375, effects: [{ kind: 'global', mult: 1.5 }] },
-      { cost: 2600, effects: [{ kind: 'global', mult: 1.1 }] },
-      { cost: 7500, effects: [{ kind: 'global', mult: 1.1 }] },
-      { cost: 20_000, effects: [{ kind: 'global', mult: 1.12 }] },
-    ],
-  },
-  {
     id: 'escalation',
     track: 'C',
-    requires: 'income',
+    requires: 'valueBug',
     levels: [
       { cost: 1300, effects: [{ kind: 'escalation', mult: 1.4 }] },
       { cost: 4000, effects: [{ kind: 'escalation', mult: 1.3 }] },
@@ -680,32 +587,9 @@ export const SKILL_NODES: readonly SkillNode[] = [
     ],
   },
   {
-    id: 'estimates',
-    track: 'C',
-    requires: 'valueLint',
-    levels: [75, 112, 168, 253, 379].map((cost) => ({
-      cost,
-      effects: [
-        { kind: 'spPerClose' as const, add: 2, target: 'lint' as const },
-      ],
-    })),
-  },
-  {
-    id: 'estimatesLegacy',
-    track: 'C',
-    requires: 'valueLegacy',
-    gate: 'tier1',
-    levels: [400, 600, 900, 1350, 2025].map((cost) => ({
-      cost,
-      effects: [
-        { kind: 'spPerClose' as const, add: 2, target: 'legacy' as const },
-      ],
-    })),
-  },
-  {
     id: 'coaches',
     track: 'C',
-    requires: 'estimates',
+    requires: 'estimatesLint',
     gate: 'tier2',
     levels: [
       2000, 5000, 12_000, 30_000, 75_000, 180_000, 450_000, 1_100_000,
@@ -739,42 +623,11 @@ export const SKILL_NODES: readonly SkillNode[] = [
     levels: [{ cost: 15_000, effects: [{ kind: 'crewSp' }] }],
   },
   {
-    id: 'valueLint',
-    track: 'C',
-    requires: 'client',
-    levels: [
-      {
-        cost: 25,
-        effects: [{ kind: 'ticketValue', target: 'lint', mult: 2 }],
-      },
-      {
-        cost: 2500,
-        effects: [{ kind: 'ticketValue', target: 'lint', mult: 2 }],
-      },
-    ],
-  },
-  {
     id: 'valueBug',
     track: 'C',
     requires: 'valueLint',
     levels: [
       { cost: 500, effects: [{ kind: 'ticketValue', target: 'bug', mult: 2 }] },
-    ],
-  },
-  {
-    id: 'valueLegacy',
-    track: 'C',
-    requires: 'valueBug',
-    gate: 'tier1',
-    levels: [
-      {
-        cost: 1500,
-        effects: [{ kind: 'ticketValue', target: 'legacy', mult: 2 }],
-      },
-      {
-        cost: 2200,
-        effects: [{ kind: 'ticketValue', target: 'legacy', mult: 1.5 }],
-      },
     ],
   },
   {
@@ -826,12 +679,6 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'O',
     requires: 'o1',
     levels: [{ cost: 1000, effects: [{ kind: 'juniorWalk', mult: 1.2 }] }],
-  },
-  {
-    id: 'o4',
-    track: 'O',
-    requires: 'o1',
-    levels: [{ cost: 3750, effects: [{ kind: 'spawnRate', mult: 1.1 }] }],
   },
   {
     id: 'o5',
@@ -964,13 +811,6 @@ export const OFFICE_HEADING_ID = 'office';
 
 export const OFFICE_NODE_IDS: readonly string[] = SKILL_NODES.filter(
   (node) => node.track === 'O' && node.heading !== true
-).map((node) => node.id);
-
-export const AUTO_CLOSE_NODE_IDS: readonly string[] = SKILL_NODES.filter(
-  (node) =>
-    node.levels.some((level) =>
-      level.effects.some((effect) => effect.kind === 'autoClose')
-    )
 ).map((node) => node.id);
 
 export const SKILL_ROOT_ID = 'root';

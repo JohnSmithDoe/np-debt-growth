@@ -21,7 +21,6 @@ import {
   incomeLevel,
   incomeUnlocked,
   ticketValue,
-  retainerPerSec,
   closeRate,
   crewCeilingPerSec,
   juniorCeilingPerSec,
@@ -89,7 +88,7 @@ describe('hand-only rares are weather, not a source (D5)', () => {
 
     const bought = consultancy({
       tier: 3,
-      levels: { junior: 40, senior: 40, copilot: 40 },
+      levels: { junior: 40, senior: 40 },
       skills: { supply: 5, capacity: 5, spawnLint: 1, spawnBug: 1, pizza: 1 },
     });
     for (const id of rares) {
@@ -384,26 +383,6 @@ describe('what a body may take (crewCeiling)', () => {
         expect(TICKET_TYPES[ceiling].tier).toBeLessThanOrEqual(tier);
       }
     }
-  });
-
-  it('falls when automation retires the rung it named', () => {
-    const early = consultancy({ tier: 1, levels: { junior: 2 } });
-    expect(crewCeiling(early, 'juniors')).toBe('legacy');
-
-    const automated = consultancy({
-      tier: 1,
-      levels: { junior: 2 },
-      skills: { copilot: 1, autoLint: 1, autoBug: 1, autoLegacy: 1 },
-    });
-    expect(crewCeiling(automated, 'juniors')).toBeNull();
-  });
-});
-
-describe('the retainer', () => {
-  it('bills per second now, because there is no round to bill per', () => {
-    const at = consultancy({ tier: 2, levels: { junior: 3 } });
-    expect(retainerPerSec(at)).toBeGreaterThan(0);
-    expect(retainerPerSec(consultancy({ tier: 2 }))).toBe(0);
   });
 });
 

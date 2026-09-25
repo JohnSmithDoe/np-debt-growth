@@ -3,7 +3,7 @@ import { SPAWNER_FREE_AT_ADR_0 } from './spawner.model';
 import type { SeniorHire } from './senior.model';
 import { SKILL_ROOT_ID } from './skill.model';
 import type { PurchaseId } from './balance/progression';
-import { FREE_COPILOTS, PURCHASE_IDS } from './balance/progression';
+import { PURCHASE_IDS } from './balance/progression';
 
 /** Where the last voucher was swept, in board units, and when the pizza runs out. */
 export interface PizzaParty {
@@ -48,20 +48,16 @@ export interface Consultancy {
   readonly lifetimeWontFix: number;
   readonly lifetimeBilled: number;
   readonly lifetimeRounds: number;
-  readonly lifetimeSkimmed: number;
   readonly lifetimeClosedByWomen: number;
   readonly lifetimeCrewBilled: number;
   readonly lifetimeWorkBilled: number;
 }
 
-/**
- * `lastTick` survives the restore on purpose: the gap between it and now is
- * what the first tick pays out as offline progress.
- */
+/** Time away is not played: the run picks up where it was left. */
 export function resumed(state: Consultancy, now: number): Consultancy {
   return {
     ...state,
-    lastTick: Math.min(state.lastTick, now),
+    lastTick: now,
     phase: 'collecting',
     roundMs: 0,
     haulLeftMs: 0,
@@ -86,13 +82,10 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     haulLeftMs: 0,
     roundSeq: 1,
     lastOutcome: null,
-    levels: {
-      ...(Object.fromEntries(PURCHASE_IDS.map((id) => [id, 0])) as Record<
-        PurchaseId,
-        number
-      >),
-      copilot: FREE_COPILOTS,
-    },
+    levels: Object.fromEntries(PURCHASE_IDS.map((id) => [id, 0])) as Record<
+      PurchaseId,
+      number
+    >,
     // The root is free and the whole tree hangs off it — including the ADR
     // ladder the rail's own button buys. Leaving it unclicked strands the run.
     skills: { [SKILL_ROOT_ID]: 1 },
@@ -114,7 +107,6 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     lifetimeWontFix: 0,
     lifetimeBilled: 0,
     lifetimeRounds: 0,
-    lifetimeSkimmed: 0,
     lifetimeClosedByWomen: 0,
     lifetimeCrewBilled: 0,
     lifetimeWorkBilled: 0,

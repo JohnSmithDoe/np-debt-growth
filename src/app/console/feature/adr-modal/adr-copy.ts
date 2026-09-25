@@ -11,7 +11,7 @@ export const ADR_COPY: Readonly<Record<number, AdrCopy>> = {
     decision:
       'Adopt Legacy Framework as the platform baseline. The current version will not be upgraded. Legacy Defects are expected output, not incidents.',
     consequences:
-      'Legacy Defects now spawn continuously across the board. The engagement gains its first Copilot, free of charge, and Story Points begin accruing outside of milestones. The framework is now load-bearing and unmaintained.',
+      'Legacy Defects now spawn continuously across the board. The framework is now load-bearing and unmaintained.',
   },
   2: {
     context:

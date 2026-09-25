@@ -57,8 +57,6 @@ function describe(effect: SkillEffect): EffectText {
       return { key: 'skill.effect.coach', params: { count: effect.add } };
     case 'deck':
       return { key: 'skill.effect.deck', params: { count: effect.add } };
-    case 'runners':
-      return { key: 'skill.effect.runners', params: { count: effect.add } };
     case 'slots':
       return { key: 'skill.effect.slots', params: { count: effect.add } };
     case 'cans':
@@ -103,13 +101,6 @@ function describe(effect: SkillEffect): EffectText {
       };
     case 'nearestClaim':
       return { key: 'skill.effect.nearestClaim' };
-    case 'autoClose':
-      return {
-        key: 'skill.effect.autoClose',
-        params: { ticket: effect.target },
-      };
-    case 'autoCloseSpeed':
-      return { key: 'skill.effect.autoCloseSpeed', params: pct(effect.mult) };
     case 'senior':
       return { key: 'skill.effect.senior', params: pct(effect.mult) };
     case 'seniorWalk':
@@ -126,8 +117,6 @@ function describe(effect: SkillEffect): EffectText {
       return { key: 'skill.effect.seniorSweep', params: pct(effect.mult) };
     case 'topOfBand':
       return { key: 'skill.effect.topOfBand' };
-    case 'copilot':
-      return { key: 'skill.effect.copilot', params: pct(effect.mult) };
     case 'manager':
       return { key: 'skill.effect.manager', params: pct(effect.mult) };
     case 'managerWalk':

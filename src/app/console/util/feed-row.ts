@@ -64,9 +64,7 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
         who:
           line.close.by === 'you'
             ? 'you'
-            : line.close.by === 'auto'
-              ? 'CI'
-              : crewName(line.close.by, line.close.poolSeat, line.close.woman),
+            : crewName(line.close.by, line.close.poolSeat, line.close.woman),
         key: `${type.prefix}-${1000 + (line.seq % 8999)}`,
         title: line.title,
         value: eventLabel(type.effect, escalation) ?? formatMoney(line.value),
@@ -133,13 +131,6 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
             seq: line.seq,
             mark: '✦',
             text: `${hazardName(line.hazard)} — declined on your behalf`,
-          };
-        case 'offline':
-          return {
-            kind: 'note',
-            seq: line.seq,
-            mark: '✦',
-            text: `The retainer ran for ${line.count} min — ${formatMoney(line.money ?? 0)} banked`,
           };
         case 'hazard-groomed':
           return {

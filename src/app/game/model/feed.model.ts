@@ -10,8 +10,7 @@ export type NoteId =
   | 'hazard-declined'
   | 'hazard-auto-declined'
   | 'hazard-landed'
-  | 'hazard-groomed'
-  | 'offline';
+  | 'hazard-groomed';
 
 export interface HireNote {
   readonly poolSeat: number;
@@ -41,7 +40,6 @@ export interface NoteLine extends FeedBase {
   readonly count: number;
   readonly hire?: HireNote;
   readonly hazard?: HazardId;
-  readonly money?: number;
 }
 
 export type FeedLine = CloseLine | AwardLine | NoteLine;
