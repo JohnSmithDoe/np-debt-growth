@@ -10,10 +10,23 @@ import type { HitRect } from '../model/hit-rect.model';
 import { hits } from '../model/hit-rect.model';
 
 export const SQUARE = 64;
-const LANE_GAP = 30;
-const LANE_PITCH = SQUARE + LANE_GAP;
-const LAYER_PITCH = SQUARE + 92;
-const BAND_HEADROOM = 46;
+/** Clear space every square keeps from every other. */
+const GAP = 45;
+/** Rest length of a wire, and the seed's ring step. */
+const LINK = 170;
+const SEED_RING = 150;
+const FIRST_RING = 230;
+const RELAX_STEPS = 300;
+/** Springs at their floor: separation dominates, so the last overlaps resolve. */
+const SETTLE_STEPS = 100;
+/** Keeps a settling wire from stretching while squares push off it. */
+const SPRING_FLOOR = 0.02;
+const MARGIN = SQUARE;
+/** A heading's name at band scale: the longest catalogue entry, 25 glyphs of 14 px. */
+const BAND_ROOM = 360;
+const BAND_HIGH = 24;
+/** Band text is drawn from its top edge. */
+const BAND_TEXT_TOP = 8;
 
 interface Vec {
   readonly x: number;
@@ -77,136 +90,258 @@ function kidsOf(id: string): readonly string[] {
   return CHILDREN.get(id) ?? [];
 }
 
-function spanOf(id: string, cache: Map<string, number>): number {
+function leavesOf(id: string, cache: Map<string, number>): number {
   const known = cache.get(id);
   if (known !== undefined) return known;
   const kids = kidsOf(id);
-  const span =
+  const count =
     kids.length === 0
       ? 1
-      : kids.reduce((total, kid) => total + spanOf(kid, cache), 0);
-  cache.set(id, span);
-  return span;
+      : kids.reduce((sum, kid) => sum + leavesOf(kid, cache), 0);
+  cache.set(id, count);
+  return count;
 }
 
-interface Cell {
-  readonly depth: number;
-  readonly lane: number;
-  readonly from: number;
-  readonly to: number;
+/** Rings by depth, wedges by leaf count: crowded, but pointing the right way. */
+function seed(): Map<string, Vec> {
+  const leaves = new Map<string, number>();
+  const out = new Map<string, Vec>();
+  const walk = (id: string, depth: number, from: number, to: number): void => {
+    const angle = (from + to) / 2;
+    const radius = depth === 0 ? 0 : FIRST_RING + (depth - 1) * SEED_RING;
+    out.set(id, { x: radius * Math.cos(angle), y: radius * Math.sin(angle) });
+    const kids = kidsOf(id);
+    const total = leavesOf(id, leaves);
+    let at = from;
+    for (const kid of kids) {
+      const share = ((to - from) * leavesOf(kid, leaves)) / total;
+      walk(kid, depth + 1, at, at + share);
+      at += share;
+    }
+  };
+  walk(SKILL_ROOT_ID, 0, -Math.PI, Math.PI);
+  return out;
 }
 
-function place(
-  id: string,
-  depth: number,
-  base: number,
-  cells: Map<string, Cell>,
-  spans: Map<string, number>
-): void {
-  const kids = kidsOf(id);
-  const to = base + spanOf(id, spans) - 1;
+/** The arms a heading names: its own children, headings collapsed away. */
+const HEADING_ARMS: ReadonlyMap<string, readonly string[]> = new Map(
+  SKILL_NODES.filter((node) => node.heading === true).flatMap((node) => {
+    const arms = SKILL_NODES.filter(
+      (one) =>
+        one.requires === node.id &&
+        !isSkillHeading(one.id) &&
+        BY_NODE.has(one.id)
+    ).map((one) => one.id);
+    return arms.length === 0 ? [] : [[node.id, arms] as const];
+  })
+);
 
-  if (kids.length === 0) {
-    cells.set(id, { depth, lane: base, from: base, to });
+const bandBody = (heading: string): string => `band:${heading}`;
+
+interface Body {
+  readonly id: string;
+  readonly parent: number;
+  /** A label's arms; it floats beside their middle. */
+  readonly anchors: readonly number[];
+  readonly hw: number;
+  readonly hh: number;
+  x: number;
+  y: number;
+}
+
+const isLabel = (body: Body): boolean => body.anchors.length > 0;
+
+/** Shove two boxes apart along the shallower axis until `GAP` clears them. */
+function separateBoxes(one: Body, two: Body): void {
+  const dx = two.x - one.x;
+  const dy = two.y - one.y;
+  const ox = one.hw + two.hw + GAP - Math.abs(dx);
+  const oy = one.hh + two.hh + GAP - Math.abs(dy);
+  if (ox <= 0 || oy <= 0) return;
+  if (ox < oy) {
+    const push = (Math.sign(dx) || 1) * (ox / 2);
+    one.x -= push;
+    two.x += push;
+  } else {
+    const push = (Math.sign(dy) || 1) * (oy / 2);
+    one.y -= push;
+    two.y += push;
+  }
+}
+
+/** Squares push round, so a crowd spreads in every direction rather than in rows. */
+function separateSquares(one: Body, two: Body, pitch: number): void {
+  const dx = two.x - one.x;
+  const dy = two.y - one.y;
+  const deficit = pitch - Math.max(Math.abs(dx), Math.abs(dy));
+  if (deficit <= 0) return;
+  const length = Math.hypot(dx, dy) || 1;
+  const push = deficit / 2 / length;
+  one.x -= dx * push;
+  one.y -= dy * push;
+  two.x += dx * push;
+  two.y += dy * push;
+}
+
+/** Push a body off a wire it does not belong to. */
+function clearWire(body: Body, from: Body, to: Body): void {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = dx * dx + dy * dy;
+  if (length === 0) return;
+  const t = Math.max(
+    0,
+    Math.min(1, ((body.x - from.x) * dx + (body.y - from.y) * dy) / length)
+  );
+  const nx = body.x - (from.x + t * dx);
+  const ny = body.y - (from.y + t * dy);
+
+  if (isLabel(body)) {
+    const ox = body.hw + GAP / 3 - Math.abs(nx);
+    const oy = body.hh + GAP / 3 - Math.abs(ny);
+    if (ox <= 0 || oy <= 0) return;
+    if (ox < oy) body.x += (Math.sign(nx) || 1) * (ox / 2);
+    else body.y += (Math.sign(ny) || 1) * (oy / 2);
     return;
   }
 
-  let cursor = base;
-  for (const kid of kids) {
-    place(kid, depth + 1, cursor, cells, spans);
-    cursor += spanOf(kid, spans);
-  }
-
-  const first = cells.get(kids[0]!)!;
-  const last = cells.get(kids[kids.length - 1]!)!;
-  cells.set(id, {
-    depth,
-    lane: (first.lane + last.lane) / 2,
-    from: base,
-    to,
-  });
+  const room = body.hw * Math.SQRT2 + GAP / 3;
+  const off = Math.hypot(nx, ny);
+  if (off >= room || off === 0) return;
+  const push = (room - off) / 2;
+  const [px, py] = [(nx / off) * push, (ny / off) * push];
+  body.x += px;
+  body.y += py;
+  to.x -= px * (1 - t);
+  to.y -= py * (1 - t);
+  from.x -= px * t;
+  from.y -= py * t;
 }
 
-function elbow(from: Vec, to: Vec): readonly Vec[] {
-  const mid = (from.y + to.y) / 2;
-  if (from.x === to.x) return [from, to];
-  return [from, { x: from.x, y: mid }, { x: to.x, y: mid }, to];
-}
+/**
+ * Deterministic relaxation: squares and heading names shove each other apart
+ * until `GAP` clears them, wires spring back towards `LINK`, names cling to
+ * their arms, and nothing sits on a wire that is not its own. The root stays.
+ */
+function relax(start: ReadonlyMap<string, Vec>): Map<string, Vec> {
+  const ids = [...start.keys()];
+  const index = new Map(ids.map((id, at) => [id, at]));
+  const half = SQUARE / 2;
+  const bodies: Body[] = ids.map((id) => ({
+    id,
+    parent: index.get(PARENTS.get(id) ?? '') ?? -1,
+    anchors: [],
+    hw: half,
+    hh: half,
+    ...start.get(id)!,
+  }));
+  const rootStart = start.get(SKILL_ROOT_ID)!;
+  for (const [heading, arms] of HEADING_ARMS) {
+    const anchors = arms.map((arm) => index.get(arm)!);
+    const mid = centroid(anchors.map((at) => bodies[at]!));
+    const out = Math.hypot(mid.x - rootStart.x, mid.y - rootStart.y) || 1;
+    const lift = LINK / 2;
+    bodies.push({
+      id: bandBody(heading),
+      parent: -1,
+      anchors,
+      hw: BAND_ROOM / 2,
+      hh: BAND_HIGH / 2,
+      x: mid.x + ((mid.x - rootStart.x) / out) * lift,
+      y: mid.y + ((mid.y - rootStart.y) / out) * lift,
+    });
+  }
 
-function packed(): Map<string, Cell> {
-  const heads = kidsOf(SKILL_ROOT_ID);
-  const split = Math.ceil(heads.length / 2);
-  const rows = [heads.slice(0, split), heads.slice(split)];
-  const spans = new Map<string, number>();
+  const pitch = SQUARE + GAP;
+  const cling = half + BAND_HIGH / 2 + GAP;
+  const rootAt = index.get(SKILL_ROOT_ID)!;
 
-  const laid = rows.map((row) => {
-    const cells = new Map<string, Cell>();
-    let base = 0;
-    for (const head of row) {
-      place(head, 0, base, cells, spans);
-      base += spanOf(head, spans);
+  for (let step = 0; step < RELAX_STEPS + SETTLE_STEPS; step += 1) {
+    const spring = Math.max(SPRING_FLOOR, 0.2 * (1 - step / RELAX_STEPS));
+
+    for (const body of bodies) {
+      const anchor =
+        body.parent >= 0
+          ? { at: bodies[body.parent]!, rest: LINK }
+          : isLabel(body)
+            ? {
+                at: centroid(body.anchors.map((at) => bodies[at]!)),
+                rest: cling,
+              }
+            : null;
+      if (!anchor) continue;
+      const dx = body.x - anchor.at.x;
+      const dy = body.y - anchor.at.y;
+      const length = Math.hypot(dx, dy) || 1;
+      if (isLabel(body) && length < anchor.rest) continue;
+      const pull = ((length - anchor.rest) / length) * spring;
+      body.x -= dx * pull;
+      body.y -= dy * pull;
     }
-    const depth = Math.max(0, ...[...cells.values()].map((one) => one.depth));
-    return { cells, lanes: base, depth };
-  });
 
-  const lanes = Math.max(...laid.map((row) => row.lanes));
-  const out = new Map<string, Cell>();
+    for (let a = 0; a < bodies.length; a += 1) {
+      for (let b = a + 1; b < bodies.length; b += 1) {
+        const one = bodies[a]!;
+        const two = bodies[b]!;
+        if (isLabel(one) || isLabel(two)) separateBoxes(one, two);
+        else separateSquares(one, two, pitch);
+      }
+    }
 
-  for (const [at, row] of laid.entries()) {
-    const up = at === 0;
-    const shift = (lanes - row.lanes) / 2;
-    for (const [id, cell] of row.cells) {
-      const away = 1 + cell.depth;
-      out.set(id, {
-        depth: up ? -away : away,
-        lane: cell.lane + shift,
-        from: cell.from + shift,
-        to: cell.to + shift,
-      });
+    for (const wire of bodies) {
+      if (wire.parent < 0) continue;
+      const parent = bodies[wire.parent]!;
+      for (const body of bodies) {
+        if (body === wire || body === parent) continue;
+        clearWire(body, parent, wire);
+      }
+    }
+
+    const root = bodies[rootAt]!;
+    const [sx, sy] = [root.x - rootStart.x, root.y - rootStart.y];
+    for (const body of bodies) {
+      body.x -= sx;
+      body.y -= sy;
     }
   }
 
-  const headLanes = heads.flatMap((id) => {
-    const cell = out.get(id);
-    return cell ? [cell.lane] : [];
-  });
-  out.set(SKILL_ROOT_ID, {
-    depth: 0,
-    lane: (Math.min(...headLanes) + Math.max(...headLanes)) / 2,
-    from: 0,
-    to: lanes - 1,
-  });
+  return new Map(bodies.map((body) => [body.id, { x: body.x, y: body.y }]));
+}
 
-  const floor = Math.min(...[...out.values()].map((one) => one.depth));
-  for (const [id, cell] of out)
-    out.set(id, { ...cell, depth: cell.depth - floor });
-  return out;
+function centroid(points: readonly Vec[]): Vec {
+  return {
+    x: points.reduce((sum, one) => sum + one.x, 0) / points.length,
+    y: points.reduce((sum, one) => sum + one.y, 0) / points.length,
+  };
 }
 
 function build(): SkillGraph {
   const root = BY_NODE.get(SKILL_ROOT_ID);
   if (!root) throw new Error(`No ${SKILL_ROOT_ID} node to hang the map on`);
 
-  const cells = packed();
-
+  const raw = relax(seed());
   const half = SQUARE / 2;
-  const top = BAND_HEADROOM + half;
-  const centreOf = (id: string): Vec => {
-    const cell = cells.get(id);
-    if (!cell) return { x: half, y: top };
-    return {
-      x: half + cell.lane * LANE_PITCH,
-      y: top + cell.depth * LAYER_PITCH,
-    };
-  };
+  const reach = (id: string): Vec =>
+    id.startsWith('band:')
+      ? { x: BAND_ROOM / 2, y: BAND_HIGH / 2 }
+      : { x: half, y: half };
+  const left =
+    Math.min(...[...raw].map(([id, one]) => one.x - reach(id).x)) - MARGIN;
+  const top =
+    Math.min(...[...raw].map(([id, one]) => one.y - reach(id).y)) - MARGIN;
+  const centres = new Map(
+    [...raw].map(([id, one]) => [
+      id,
+      { x: Math.round(one.x - left), y: Math.round(one.y - top) },
+    ])
+  );
 
   const squares: SkillSquare[] = [];
   for (const node of ON_TREE) {
-    const cell = cells.get(node.id);
-    if (!cell) continue;
+    const centre = centres.get(node.id);
+    if (!centre) continue;
     const parent = PARENTS.get(node.id) ?? null;
-    const centre = centreOf(node.id);
+    const from = parent === null ? undefined : centres.get(parent);
     squares.push({
       id: node.id,
       node,
@@ -215,56 +350,50 @@ function build(): SkillGraph {
       width: SQUARE,
       height: SQUARE,
       parent,
-      wire: parent === null ? [] : elbow(centreOf(parent), centre),
+      wire: from ? [from, centre] : [],
     });
   }
 
+  const bands = bandsFrom(centres);
   return {
     squares,
-    bands: bandsFrom(cells),
-    width: Math.max(...squares.map((one) => one.x + SQUARE)) + half,
-    height: Math.max(...squares.map((one) => one.y + SQUARE)) + half,
+    bands,
+    width:
+      Math.max(
+        ...squares.map((one) => one.x + SQUARE),
+        ...bands.map((one) => one.x + one.width)
+      ) + MARGIN,
+    height:
+      Math.max(
+        ...squares.map((one) => one.y + SQUARE),
+        ...bands.map((one) => one.y + BAND_HIGH)
+      ) + MARGIN,
   };
 }
 
-function bandsFrom(cells: ReadonlyMap<string, Cell>): readonly SkillBand[] {
-  const bands: SkillBand[] = [];
-
-  for (const node of SKILL_NODES) {
-    if (node.heading !== true) continue;
-    const under = SKILL_NODES.filter(
-      (one) => one.requires === node.id && !isSkillHeading(one.id)
-    ).map((one) => one.id);
-
-    const spread = under.flatMap((id) => {
-      const cell = cells.get(id);
-      return cell ? [cell] : [];
-    });
-    if (spread.length === 0) continue;
-
-    const from = Math.min(...spread.map((cell) => cell.from));
-    const to = Math.max(...spread.map((cell) => cell.to));
-    const depth = Math.min(...spread.map((cell) => cell.depth));
-
-    bands.push({
-      id: node.id,
-      x: from * LANE_PITCH,
-      y: depth * LAYER_PITCH,
-      width: (to - from) * LANE_PITCH + SQUARE,
-      over: descendants(cells, under),
-    });
-  }
-
-  return bands;
+function bandsFrom(centres: ReadonlyMap<string, Vec>): readonly SkillBand[] {
+  return [...HEADING_ARMS].flatMap(([heading, arms]) => {
+    const centre = centres.get(bandBody(heading));
+    if (!centre) return [];
+    return [
+      {
+        id: heading,
+        x: centre.x - BAND_ROOM / 2,
+        y: centre.y - BAND_TEXT_TOP,
+        width: BAND_ROOM,
+        over: descendants(centres, arms),
+      },
+    ];
+  });
 }
 
 function descendants(
-  cells: ReadonlyMap<string, Cell>,
+  centres: ReadonlyMap<string, Vec>,
   roots: readonly string[]
 ): readonly string[] {
   const out: string[] = [];
   const walk = (id: string): void => {
-    if (!cells.has(id)) return;
+    if (!centres.has(id)) return;
     out.push(id);
     for (const kid of kidsOf(id)) walk(kid);
   };

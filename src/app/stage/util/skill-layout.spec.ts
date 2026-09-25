@@ -5,7 +5,6 @@ import {
   SKILL_NODES,
   SKILL_ROOT_ID,
 } from '../../game/model/skill.model';
-import type { SkillSquare } from './skill-layout';
 import {
   revealSquares,
   SKILL_GRAPH,
@@ -63,38 +62,30 @@ describe('skill layout', () => {
     expect(orphans.map((square) => square.id)).toEqual([SKILL_ROOT_ID]);
   });
 
-  it('centres every parent on the children it fans into', () => {
-    const kids = new Map<string, SkillSquare[]>();
+  it('never runs a wire through a square it does not join', () => {
+    const crossed: string[] = [];
     for (const square of SKILL_GRAPH.squares) {
-      if (square.parent === null) continue;
-      kids.set(square.parent, [...(kids.get(square.parent) ?? []), square]);
+      const [from, to] = [square.wire.at(0), square.wire.at(-1)];
+      if (!from || !to) continue;
+      const length = Math.hypot(to.x - from.x, to.y - from.y);
+      for (const other of SKILL_GRAPH.squares) {
+        if (other.id === square.id || other.id === square.parent) continue;
+        for (let run = 0; run <= length; run += 4) {
+          const x = from.x + ((to.x - from.x) * run) / length;
+          const y = from.y + ((to.y - from.y) * run) / length;
+          if (
+            x > other.x &&
+            x < other.x + SQUARE &&
+            y > other.y &&
+            y < other.y + SQUARE
+          ) {
+            crossed.push(`${square.parent}->${square.id} through ${other.id}`);
+            break;
+          }
+        }
+      }
     }
-
-    for (const [parent, fan] of kids) {
-      const at = skillSquare(parent)!;
-      const middle =
-        (Math.min(...fan.map((one) => one.x)) +
-          Math.max(...fan.map((one) => one.x))) /
-        2;
-      expect(at.x, `${parent} leans off its fan`).toBeCloseTo(middle, 6);
-    }
-  });
-
-  it('puts every child exactly one layer further from the root', () => {
-    const root = skillSquare(SKILL_ROOT_ID)!;
-    const steps = new Set<number>();
-
-    for (const square of SKILL_GRAPH.squares) {
-      if (square.parent === null) continue;
-      const parent = skillSquare(square.parent)!;
-      steps.add(Math.round(Math.abs(square.y - parent.y)));
-      expect(
-        Math.abs(square.y - root.y),
-        `${square.id} is not further from the root than ${square.parent}`
-      ).toBeGreaterThan(Math.abs(parent.y - root.y));
-    }
-
-    expect([...steps]).toHaveLength(1);
+    expect(crossed).toEqual([]);
   });
 
   it('runs every wire from its parent square to its own', () => {
