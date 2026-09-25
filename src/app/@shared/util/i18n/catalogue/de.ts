@@ -73,8 +73,6 @@ export const DE: Readonly<Record<string, string>> = {
   'hazard.freeze.label': 'Prod Freeze',
   'hazard.grooming.label': 'Backlog Grooming',
   'hazard.migration.label': 'Migration Window',
-  'hazard.offshore.label': 'Offshore-Onboarding',
-  'hazard.offshore.role': 'Offshore-Dienstleister',
   'hazard.page.label': 'Rufbereitschaft',
   'hazard.reorg.label': 'Reorg-Briefing',
   'hazard.retro.label': 'Sprint-Retro',

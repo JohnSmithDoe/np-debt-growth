@@ -1,7 +1,7 @@
 import type { CrewMember } from './board.model';
 import type { TicketTypeId } from './ticket.model';
 
-export type CrewKind = 'juniors' | 'seniors' | 'managers' | 'offshore';
+export type CrewKind = 'juniors' | 'seniors' | 'managers';
 
 export interface HirePace {
   readonly closeMs: number;
@@ -36,7 +36,6 @@ export interface CrewRules extends HirePace {
   readonly homeY: number;
   readonly mode: CrewMode;
   readonly claims: (type: TicketTypeId) => boolean;
-  readonly rares: boolean;
   /** May this crew kind pick up golden work at all? */
   readonly golden: boolean;
   readonly paces: readonly HirePace[] | null;
@@ -44,8 +43,4 @@ export interface CrewRules extends HirePace {
   readonly interrupted: boolean;
   readonly rush: Rush | null;
   readonly transform: ((type: TicketTypeId) => TicketTypeId | null) | null;
-  readonly leaves: {
-    readonly type: TicketTypeId;
-    readonly count: number;
-  } | null;
 }

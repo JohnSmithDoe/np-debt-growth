@@ -72,14 +72,7 @@ function deliver(
       : refile(board, rules.transform, card, rand);
   }
 
-  const banked = bill(board, card);
-  const { leaves } = rules;
-  if (leaves) {
-    for (let n = 0; n < leaves.count; n += 1) {
-      addTicket(board, leaves.type, rand);
-    }
-  }
-  return banked;
+  return bill(board, card);
 }
 
 export function stepBoard(
@@ -444,17 +437,14 @@ function claim(
   worker: CrewMember,
   rand: () => number
 ): BoardTicket | null {
-  const total = board.claimable.length + (rules.rares ? board.rares.length : 0);
+  const total = board.claimable.length;
   if (total === 0) return null;
 
   let best: BoardTicket | null = null;
   let bestAway = Number.POSITIVE_INFINITY;
   for (let sample = 0; sample < CLAIM_SAMPLES; sample++) {
     const at = Math.floor(rand() * total);
-    const ticket =
-      at < board.claimable.length
-        ? board.claimable[at]
-        : board.rares[at - board.claimable.length];
+    const ticket = board.claimable[at];
     if (!ticket || !rules.claims(ticket.type)) continue;
     if (ticket.golden && !rules.golden) continue;
     if (pace.pick === 'random') {
@@ -481,13 +471,6 @@ function claim(
 
 function firstAllowed(board: Board, rules: CrewRules): BoardTicket | null {
   for (const ticket of board.claimable) {
-    if (rules.claims(ticket.type) && (!ticket.golden || rules.golden)) {
-      leavePool(board, ticket);
-      return ticket;
-    }
-  }
-  if (!rules.rares) return null;
-  for (const ticket of board.rares) {
     if (rules.claims(ticket.type) && (!ticket.golden || rules.golden)) {
       leavePool(board, ticket);
       return ticket;

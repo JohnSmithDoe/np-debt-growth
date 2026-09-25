@@ -102,7 +102,6 @@ export interface Board {
   readonly juniors: CrewMember[];
   readonly seniors: CrewMember[];
   readonly managers: CrewMember[];
-  readonly offshore: CrewMember[];
   readonly pending: Comeback[];
   /** Cards a full board pushed out for newer work; drained as won't fix. */
   readonly displaced: BoardTicket[];
@@ -159,7 +158,6 @@ export function emptyBoard(): Board {
     juniors: [],
     seniors: [],
     managers: [],
-    offshore: [],
     pending: [],
     displaced: [],
     byId: new Map(),

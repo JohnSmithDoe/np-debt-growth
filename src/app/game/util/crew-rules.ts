@@ -2,7 +2,6 @@ import type { Board } from '../model/board.model';
 import type { Consultancy } from '../model/consultancy.model';
 import type { Weather } from '../model/hazard.model';
 import type { TicketTypeId } from '../model/ticket.model';
-import { RETYPE_LADDER, TICKET_TYPES } from '../model/ticket.model';
 import type { CrewMember } from '../model/board.model';
 import type { CrewKind } from '../model/crew.model';
 import type {
@@ -52,7 +51,7 @@ function rulesFor(
   return {
     kind,
     crew: crewOf(board, kind),
-    size: economy.crewSize(state, kind, weather),
+    size: economy.crewSize(state, kind),
     homeY: stats.homeY,
     mode: stats.mode,
     ...economy.crewPace(state, kind),
@@ -60,21 +59,18 @@ function rulesFor(
     claims: transform
       ? (type) => transform(type) !== null
       : economy.crewClaims(state, kind),
-    rares: economy.crewTakesRares(state, kind),
     golden: economy.crewTakesGolden(state),
     paces: stats.perSeat ? seatPaces(state, kind, weather) : null,
     interrupted: stats.interruptible && weather.meeting,
     rush: economy.pizzaRush(state),
     transform,
-    leaves: leavesOf(state, stats.leaves),
   };
 }
 
 function crewOf(board: Board, kind: CrewKind): CrewMember[] {
   if (kind === 'juniors') return board.juniors;
   if (kind === 'seniors') return board.seniors;
-  if (kind === 'managers') return board.managers;
-  return board.offshore;
+  return board.managers;
 }
 
 function seatOf(
@@ -95,7 +91,7 @@ function seatPaces(
   weather: Weather
 ): readonly HirePace[] {
   const paces: HirePace[] = [];
-  const seats = economy.crewSize(state, kind, weather);
+  const seats = economy.crewSize(state, kind);
   for (let seat = 0; seat < seats; seat += 1) {
     paces.push(economy.crewPace(state, kind, economy.hireAt(state, seat)));
   }
@@ -106,14 +102,6 @@ function relabel(
   state: Consultancy
 ): (type: TicketTypeId) => TicketTypeId | null {
   return (type) => economy.relabelTarget(state, type);
-}
-
-function leavesOf(state: Consultancy, count: number): CrewRules['leaves'] {
-  if (count === 0) return null;
-  const type = RETYPE_LADDER.find(
-    (id) => TICKET_TYPES[id].tier === state.tier + 1
-  );
-  return type === undefined ? null : { type, count };
 }
 
 export type { ClaimPick, CrewRules, CrewSeat, HirePace };

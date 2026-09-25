@@ -76,9 +76,6 @@ describe('the crew table', () => {
       expect(economy.crewWomanEvery(fresh, kind)).toBe(
         CREW_STATS[kind].womanEvery
       );
-      expect(economy.crewTakesRares(fresh, kind)).toBe(
-        CREW_STATS[kind].takesRares
-      );
     }
   });
 

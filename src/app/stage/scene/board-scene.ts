@@ -62,7 +62,6 @@ interface BoardParts {
   readonly crew: CrewLayer;
   readonly seniors: CrewLayer;
   readonly managers: CrewLayer;
-  readonly offshore: CrewLayer;
   readonly spawners: TierSpawners;
   readonly votes: VoteBeams;
   readonly strip: SprintStrip;
@@ -85,7 +84,6 @@ const CREW_ROLE_KEY: Readonly<Record<CrewKind, string>> = {
   juniors: 'purchase.junior.label',
   seniors: 'hire.line',
   managers: 'purchase.manager.label',
-  offshore: 'hazard.offshore.role',
 };
 
 const CARD_BOX = { width: CARD_WIDTH, height: CARD_HEIGHT, lift: 0 } as const;
@@ -230,7 +228,6 @@ export class BoardScene extends CbScene {
       crew: new CrewLayer(this, DEPTH.crew, 'juniors', 0),
       seniors: new CrewLayer(this, DEPTH.crew + 1, 'seniors', 1),
       managers: new CrewLayer(this, DEPTH.crew + 2, 'managers', 2),
-      offshore: new CrewLayer(this, DEPTH.crew + 3, 'offshore', 3),
       spawners: new TierSpawners(this, DEPTH.spawner),
       votes: new VoteBeams(this, DEPTH.spawner - 1),
       strip,
@@ -311,11 +308,6 @@ export class BoardScene extends CbScene {
       board.managers,
       this.deps.womanEvery('managers')
     );
-    parts.offshore.sync(
-      board,
-      board.offshore,
-      this.deps.womanEvery('offshore')
-    );
     parts.seniors.sync(
       board,
       board.seniors,
@@ -329,7 +321,6 @@ export class BoardScene extends CbScene {
     parts.crew.update(step);
     parts.seniors.update(step);
     parts.managers.update(step);
-    parts.offshore.update(step);
     parts.flyers.update(step);
     parts.strip.update();
     this.#weather();
@@ -494,12 +485,7 @@ export class BoardScene extends CbScene {
   /** A crew pickup is carried off by hand; it reaches its lane on delivery. */
   #carried(id: number): boolean {
     const board = this.deps.board();
-    for (const crew of [
-      board.juniors,
-      board.seniors,
-      board.managers,
-      board.offshore,
-    ]) {
+    for (const crew of [board.juniors, board.seniors, board.managers]) {
       for (const member of crew) {
         if (member.carrying.some((card) => card.id === id)) return true;
       }
@@ -523,12 +509,7 @@ export class BoardScene extends CbScene {
     this.#hoverSlot = NONE;
     if (py >= this.#boardHeight) return this.#readStrip(parts, px, py);
 
-    for (const layer of [
-      parts.offshore,
-      parts.managers,
-      parts.seniors,
-      parts.crew,
-    ]) {
+    for (const layer of [parts.managers, parts.seniors, parts.crew]) {
       const name = layer.nameAt(px, py);
       if (!name) continue;
       const ceiling =
@@ -752,7 +733,6 @@ export class BoardScene extends CbScene {
     parts.crew.layout(this.#scale, this.#offX, this.#offY);
     parts.seniors.layout(this.#scale, this.#offX, this.#offY);
     parts.managers.layout(this.#scale, this.#offX, this.#offY);
-    parts.offshore.layout(this.#scale, this.#offX, this.#offY);
 
     this.#floorLine?.setPosition(0, this.#boardHeight).setSize(width, 1);
     this.#secret?.setPosition(12, 8);
@@ -774,7 +754,6 @@ export class BoardScene extends CbScene {
     parts.crew.destroy();
     parts.seniors.destroy();
     parts.managers.destroy();
-    parts.offshore.destroy();
     parts.spawners.destroy();
     parts.votes.destroy();
     parts.flyers.destroy();

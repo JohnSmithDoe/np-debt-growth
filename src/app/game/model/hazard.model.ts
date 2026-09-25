@@ -8,7 +8,6 @@ export type HazardId =
   | 'grooming'
   | 'storm'
   | 'freeze'
-  | 'offshore'
   | 'page'
   | 'migration';
 
@@ -16,7 +15,6 @@ export interface Weather {
   readonly meeting: boolean;
   readonly incidentRate: number;
   readonly slots: number;
-  readonly offshore: number;
   readonly supply: number;
 }
 
@@ -24,7 +22,6 @@ export const CALM: Weather = {
   meeting: false,
   incidentRate: 1,
   slots: 1,
-  offshore: 0,
   supply: 1,
 };
 
@@ -71,13 +68,6 @@ export const HAZARDS: readonly Hazard[] = [
     fromTier: 1,
     durationMs: 10_000,
     weather: { meeting: true },
-  },
-  {
-    id: 'offshore',
-    kind: 'fact',
-    fromTier: 2,
-    durationMs: 60_000,
-    weather: { offshore: 5 },
   },
   {
     id: 'freeze',

@@ -256,14 +256,10 @@ describe('what a crew is allowed to claim', () => {
     }
   });
 
-  it('keeps the P0s away from every crew that takes a desk', () => {
+  it('keeps the P0s away from every crew', () => {
     expect(claims()('incident')).toBe(false);
     expect(crewClaims(consultancy(), 'seniors')('incident')).toBe(false);
     expect(claims({ juniorReach: 2 })('incident')).toBe(false);
-  });
-
-  it('still lets the contractors take them', () => {
-    expect(crewClaims(consultancy(), 'offshore')('incident')).toBe(true);
   });
 
   it('splits the ladder between the two crews, overlapping in the middle', () => {
@@ -338,18 +334,10 @@ describe('what a body may take (crewCeiling)', () => {
     );
   });
 
-  it('reaches furthest for the contractors, who have no band at all', () => {
-    const offshore = crewCeiling(late, 'offshore');
-    const senior = crewCeiling(late, 'seniors');
-    expect(TICKET_TYPES[offshore!].value).toBeGreaterThanOrEqual(
-      TICKET_TYPES[senior!].value
-    );
-  });
-
   it('never names a ticket the tier has not unlocked', () => {
     for (let tier = 0; tier <= 8; tier += 1) {
       const at = consultancy({ tier, levels: { junior: 2, senior: 2 } });
-      for (const crew of ['juniors', 'seniors', 'offshore'] as const) {
+      for (const crew of ['juniors', 'seniors'] as const) {
         const ceiling = crewCeiling(at, crew);
         if (ceiling === null) continue;
         expect(TICKET_TYPES[ceiling].tier).toBeLessThanOrEqual(tier);

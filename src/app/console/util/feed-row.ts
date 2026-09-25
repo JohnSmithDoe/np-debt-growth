@@ -151,7 +151,6 @@ const HAZARD_NAME: Readonly<Record<HazardId, string>> = {
   grooming: 'Backlog Grooming',
   storm: 'Incident Storm',
   freeze: 'Prod Freeze',
-  offshore: 'Offshore Onboarding',
   page: 'Pager Duty',
   migration: 'Migration Window',
 };

@@ -84,7 +84,6 @@ export const CAST_PREFIX = {
   juniors: 'junior',
   seniors: 'senior',
   managers: 'manager',
-  offshore: 'junior',
 } as const satisfies Record<CrewKind, string>;
 
 interface CastPool {
@@ -109,10 +108,6 @@ const CAST_POOLS: Record<CrewKind, CastPool> = {
   managers: {
     men: indicesFor('manager-m'),
     women: indicesFor('manager-f'),
-  },
-  offshore: {
-    men: indicesFor('junior-m'),
-    women: indicesFor('junior-f'),
   },
 };
 

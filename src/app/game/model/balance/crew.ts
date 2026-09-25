@@ -7,7 +7,6 @@ import type { PurchaseId } from './progression';
  * this retunes who gets the dearest work, so it is a balance knob in itself.
  */
 export const CREW_KINDS = [
-  'offshore',
   'seniors',
   'juniors',
   'managers',
@@ -34,12 +33,9 @@ export interface CrewStats {
   readonly sweepRadius: number;
   readonly womanEvery: number;
   readonly band: CrewBand;
-  readonly takesRares: boolean;
   readonly mode: CrewMode;
-  /** `null` = headcount comes from the weather, not a bought line. */
-  readonly levelKey: PurchaseId | null;
+  readonly levelKey: PurchaseId;
   readonly effects: CrewPaceEffects;
-  readonly leaves: number;
   /** Meetings pull this crew off the board. */
   readonly interruptible: boolean;
   /** Junior-only: standup aura scales with headcount. */
@@ -57,7 +53,6 @@ export const CREW_STATS = {
     sweepRadius: 40,
     womanEvery: 4,
     band: { from: 0, to: 3 },
-    takesRares: false,
     mode: 'closer',
     levelKey: 'junior',
     effects: {
@@ -66,7 +61,6 @@ export const CREW_STATS = {
       batch: 'juniorBatch',
       sweep: 'juniorSweep',
     },
-    leaves: 0,
     interruptible: true,
     aura: true,
     perSeat: false,
@@ -79,7 +73,6 @@ export const CREW_STATS = {
     sweepRadius: 70,
     womanEvery: 6,
     band: { from: 2, to: Infinity },
-    takesRares: false,
     mode: 'closer',
     levelKey: 'senior',
     effects: {
@@ -88,7 +81,6 @@ export const CREW_STATS = {
       batch: 'seniorBatch',
       sweep: 'seniorSweep',
     },
-    leaves: 0,
     interruptible: true,
     aura: false,
     perSeat: true,
@@ -101,7 +93,6 @@ export const CREW_STATS = {
     sweepRadius: 0,
     womanEvery: 3,
     band: { from: 0, to: Infinity },
-    takesRares: false,
     mode: 'refiler',
     levelKey: 'manager',
     effects: {
@@ -110,24 +101,6 @@ export const CREW_STATS = {
       batch: null,
       sweep: null,
     },
-    leaves: 0,
-    interruptible: false,
-    aura: false,
-    perSeat: false,
-  },
-  offshore: {
-    closeMs: 4_000,
-    walkSpeed: 130,
-    homeY: 392,
-    batchBase: 1,
-    sweepRadius: 0,
-    womanEvery: 4,
-    band: { from: 0, to: Infinity },
-    takesRares: true,
-    mode: 'closer',
-    levelKey: null,
-    effects: { close: null, walk: null, batch: null, sweep: null },
-    leaves: 1,
     interruptible: false,
     aura: false,
     perSeat: false,

@@ -94,14 +94,8 @@ export function desks(state: Consultancy): number {
   return additive(state, 'desks', DESKS_BASE);
 }
 
-/** Headcount of a crew kind; the weather staffs whatever has no bought line. */
-export function crewSize(
-  state: Consultancy,
-  crew: CrewKind,
-  weather: Weather = CALM
-): number {
-  const key = CREW_STATS[crew].levelKey;
-  return key === null ? weather.offshore : state.levels[key];
+export function crewSize(state: Consultancy, crew: CrewKind): number {
+  return state.levels[CREW_STATS[crew].levelKey];
 }
 
 export function crewCount(state: Consultancy): number {
@@ -562,7 +556,6 @@ export function crewPick(
   crew: CrewKind,
   hire?: SeniorHire
 ): ClaimPick {
-  if (crew === 'offshore') return 'random';
   if (crew === 'managers') {
     return managersPreferFiller(state) ? 'cheapest' : 'random';
   }
@@ -609,12 +602,11 @@ export function crewClaims(
   crew: CrewKind
 ): (type: TicketTypeId) => boolean {
   const skipped = triageSkips(state, crew);
-  const rares = crewTakesRares(state, crew);
   const band = crewBand(state, crew);
   return (type) => {
     const ticket = TICKET_TYPES[type];
     if (ticket.effect !== 'value') return false;
-    if (ticket.handOnly && !rares) return false;
+    if (ticket.handOnly) return false;
     if (ticket.tier < band.from || ticket.tier > band.to) return false;
     return !skipped.has(type);
   };
@@ -654,10 +646,6 @@ function triageSkips(
     }
     return all;
   });
-}
-
-export function crewTakesRares(_state: Consultancy, crew: CrewKind): boolean {
-  return CREW_STATS[crew].takesRares;
 }
 
 export function womenAmong(count: number, every: number): number {

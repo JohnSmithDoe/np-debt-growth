@@ -364,7 +364,6 @@ describe('desks gate the crew (D36, D56)', () => {
       expect(store.deskLimited(line)).toBe(false);
     }
   });
-
 });
 
 describe('the feed', () => {
@@ -483,7 +482,6 @@ describe('the senior hire (D34)', () => {
     expect(store.buyLine('junior')).toBe(true);
     expect(store.snapshot().roster).toEqual([]);
   });
-
 });
 
 describe('a full can refuses in place (parity #11)', () => {
