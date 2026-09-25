@@ -255,8 +255,8 @@ Drawn by `stage/scene/vote-beams.ts`. The reference's gum angels.
 ### The ADR ladder
 
 `DEBT_TIERS` (`model/tier.model.ts`). Buying `adrN` raises `state.tier`, opening line N and its
-ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR panel (`unlockNextTier`) buys the same
-node.
+ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR modal's approve button
+(`unlockNextTier`) buys the same node; the rail has no ADR panel.
 
 | ADR | SP | Unlocks | Source |
 |---|---|---|---|

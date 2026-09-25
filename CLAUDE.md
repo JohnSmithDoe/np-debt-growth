@@ -113,7 +113,7 @@ so a restored save does not tick behind the splash. Save is `localStorage`, vers
 One thing in the restore looks like a bug and is not:
 
 - **`freshConsultancy` ships `root` bought.** The tree costs story points and the ADR ladder lives
-  on it, so a run with an unbought root is stranded — including the ADR panel's own buy button,
+  on it, so a run with an unbought root is stranded — including the ADR modal's own approve button,
   which routes through `buySkill`. The `velocity` row is `open` on the rail for the same reason:
   it is the SP source, so it cannot sit behind an SP node. The run opens with one developer and
   nothing else, as the reference does.

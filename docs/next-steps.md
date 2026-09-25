@@ -98,7 +98,7 @@ has no counterplay; the two 120 s cadences coincide by accident.
   managers) could become one `{ kind: 'pace', crew, field }`.
 - `util/first-act.ts` holds back types by name; a `revealAtMs?` / `revealAtTier?` field on
   `TicketType` would make it data.
-- The ADR panel duplicates the `adrN` tree node it buys. Keep it or drop it, but decide.
+- `console/feature/adr-panel/` is no longer mounted anywhere; delete it, with its i18n keys.
 
 ## 9. Needs a design call
 
