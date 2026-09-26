@@ -146,7 +146,7 @@ export const SPEECH_BUBBLE = {
   tail: 5,
   lift: 56,
   edge: 4,
-  ms: 2_800,
+  ms: 7_000,
   fadeMs: 400,
   gapMs: { min: 2_500, max: 5_500 },
   limit: 2,

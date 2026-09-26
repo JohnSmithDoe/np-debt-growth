@@ -1,0 +1,41 @@
+:host {
+  display: block;
+  overflow: hidden;
+  padding: 0.45rem 0;
+  background: rgb(6 8 11 / 0.62);
+  border-bottom: 1px solid var(--np-cb-rule);
+  font-family: var(--np-cb-font-util);
+  font-size: 0.72rem;
+  color: var(--np-cb-ink-2);
+  white-space: nowrap;
+}
+
+.track {
+  display: inline-flex;
+  animation: ticker 150s linear infinite;
+}
+
+:host(:hover) .track {
+  animation-play-state: paused;
+}
+
+.item {
+  padding-right: 2.5rem;
+}
+
+.key {
+  margin-right: 0.4rem;
+  color: var(--np-cb-ink-3);
+}
+
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none;
+  }
+}

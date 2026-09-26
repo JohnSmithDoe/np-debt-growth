@@ -1,17 +1,6 @@
 @if (shown()) {
   <div class="title" [style.background-image]="'url(' + art() + ')'">
-    <div class="ticker" aria-hidden="true">
-      <div class="ticker-track">
-        @for (pass of passes; track pass) {
-          @for (item of ticker; track item.key) {
-            <span class="ticker-item">
-              <span class="ticker-key">{{ item.key }}</span>
-              {{ item.titleKey | translate }}
-            </span>
-          }
-        }
-      </div>
-    </div>
+    <cb-backlog-ticker class="ticker" />
 
     <div class="card">
       <h1>{{ 'title.name' | translate }}</h1>

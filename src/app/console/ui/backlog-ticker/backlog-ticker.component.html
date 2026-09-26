@@ -1,0 +1,10 @@
+<div class="track">
+  @for (pass of passes; track pass) {
+    @for (item of items; track item.key) {
+      <span class="item">
+        <span class="key">{{ item.key }}</span>
+        {{ item.titleKey | translate }}
+      </span>
+    }
+  }
+</div>

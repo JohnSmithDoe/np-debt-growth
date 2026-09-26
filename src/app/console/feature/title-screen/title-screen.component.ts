@@ -15,15 +15,13 @@ import { GameStore } from '../../../game/data/game.store';
 import { SaveService } from '../../../game/data/save.service';
 import { DoorService } from '../../data/door.service';
 import { FullscreenService } from '../../data/fullscreen.service';
+import { BacklogTickerComponent } from '../../ui/backlog-ticker/backlog-ticker.component';
 import { CreditsComponent } from '../../ui/credits/credits.component';
-import { backlogTicker } from '../../util/backlog-ticker';
 import { CLOSING_OFFICE_ART, officeArtFor } from '../../util/office-art';
-
-const TICKER_LENGTH = 18;
 
 @Component({
   selector: 'cb-title-screen',
-  imports: [CreditsComponent, TranslatePipe],
+  imports: [BacklogTickerComponent, CreditsComponent, TranslatePipe],
   templateUrl: './title-screen.component.html',
   styleUrl: './title-screen.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,9 +35,6 @@ export class TitleScreenComponent {
   readonly art = computed(() =>
     this.#store.ended() ? CLOSING_OFFICE_ART : officeArtFor(this.#store.tier())
   );
-
-  readonly ticker = backlogTicker(TICKER_LENGTH);
-  readonly passes = [0, 1] as const;
 
   readonly languages = LANGUAGES;
   readonly language = bootLanguage();

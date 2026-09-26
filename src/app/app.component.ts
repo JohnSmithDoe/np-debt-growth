@@ -16,6 +16,7 @@ import {
   formatPointsExact,
   formatQuantity,
 } from './@shared/util/format-quantity';
+import { BacklogTickerComponent } from './console/ui/backlog-ticker/backlog-ticker.component';
 import { AdrModalComponent } from './console/feature/adr-modal/adr-modal.component';
 import { AwardBannerComponent } from './console/feature/award-banner/award-banner.component';
 import { MomentModalComponent } from './console/feature/moment-modal/moment-modal.component';
@@ -50,6 +51,7 @@ const STEP_MODE: Partial<Record<NoticeTarget, StageMode>> = {
   styleUrl: './app.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    BacklogTickerComponent,
     RouterOutlet,
     AchievementsPanelComponent,
     SupplyPanelComponent,
