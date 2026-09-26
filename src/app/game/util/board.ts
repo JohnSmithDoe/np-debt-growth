@@ -129,7 +129,8 @@ export function addTicket(
     golden,
     spBonus: 0,
     relabelled,
-    lifeLeftMs: TICKET_TYPES[type].handOnly ? NEVER_EXPIRES : TICKET_LIFE_MS,
+    lifeLeftMs:
+      TICKET_TYPES[type].handOnly || golden ? NEVER_EXPIRES : TICKET_LIFE_MS,
     x: cellX(col),
     y: cellY(cell - col * HEAP_ROWS),
     claimedBy: NO_TICKET,
@@ -160,7 +161,7 @@ export function removeTicket(board: Board, ticket: BoardTicket): void {
  */
 /**
  * A full board makes room for new work by closing the card nearest its own
- * expiry. Claimed and hand-only cards are never pushed out.
+ * expiry. Claimed, golden and hand-only cards are never pushed out.
  */
 function displaceOldest(board: Board): boolean {
   let oldest: BoardTicket | null = null;

@@ -15,6 +15,7 @@ import { SAVE_VERSION } from '../model/game.consts';
 import { CALM } from '../model/hazard.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { CREW_STATS } from '../model/balance/crew';
+import { TICKET_LIFE_MS } from '../model/balance/flow';
 import { GOLDEN_CREW_CONVERSION } from '../model/balance/flow';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPRINT_SLOTS_BASE } from '../model/balance/round';
@@ -526,6 +527,19 @@ describe('the board fills up', () => {
     const gone: BoardTicket[] = [];
     expireTickets(board, 0, gone);
     expect(gone).toEqual([oldest]);
+  });
+
+  it('never closes or pushes out a golden card', () => {
+    const board = emptyBoard();
+    const gold = addTicket(board, 'lint', Math.random, false, false, true)!;
+    expireTickets(board, TICKET_LIFE_MS * 10, []);
+    expect(board.byId.has(gold.id)).toBe(true);
+
+    for (let n = 1; n < BOARD_CAPACITY; n++) addTicket(board, 'lint');
+    for (const ticket of board.tickets)
+      if (ticket !== gold) ticket.lifeLeftMs = 2;
+    addTicket(board, 'legacy');
+    expect(board.byId.has(gold.id)).toBe(true);
   });
 
   it('never pushes out a claimed or hand-only card', () => {

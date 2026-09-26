@@ -41,10 +41,15 @@ export class HarnessDoor {
       buySkill: (id) => this.#store.buySkill(id),
       buyLine: (line) => this.#store.buyLine(line),
       place: (type, golden = false) => {
-        const ticket = addTicket(this.#store.board, type);
-        if (!ticket) return NO_TICKET;
-        ticket.golden = golden;
-        return ticket.id;
+        const ticket = addTicket(
+          this.#store.board,
+          type,
+          Math.random,
+          false,
+          false,
+          golden
+        );
+        return ticket ? ticket.id : NO_TICKET;
       },
     };
   }
