@@ -53,12 +53,12 @@ Types within a domain: `feature` → `ui`/`data`/`util`/`model`, `data` → `sce
 ### The loop: swimlanes, release trains, no wall clock
 
 There is no round timer. Money and story points land **per ticket at pickup**. Closed work fills
-**swimlanes** (`state.lanes`, dealt round-robin by `economy.fillLanes`); each lane has a WIP limit
+**swimlanes** (`state.lanes`, dealt round-robin by `economy.fillLanes`); each lane has a sprint scope
 (`laneCapacity`) and, when full, ships on its own **release train** (`haulMs`) and takes nothing
 until it is back. The others keep taking; collection is refused only when every train is away
 (`phase: 'hauling'`). A "round" is one lane's release. `cans` adds a lane, `capacity` raises the
-WIP limit. The cadence is an output of the player's throughput, not an input. Player-facing copy
-never says "truck" or "can". The board is never wiped at once, but work nobody reaches in
+sprint scope. The cadence is an output of the player's throughput, not an input. Player-facing copy
+never says "truck", "can" or "WIP". The board is never wiped at once, but work nobody reaches in
 `TICKET_LIFE_MS` is **closed as "won't fix"** (`expireTickets`): the debt stays, it just leaves
 the board. At `BOARD_CAPACITY` a full board **displaces** — each arrival pushes out the unclaimed
 card nearest expiry (`displaceOldest`) — so the field's mix always matches what was bought. Never
@@ -161,6 +161,7 @@ block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored 
 | File | What it is |
 |---|---|
 | `docs/gamedesign.md` | The design **as the code has it** — loop, currencies, crew, progression, where every knob lives, the current measured run, and the reference's measured numbers (§11). Read this before touching balance. |
+| `docs/upgrades.md` | Every tree node and rail row: cost, ranks, effect, and where two purchases overlap. |
 | `docs/next-steps.md` | What is open, ranked, including the stage-performance leads and the traps that cost this project time. |
 
 Docs describe the current state only — no history; git has that.

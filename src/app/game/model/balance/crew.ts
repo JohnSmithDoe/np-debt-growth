@@ -42,7 +42,7 @@ export const CREW_STATS = {
     batchBase: 1,
     sweepRadius: 40,
     womanEvery: 4,
-    band: { from: 0, to: 3 },
+    band: { from: 0, to: 4 },
     mode: 'closer',
     levelKey: 'junior',
     interruptible: true,
@@ -56,7 +56,7 @@ export const CREW_STATS = {
     batchBase: 3,
     sweepRadius: 70,
     womanEvery: 6,
-    band: { from: 2, to: Infinity },
+    band: { from: 3, to: Infinity },
     mode: 'closer',
     levelKey: 'senior',
     interruptible: true,
@@ -79,13 +79,7 @@ export const CREW_STATS = {
   },
 } as const satisfies Record<CrewKind, CrewStats>;
 
-export const DESK_LINES: readonly PurchaseId[] = CREW_KINDS.flatMap(
-  (kind) => CREW_STATS[kind].levelKey ?? []
-);
-
 export const WOMAN_CLOSE_RATE = 2;
 
-/** The floor you start with; the headcount node adds seats on top, never multiplies. */
-export const DESKS_BASE = 10;
-
-export const DESKS_PER_RANK = 5;
+/** Seats a room node's rank adds to its line's cap. */
+export const ROOM_SEATS = 5;

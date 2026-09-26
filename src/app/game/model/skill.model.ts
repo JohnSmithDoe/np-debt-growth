@@ -7,7 +7,7 @@ import {
   VOTE_BONUS_PER_RANK,
 } from './balance/flow';
 import { HAUL_SHAVE_PER_RANK, WIP_LIMIT_STEP } from './balance/round';
-import { DESKS_PER_RANK } from './balance/crew';
+import { ROOM_SEATS } from './balance/crew';
 import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from './tier.model';
 
 /** What a crew pace effect speeds up. */
@@ -18,7 +18,11 @@ export type SkillEffect =
   | { readonly kind: 'clickRadius'; readonly mult: number }
   | { readonly kind: 'slots'; readonly add: number }
   | { readonly kind: 'cans'; readonly add: number }
-  | { readonly kind: 'desks'; readonly add: number }
+  | {
+      readonly kind: 'room';
+      readonly line: CrewLine;
+      readonly add: number;
+    }
   | { readonly kind: 'adr'; readonly adr: number }
   | { readonly kind: 'haulShave'; readonly seconds: number }
   | {
@@ -316,12 +320,12 @@ export const SKILL_NODES: readonly SkillNode[] = [
     levels: [{ cost: 1200, effects: [{ kind: 'line', line: 'junior' }] }],
   },
   {
-    id: 'headcount',
+    id: 'juniorRoom',
     track: 'B',
     requires: 'juniorSpeed',
-    levels: [20_000, 60_000, 180_000, 540_000, 1_600_000].map((cost) => ({
+    levels: [20_000, 60_000, 180_000].map((cost) => ({
       cost,
-      effects: [{ kind: 'desks' as const, add: DESKS_PER_RANK }],
+      effects: [{ kind: 'room' as const, line: 'junior', add: ROOM_SEATS }],
     })),
   },
   {
@@ -409,7 +413,18 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'senior',
     track: 'E',
     requires: 'junior',
-    levels: [{ cost: 600, effects: [{ kind: 'line', line: 'senior' }] }],
+    gate: { tier: 3 },
+    levels: [{ cost: 6000, effects: [{ kind: 'line', line: 'senior' }] }],
+  },
+  {
+    id: 'seniorRoom',
+    track: 'E',
+    requires: 'seniorSpeed',
+    gate: 'senior',
+    levels: [100_000, 300_000, 900_000].map((cost) => ({
+      cost,
+      effects: [{ kind: 'room' as const, line: 'senior', add: ROOM_SEATS }],
+    })),
   },
   {
     id: 'seniorSpeed',
@@ -520,6 +535,18 @@ export const SKILL_NODES: readonly SkillNode[] = [
       { cost: 1100, effects: [{ kind: 'relabelSteps', add: 1 }] },
       { cost: 3300, effects: [{ kind: 'relabelFillerFirst' }] },
       { cost: 9000, effects: [{ kind: 'relabelSteps', add: 1 }] },
+    ],
+  },
+  {
+    id: 'managerRoom',
+    track: 'H',
+    requires: 'managerSpeed',
+    gate: 'manager',
+    levels: [
+      {
+        cost: 150_000,
+        effects: [{ kind: 'room', line: 'manager', add: ROOM_SEATS }],
+      },
     ],
   },
 
@@ -826,8 +853,16 @@ const COLLAPSED: ReadonlyMap<string, string | null> = new Map(
 
 export const ADR_NODE_IDS: readonly string[] = ADR_NODES.map((node) => node.id);
 
-/** The one node that adds desks; `Rattenpopulation`'s opposite number. */
-export const DESK_NODE_ID = 'headcount';
+/** Each crew line's `Rattenpopulation`. */
+export const ROOM_NODE_BY_LINE = {
+  junior: 'juniorRoom',
+  senior: 'seniorRoom',
+  manager: 'managerRoom',
+} as const satisfies Partial<Record<PurchaseId, string>>;
+
+export type CrewLine = keyof typeof ROOM_NODE_BY_LINE;
+
+export const CREW_LINES = Object.keys(ROOM_NODE_BY_LINE) as CrewLine[];
 
 export const OFFICE_HEADING_ID = 'office';
 

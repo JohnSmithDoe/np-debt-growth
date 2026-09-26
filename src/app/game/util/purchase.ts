@@ -51,21 +51,12 @@ function unmaxed(state: Consultancy, id: string): string | null {
   return null;
 }
 
-function deskShort(state: Consultancy, id: string): boolean {
-  const next = SKILL_BY_ID.get(id)?.levels[economy.skillRank(state, id)];
-  return (next?.effects ?? []).some(
-    (effect) =>
-      effect.kind === 'line' && economy.deskLimited(state, effect.line)
-  );
-}
-
 export function skillAvailable(state: Consultancy, id: string): boolean {
   const node = SKILL_BY_ID.get(id);
   if (!node || node.granted === true) return false;
   if (economy.skillRank(state, id) >= node.levels.length) return false;
   const parent = skillParent(id);
   if (parent !== null && economy.skillRank(state, parent) === 0) return false;
-  if (deskShort(state, id)) return false;
   if (unmaxed(state, id) !== null) return false;
   return gateReason(state, node.gate) === null;
 }
@@ -80,7 +71,6 @@ export function skillLockReason(
 
   const gate = gateReason(state, node.gate);
   if (gate !== null) return gate;
-  if (deskShort(state, id)) return { key: 'skill.lock.needs-desk' };
   const parent = skillParent(id);
   if (parent !== null && economy.skillRank(state, parent) === 0) {
     return {

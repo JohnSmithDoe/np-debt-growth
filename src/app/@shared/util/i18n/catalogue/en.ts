@@ -9,7 +9,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.topOfBand': 'Seniors take the biggest ticket first',
   'strip.collecting': 'COLLECTING',
   'strip.releasing': 'TRAIN {{seconds}}s',
-  'skill.effect.slots': 'WIP limit +{{count}} per swimlane',
+  'skill.effect.slots': 'Sprint scope +{{count}} per swimlane',
   'skill.effect.haulShave': '−{{seconds}}s on every release train',
   'skill.effect.spawnRate': '{{pct}} ticket spawn rate',
   'skill.effect.spawnRate.ticket': '{{pct}} {{ticket}} spawn rate',
@@ -19,7 +19,6 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.triagePolicy.seniors': 'Seniors leave {{ticket}} alone',
   'skill.lock.blocked': 'Blocked by {{by}}',
   'skill.lock.needs-adr': 'Needs ADR-{{adr}}',
-  'skill.lock.needs-desk': 'Needs a desk — buy floor',
   'skill.lock.needs-junior': 'Needs a Junior Dev',
   'skill.lock.needs-manager': 'Needs an Account Manager',
   'skill.lock.needs-senior': 'Needs a Senior Dev',
@@ -38,9 +37,9 @@ export const EN: Readonly<Record<string, string>> = {
   'step.earn.detail':
     'Nothing is affordable yet. Tickets are where the money is.',
   'step.earn.title': 'Back to the board',
-  'step.floor.detail':
-    'No desk is free, so nobody else can be hired. {{plate}} makes room.',
-  'step.floor.title': 'Lease the next plate',
+  'step.room.detail':
+    'Every seat is taken, so the rail stops selling. Five more seats open it.',
+  'step.room.title': 'Make room: {{room}}',
   'step.heading': 'Next',
   'step.rank.detail':
     'The cheapest rank your Story Points reach. Rank {{rank}} is next.',
@@ -195,7 +194,7 @@ export const EN: Readonly<Record<string, string>> = {
     'Bill the partner-only work the way a partner bills.',
   'skill.effect.goldenChance': 'Golden work: {{value}} of arrivals',
   'skill.effect.goldenCrew':
-    'The crew handle golden work, and {{value}} of what they close turns golden',
+    'The crew handle golden work, and {{value}} of what they close or re-file turns golden',
   'skill.effect.goldenValue': 'Golden work pays +{{times}}×',
   'spawner.0.blurb':
     'Fresh graduates, shipping formatting crimes and off-by-ones. The intake never stops.',
@@ -224,18 +223,18 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.assurance.3.label': 'Sign-Off Committee',
   'skill.assurance.blurb':
     'Everything bills better, and a committee signs it off.',
-  'skill.capacity.1.label': 'Raise the WIP Limit',
-  'skill.capacity.2.label': 'Raise It Again',
-  'skill.capacity.3.label': 'Soft WIP Limit',
-  'skill.capacity.4.label': 'WIP Guideline',
-  'skill.capacity.5.label': 'WIP Suggestion',
-  'skill.capacity.6.label': 'WIP Aspiration',
-  'skill.capacity.7.label': 'WIP Vibes',
-  'skill.capacity.8.label': 'Limit Under Review',
-  'skill.capacity.9.label': 'Limit Deprecated',
-  'skill.capacity.10.label': 'What WIP Limit',
+  'skill.capacity.1.label': 'Bigger Sprints',
+  'skill.capacity.2.label': 'Bigger Again',
+  'skill.capacity.3.label': 'Stretch Goal',
+  'skill.capacity.4.label': 'Stretch Goals',
+  'skill.capacity.5.label': 'Aggressive Commitment',
+  'skill.capacity.6.label': 'Overcommitted',
+  'skill.capacity.7.label': 'Sprint Vibes',
+  'skill.capacity.8.label': 'Capacity Under Review',
+  'skill.capacity.9.label': 'Sprint Goal Deprecated',
+  'skill.capacity.10.label': 'What Sprint Goal',
   'skill.capacity.blurb':
-    'A WIP limit exists to be low. Raise it anyway: every swimlane holds more before its train has to leave.',
+    'A sprint exists to be small. Grow it anyway: every swimlane holds more before its train has to leave.',
   'skill.client.1.label': 'The Client',
   'skill.crew.1.label': 'Headcount',
   'skill.debt.1.label': 'The Debt',
@@ -461,7 +460,7 @@ export const EN: Readonly<Record<string, string>> = {
     'Work the crew and the pipeline close gets logged twice.',
   'skill.effect.crewSp': 'Crew and pipeline closes pay double SP',
   'skill.effect.cans': '+{{count}} swimlane, with its own release train',
-  'skill.effect.desks': '+{{count}} desks',
+  'skill.effect.room': '+{{count}} seats',
   'skill.effect.adr':
     'Approves ADR-{{adr}}: opens its line and the work it leaves',
   'skill.adrs.1.label': 'Architecture Decisions',
@@ -476,13 +475,19 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.cans.9.label': 'Task Force (Final) 2',
   'skill.cans.blurb':
     'Open another swimlane. It fills on its own and ships on its own train, so one release never stops the others.',
-  'skill.headcount.1.label': 'Desk Order',
-  'skill.headcount.2.label': 'Second Bullpen',
-  'skill.headcount.3.label': 'Floor Expansion',
-  'skill.headcount.4.label': 'Satellite Office',
-  'skill.headcount.5.label': 'Campus',
-  'skill.headcount.blurb':
-    'Five more desks a rank. Nobody is hired without one.',
+  'skill.juniorRoom.1.label': 'Bullpen',
+  'skill.juniorRoom.2.label': 'Second Bullpen',
+  'skill.juniorRoom.3.label': 'Floor Expansion',
+  'skill.juniorRoom.blurb':
+    'Five more junior seats a rank. The rail hires into them.',
+  'skill.seniorRoom.1.label': 'Quiet Corner',
+  'skill.seniorRoom.2.label': 'Corner Offices',
+  'skill.seniorRoom.3.label': 'Senior Wing',
+  'skill.seniorRoom.blurb':
+    'Five more senior seats a rank. Doors that close, for people who bill more.',
+  'skill.managerRoom.1.label': 'Client Lounge',
+  'skill.managerRoom.blurb':
+    'Five more account manager seats, and a sofa for the client.',
   'rail.tab.supply': 'Debt',
   'rail.tab.income': 'Rates',
   'rail.tab.crew': 'Crew',

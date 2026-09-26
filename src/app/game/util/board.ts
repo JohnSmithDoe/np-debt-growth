@@ -44,6 +44,7 @@ function bill(board: Board, card: Carried): TicketTypeId {
 
 function refile(
   board: Board,
+  rules: CrewRules,
   transform: (type: TicketTypeId) => TicketTypeId | null,
   card: Carried,
   rand: () => number
@@ -55,7 +56,8 @@ function refile(
     filed ? target : card.type,
     rand,
     filed && TICKET_TYPES[target].respawns ? true : card.reborn,
-    filed || card.relabelled
+    filed || card.relabelled,
+    card.golden || (rules.gilds > 0 && rand() < rules.gilds)
   );
   return null;
 }
@@ -69,7 +71,7 @@ function deliver(
   if (rules.mode === 'refiler') {
     return rules.transform === null
       ? null
-      : refile(board, rules.transform, card, rand);
+      : refile(board, rules, rules.transform, card, rand);
   }
 
   return bill(board, card);

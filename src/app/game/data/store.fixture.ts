@@ -1,7 +1,7 @@
 import type { ConsultancyPatch } from '../model/consultancy.fixture';
 import { consultancy } from '../model/consultancy.fixture';
 import { TICK_MS } from '../model/game.consts';
-import { DESK_NODE_ID, SKILL_BY_ID } from '../model/skill.model';
+import { ROOM_NODE_BY_LINE, SKILL_BY_ID } from '../model/skill.model';
 import { GameStore } from './game.store';
 
 export function storeWith(patch: ConsultancyPatch = {}): GameStore {
@@ -10,14 +10,15 @@ export function storeWith(patch: ConsultancyPatch = {}): GameStore {
   return store;
 }
 
-/** Ranks of the headcount node — the only thing that adds desks. */
+/** Ranks of the junior room node — the only thing that adds junior seats. */
 export function rooms(ranks: number): Record<string, number> {
-  const node = SKILL_BY_ID.get(DESK_NODE_ID);
+  const room = ROOM_NODE_BY_LINE.junior;
+  const node = SKILL_BY_ID.get(room);
   return {
     root: 1,
     crew: 1,
     junior: 1,
-    [DESK_NODE_ID]: Math.min(ranks, node?.levels.length ?? 0),
+    [room]: Math.min(ranks, node?.levels.length ?? 0),
   };
 }
 

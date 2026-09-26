@@ -15,6 +15,7 @@ import { SAVE_VERSION } from '../model/game.consts';
 import { CALM } from '../model/hazard.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { CREW_STATS } from '../model/balance/crew';
+import { GOLDEN_CREW_CONVERSION } from '../model/balance/flow';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPRINT_SLOTS_BASE } from '../model/balance/round';
 import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
@@ -209,7 +210,7 @@ describe('the crew, told how to work', () => {
 
   it('reaches the rung above the band once reach is bought', () => {
     const board = emptyBoard();
-    addTicket(board, 'slop');
+    addTicket(board, 'rockstar');
 
     const plain = junior({});
     run(board, plain, juniorCloseMs(plain) + WALK_MS);
@@ -299,7 +300,7 @@ describe('a close says who did it', () => {
       levels: { ...BARE, senior: 1 },
       skills: { e1: 3 },
     });
-    fill(board, 'flaky', 40, cycling());
+    fill(board, 'conflict', 40, cycling());
 
     const closes = closesOf(board, state, seniorCloseMs(state) + WALK_MS);
     expect(closes.length).toBeGreaterThan(1);
@@ -379,7 +380,7 @@ describe('a senior closing a patch', () => {
     const board = emptyBoard();
     const state = seniorState();
     const rand = cycling();
-    fill(board, 'flaky', 40, rand);
+    fill(board, 'conflict', 40, rand);
 
     const closed = firstClose(board, state, rand);
     expect(closed.length).toBeGreaterThan(1);
@@ -398,7 +399,7 @@ describe('a senior closing a patch', () => {
   it('goes for the biggest rung first once the War Room is bought (E4)', () => {
     const board = emptyBoard();
     const rand = cycling();
-    fill(board, 'flaky', 8, rand);
+    fill(board, 'conflict', 8, rand);
     fill(board, 'swarm', 8, rand);
 
     const state = seniorState({ skills: { e4: 1 } });
@@ -412,7 +413,7 @@ describe('a senior closing a patch', () => {
       levels: { ...BARE, senior: 1 },
       sprintCount: SPRINT_SLOTS_BASE - 1,
     });
-    for (let n = 0; n < 40; n++) addTicket(board, 'flaky');
+    for (let n = 0; n < 40; n++) addTicket(board, 'conflict');
 
     const closed = run(board, state, seniorCloseMs(state) + SENIOR_WALK_MS);
     expect(closed.length).toBeGreaterThanOrEqual(seniorBatch(state));
@@ -566,7 +567,7 @@ describe('throughput', () => {
 
     let closed = 0;
     for (let at = 0; at < seconds * 1000; at += STEP_MS) {
-      while (board.tickets.length < 60) addTicket(board, 'flaky', rand);
+      while (board.tickets.length < 60) addTicket(board, 'conflict', rand);
       closed += workCrews(board, state, STEP_MS, rand).closed.length;
     }
 
@@ -663,6 +664,39 @@ describe('an account manager (D41)', () => {
 
     run(board, state, managerCloseMs(state) * 3 + WALK_MS);
     expect(board.pending).toEqual([]);
+  });
+
+  it('keeps a golden ticket golden through the re-file', () => {
+    const board = emptyBoard();
+    const state = managed({ goldenCrew: 1 });
+    addTicket(board, 'lint', cycling(), false, false, true);
+
+    settle(board, state, managerCloseMs(state) + 3 * WALK_MS);
+    expect(board.tickets[0]!.relabelled).toBe(true);
+    expect(board.tickets[0]!.golden).toBe(true);
+  });
+
+  it('gilds re-files at the golden crew rate, and only then', () => {
+    const managersOf = (state: Consultancy) =>
+      crewRules(emptyBoard(), state, CALM).find((r) => r.kind === 'managers');
+    expect(managersOf(managed())?.gilds).toBe(0);
+    expect(managersOf(managed({ goldenCrew: 1 }))?.gilds).toBe(
+      GOLDEN_CREW_CONVERSION
+    );
+
+    const board = emptyBoard();
+    const state = managed({ goldenCrew: 1 });
+    const certain = crewRules(board, state, CALM).map((rules) =>
+      rules.kind === 'managers' ? { ...rules, gilds: 1 } : rules
+    );
+    addTicket(board, 'lint');
+    const rand = cycling();
+    const until = managerCloseMs(state) + 3 * WALK_MS;
+    for (let at = 0; at < until; at += STEP_MS) {
+      stepCrews(board, certain, STEP_MS, rand);
+    }
+    expect(board.tickets[0]!.relabelled).toBe(true);
+    expect(board.tickets[0]!.golden).toBe(true);
   });
 
   it('leaves the pools consistent after re-filing', () => {

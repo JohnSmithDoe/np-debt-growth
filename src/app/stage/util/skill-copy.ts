@@ -61,8 +61,8 @@ function describe(effect: SkillEffect): EffectText {
       return { key: 'skill.effect.slots', params: { count: effect.add } };
     case 'cans':
       return { key: 'skill.effect.cans', params: { count: effect.add } };
-    case 'desks':
-      return { key: 'skill.effect.desks', params: { count: effect.add } };
+    case 'room':
+      return { key: 'skill.effect.room', params: { count: effect.add } };
     case 'adr':
       return { key: 'skill.effect.adr', params: { adr: effect.adr } };
     case 'haulShave':

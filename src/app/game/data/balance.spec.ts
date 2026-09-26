@@ -234,14 +234,23 @@ describe('the crew ceiling counts everyone', () => {
     );
   });
 
-  it('spends a desk a closer would otherwise sit at (D36)', () => {
+  it('seats account managers apart from the closers', () => {
     const closers = fullyLevelled(10, 4, 1);
     const managed: Consultancy = {
       ...closers,
-      levels: { ...closers.levels, manager: 8 },
+      levels: {
+        ...closers.levels,
+        manager: economy.lineCap(closers, 'manager'),
+      },
     };
-    expect(economy.freeDesks(managed)).toBe(economy.freeDesks(closers) - 8);
-    expect(economy.needsDesk('manager')).toBe(true);
+    for (const line of ['junior', 'senior'] as const) {
+      expect(economy.canBuyLine(managed, line)).toBe(
+        economy.canBuyLine(closers, line)
+      );
+    }
+    expect(economy.canBuyLine({ ...managed, budget: 1e12 }, 'manager')).toBe(
+      false
+    );
   });
 
   it('keeps every trait inside TRAIT_D21_CEILING', () => {

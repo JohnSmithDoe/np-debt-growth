@@ -9,13 +9,13 @@ import type { CrewKind } from '../model/crew.model';
 import {
   CREW_KINDS,
   CREW_STATS,
-  DESKS_PER_RANK,
+  ROOM_SEATS,
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
 import { INCOME_CAP } from '../model/balance/progression';
 import {
   ceilingPerSec,
-  desks,
+  lineCap,
   haulMs,
   incomeCost,
   incomeLevel,
@@ -274,13 +274,16 @@ describe('what a crew is allowed to claim', () => {
     expect(senior('lint')).toBe(false);
     expect(claims()('swarm')).toBe(false);
     expect(senior('swarm')).toBe(true);
-    expect(claims()('flaky')).toBe(true);
-    expect(senior('flaky')).toBe(true);
+    expect(senior('flaky')).toBe(false);
+    for (const both of ['conflict', 'slop'] as const) {
+      expect(claims()(both)).toBe(true);
+      expect(senior(both)).toBe(true);
+    }
   });
 
   it('lets reach stretch a junior one rung past the band', () => {
-    expect(claims()('slop')).toBe(false);
-    expect(claims({ juniorReach: 2 })('slop')).toBe(true);
+    expect(claims()('rockstar')).toBe(false);
+    expect(claims({ juniorReach: 2 })('rockstar')).toBe(true);
   });
 
   it('drops the type a policy named, and only that one (§6.5)', () => {
@@ -375,14 +378,23 @@ describe('the can has two axes (parity #13, #14)', () => {
     expect(slots({ capacity: 3, cans: 2 })).toBe(bare * 3);
   });
 
-  it('adds desks by the rank, mirroring the reference worker node', () => {
-    const none = desks(consultancy());
-    expect(desks(consultancy({ skills: { headcount: 1 } })) - none).toBe(
-      DESKS_PER_RANK
+  it('adds seats by the rank, mirroring the reference population node', () => {
+    const none = lineCap(consultancy(), 'junior');
+    expect(none).toBe(10);
+    const at = (juniorRoom: number): number =>
+      lineCap(consultancy({ skills: { juniorRoom } }), 'junior');
+    expect(at(1) - none).toBe(ROOM_SEATS);
+    expect(at(3)).toBe(25);
+  });
+
+  it('gives seniors 10 → 25 and managers 5 → 10', () => {
+    expect(lineCap(consultancy({ skills: { seniorRoom: 3 } }), 'senior')).toBe(
+      25
     );
-    expect(desks(consultancy({ skills: { headcount: 3 } })) - none).toBe(
-      DESKS_PER_RANK * 3
-    );
+    expect(lineCap(consultancy(), 'manager')).toBe(5);
+    expect(
+      lineCap(consultancy({ skills: { managerRoom: 1 } }), 'manager')
+    ).toBe(10);
   });
 });
 

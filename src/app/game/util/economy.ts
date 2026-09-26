@@ -31,8 +31,6 @@ import type { CrewBand } from '../model/balance/crew';
 import {
   CREW_KINDS,
   CREW_STATS,
-  DESKS_BASE,
-  DESK_LINES,
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
 import {
@@ -89,29 +87,8 @@ export function kitNext(state: Consultancy): KitItem | null {
   return nextKitItem(state.levels.kit);
 }
 
-/** A flat desk count plus whatever the headcount node has added — never a product. */
-export function desks(state: Consultancy): number {
-  return additive(state, 'desks', DESKS_BASE);
-}
-
 export function crewSize(state: Consultancy, crew: CrewKind): number {
   return state.levels[CREW_STATS[crew].levelKey];
-}
-
-export function crewCount(state: Consultancy): number {
-  return DESK_LINES.reduce((total, line) => total + state.levels[line], 0);
-}
-
-export function freeDesks(state: Consultancy): number {
-  return Math.max(0, desks(state) - crewCount(state));
-}
-
-export function needsDesk(line: PurchaseId): boolean {
-  return DESK_LINES.includes(line);
-}
-
-export function deskLimited(state: Consultancy, line: PurchaseId): boolean {
-  return needsDesk(line) && freeDesks(state) < 1;
 }
 
 export function skillRank(state: Consultancy, id: string): number {
@@ -398,19 +375,22 @@ export function lineUnlocked(state: Consultancy, line: PurchaseId): boolean {
 export function lineCost(state: Consultancy, line: PurchaseId): number {
   const plan = LINE_PLAN[line];
   const held = state.levels[line];
-  if (held >= plan.cap) return Number.POSITIVE_INFINITY;
+  if (held >= lineCap(state, line)) return Number.POSITIVE_INFINITY;
   return Math.ceil(plan.cost * LINE_COST_STEP ** Math.max(0, held - 1));
 }
 
-export function lineCap(line: PurchaseId): number {
-  return LINE_PLAN[line].cap;
+/** The line's start cap plus every seat its room node has added — never a product. */
+export function lineCap(state: Consultancy, line: PurchaseId): number {
+  return (
+    LINE_PLAN[line].cap +
+    sumOf(state, (e) => (e.kind === 'room' && e.line === line ? e.add : null))
+  );
 }
 
 export function canBuyLine(state: Consultancy, line: PurchaseId): boolean {
   return (
     lineUnlocked(state, line) &&
-    state.levels[line] < LINE_PLAN[line].cap &&
-    !deskLimited(state, line) &&
+    state.levels[line] < lineCap(state, line) &&
     state.budget >= lineCost(state, line)
   );
 }

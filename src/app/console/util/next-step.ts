@@ -1,8 +1,9 @@
 import type { Consultancy } from '../../game/model/consultancy.model';
-import { officeLabelKey } from '../../game/model/office.model';
 import {
   adrPrice,
-  DESK_NODE_ID,
+  CREW_LINES,
+  ROOM_NODE_BY_LINE,
+  SKILL_BY_ID,
   skillLabelKey,
 } from '../../game/model/skill.model';
 import { adrNodeId, tierAt, tierNameKey } from '../../game/model/tier.model';
@@ -65,15 +66,21 @@ export function nextSteps(
     });
   }
 
-  const plate = economy.officeNext(state);
-  if (plate && economy.freeDesks(state) < 1) {
+  for (const line of CREW_LINES) {
+    const room = ROOM_NODE_BY_LINE[line];
+    const rank = economy.skillRank(state, room);
+    const ranks = SKILL_BY_ID.get(room)?.levels.length ?? 0;
+    const held = state.levels[line];
+    if (held === 0 || held < economy.lineCap(state, line) || rank >= ranks) {
+      continue;
+    }
     steps.push({
-      id: `office:${economy.officePlates(state)}`,
+      id: `room:${room}:${rank}`,
       target: 'skills',
-      focus: DESK_NODE_ID,
-      titleKey: 'step.floor.title',
-      detailKey: 'step.floor.detail',
-      detailParams: { plate: officeLabelKey(plate.id) },
+      focus: room,
+      titleKey: 'step.room.title',
+      titleParams: { room: skillLabelKey(room, rank + 1) },
+      detailKey: 'step.room.detail',
     });
   }
 

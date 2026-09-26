@@ -3,14 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { resumed } from '../model/consultancy.model';
 import { FEED_LINES_PER_SEC, MAX_CATCHUP_MS } from '../model/game.consts';
 import {
-  DESK_NODE_ID,
+  ROOM_NODE_BY_LINE,
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_ROOT_ID,
   adrPrice,
 } from '../model/skill.model';
 import { adrNodeId, DEBT_TIERS, tierAt } from '../model/tier.model';
-import { DESKS_BASE, DESKS_PER_RANK } from '../model/balance/crew';
+import { ROOM_SEATS } from '../model/balance/crew';
+import { LINE_PLAN } from '../model/balance/progression';
 import { addTicket } from '../util/board';
 import { sprintSlots } from '../util/economy';
 import { GameStore } from './game.store';
@@ -333,35 +334,33 @@ describe('juniors and the sprint', () => {
   });
 });
 
-describe('desks gate the crew (D36, D56)', () => {
-  it('refuses a seat the floor has no desk for', () => {
+describe('rooms cap each crew line', () => {
+  it('stops the rail at the start cap', () => {
     const store = storeWith({
       budget: 1_000_000,
       skills: { root: 1, junior: 1 },
-      levels: { junior: DESKS_BASE },
+      levels: { junior: LINE_PLAN.junior.cap },
     });
-    expect(store.skillAvailable('junior')).toBe(false);
-    expect(store.buySkill('junior')).toBe(false);
+    expect(store.canBuyLine('junior')).toBe(false);
+    expect(store.buyLine('junior')).toBe(false);
   });
 
-  it('adds seats a rank at a time, never by a factor', () => {
+  it('adds seats a rank at a time, to its own line only', () => {
     const store = storeWith({
       budget: 1_000_000,
-      skills: { root: 1, crew: 1, junior: 1, [DESK_NODE_ID]: 1 },
-      levels: { junior: DESKS_BASE },
+      skills: { root: 1, crew: 1, junior: 1, [ROOM_NODE_BY_LINE.junior]: 1 },
+      levels: { junior: LINE_PLAN.junior.cap, senior: LINE_PLAN.senior.cap },
     });
-    expect(store.freeDesks()).toBe(DESKS_PER_RANK);
+    expect(store.lineCap('junior')).toBe(LINE_PLAN.junior.cap + ROOM_SEATS);
+    expect(store.lineCap('senior')).toBe(LINE_PLAN.senior.cap);
     expect(store.buyLine('junior')).toBe(true);
-    expect(store.levels().junior).toBe(DESKS_BASE + 1);
+    expect(store.levels().junior).toBe(LINE_PLAN.junior.cap + 1);
   });
 
   it('leaves every line that seats nobody alone', () => {
-    const store = storeWith({
-      budget: 1_000_000,
-      levels: { junior: DESKS_BASE },
-    });
+    const store = storeWith({ skills: { juniorRoom: 3, seniorRoom: 3 } });
     for (const line of ['velocity', 'kit'] as const) {
-      expect(store.deskLimited(line)).toBe(false);
+      expect(store.lineCap(line)).toBe(LINE_PLAN[line].cap);
     }
   });
 });
@@ -452,8 +451,9 @@ describe('the senior hire (D34)', () => {
     storeWith({
       budget: 1e6,
       storyPoints: 1e6,
+      tier: 3,
       levels: { junior: 1 },
-      skills: { ...rooms(4), root: 1, crew: 1, junior: 1 },
+      skills: { ...rooms(3), root: 1, crew: 1, junior: 1 },
     });
 
   it('seats somebody the moment the line is opened', () => {

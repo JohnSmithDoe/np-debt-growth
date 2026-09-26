@@ -65,7 +65,7 @@ export type PurchaseId = (typeof PURCHASE_IDS)[number];
 /**
  * The rail's repeatable lines. The tree unlocks a line once; every head
  * after that is bought here with euros, on the same 1.15x climb the
- * spawner lines use.
+ * spawner lines use. `cap` is the start; a crew line's room node adds seats.
  */
 export const LINE_COST_STEP = 1.15;
 
@@ -75,9 +75,9 @@ export const LINE_PLAN: Readonly<
     { readonly cost: number; readonly cap: number; readonly open?: boolean }
   >
 > = {
-  junior: { cost: 1000, cap: 50 },
-  senior: { cost: 1_200, cap: 50 },
-  manager: { cost: 28_000, cap: 50 },
+  junior: { cost: 1000, cap: 10 },
+  senior: { cost: 1_200, cap: 10 },
+  manager: { cost: 28_000, cap: 5 },
   velocity: { cost: 25, cap: 1, open: true },
   kit: { cost: 400, cap: 6 },
 };

@@ -80,7 +80,7 @@ ceilingPerSec  = sprintSlots / haulMs
 All in `balance/round.ts` and `util/economy.ts`. The cadence is an output of the player's
 throughput. A "round" in the code is one lane's release.
 
-Player-facing copy never says "truck" or "can": lanes, WIP limit, release train.
+Player-facing copy never says "truck" or "can": lanes, sprint scope, release train.
 
 ---
 
@@ -152,7 +152,8 @@ and `util/first-act.ts` places the first card on its beat.
 Any arrival rolls `goldenChance` (+2 % a rank of `golden`, cap `GOLDEN_CHANCE_CAP` 0.2). A golden
 card is worth `GOLDEN_VALUE_BASE` 100× + `GOLDEN_VALUE_PER_RANK` 50× a `goldenValue` rank
 (additive, 100× → 300×). **No crew kind claims golden** until `goldenCrew`, which also turns
-`GOLDEN_CREW_CONVERSION` 5 % of crew closes golden. Golden is what keeps the hand worth using
+`GOLDEN_CREW_CONVERSION` 5 % of crew closes golden. Managers get the same: a relabel keeps a
+card's gold, and 5 % of relabels come back golden (`CrewRules.gilds`). Golden is what keeps the hand worth using
 once the crew works; after `goldenCrew` the cursor is a bonus, by design.
 
 ---
@@ -161,18 +162,18 @@ once the crew works; after `goldenCrew` the cursor is a bonus, by design.
 
 One row per kind in `CREW_STATS` (`balance/crew.ts`). The row order is claim priority.
 
-| | close | walk | batch | sweep | band | woman every | headcount |
+| | close | walk | batch | sweep | band | woman every | seats |
 |---|---|---|---|---|---|---|---|
-| seniors | 10 s | 70 | 3 | 70 | 2–∞ | 6 | `levels.senior` |
-| juniors | 5 s | 90 | 1 | 40 | 0–3 | 4 | `levels.junior` |
-| managers | 24 s | 110 | 1 | 0 | 0–∞ | 3 | `levels.manager` |
+| seniors | 10 s | 70 | 3 | 70 | 3–∞ | 6 | 10 + `seniorRoom` 3 × 5 → 25 |
+| juniors | 5 s | 90 | 1 | 40 | 0–4 | 4 | 10 + `juniorRoom` 3 × 5 → 25 |
+| managers | 24 s | 110 | 1 | 0 | 0–∞ | 3 | 5 + `managerRoom` 1 × 5 → 10 |
 
 - **File on arrival, then recover.** A worker walks to a card, files it at once, and rests for
   its close time. A claim samples four cards (`CLAIM_SAMPLES`) and takes the nearest of them
   (`lineOfSight`, the `scout` trait) or a random / dearest one; the walk is a real share of every
   cycle.
-- **Bands** divide labour: juniors take tiers 0–3 (`juniorReach`, `stretch` extend it), seniors
-  tier 2 up. A senior on a fresh board has nothing to do.
+- **Bands** divide labour: juniors take tiers 0–4 (`juniorReach`, `stretch` extend it), seniors
+  tier 3 up; both take 3–4. The `senior` node is gated on ADR-3, so no senior waits for work.
 - **Seniors have one trait each**, by seat (`model/senior.model.ts`, `hireFor`): `closer`,
   `sweeper`, `runner`, `firefighter` (top of band), `scout` (nearest).
 - **Managers relabel** (`mode: 'refiler'`): they walk a card `relabelSteps` rungs up the ladder.
@@ -180,8 +181,10 @@ One row per kind in `CREW_STATS` (`balance/crew.ts`). The row order is claim pri
   `lifetimeClosedByWomen` and shown in the post-mortem.
 - **Crew skills are two effect kinds**: `{ kind: 'pace', crew, field: 'close' | 'walk' | 'sweep',
   mult }` and `{ kind: 'batch', crew, add, closeMult? }`. Senior traits use the same shape.
-- **Desks** = `DESKS_BASE` 10 + `headcount` ranks × `DESKS_PER_RANK` 5. `headcount` sits behind
-  `juniorSpeed` (unlock → improve → raise the cap, as the reference orders it).
+- **Seats are per line**: `LINE_PLAN` cap + the line's room ranks × `ROOM_SEATS` 5
+  (`economy.lineCap`, `{ kind: 'room', line }`). Each room sits behind its kind's speed node
+  (unlock → improve → raise the cap, as the reference orders it) and is priced off its unlock,
+  the reference's population/unlock ratio (20 000 / 1 200) climbing ×3 a rank.
 - **Pizza party** (`pizza` node, ADR-5): the engineering manager drops a hand-only voucher;
   sweeping it makes crew inside `PIZZA_RADIUS` 240 work ×`PIZZA_RUSH` 5 for `PIZZA_MS` 12 s. The
   reference's Chad.
@@ -193,6 +196,8 @@ Promotion Round are gone (see *Parked* in `next-steps.md`).
 ---
 
 ## 6. Progression
+
+Every purchase, node by node, is catalogued in `upgrades.md`.
 
 ### The rail — three tabs, all euros
 
@@ -208,8 +213,8 @@ Promotion Round are gone (see *Parked* in `next-steps.md`).
   first rank and adds a flat `3 + t` € a rank to the ticket's value **before** multipliers.
   Opens once the line has a head (`incomeUnlocked`). Flat on purpose: decisive on cheap work,
   nothing on dear work, so it pushes the player up a rung.
-- **Crew lines** (`LINE_PLAN`): junior 1 000, senior 1 200, manager 28 000, velocity 25 (cap 1),
-  kit 400 (cap 6). The tree opens each line once (`{ kind: 'line' }`); `velocity` is open from
+- **Crew lines** (`LINE_PLAN`): junior 1 000 (cap 10), senior 1 200 (cap 10), manager 28 000
+  (cap 5), velocity 25 (cap 1), kit 400 (cap 6). Room nodes raise the crew caps. The tree opens each line once (`{ kind: 'line' }`); `velocity` is open from
   the start because it is the SP source.
 
 ### The tree — SP only
@@ -235,10 +240,10 @@ five +20 % ranks end at exactly ×2. First-rank prices double a tier: `value` 25
 
 | Track | Holds |
 |---|---|
-| **A** Hand | `radius`, `capacity` (WIP +25 ×10), `cans` (+1 lane ×9, tier 1), `duration`, `lineOfSight`, `golden` → `goldenValue` → `goldenCrew` |
-| **B** Juniors | `junior` (1 200), `juniorSpeed`, `headcount`, `juniorReach`, `juniorPresence`, `ticketStacking`, `timesheets`, `pizza` |
-| **E** Seniors | `senior`, speed, reach, presence |
-| **H** Managers | `manager`, speed, `relabel` |
+| **A** Hand | `radius`, `capacity` (sprint scope +25 ×10), `cans` (+1 lane ×9, tier 1), `duration`, `lineOfSight`, `golden` → `goldenValue` → `goldenCrew` |
+| **B** Juniors | `junior` (1 200), `juniorSpeed`, `juniorRoom`, `juniorReach`, `juniorPresence`, `ticketStacking`, `timesheets`, `pizza` |
+| **E** Seniors | `senior` (6 000, ADR-3), speed, reach, presence, `seniorRoom` |
+| **H** Managers | `manager`, speed, `relabel`, `managerRoom` |
 | **C** Client | the per-line `value` / `income` / `estimates` / `double` nodes, `valueBug`, `valueIncident`, `escalation`, `coaches`, `deck` |
 | **D** Debt | the per-line `spawn` nodes, `debtInterest`, `triagePolicy`, `spawnEscalation`, `spawnIncident` |
 | **G** Capstones | `assurance`, `stretch`, `signoff` |
@@ -369,12 +374,12 @@ field, and the sim counts that.
 
 - `data/sim.spec.ts` guards the **sim** against a real board.
 
-**Measured run** (25 Sep 2026, autoplayer):
+**Measured run** (26 Sep 2026, autoplayer, crew caps not yet tuned):
 
 ```
-ADR-1 12.3   first junior 15.2   ADR-2 28.0   ADR-3 43.4   ADR-4 46.1
-ADR-5 48.5   ADR-6 56.1          ADR-7 66.2   ADR-8 73.8   signed off 89.4   tree bought out
-golden crew 59.7 · crew: 38–59 % of closes, 2–4 % of euros before golden crew, 14–19 % after
+ADR-1 12.3   first junior 15.2   ADR-2 25.4   ADR-3 38.7   ADR-4 41.5
+ADR-5 44.2   ADR-6 49.1          ADR-7 54.5   ADR-8 60.0   signed off 71.3   tree bought out
+golden crew 51.4 · crew: 28–70 % of closes, 2–6 % of euros before golden crew, 27–41 % after
 ```
 
 ### Load-bearing, do not undo
@@ -407,7 +412,8 @@ These are accepted as real and go in as they are.
 | 20 % chance to throw 2 papers | 2 200 gum | `spawnLint` rank 1 |
 | Radius +25 % | 100 gum | `radius` |
 | Rat unlock / hire | 1 200 gum / 1 000 $ | `junior` / `LINE_PLAN.junior` |
-| Rat speed / population / slimy (×2 gum) | 1 500 / 20 000 (+5 ×3) / 15 000 | `juniorSpeed` / `headcount` / `timesheets` |
+| Rat speed / population / slimy (×2 gum) | 1 500 / 20 000 (+5 ×3) / 15 000 | `juniorSpeed` / `juniorRoom` / `timesheets` |
+| Rats | 10 on the rail, 25 with population | `LINE_PLAN.junior` 10 + `juniorRoom` |
 | Dogs unlock | 750 gum | `adr1` |
 | +1 trashcan | 1 500 gum | `cans` rank 1 |
 | Golden 2 %, 100× | 2 000 gum; +50× a rank ×4 from 2 000 | `golden`, `goldenValue` |

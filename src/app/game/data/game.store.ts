@@ -1033,14 +1033,6 @@ export class GameStore {
     return economy.seniorPoolSeat(this.#state(), seat);
   }
 
-  freeDesks(): number {
-    return economy.freeDesks(this.#state());
-  }
-
-  deskLimited(line: PurchaseId): boolean {
-    return economy.deskLimited(this.#state(), line);
-  }
-
   /** The rung is a tree node; this is the same purchase, reached from the rail. */
   unlockNextTier(): boolean {
     const id = purchase.nextAdrNodeId(this.#state());
@@ -1060,7 +1052,7 @@ export class GameStore {
   }
 
   lineCap(line: PurchaseId): number {
-    return economy.lineCap(line);
+    return economy.lineCap(this.#state(), line);
   }
 
   lineUnlocked(line: PurchaseId): boolean {

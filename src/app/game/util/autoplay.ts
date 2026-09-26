@@ -209,7 +209,7 @@ function wants(state: Consultancy, line: PurchaseId): boolean {
     case 'junior':
     case 'senior':
       return (
-        economy.freeDesks(state) >= 1 &&
+        state.levels[line] < economy.lineCap(state, line) &&
         economy.crewCeilingPerSec(state) < economy.ceilingPerSec(state) * 0.5
       );
     case 'velocity':
@@ -217,6 +217,9 @@ function wants(state: Consultancy, line: PurchaseId): boolean {
     case 'kit':
       return economy.kitNext(state) !== null;
     case 'manager':
-      return economy.freeDesks(state) >= 1 && state.tier >= 2;
+      return (
+        state.levels.manager < economy.lineCap(state, 'manager') &&
+        state.tier >= 2
+      );
   }
 }
