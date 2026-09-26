@@ -214,9 +214,7 @@ export class SprintStrip {
 
     const filled = this.#deps.filled();
     const slots = this.#deps.slots();
-    this.#slotsLabel.setText(
-      `${lanes.length} × WIP ${cap}   ${filled} / ${slots}`
-    );
+    this.#slotsLabel.setText(`${lanes.length} × ${cap}   ${filled} / ${slots}`);
     this.#pips.clear();
 
     const { width } = this.#bar();
