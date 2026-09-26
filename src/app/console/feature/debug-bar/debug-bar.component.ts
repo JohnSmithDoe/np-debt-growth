@@ -18,9 +18,9 @@ interface Grant {
 
 const GRANTS: readonly Grant[] = [
   { label: '+€1k', budget: 1_000, points: 0 },
-  { label: '+€1M', budget: 1_000_000, points: 0 },
+  { label: '+€10M', budget: 10_000_000, points: 0 },
   { label: '+1k SP', budget: 0, points: 1_000 },
-  { label: '+1M SP', budget: 0, points: 1_000_000 },
+  { label: '+10M SP', budget: 0, points: 10_000_000 },
 ];
 
 const ARMED_MS = 4_000;
