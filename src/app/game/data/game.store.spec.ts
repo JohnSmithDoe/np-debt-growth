@@ -534,3 +534,27 @@ describe('an ADR is a tree node (parity #23)', () => {
     expect(store.skillAvailable(adrNodeId(2))).toBe(true);
   });
 });
+
+describe('big payouts', () => {
+  function sweep(store: GameStore, golden: boolean): boolean {
+    const plain = addTicket(store.board, 'bug')!;
+    const odd = addTicket(store.board, 'bug')!;
+    odd.golden = golden;
+    return store.harvest([plain.id, odd.id]).big;
+  }
+
+  it('marks a sweep with a golden ticket in it, whatever else it took', () => {
+    expect(sweep(storeWith(), true)).toBe(true);
+  });
+
+  it('leaves an ordinary sweep ordinary', () => {
+    expect(sweep(storeWith(), false)).toBe(false);
+  });
+
+  it('marks a sweep with an incident in it', () => {
+    const store = storeWith();
+    const incident = addTicket(store.board, 'incident');
+    expect(incident).not.toBeNull();
+    expect(store.harvest([incident!.id]).big).toBe(true);
+  });
+});

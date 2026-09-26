@@ -6,6 +6,8 @@ import { TICKET_TYPES } from '../../game/model/ticket.model';
 import {
   BOARD_TEXT,
   CLAIM_SLOTS,
+  GOLD_GLOW,
+  GOLD_GLOW_CAPACITY,
   HEAP_CAPACITY,
   RARE_CAPACITY,
   REFUSAL_BOUNCE,
@@ -19,18 +21,24 @@ import {
   goldFrame,
   claimFrame,
   GLOW_FRAME,
+  GOLD_INK,
   paintClaimCard,
 } from './board-atlas';
 
 export const NONE = -1;
 
-const DEPTH = { layer: 10, glow: 11, rare: 12 } as const;
+const DEPTH = { goldGlow: 9, layer: 10, glow: 11, rare: 12 } as const;
 
 export class TicketHeap {
   readonly #scene: Phaser.Scene;
   readonly #layer: Phaser.GameObjects.SpriteGPULayer;
   readonly #member: Partial<Phaser.Types.GameObjects.SpriteGPULayer.Member> =
     {};
+  readonly #goldGlows: Phaser.GameObjects.SpriteGPULayer;
+  readonly #glowMember: Partial<Phaser.Types.GameObjects.SpriteGPULayer.Member> =
+    {};
+  readonly #glowFree: number[] = [];
+  readonly #glowSlot = new Map<number, number>();
 
   readonly #free: number[] = [];
   readonly #slotOf = new Map<number, number>();
@@ -68,6 +76,15 @@ export class TicketHeap {
     for (let i = HEAP_CAPACITY - 1; i >= 0; i--) {
       this.#layer.addMember(this.#hiddenMember());
       this.#free.push(i);
+    }
+
+    this.#goldGlows = scene.add
+      .spriteGPULayer(this.#atlas, GOLD_GLOW_CAPACITY)
+      .setDepth(DEPTH.goldGlow)
+      .setBlendMode(Phaser.BlendModes.ADD);
+    for (let i = GOLD_GLOW_CAPACITY - 1; i >= 0; i--) {
+      this.#goldGlows.addMember(this.#hiddenGlow());
+      this.#glowFree.push(i);
     }
 
     for (let slot = 0; slot < RARE_CAPACITY; slot++) {
@@ -215,6 +232,7 @@ export class TicketHeap {
 
   destroy(): void {
     this.#layer.destroy();
+    this.#goldGlows.destroy();
     for (const card of this.#rareCards) card.destroy();
     for (const glow of this.#rareGlows) glow.destroy();
     for (const title of this.#rareTitles) title.destroy();
@@ -230,6 +248,7 @@ export class TicketHeap {
       this.#claimFree.push(claim);
     }
     this.#bouncing.delete(id);
+    this.#dropGlow(id);
     const rare = this.#rareSlot.get(id);
     if (rare !== undefined) {
       this.#rareCards[rare]?.setVisible(false);
@@ -283,6 +302,64 @@ export class TicketHeap {
     this.#member.scaleY = 1;
     this.#member.alpha = 1;
     this.#layer.editMember(slot, this.#member);
+    if (ticket.golden) this.#glowUnder(ticket.id, x, y);
+  }
+
+  #glowUnder(id: number, x: number, y: number): void {
+    const slot = this.#glowSlot.get(id) ?? this.#glowFree.pop();
+    if (slot === undefined) return;
+    this.#glowSlot.set(id, slot);
+    const pulse = {
+      ease: 'Sine.easeInOut',
+      duration: GOLD_GLOW.ms,
+      delay: (id % 7) * 100,
+    };
+    const glow = this.#glowMember;
+    glow.frame = GLOW_FRAME;
+    glow.x = x;
+    glow.y = y;
+    glow.rotation = 0;
+    glow.scaleX = {
+      ...pulse,
+      base: GOLD_GLOW.scaleX,
+      amplitude: GOLD_GLOW.swell,
+    };
+    glow.scaleY = {
+      ...pulse,
+      base: GOLD_GLOW.scaleY,
+      amplitude: GOLD_GLOW.swell,
+    };
+    glow.alpha = {
+      ...pulse,
+      base: GOLD_GLOW.alpha,
+      amplitude: GOLD_GLOW.flare,
+    };
+    glow.tintTopLeft = GOLD_INK;
+    glow.tintTopRight = GOLD_INK;
+    glow.tintBottomLeft = GOLD_INK;
+    glow.tintBottomRight = GOLD_INK;
+    glow.tintBlend = 1;
+    this.#goldGlows.editMember(slot, glow);
+  }
+
+  #dropGlow(id: number): void {
+    const slot = this.#glowSlot.get(id);
+    if (slot === undefined) return;
+    this.#goldGlows.editMember(slot, this.#hiddenGlow());
+    this.#glowSlot.delete(id);
+    this.#glowFree.push(slot);
+  }
+
+  #hiddenGlow(): Partial<Phaser.Types.GameObjects.SpriteGPULayer.Member> {
+    const glow = this.#glowMember;
+    glow.frame = GLOW_FRAME;
+    glow.x = 0;
+    glow.y = 0;
+    glow.rotation = 0;
+    glow.scaleX = 0;
+    glow.scaleY = 0;
+    glow.alpha = 0;
+    return glow;
   }
 
   #hiddenMember(): Partial<Phaser.Types.GameObjects.SpriteGPULayer.Member> {

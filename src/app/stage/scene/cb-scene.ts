@@ -1,6 +1,11 @@
 import * as Phaser from 'phaser';
 
-import { BOARD_TEXT, MAX_FRAME_MS } from '../model/board.consts';
+import {
+  BIG_FLOAT,
+  BOARD_TEXT,
+  FLOAT_MS,
+  MAX_FRAME_MS,
+} from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
 
 export abstract class CbScene extends Phaser.Scene {
@@ -44,8 +49,35 @@ export abstract class CbScene extends Phaser.Scene {
       targets: text,
       y: y - (style.rise ?? 46),
       alpha: 0,
-      duration: 650,
+      duration: FLOAT_MS,
       ease: 'Sine.easeOut',
+      onComplete: () => text.destroy(),
+    });
+  }
+
+  protected floatBig(x: number, y: number, label: string): void {
+    const text = this.add
+      .text(x, y, label, {
+        fontFamily: 'monospace',
+        fontSize: BIG_FLOAT.size,
+        color: BIG_FLOAT.colour,
+        stroke: BIG_FLOAT.stroke,
+        strokeThickness: BIG_FLOAT.strokeThickness,
+      })
+      .setOrigin(0.5)
+      .setDepth(51);
+
+    this.tweens.add({
+      targets: text,
+      y: y - BIG_FLOAT.rise,
+      duration: BIG_FLOAT.ms,
+      ease: 'Sine.easeOut',
+    });
+    this.tweens.add({
+      targets: text,
+      alpha: 0,
+      delay: BIG_FLOAT.ms * BIG_FLOAT.hold,
+      duration: BIG_FLOAT.ms * (1 - BIG_FLOAT.hold),
       onComplete: () => text.destroy(),
     });
   }

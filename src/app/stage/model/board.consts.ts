@@ -19,6 +19,18 @@ export const CLAIM_SLOTS = 16;
 export const FLYER_CAPACITY = 320;
 export const RARE_CAPACITY = 24;
 
+/** Room for every golden card a full board can hold at the chance cap. */
+export const GOLD_GLOW_CAPACITY = 160;
+/** A halo behind a golden card, pulsed on the GPU. Scales are of the 64px glow frame. */
+export const GOLD_GLOW = {
+  scaleX: 1.9,
+  scaleY: 1.35,
+  swell: 0.3,
+  alpha: 0.75,
+  flare: 0.25,
+  ms: 700,
+} as const;
+
 /** New work is thrown on the same hop a harvest takes, slow enough to catch mid-air. */
 export const DROP_MS = 1_850;
 export const DROP_HOP = 90;
@@ -100,6 +112,19 @@ export const HOVER_LINE_GAP = 2;
 export const HOVER_OFFSET = { x: 14, y: 10, edge: 4 } as const;
 
 export const CLOSE_FLOAT = { size: '13px', rise: 30 } as const;
+export const FLOAT_MS = 750;
+
+/** Payouts with golden or incident work in them, sized to be read. */
+export const BIG_FLOAT = {
+  size: '24px',
+  colour: '#f0c86a',
+  stroke: '#d99a3f',
+  strokeThickness: 2,
+  rise: 120,
+  ms: 1500,
+  /** Share of `ms` it stays fully opaque before fading. */
+  hold: 0.5,
+} as const;
 
 export const CLICK_RING = {
   width: 1,

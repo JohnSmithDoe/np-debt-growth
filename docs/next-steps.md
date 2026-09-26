@@ -63,14 +63,26 @@ full), so the heap leads matter again:
 
 Capture: reach ADR-5+ with a full board, 20 s of Chrome DevTools → Performance while sweeping.
 
-## 4. Unstash the weather
+## 4. Render the canvas at device pixel ratio
+
+All Phaser text is soft on a HiDPI screen; the DOM text beside it is sharp. `phaser.service.ts`
+sizes the canvas in CSS pixels (`Scale.RESIZE`, `parent.clientWidth`), so on a DPR-2 display the
+browser upscales a half-resolution buffer. `pixelArt: true` makes that harmless for sprites, not
+for anti-aliased glyphs. The payout floats show it worst.
+
+The fix is a backing store of `clientWidth × devicePixelRatio` shown at CSS size, then every scene
+scaling its literal pixel sizes by the same factor — font sizes (`'11px'`, `CLOSE_FLOAT`,
+`BIG_FLOAT`), `HOVER_*`, rise distances, the board fit. Fill cost goes ×4 at DPR 2, so do it after
+§3 has a profile, and measure both.
+
+## 5. Unstash the weather
 
 This is more than flipping `HAZARDS_ENABLED`: `meeting` was tuned against a 10 s round;
 `CREW_EURO_WINDOW_FLOOR` needs re-measuring; `grooming` is a no-op; `migration`'s `supply: 0`
 has no counterplay; the two 120 s cadences coincide by accident. Offshore contractors, which
 only weather ever staffed, were removed with `3524a98`; the `offshore` hazard went with them.
 
-## 5. Needs a design call
+## 6. Needs a design call
 
 - **The hidden node.** The reference hides a "Wow you found me!" node at the zoomed-out corner of
   its tree. Ours: *the undocumented endpoint*.

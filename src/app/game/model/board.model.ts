@@ -80,6 +80,8 @@ export interface CloseFloat {
   readonly x: number;
   readonly y: number;
   readonly value: number;
+  /** Golden or incident work was in it. */
+  readonly big: boolean;
 }
 
 export interface Harvest {
@@ -88,6 +90,8 @@ export interface Harvest {
   readonly refused: readonly number[];
   readonly value: number;
   readonly sp: number;
+  /** Golden or incident work was in it. */
+  readonly big: boolean;
 }
 
 export interface Comeback {

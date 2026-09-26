@@ -811,9 +811,11 @@ export class GameStore {
     state: Consultancy,
     work: CrewWork,
     now: number
-  ): { next: Consultancy; value: number; sp: number } {
+  ): { next: Consultancy; value: number; sp: number; big: boolean } {
     const { closed, byWomen } = work;
-    if (closed.length === 0) return { next: state, value: 0, sp: 0 };
+    if (closed.length === 0) {
+      return { next: state, value: 0, sp: 0, big: false };
+    }
 
     const banked = this.#bankWork(state, closed, now);
     const buffs = armBuffs(state, closed, now);
@@ -858,6 +860,7 @@ export class GameStore {
       },
       value: banked.value,
       sp: velocitySp,
+      big: banked.big,
     };
   }
 
@@ -869,11 +872,13 @@ export class GameStore {
     value: number;
     crew: number;
     sp: number;
+    big: boolean;
     took: Omit<SprintSlot, 'lane'>[];
   } {
     let value = 0;
     let crew = 0;
     let sp = 0;
+    let big = false;
     const took: Omit<SprintSlot, 'lane'>[] = [];
 
     const goldenMult = economy.goldenMultiplier(state);
@@ -884,6 +889,8 @@ export class GameStore {
         golden || (by !== 'you' && conversion > 0 && this.#rand() < conversion);
       const worth =
         economy.closeValue(state, type, now) * (gilded ? goldenMult : 1);
+      const loud = gilded || type === 'incident';
+      big ||= loud;
       value += worth;
       sp +=
         economy.pickupStoryPoints(state, type, by !== 'you') +
@@ -891,10 +898,10 @@ export class GameStore {
       took.push({ type, title });
       if (by !== 'you') {
         crew += worth;
-        this.#addCloseFloat(x, y, worth);
+        this.#addCloseFloat(x, y, worth, loud);
       }
     }
-    return { value, crew, sp, took };
+    return { value, crew, sp, big, took };
   }
 
   #billWholeBoard(now: number): number {
@@ -972,7 +979,9 @@ export class GameStore {
     const { taken, closed } = reached;
 
     this.#probeClick(now, ids.length, taken.length, state);
-    if (taken.length === 0) return { taken, refused, value: 0, sp: 0 };
+    if (taken.length === 0) {
+      return { taken, refused, value: 0, sp: 0, big: false };
+    }
 
     for (const ticket of reached.tickets) {
       if (TICKET_TYPES[ticket.type].effect === 'decline') {
@@ -981,12 +990,16 @@ export class GameStore {
       comeBack(this.#board, ticket);
       removeTicket(this.#board, ticket);
     }
-    const { next, value, sp } = this.#bank(state, { closed, byWomen: 0 }, now);
+    const { next, value, sp, big } = this.#bank(
+      state,
+      { closed, byWomen: 0 },
+      now
+    );
     this.#state.set(next);
     this.#lastLineAt = now;
     this.#logClose(state, dearest(state, closed, now), now);
     if (reached.quarterEnd) this.#billWholeBoard(now);
-    return { taken, refused, value, sp };
+    return { taken, refused, value, sp, big };
   }
 
   takePayout(): number {
@@ -995,18 +1008,19 @@ export class GameStore {
     return paid;
   }
 
-  #addCloseFloat(x: number, y: number, worth: number): void {
+  #addCloseFloat(x: number, y: number, worth: number, big: boolean): void {
     const last = this.#closeFloats.at(-1);
     if (last && last.x === x && last.y === y) {
       this.#closeFloats[this.#closeFloats.length - 1] = {
         x,
         y,
         value: last.value + worth,
+        big: last.big || big,
       };
       return;
     }
     if (this.#closeFloats.length >= CLOSE_FLOAT_BUFFER) return;
-    this.#closeFloats.push({ x, y, value: worth });
+    this.#closeFloats.push({ x, y, value: worth, big });
   }
 
   takeCloseFloats(): readonly CloseFloat[] {

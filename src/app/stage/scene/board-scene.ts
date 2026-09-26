@@ -627,13 +627,14 @@ export class BoardScene extends CbScene {
     flyers.fallingWithin(px, py, radius * this.#scale, ids);
     if (ids.length === 0) return;
 
-    const { taken, refused, value, sp } = this.deps.harvest(ids);
+    const { taken, refused, value, sp, big } = this.deps.harvest(ids);
     if (refused.length > 0) {
       this.#refusedUntil = this.time.now + REFUSED_MS;
       parts.heap.bounce(refused.filter((id) => !flyers.isFalling(id)));
     }
     if (taken.length === 0) return;
-    if (value > 0) this.floatPayout(px, py - 14, `+${formatMoney(value)}`);
+    if (value > 0 && big) this.floatBig(px, py - 22, `+${formatMoney(value)}`);
+    else if (value > 0) this.floatPayout(px, py - 14, `+${formatMoney(value)}`);
     if (sp > 0) {
       this.floatPayout(px, py + 8, `+${formatCompactWhole(sp)} SP`, {
         colour: BOARD_TEXT.points,
@@ -657,17 +658,23 @@ export class BoardScene extends CbScene {
 
   #floatCloses(): void {
     const due = this.deps.takeCloseFloats();
-    for (const close of due.slice(0, CLOSE_FLOATS_PER_FRAME)) {
-      this.floatPayout(
-        close.x * this.#scale + this.#offX,
-        close.y * this.#scale + this.#offY,
-        formatMoney(close.value),
-        {
-          colour: BOARD_TEXT.bright,
-          size: CLOSE_FLOAT.size,
-          rise: CLOSE_FLOAT.rise,
-        }
-      );
+    if (due.length === 0) return;
+    const shown = [
+      ...due.filter((close) => close.big),
+      ...due.filter((close) => !close.big),
+    ].slice(0, CLOSE_FLOATS_PER_FRAME);
+    for (const close of shown) {
+      const x = close.x * this.#scale + this.#offX;
+      const y = close.y * this.#scale + this.#offY;
+      if (close.big) {
+        this.floatBig(x, y, formatMoney(close.value));
+        continue;
+      }
+      this.floatPayout(x, y, formatMoney(close.value), {
+        colour: BOARD_TEXT.bright,
+        size: CLOSE_FLOAT.size,
+        rise: CLOSE_FLOAT.rise,
+      });
     }
   }
 
