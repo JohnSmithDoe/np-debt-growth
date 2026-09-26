@@ -28,7 +28,11 @@
             class="line"
             [class.maxed]="row.maxed || row.locked"
             [disabled]="!row.affordable"
-            (click)="buy(row.key)"
+            (click)="pick($event, row.key)"
+            (pointerdown)="press($event, row.key)"
+            (pointerup)="release()"
+            (pointerleave)="release()"
+            (pointercancel)="release()"
           >
             <span class="head">
               <span class="name">{{ row.name }}</span>

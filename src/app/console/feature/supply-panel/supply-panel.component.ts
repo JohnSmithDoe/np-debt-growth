@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   signal,
 } from '@angular/core';
@@ -32,6 +33,9 @@ type Tab = (typeof TABS)[number];
 
 const MAXED = 'MAX';
 
+/** Holding a row keeps buying: a pause, then a repeat that speeds up. */
+const HOLD = { delayMs: 350, everyMs: 90, fastMs: 40, fastAfter: 10 } as const;
+
 /** One shop row, whatever tab it sits in. */
 const SP_UNLOCK: PurchaseId = 'velocity';
 
@@ -59,6 +63,12 @@ export class SupplyPanelComponent {
   #text = inject(TranslateService);
 
   readonly tab = signal<Tab>('supply');
+
+  #holdTimer: ReturnType<typeof setTimeout> | undefined;
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.release());
+  }
 
   // Resolved per render: the catalogue is lazily imported, so a field
   // initialiser would read the keys back raw.
@@ -191,18 +201,43 @@ export class SupplyPanelComponent {
     this.tab.set(tab);
   }
 
-  buy(key: string): void {
-    switch (this.tab()) {
+  /** Keyboard activation only; a pointer buys through `press`. */
+  pick(event: MouseEvent, key: string): void {
+    if (event.detail === 0) this.#buy(this.tab(), key);
+  }
+
+  press(event: PointerEvent, key: string): void {
+    if (event.button !== 0) return;
+    this.release();
+    const tab = this.tab();
+    if (!this.#buy(tab, key)) return;
+    let bought = 1;
+    const again = (): void => {
+      if (!this.#buy(tab, key)) return this.release();
+      bought += 1;
+      this.#holdTimer = setTimeout(
+        again,
+        bought > HOLD.fastAfter ? HOLD.fastMs : HOLD.everyMs
+      );
+    };
+    this.#holdTimer = setTimeout(again, HOLD.delayMs);
+  }
+
+  release(): void {
+    clearTimeout(this.#holdTimer);
+    this.#holdTimer = undefined;
+  }
+
+  #buy(tab: Tab, key: string): boolean {
+    switch (tab) {
       case 'supply':
-        if (key === SP_UNLOCK) this.#store.buyLine(SP_UNLOCK);
-        else this.#store.buySpawner(Number(key));
-        return;
+        return key === SP_UNLOCK
+          ? this.#store.buyLine(SP_UNLOCK)
+          : this.#store.buySpawner(Number(key));
       case 'income':
-        this.#store.buyIncome(key as TicketTypeId);
-        return;
+        return this.#store.buyIncome(key as TicketTypeId);
       case 'crew':
-        this.#store.buyLine(key as PurchaseId);
-        return;
+        return this.#store.buyLine(key as PurchaseId);
     }
   }
 
