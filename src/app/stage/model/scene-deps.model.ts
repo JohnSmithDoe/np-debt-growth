@@ -46,7 +46,8 @@ export interface SceneDeps {
   running(): boolean;
   roundLeftMs(): number;
   haulMs(): number;
-  takePayout(): number;
+  /** Keyed by lane; `NO_LANE` is billed to the whole strip. */
+  takePayouts(): ReadonlyMap<number, number>;
   takeCloseFloats(): readonly CloseFloat[];
   takeWontFix(): readonly number[];
   unlockSecret(): void;

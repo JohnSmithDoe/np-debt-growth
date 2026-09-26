@@ -10,6 +10,7 @@ import type {
 } from '../model/board.model';
 import {
   emptyBoard,
+  NO_LANE,
   NO_SEAT,
   NO_TICKET,
   ticketMix,
@@ -215,7 +216,7 @@ export class GameStore {
   #roundSlots = signal<readonly SprintSlot[]>([]);
   #lastLineAt = 0;
   #seen = freshConsultancy(Date.now(), SAVE_VERSION);
-  #billed = 0;
+  #billed = new Map<number, number>();
   #board = emptyBoard();
   #budget = new SpawnBudget();
   #rand: () => number = Math.random;
@@ -845,7 +846,9 @@ export class GameStore {
     // Money and story points land here, per ticket, at pickup — the can only rate-limits.
     const payout = banked.value;
     const velocitySp = banked.sp;
-    this.#billed += payout;
+    banked.worths.forEach((worth, at) =>
+      this.#bill(fill.placed[at] ?? NO_LANE, worth)
+    );
     this.#cycleBilled += payout;
     this.#roundSp.velocity += velocitySp;
 
@@ -882,6 +885,7 @@ export class GameStore {
     big: boolean;
     headline: string | null;
     took: Omit<SprintSlot, 'lane'>[];
+    worths: number[];
   } {
     let value = 0;
     let crew = 0;
@@ -889,6 +893,7 @@ export class GameStore {
     let big = false;
     let headline: string | null = null;
     const took: Omit<SprintSlot, 'lane'>[] = [];
+    const worths: number[] = [];
 
     const goldenMult = economy.goldenMultiplier(state);
     const conversion = economy.crewGoldenConversion(state);
@@ -906,12 +911,13 @@ export class GameStore {
         economy.pickupStoryPoints(state, type, by !== 'you') +
         (economy.pickupsPaySp(state) ? spBonus : 0);
       took.push({ type, titleKey });
+      worths.push(worth);
       if (by !== 'you') {
         crew += worth;
         this.#addCloseFloat(x, y, worth, loud ? titleKey : null);
       }
     }
-    return { value, crew, sp, big, headline, took };
+    return { value, crew, sp, big, headline, took, worths };
   }
 
   #billWholeBoard(now: number): number {
@@ -931,7 +937,7 @@ export class GameStore {
       removeTicket(this.#board, ticket);
     }
 
-    this.#billed += payout;
+    this.#bill(NO_LANE, payout);
     this.#state.set({
       ...state,
       budget: state.budget + payout,
@@ -1012,10 +1018,16 @@ export class GameStore {
     return { taken, refused, value, sp, big, headline };
   }
 
-  takePayout(): number {
+  /** Euros billed since the last call, by the lane they landed in. */
+  takePayouts(): ReadonlyMap<number, number> {
     const paid = this.#billed;
-    this.#billed = 0;
+    this.#billed = new Map();
     return paid;
+  }
+
+  #bill(lane: number, value: number): void {
+    if (value <= 0) return;
+    this.#billed.set(lane, (this.#billed.get(lane) ?? 0) + value);
   }
 
   #addCloseFloat(
@@ -1212,7 +1224,7 @@ export class GameStore {
     this.#nextSampleAt = 0;
     this.#sampleEvery = BURNDOWN_SAMPLE_MS;
     this.#assisted.set(false);
-    this.#billed = 0;
+    this.#billed = new Map();
     this.#seq = 0;
     this.#roundFrom.set(0);
     this.#roundSlots.set([]);

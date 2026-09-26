@@ -70,6 +70,9 @@ export interface Close {
   readonly y: number;
 }
 
+/** A payout that belongs to no one lane, such as the quarter-end bill. */
+export const NO_LANE = -1;
+
 export interface SprintSlot {
   readonly type: TicketTypeId;
   readonly titleKey: string;

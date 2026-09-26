@@ -231,7 +231,7 @@ export class StageService {
       haulMs: () => store.haulMs(),
       escalationMultiplier: () => store.escalationMultiplier(),
       womanEvery: (crew) => store.womanEvery(crew),
-      takePayout: () => store.takePayout(),
+      takePayouts: () => store.takePayouts(),
       takeCloseFloats: () => store.takeCloseFloats(),
       takeWontFix: () => store.takeWontFix(),
       unlockSecret: () => void store.unlockSecret(),

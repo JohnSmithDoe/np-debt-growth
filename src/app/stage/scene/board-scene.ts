@@ -10,6 +10,7 @@ import type {
   CrewMember,
   SprintSlot,
 } from '../../game/model/board.model';
+import { NO_LANE } from '../../game/model/board.model';
 import { pickWithin } from '../../game/util/board';
 import { WONT_FIX_FADE_MS } from '../../game/model/balance/flow';
 import { hazardLabelKey } from '../../game/model/hazard.model';
@@ -738,13 +739,13 @@ export class BoardScene extends CbScene {
   }
 
   #bill(parts: BoardParts): void {
-    const payout = this.deps.takePayout();
-    if (payout <= 0) return;
-    this.floatPayout(
-      parts.strip.dropX,
-      parts.strip.dropY,
-      `+${formatMoney(payout)}`
-    );
+    for (const [lane, payout] of this.deps.takePayouts()) {
+      this.floatPayout(
+        lane === NO_LANE ? parts.strip.dropX : parts.strip.laneX(lane),
+        parts.strip.dropY,
+        `+${formatMoney(payout)}`
+      );
+    }
   }
 
   #buildSecret(): void {

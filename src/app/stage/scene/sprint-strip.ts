@@ -88,7 +88,7 @@ export class SprintStrip {
   }
 
   slotX(slot: number): number {
-    return this.#laneX(this.#deps.sprint()[slot]?.lane ?? 0);
+    return this.laneX(this.#deps.sprint()[slot]?.lane ?? 0);
   }
 
   /** The first lane that is home with room: where unfiled work is headed. */
@@ -98,10 +98,11 @@ export class SprintStrip {
     const open = lanes.findIndex(
       (lane) => lane.releaseLeftMs <= 0 && lane.count < cap
     );
-    return this.#laneX(Math.max(0, open));
+    return this.laneX(Math.max(0, open));
   }
 
-  #laneX(lane: number): number {
+  /** Screen x of a lane's bar centre. */
+  laneX(lane: number): number {
     const { width } = this.#bar();
     return BAR_X + lane * (width + LANE_GAP) + width / 2;
   }
