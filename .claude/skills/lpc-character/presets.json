@@ -258,8 +258,8 @@
       "hash": "sex=male&body=Body_Color_lpcr.bronze&head=Human_Male_Gaunt_lpcr.bronze&eyes=Eye_Color_blue&expression=Neutral&hair=Page2_gold&clothes=Longsleeve_all.lpcr.soot&legs=Hose_brown&shoes=Slippers_black&wrinkles=Wrinkles_lpcr.bronze"
     },
     "spawner-0": {
-      "note": "Spawner, ADR-0 Junior Intake — sheep, follows the herd",
-      "hash": "sex=male&body=Body_Color_all.lpcr.white&head=Sheep_all.lpcr.white"
+      "note": "Spawner, ADR-0 Junior Intake — fresh hire in blank white",
+      "hash": "sex=teen&body=Body_Color_light&head=Human_Male_light&eyes=Eye_Color_blue&expression=Neutral&hair=Bedhead_platinum&clothes=TShirt_all.lpcr.white&legs=Pants_all.lpcr.white&shoes=Basic_Shoes_all.lpcr.white"
     },
     "spawner-1": {
       "note": "Spawner, ADR-1 Legacy Framework — skeleton, long dead and still serving",
@@ -278,8 +278,8 @@
       "hash": "sex=male&body=Body_Color_all.lpcr.cyan&head=Alien_all.lpcr.cyan"
     },
     "spawner-5": {
-      "note": "Spawner, ADR-5 Rockstar Dev — lone wolf",
-      "hash": "sex=male&body=Body_Color_all.lpcr.royal&head=Wolf_male_all.lpcr.royal&tail=Wolf_Tail_blue"
+      "note": "Spawner, ADR-5 Rockstar Dev — long blue hair, shades, sleeveless",
+      "hash": "sex=male&body=Body_Color_lpcr.tan&head=Human_Male_lpcr.tan&eyes=Eye_Color_brown&expression=Neutral&hair=Long_straight_blue&clothes=Sleeveless_2_all.lpcr.royal&legs=Pants_all.lpcr.royal&shoes=Revised_Boots_all.lpcr.royal&facial_eyes=Shades_black"
     },
     "spawner-6": {
       "note": "Spawner, ADR-6 Zombie Service — brain-dead, still up",
