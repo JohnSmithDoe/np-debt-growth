@@ -162,6 +162,8 @@ export const BOARD_INK = {
   laneAway: 0x1b2129,
   train: 0xe6e9ef,
   trainWindow: 0x1f6feb,
+  tunnel: 0x07090c,
+  tunnelFrame: 0x3a4452,
   vote: 0xe06c9f,
   pizza: 0xf97316,
   card: 0xe6e9ef,

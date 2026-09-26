@@ -15,7 +15,11 @@ import type { SceneDeps } from '../model/scene-deps.model';
 
 const PIP_HEIGHT = 16;
 const LANE_GAP = 6;
-const TRAIN_WIDTH = 26;
+const LOCO_WIDTH = 14;
+const WAGON_PITCH = 12;
+const WAGON_GAP = 2;
+const PORTAL_WIDTH = 8;
+const TRAIN_STEPS = 1000;
 const CLOCK_WIDTH = 148;
 const CLOCK_HEIGHT = 28;
 
@@ -200,11 +204,11 @@ export class SprintStrip {
     const drawn = lanes
       .map((lane) =>
         lane.releaseLeftMs > 0
-          ? `r${Math.round((lane.releaseLeftMs / haul) * 60)}`
+          ? `r${Math.round((lane.releaseLeftMs / haul) * TRAIN_STEPS)}`
           : `${lane.count}`
       )
       .join(',');
-    const key = `${cap}|${drawn}`;
+    const key = `${cap}|${this.#deps.tier()}|${drawn}`;
     if (key === this.#drawnLanes) return;
     this.#drawnLanes = key;
 
@@ -245,21 +249,54 @@ export class SprintStrip {
     }
   }
 
-  /** The release train: it pulls the lane's work off to the right, then is gone. */
+  /** The release train: out of the left tunnel, one wagon per tier, into the right. */
   #drawTrain(x: number, y: number, width: number, progress: number): void {
-    const span = Math.max(0, width - TRAIN_WIDTH);
-    const left = x + span * Math.min(1, Math.max(0, progress));
+    const wagons = this.#deps.tier() + 1;
+    const length = wagons * WAGON_PITCH + LOCO_WIDTH;
+    const from = x + PORTAL_WIDTH;
+    const to = x + width - PORTAL_WIDTH;
+    const run = Math.min(1, Math.max(0, progress));
+    const left = from - length + (to - from + length) * run;
+    const loco = left + wagons * WAGON_PITCH;
+    const body = WAGON_PITCH - WAGON_GAP;
     const top = y + 3;
     const g = this.#pips;
+    const rect = (rx: number, ry: number, rw: number, rh: number): void => {
+      const a = Math.max(rx, from);
+      const b = Math.min(rx + rw, to);
+      if (b > a) g.fillRect(a, ry, b - a, rh);
+    };
+
+    g.fillStyle(BOARD_INK.stripRule, 1);
+    g.fillRect(from, top + 12, to - from, 1);
+
     g.fillStyle(BOARD_INK.gold, 1);
-    g.fillRect(left, top + 2, 10, 7);
+    for (let n = 0; n < wagons; n++)
+      rect(left + n * WAGON_PITCH, top + 2, body, 7);
     g.fillStyle(BOARD_INK.train, 1);
-    g.fillRect(left + 12, top, 14, 9);
-    g.fillRect(left + 22, top - 3, 3, 3);
+    rect(loco, top, LOCO_WIDTH, 9);
+    rect(loco + 10, top - 3, 3, 3);
     g.fillStyle(BOARD_INK.trainWindow, 1);
-    g.fillRect(left + 14, top + 2, 4, 3);
+    rect(loco + 2, top + 2, 4, 3);
+
     g.fillStyle(BOARD_INK.strip, 1);
-    for (const wheel of [2, 7, 15, 22]) g.fillRect(left + wheel, top + 9, 3, 3);
+    for (let n = 0; n < wagons; n++) {
+      rect(left + n * WAGON_PITCH + 2, top + 9, 3, 3);
+      rect(left + n * WAGON_PITCH + body - 3, top + 9, 3, 3);
+    }
+    for (const wheel of [3, 10]) rect(loco + wheel, top + 9, 3, 3);
+
+    this.#drawPortal(x, y);
+    this.#drawPortal(to, y);
+  }
+
+  #drawPortal(x: number, y: number): void {
+    const g = this.#pips;
+    g.fillStyle(BOARD_INK.tunnelFrame, 1);
+    g.fillRect(x, y - 4, PORTAL_WIDTH, PIP_HEIGHT + 4);
+    g.fillStyle(BOARD_INK.tunnel, 1);
+    g.fillRect(x + 2, y, PORTAL_WIDTH - 4, PIP_HEIGHT);
+    g.fillRect(x + 3, y - 1, PORTAL_WIDTH - 6, 1);
   }
 
   #refreshPending(): void {
