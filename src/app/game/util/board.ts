@@ -21,7 +21,7 @@ import { TICKET_TYPES } from '../model/ticket.model';
 import type { CrewRules, CrewSeat, HirePace, Rush } from '../model/crew.model';
 import { FLAKY_COMEBACK_MS } from '../model/ticket.model';
 import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
-import { TICKET_LIFE_MS } from '../model/balance/flow';
+import { GOLDEN_LIFE_MS, TICKET_LIFE_MS } from '../model/balance/flow';
 
 const OUT_OF_POOL = -1;
 const COLUMN_SAMPLES = 4;
@@ -129,8 +129,11 @@ export function addTicket(
     golden,
     spBonus: 0,
     relabelled,
-    lifeLeftMs:
-      TICKET_TYPES[type].handOnly || golden ? NEVER_EXPIRES : TICKET_LIFE_MS,
+    lifeLeftMs: TICKET_TYPES[type].handOnly
+      ? NEVER_EXPIRES
+      : golden
+        ? GOLDEN_LIFE_MS
+        : TICKET_LIFE_MS,
     x: cellX(col),
     y: cellY(cell - col * HEAP_ROWS),
     claimedBy: NO_TICKET,
@@ -161,19 +164,25 @@ export function removeTicket(board: Board, ticket: BoardTicket): void {
  */
 /**
  * A full board makes room for new work by closing the card nearest its own
- * expiry. Claimed, golden and hand-only cards are never pushed out.
+ * expiry, golden only once nothing else is left. Claimed and hand-only cards
+ * are never pushed out.
  */
 function displaceOldest(board: Board): boolean {
   let oldest: BoardTicket | null = null;
   for (const ticket of board.tickets) {
     if (ticket.lifeLeftMs === NEVER_EXPIRES) continue;
     if (ticket.claimedBy !== NO_TICKET) continue;
-    if (!oldest || ticket.lifeLeftMs < oldest.lifeLeftMs) oldest = ticket;
+    if (!oldest || displacesBefore(ticket, oldest)) oldest = ticket;
   }
   if (!oldest) return false;
   removeTicket(board, oldest);
   board.displaced.push(oldest);
   return true;
+}
+
+function displacesBefore(a: BoardTicket, b: BoardTicket): boolean {
+  if (a.golden !== b.golden) return b.golden;
+  return a.lifeLeftMs < b.lifeLeftMs;
 }
 
 export function expireTickets(

@@ -56,13 +56,13 @@ which spends no time in the tree.
    metered by `SpawnBudget` (burst cap `SPAWN_BURST_CAP` 12). Tickets are thrown from the lane
    on a catchable arc (`DROP_MS` 1 850, `DROP_HOP` 90 in `stage/model/board.consts.ts`); the
    sweep catches them mid-flight.
-2. **Expire.** A crew-workable card nobody reaches in `TICKET_LIFE_MS` 3.5 s is closed as
-   **"won't fix"** (`expireTickets` in `util/board.ts`, counted in `lifetimeWontFix`).
+2. **Expire.** A crew-workable card nobody reaches in `TICKET_LIFE_MS` 3.5 s (golden:
+   `GOLDEN_LIFE_MS` 20 s) is closed as **"won't fix"** (`expireTickets` in `util/board.ts`, counted in `lifetimeWontFix`).
 3. **Displace.** The field holds `BOARD_CAPACITY` 600 cards (`model/geometry.ts`). When it is
    full, each arrival pushes out the unclaimed card nearest its own expiry, which is closed as
    won't fix (`displaceOldest`). Every arrival lands, so the field's mix always matches what was
-   bought; buying more only makes work turn over faster. Claimed and hand-only cards are never
-   pushed out.
+   bought; buying more only makes work turn over faster. Golden cards go only once no ordinary
+   card is left; claimed and hand-only cards are never pushed out.
 4. **Collect.** The player's cursor sweeps a radius (everything under it, once a frame) and the
    crew walk to cards. **Money and SP land per ticket, at pickup.** A taken card hops into its
    lane on two parabolas meeting at the apex (`HARVEST_MS` 1 600, `HARVEST_HOP` 150).

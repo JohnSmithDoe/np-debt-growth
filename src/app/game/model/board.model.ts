@@ -25,7 +25,7 @@ export interface BoardTicket {
   golden: boolean;
   /** SP the planning-poker votes it fell through add at pickup. */
   spBonus: number;
-  /** Counts down while unclaimed; `NEVER_EXPIRES` for hand-only and golden cards. */
+  /** Counts down while unclaimed; `NEVER_EXPIRES` for hand-only cards. */
   lifeLeftMs: number;
   relabelled: boolean;
   readonly x: number;

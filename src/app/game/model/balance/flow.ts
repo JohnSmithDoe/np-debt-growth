@@ -39,6 +39,8 @@ export const VOTE_SPREAD_MS = 37;
  * spawn rate × this, so it tracks what the player bought.
  */
 export const TICKET_LIFE_MS = 3_500;
+/** Golden work waits longer, but not forever: a hoarded board still clears. */
+export const GOLDEN_LIFE_MS = 20_000;
 
 export const TIER_BURST = { tier: 3, count: 10 } as const;
 

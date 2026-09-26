@@ -15,7 +15,7 @@ import { SAVE_VERSION } from '../model/game.consts';
 import { CALM } from '../model/hazard.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { CREW_STATS } from '../model/balance/crew';
-import { TICKET_LIFE_MS } from '../model/balance/flow';
+import { GOLDEN_LIFE_MS, TICKET_LIFE_MS } from '../model/balance/flow';
 import { GOLDEN_CREW_CONVERSION } from '../model/balance/flow';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPRINT_SLOTS_BASE } from '../model/balance/round';
@@ -529,17 +529,30 @@ describe('the board fills up', () => {
     expect(gone).toEqual([oldest]);
   });
 
-  it('never closes or pushes out a golden card', () => {
+  it('keeps a golden card for its own, longer life', () => {
     const board = emptyBoard();
     const gold = addTicket(board, 'lint', Math.random, false, false, true)!;
-    expireTickets(board, TICKET_LIFE_MS * 10, []);
+    expireTickets(board, TICKET_LIFE_MS * 2, []);
     expect(board.byId.has(gold.id)).toBe(true);
 
+    const gone: BoardTicket[] = [];
+    expireTickets(board, GOLDEN_LIFE_MS, gone);
+    expect(gone).toEqual([gold]);
+  });
+
+  it('pushes a golden card out only once nothing else is left', () => {
+    const board = emptyBoard();
+    const gold = addTicket(board, 'lint', Math.random, false, false, true)!;
+    gold.lifeLeftMs = 1;
     for (let n = 1; n < BOARD_CAPACITY; n++) addTicket(board, 'lint');
-    for (const ticket of board.tickets)
-      if (ticket !== gold) ticket.lifeLeftMs = 2;
     addTicket(board, 'legacy');
     expect(board.byId.has(gold.id)).toBe(true);
+
+    const hoard = emptyBoard();
+    for (let n = 0; n < BOARD_CAPACITY; n++) {
+      addTicket(hoard, 'lint', Math.random, false, false, true);
+    }
+    expect(addTicket(hoard, 'lint')).not.toBeNull();
   });
 
   it('never pushes out a claimed or hand-only card', () => {
