@@ -1,51 +1,53 @@
 <cb-panel heading="The Practice" subheading="Bought while the board fills.">
   <span panel-meta class="chip accent">Shop</span>
 
-  <div class="tabs" role="tablist">
-    @for (one of tabs(); track one.id) {
-      <button
-        type="button"
-        role="tab"
-        [class.on]="tab() === one.id"
-        [attr.aria-selected]="tab() === one.id"
-        (click)="show(one.id)"
-      >
-        {{ one.label }}
-      </button>
-    }
-  </div>
-
-  @if (tab() === 'crew') {
-    <p class="locked">Lines open on the tree; heads are hired here.</p>
-  }
-
-  <ul class="lines">
-    @for (row of rows(); track row.key) {
-      <li>
+  <div class="shop">
+    <div class="tabs" role="tablist">
+      @for (one of tabs(); track one.id) {
         <button
           type="button"
-          class="line"
-          [class.maxed]="row.maxed || row.locked"
-          [disabled]="!row.affordable"
-          (click)="buy(row.key)"
+          role="tab"
+          [class.on]="tab() === one.id"
+          [attr.aria-selected]="tab() === one.id"
+          (click)="show(one.id)"
         >
-          <span class="head">
-            <span class="name">{{ row.name }}</span>
-            <span class="cost" [class.max]="row.maxed || row.locked">{{
-              row.cost
-            }}</span>
-          </span>
-          <span class="blurb">{{ row.blurb }}</span>
-          <span class="held">{{ row.held }}/{{ row.cap }}</span>
+          {{ one.label }}
         </button>
-      </li>
-    }
-  </ul>
+      }
+    </div>
 
-  @if (tab() === 'supply' && locked() > 0) {
-    <p class="locked">{{ locked() }} more behind the next ADR.</p>
-  }
-  @if (tab() === 'income' && rateLocked() > 0) {
-    <p class="locked">{{ rateLocked() }} more open with their source.</p>
-  }
+    @if (tab() === 'crew') {
+      <p class="locked">Lines open on the tree; heads are hired here.</p>
+    }
+
+    <ul class="lines">
+      @for (row of rows(); track row.key) {
+        <li>
+          <button
+            type="button"
+            class="line"
+            [class.maxed]="row.maxed || row.locked"
+            [disabled]="!row.affordable"
+            (click)="buy(row.key)"
+          >
+            <span class="head">
+              <span class="name">{{ row.name }}</span>
+              <span class="cost" [class.max]="row.maxed || row.locked">{{
+                row.cost
+              }}</span>
+            </span>
+            <span class="blurb">{{ row.blurb }}</span>
+            <span class="held">{{ row.held }}/{{ row.cap }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (tab() === 'supply' && locked() > 0) {
+      <p class="locked">{{ locked() }} more behind the next ADR.</p>
+    }
+    @if (tab() === 'income' && rateLocked() > 0) {
+      <p class="locked">{{ rateLocked() }} more open with their source.</p>
+    }
+  </div>
 </cb-panel>

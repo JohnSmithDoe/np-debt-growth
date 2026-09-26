@@ -51,6 +51,14 @@
     </div>
   </dl>
   <div class="controls">
+    @if (treeOpen() && !onTree()) {
+      <button type="button" class="btn primary small tree" (click)="toTree()">
+        Open the tree
+        @if (storyPoints() > 0) {
+          <span class="chip points">{{ points(storyPoints()) }}</span>
+        }
+      </button>
+    }
     <button
       type="button"
       class="btn ghost small settings"
@@ -88,17 +96,7 @@
       <cb-next-steps (go)="goTo($event)" />
       <cb-achievements-panel />
     } @else {
-      @if (treeOpen()) {
-        <button type="button" class="btn primary rail-tree" (click)="toTree()">
-          Open the tree
-          @if (storyPoints() > 0) {
-            <span class="chip points">{{ points(storyPoints()) }}</span>
-          }
-        </button>
-      }
       <cb-supply-panel />
-      <cb-lifetime-stats />
-      <cb-activity-feed />
     }
   </aside>
 </main>
