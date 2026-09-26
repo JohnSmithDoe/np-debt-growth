@@ -62,27 +62,39 @@ describe('skill layout', () => {
   it('never runs a wire through a square it does not join', () => {
     const crossed: string[] = [];
     for (const square of SKILL_GRAPH.squares) {
-      const [from, to] = [square.wire.at(0), square.wire.at(-1)];
-      if (!from || !to) continue;
-      const length = Math.hypot(to.x - from.x, to.y - from.y);
-      for (const other of SKILL_GRAPH.squares) {
-        if (other.id === square.id || other.id === square.parent) continue;
-        for (let run = 0; run <= length; run += 4) {
-          const x = from.x + ((to.x - from.x) * run) / length;
-          const y = from.y + ((to.y - from.y) * run) / length;
-          if (
-            x > other.x &&
-            x < other.x + SQUARE &&
-            y > other.y &&
-            y < other.y + SQUARE
-          ) {
-            crossed.push(`${square.parent}->${square.id} through ${other.id}`);
-            break;
+      for (let leg = 1; leg < square.wire.length; leg += 1) {
+        const [from, to] = [square.wire[leg - 1]!, square.wire[leg]!];
+        const length = Math.hypot(to.x - from.x, to.y - from.y);
+        for (const other of SKILL_GRAPH.squares) {
+          if (other.id === square.id || other.id === square.parent) continue;
+          for (let run = 0; run <= length; run += 4) {
+            const x = from.x + ((to.x - from.x) * run) / length;
+            const y = from.y + ((to.y - from.y) * run) / length;
+            if (
+              x > other.x &&
+              x < other.x + SQUARE &&
+              y > other.y &&
+              y < other.y + SQUARE
+            ) {
+              crossed.push(
+                `${square.parent}->${square.id} through ${other.id}`
+              );
+              break;
+            }
           }
         }
       }
     }
-    expect(crossed).toEqual([]);
+    expect([...new Set(crossed)]).toEqual([]);
+  });
+
+  it('bends every wire only at right angles', () => {
+    for (const square of SKILL_GRAPH.squares) {
+      for (let leg = 1; leg < square.wire.length; leg += 1) {
+        const [from, to] = [square.wire[leg - 1]!, square.wire[leg]!];
+        expect(from.x === to.x || from.y === to.y).toBe(true);
+      }
+    }
   });
 
   it('runs every wire from its parent square to its own', () => {

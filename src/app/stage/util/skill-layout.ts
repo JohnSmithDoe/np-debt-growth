@@ -10,23 +10,18 @@ import type { HitRect } from '../model/hit-rect.model';
 import { hits } from '../model/hit-rect.model';
 
 export const SQUARE = 64;
-/** Clear space every square keeps from every other. */
-const GAP = 45;
-/** How far a heading's name floats off its arms. */
-const LINK = 170;
-const SEED_RING = 150;
-const FIRST_RING = 230;
-const RELAX_STEPS = 300;
-/** Springs at their floor: separation dominates, so the last overlaps resolve. */
-const SETTLE_STEPS = 100;
-/** Keeps a settling wire from stretching while squares push off it. */
-const SPRING_FLOOR = 0.02;
+/** One leaf's share of a tree's breadth: a square and the gap beside it. */
+const LANE = SQUARE + 30;
+/** One step outwards; the gap between layers carries the wire elbows. */
+const LAYER = SQUARE + 92;
 const MARGIN = SQUARE;
 /** A heading's name at band scale: the longest catalogue entry, 25 glyphs of 14 px. */
 const BAND_ROOM = 360;
 const BAND_HIGH = 24;
 /** Band text is drawn from its top edge. */
 const BAND_TEXT_TOP = 8;
+/** Clear space a heading's name keeps from squares and wires. */
+const BAND_CLEAR = 10;
 
 interface Vec {
   readonly x: number;
@@ -90,48 +85,156 @@ function kidsOf(id: string): readonly string[] {
   return CHILDREN.get(id) ?? [];
 }
 
-/** Ring `depth`'s radius, every ring scaled by `scale`. */
-const ringAt = (depth: number, scale: number): number =>
-  depth === 0 ? 0 : scale * (FIRST_RING + (depth - 1) * SEED_RING);
+/** A rung of the ADR ladder: it runs the spine instead of branching off it. */
+const isRung = (id: string): boolean =>
+  BY_NODE.get(id)?.levels.some((level) =>
+    level.effects.some((effect) => effect.kind === 'adr')
+  ) === true;
 
-/** The angle a square on a ring of `radius` needs to clear its neighbours. */
-const clearance = (radius: number): number =>
-  2 * Math.asin(Math.min(1, (SQUARE + GAP) / (2 * radius)));
+const branches = (id: string): readonly string[] =>
+  kidsOf(id).filter((kid) => !isRung(kid));
 
-/** The wedge a subtree needs: its own clearance, or its children's, whichever is wider. */
-function need(id: string, depth: number, scale: number): number {
-  const own = depth === 0 ? 0 : clearance(ringAt(depth, scale));
-  const kids = kidsOf(id).reduce(
-    (sum, kid) => sum + need(kid, depth + 1, scale),
-    0
-  );
-  return Math.max(own, kids);
+/** A subtree's breadth in lanes: one per leaf. */
+function breadth(id: string): number {
+  const kids = branches(id);
+  return kids.length === 0
+    ? 1
+    : kids.reduce((sum, kid) => sum + breadth(kid), 0);
+}
+
+const forestBreadth = (ids: readonly string[]): number =>
+  ids.reduce((sum, id) => sum + breadth(id), 0);
+
+/** Where a forest grows from, which way it grows, and which way it spreads. */
+interface Frame {
+  readonly origin: Vec;
+  readonly along: Vec;
+  readonly across: Vec;
+}
+
+const NORTH: Omit<Frame, 'origin'> = {
+  along: { x: 0, y: -1 },
+  across: { x: 1, y: 0 },
+};
+const SOUTH: Omit<Frame, 'origin'> = {
+  along: { x: 0, y: 1 },
+  across: { x: 1, y: 0 },
+};
+const WEST: Omit<Frame, 'origin'> = {
+  along: { x: -1, y: 0 },
+  across: { x: 0, y: 1 },
+};
+
+/** Squares whose parent sits a layer above or below them, not beside. */
+const STACKED = new Set<string>();
+
+/** A tidy tree: a layer per depth, a lane per leaf, each parent over its children. */
+function plantForest(
+  ids: readonly string[],
+  frame: Frame,
+  out: Map<string, Vec>
+): void {
+  const place = (id: string, depth: number, lane: number): void => {
+    const centre = lane + breadth(id) / 2;
+    if (frame.along.y !== 0) STACKED.add(id);
+    out.set(id, {
+      x:
+        frame.origin.x +
+        frame.along.x * depth * LAYER +
+        frame.across.x * centre * LANE,
+      y:
+        frame.origin.y +
+        frame.along.y * depth * LAYER +
+        frame.across.y * centre * LANE,
+    });
+    let at = lane;
+    for (const kid of branches(id)) {
+      place(kid, depth + 1, at);
+      at += breadth(kid);
+    }
+  };
+  let at = -forestBreadth(ids) / 2;
+  for (const id of ids) {
+    place(id, 1, at);
+    at += breadth(id);
+  }
+}
+
+/** Splits a rung's branches over its two sides, keeping their order, evening the breadth. */
+function sides(ids: readonly string[]): [string[], string[]] {
+  const up: string[] = [];
+  const down: string[] = [];
+  for (const id of ids) {
+    if (forestBreadth(up) <= forestBreadth(down)) up.push(id);
+    else down.push(id);
+  }
+  return [up, down];
+}
+
+function ladderFrom(first: string | undefined): readonly string[] {
+  const out: string[] = [];
+  for (let rung = first; rung; rung = kidsOf(rung).find(isRung)) out.push(rung);
+  return out;
 }
 
 /**
- * A radial tree: a ring per depth, a wedge per subtree sized to what it
- * needs, the rings pushed out until the whole tree fits once round. No two
- * squares on a ring touch and every wire stays inside its own wedge.
+ * The root in the middle, one arm per compass point. The ADR ladder is a
+ * spine running east, each rung's branches hanging north and south off it;
+ * the widest other arm grows west, the two narrower ones north and south.
  */
 function seed(): Map<string, Vec> {
-  let scale = 1;
-  while (need(SKILL_ROOT_ID, 0, scale) > 2 * Math.PI) scale *= 1.02;
-  const spare = (2 * Math.PI) / need(SKILL_ROOT_ID, 0, scale);
+  const out = new Map<string, Vec>([[SKILL_ROOT_ID, { x: 0, y: 0 }]]);
+  const arms = kidsOf(SKILL_ROOT_ID);
+  const [west, north, south] = arms
+    .filter((id) => !isRung(id))
+    .sort((one, two) => breadth(two) - breadth(one));
+  const ladder = ladderFrom(arms.find(isRung));
+  const origin = { x: 0, y: 0 };
 
-  const out = new Map<string, Vec>();
-  const walk = (id: string, depth: number, from: number, to: number): void => {
-    const angle = (from + to) / 2;
-    const radius = ringAt(depth, scale);
-    out.set(id, { x: radius * Math.cos(angle), y: radius * Math.sin(angle) });
-    let at = from;
-    for (const kid of kidsOf(id)) {
-      const share = need(kid, depth + 1, scale) * spare;
-      walk(kid, depth + 1, at, at + share);
-      at += share;
+  if (north) plantForest([north], { ...NORTH, origin }, out);
+  if (south) plantForest([south], { ...SOUTH, origin }, out);
+  const clearX =
+    (Math.max(north ? breadth(north) : 0, south ? breadth(south) : 0) / 2) *
+    LANE;
+  if (west) {
+    const pull = Math.max(
+      0,
+      clearX + SQUARE / 2 + (LANE - SQUARE) / 2 - 2 * LAYER
+    );
+    plantForest([west], { ...WEST, origin: { x: -pull, y: 0 } }, out);
+  }
+
+  const split = ladder.map((rung) => sides(branches(rung)));
+  const half = ([up, down]: [string[], string[]]): [number, number] => [
+    (forestBreadth(up) / 2) * LANE,
+    (forestBreadth(down) / 2) * LANE,
+  ];
+  let x = 0;
+  ladder.forEach((rung, at) => {
+    const [up, down] = half(split[at]!);
+    if (at === 0) x = Math.max(LAYER, clearX + Math.max(up, down));
+    else {
+      const [lastUp, lastDown] = half(split[at - 1]!);
+      x += Math.max(LAYER, lastUp + up, lastDown + down);
     }
-  };
-  walk(SKILL_ROOT_ID, 0, -Math.PI, Math.PI);
+    out.set(rung, { x, y: 0 });
+    const [upIds, downIds] = split[at]!;
+    plantForest(upIds, { ...NORTH, origin: { x, y: 0 } }, out);
+    plantForest(downIds, { ...SOUTH, origin: { x, y: 0 } }, out);
+  });
+
   return out;
+}
+
+/** A wire bent once each way, turning halfway along the axis it grows on. */
+function elbow(from: Vec, to: Vec, stacked: boolean): readonly Vec[] {
+  if (from.x === to.x || from.y === to.y) return [from, to];
+  if (stacked) {
+    const mid = Math.round((from.y + to.y) / 2);
+    return [from, { x: from.x, y: mid }, { x: to.x, y: mid }, to];
+  }
+  const mid = Math.round((from.x + to.x) / 2);
+  return [from, { x: mid, y: from.y }, { x: mid, y: to.y }, to];
 }
 
 /** The arms a heading names: its own children, headings collapsed away. */
@@ -147,220 +250,118 @@ const HEADING_ARMS: ReadonlyMap<string, readonly string[]> = new Map(
   })
 );
 
-const bandBody = (heading: string): string => `band:${heading}`;
-
-interface Body {
-  readonly id: string;
-  readonly parent: number;
-  /** A label's arms; it floats beside their middle. */
-  readonly anchors: readonly number[];
-  readonly hw: number;
-  readonly hh: number;
-  /** A wire's rest length: its seeded span, so relaxing keeps the rings. */
-  readonly rest: number;
-  x: number;
-  y: number;
+interface Box {
+  readonly left: number;
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
 }
 
-const isLabel = (body: Body): boolean => body.anchors.length > 0;
+const overlaps = (one: Box, two: Box): boolean =>
+  one.left < two.right &&
+  two.left < one.right &&
+  one.top < two.bottom &&
+  two.top < one.bottom;
 
-/** Shove two boxes apart along the shallower axis until `GAP` clears them. */
-function separateBoxes(one: Body, two: Body): void {
-  const dx = two.x - one.x;
-  const dy = two.y - one.y;
-  const ox = one.hw + two.hw + GAP - Math.abs(dx);
-  const oy = one.hh + two.hh + GAP - Math.abs(dy);
-  if (ox <= 0 || oy <= 0) return;
-  if (ox < oy) {
-    const push = (Math.sign(dx) || 1) * (ox / 2);
-    one.x -= push;
-    two.x += push;
-  } else {
-    const push = (Math.sign(dy) || 1) * (oy / 2);
-    one.y -= push;
-    two.y += push;
-  }
-}
+const boxAround = (centre: Vec, hw: number, hh: number): Box => ({
+  left: centre.x - hw,
+  top: centre.y - hh,
+  right: centre.x + hw,
+  bottom: centre.y + hh,
+});
 
-/** Squares push round, so a crowd spreads in every direction rather than in rows. */
-function separateSquares(one: Body, two: Body, pitch: number): void {
-  const dx = two.x - one.x;
-  const dy = two.y - one.y;
-  const deficit = pitch - Math.max(Math.abs(dx), Math.abs(dy));
-  if (deficit <= 0) return;
-  const length = Math.hypot(dx, dy) || 1;
-  const push = deficit / 2 / length;
-  one.x -= dx * push;
-  one.y -= dy * push;
-  two.x += dx * push;
-  two.y += dy * push;
-}
-
-/** Push a body off a wire it does not belong to. */
-function clearWire(body: Body, from: Body, to: Body): void {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const length = dx * dx + dy * dy;
-  if (length === 0) return;
-  const t = Math.max(
-    0,
-    Math.min(1, ((body.x - from.x) * dx + (body.y - from.y) * dy) / length)
-  );
-  const nx = body.x - (from.x + t * dx);
-  const ny = body.y - (from.y + t * dy);
-
-  if (isLabel(body)) {
-    const ox = body.hw + GAP / 3 - Math.abs(nx);
-    const oy = body.hh + GAP / 3 - Math.abs(ny);
-    if (ox <= 0 || oy <= 0) return;
-    if (ox < oy) body.x += (Math.sign(nx) || 1) * (ox / 2);
-    else body.y += (Math.sign(ny) || 1) * (oy / 2);
-    return;
-  }
-
-  const room = body.hw * Math.SQRT2 + GAP / 3;
-  const off = Math.hypot(nx, ny);
-  if (off >= room || off === 0) return;
-  const push = (room - off) / 2;
-  const [px, py] = [(nx / off) * push, (ny / off) * push];
-  body.x += px;
-  body.y += py;
-  to.x -= px * (1 - t);
-  to.y -= py * (1 - t);
-  from.x -= px * t;
-  from.y -= py * t;
-}
+/** Clear spots within this many steps beat a spot on a wire; past it, the name sits on one. */
+const BAND_NEAR = 3;
 
 /**
- * Deterministic relaxation: squares and heading names shove each other apart
- * until `GAP` clears them, wires spring back to their seeded span, names cling to
- * their arms, and nothing sits on a wire that is not its own. The root stays.
+ * A heading's name beside its first arm: the nearest spot clear of squares,
+ * wires and other names, or failing that of squares and names alone.
  */
-function relax(start: ReadonlyMap<string, Vec>): Map<string, Vec> {
-  const ids = [...start.keys()];
-  const index = new Map(ids.map((id, at) => [id, at]));
+function bandCentres(
+  centres: ReadonlyMap<string, Vec>,
+  wires: readonly (readonly Vec[])[]
+): Map<string, Vec> {
   const half = SQUARE / 2;
-  const bodies: Body[] = ids.map((id) => {
-    const at = start.get(id)!;
-    const from = start.get(PARENTS.get(id) ?? '');
-    return {
-      id,
-      parent: index.get(PARENTS.get(id) ?? '') ?? -1,
-      anchors: [],
-      hw: half,
-      hh: half,
-      rest: from ? Math.hypot(at.x - from.x, at.y - from.y) : LINK,
-      ...at,
-    };
-  });
-  const rootStart = start.get(SKILL_ROOT_ID)!;
+  const solid: Box[] = [...centres.values()].map((one) =>
+    boxAround(one, half, half)
+  );
+  const wired: Box[] = wires.flatMap((wire) =>
+    wire.slice(1).map((to, at) => {
+      const from = wire[at]!;
+      return {
+        left: Math.min(from.x, to.x),
+        top: Math.min(from.y, to.y),
+        right: Math.max(from.x, to.x),
+        bottom: Math.max(from.y, to.y),
+      };
+    })
+  );
+  const [hw, hh] = [BAND_ROOM / 2 + BAND_CLEAR, BAND_HIGH / 2 + BAND_CLEAR];
+  const clear = (spot: Vec, boxes: readonly Box[]): boolean =>
+    !boxes.some((box) => overlaps(box, boxAround(spot, hw, hh)));
+  const out = new Map<string, Vec>();
+
   for (const [heading, arms] of HEADING_ARMS) {
-    const anchors = arms.map((arm) => index.get(arm)!);
-    const mid = centroid(anchors.map((at) => bodies[at]!));
-    const out = Math.hypot(mid.x - rootStart.x, mid.y - rootStart.y) || 1;
-    const lift = LINK / 2;
-    bodies.push({
-      id: bandBody(heading),
-      parent: -1,
-      anchors,
-      hw: BAND_ROOM / 2,
-      hh: BAND_HIGH / 2,
-      rest: 0,
-      x: mid.x + ((mid.x - rootStart.x) / out) * lift,
-      y: mid.y + ((mid.y - rootStart.y) / out) * lift,
-    });
+    const arm = centres.get(arms[0]!);
+    if (!arm) continue;
+    const ring = (far: number): Vec[] => {
+      const off = far * 16;
+      return [
+        { x: arm.x, y: arm.y - half - hh - off },
+        { x: arm.x, y: arm.y + half + hh + off },
+        { x: arm.x + half + hw + off, y: arm.y },
+        { x: arm.x - half - hw - off, y: arm.y },
+      ];
+    };
+    const near = Array.from({ length: BAND_NEAR }, (_, far) =>
+      ring(far)
+    ).flat();
+    const wide = Array.from({ length: 24 }, (_, far) => ring(far)).flat();
+    const spot =
+      near.find((one) => clear(one, [...solid, ...wired])) ??
+      wide.find((one) => clear(one, solid)) ??
+      near[0]!;
+    out.set(heading, spot);
+    solid.push(boxAround(spot, hw, hh));
   }
-
-  const pitch = SQUARE + GAP;
-  const cling = half + BAND_HIGH / 2 + GAP;
-  const rootAt = index.get(SKILL_ROOT_ID)!;
-
-  for (let step = 0; step < RELAX_STEPS + SETTLE_STEPS; step += 1) {
-    const spring = Math.max(SPRING_FLOOR, 0.2 * (1 - step / RELAX_STEPS));
-
-    for (const body of bodies) {
-      const anchor =
-        body.parent >= 0
-          ? { at: bodies[body.parent]!, rest: body.rest }
-          : isLabel(body)
-            ? {
-                at: centroid(body.anchors.map((at) => bodies[at]!)),
-                rest: cling,
-              }
-            : null;
-      if (!anchor) continue;
-      const dx = body.x - anchor.at.x;
-      const dy = body.y - anchor.at.y;
-      const length = Math.hypot(dx, dy) || 1;
-      if (isLabel(body) && length < anchor.rest) continue;
-      const pull = ((length - anchor.rest) / length) * spring;
-      body.x -= dx * pull;
-      body.y -= dy * pull;
-    }
-
-    for (let a = 0; a < bodies.length; a += 1) {
-      for (let b = a + 1; b < bodies.length; b += 1) {
-        const one = bodies[a]!;
-        const two = bodies[b]!;
-        if (isLabel(one) || isLabel(two)) separateBoxes(one, two);
-        else separateSquares(one, two, pitch);
-      }
-    }
-
-    for (const wire of bodies) {
-      if (wire.parent < 0) continue;
-      const parent = bodies[wire.parent]!;
-      for (const body of bodies) {
-        if (body === wire || body === parent) continue;
-        clearWire(body, parent, wire);
-      }
-    }
-
-    const root = bodies[rootAt]!;
-    const [sx, sy] = [root.x - rootStart.x, root.y - rootStart.y];
-    for (const body of bodies) {
-      body.x -= sx;
-      body.y -= sy;
-    }
-  }
-
-  return new Map(bodies.map((body) => [body.id, { x: body.x, y: body.y }]));
-}
-
-function centroid(points: readonly Vec[]): Vec {
-  return {
-    x: points.reduce((sum, one) => sum + one.x, 0) / points.length,
-    y: points.reduce((sum, one) => sum + one.y, 0) / points.length,
-  };
+  return out;
 }
 
 function build(): SkillGraph {
   const root = BY_NODE.get(SKILL_ROOT_ID);
   if (!root) throw new Error(`No ${SKILL_ROOT_ID} node to hang the map on`);
 
-  const raw = relax(seed());
-  const half = SQUARE / 2;
-  const reach = (id: string): Vec =>
-    id.startsWith('band:')
-      ? { x: BAND_ROOM / 2, y: BAND_HIGH / 2 }
-      : { x: half, y: half };
-  const left =
-    Math.min(...[...raw].map(([id, one]) => one.x - reach(id).x)) - MARGIN;
-  const top =
-    Math.min(...[...raw].map(([id, one]) => one.y - reach(id).y)) - MARGIN;
-  const centres = new Map(
-    [...raw].map(([id, one]) => [
-      id,
-      { x: Math.round(one.x - left), y: Math.round(one.y - top) },
-    ])
+  const raw = seed();
+  const wireOf = (id: string, at: ReadonlyMap<string, Vec>): readonly Vec[] => {
+    const parent = PARENTS.get(id);
+    const from = parent ? at.get(parent) : undefined;
+    const to = at.get(id);
+    return from && to ? elbow(from, to, STACKED.has(id)) : [];
+  };
+  const named = bandCentres(
+    raw,
+    [...raw.keys()].map((id) => wireOf(id, raw))
   );
+
+  const half = SQUARE / 2;
+  const boxes = [
+    ...[...raw.values()].map((one) => boxAround(one, half, half)),
+    ...[...named.values()].map((one) =>
+      boxAround(one, BAND_ROOM / 2, BAND_HIGH / 2)
+    ),
+  ];
+  const left = Math.min(...boxes.map((box) => box.left)) - MARGIN;
+  const top = Math.min(...boxes.map((box) => box.top)) - MARGIN;
+  const shift = (one: Vec): Vec => ({
+    x: Math.round(one.x - left),
+    y: Math.round(one.y - top),
+  });
+  const centres = new Map([...raw].map(([id, one]) => [id, shift(one)]));
 
   const squares: SkillSquare[] = [];
   for (const node of ON_TREE) {
     const centre = centres.get(node.id);
     if (!centre) continue;
-    const parent = PARENTS.get(node.id) ?? null;
-    const from = parent === null ? undefined : centres.get(parent);
     squares.push({
       id: node.id,
       node,
@@ -368,12 +369,22 @@ function build(): SkillGraph {
       y: centre.y - half,
       width: SQUARE,
       height: SQUARE,
-      parent,
-      wire: from ? [from, centre] : [],
+      parent: PARENTS.get(node.id) ?? null,
+      wire: wireOf(node.id, centres),
     });
   }
 
-  const bands = bandsFrom(centres);
+  const bands = [...named].map(([heading, centre]) => {
+    const at = shift(centre);
+    return {
+      id: heading,
+      x: at.x - BAND_ROOM / 2,
+      y: at.y - BAND_TEXT_TOP,
+      width: BAND_ROOM,
+      over: descendants(centres, HEADING_ARMS.get(heading) ?? []),
+    };
+  });
+
   return {
     squares,
     bands,
@@ -388,22 +399,6 @@ function build(): SkillGraph {
         ...bands.map((one) => one.y + BAND_HIGH)
       ) + MARGIN,
   };
-}
-
-function bandsFrom(centres: ReadonlyMap<string, Vec>): readonly SkillBand[] {
-  return [...HEADING_ARMS].flatMap(([heading, arms]) => {
-    const centre = centres.get(bandBody(heading));
-    if (!centre) return [];
-    return [
-      {
-        id: heading,
-        x: centre.x - BAND_ROOM / 2,
-        y: centre.y - BAND_TEXT_TOP,
-        width: BAND_ROOM,
-        over: descendants(centres, arms),
-      },
-    ];
-  });
 }
 
 function descendants(

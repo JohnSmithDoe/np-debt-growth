@@ -37,7 +37,9 @@ const ICON_BOX = SKILL_ICON_SIZE;
 const ICON_DIM = 0.55;
 const ICON_CY = 21;
 const CODE_TOP = 7;
-const PIP = { top: 38, height: 4, width: 8, gap: 3 } as const;
+const PIP = { top: 38, height: 4, width: 8, gap: 3, perRow: 5 } as const;
+/** Two rows share the strip between the icon and the price. */
+const PIP_ROWS = { top: 37, height: 3, gap: 1 } as const;
 const BAND = { scale: 2 } as const;
 const BADGE = { inset: 2 } as const;
 
@@ -302,19 +304,25 @@ export class SkillScene extends PanZoomScene {
     node: SkillNodeView
   ): void {
     if (node.ranks === 1) return;
-    const span = node.ranks * PIP.width + (node.ranks - 1) * PIP.gap;
-    const left = square.x + (SQUARE - span) / 2;
+    const rows = Math.ceil(node.ranks / PIP.perRow);
+    const { top, height } = rows > 1 ? PIP_ROWS : PIP;
 
-    for (let at = 0; at < node.ranks; at += 1) {
-      frames.fillStyle(
-        at < node.rank ? SCREEN_INK.pipFull : SCREEN_INK.pipEmpty
-      );
-      frames.fillRect(
-        left + at * (PIP.width + PIP.gap),
-        square.y + PIP.top,
-        PIP.width,
-        PIP.height
-      );
+    for (let row = 0; row < rows; row += 1) {
+      const first = row * PIP.perRow;
+      const count = Math.min(PIP.perRow, node.ranks - first);
+      const span = count * PIP.width + (count - 1) * PIP.gap;
+      const left = square.x + (SQUARE - span) / 2;
+      for (let at = 0; at < count; at += 1) {
+        frames.fillStyle(
+          first + at < node.rank ? SCREEN_INK.pipFull : SCREEN_INK.pipEmpty
+        );
+        frames.fillRect(
+          left + at * (PIP.width + PIP.gap),
+          square.y + top + row * (height + PIP_ROWS.gap),
+          PIP.width,
+          height
+        );
+      }
     }
   }
 

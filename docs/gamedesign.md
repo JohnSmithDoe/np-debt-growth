@@ -273,8 +273,11 @@ root opens four arms — the Lint line, the Hand, the Office and ADR-1. After th
 | ADR-8 | Swarm line, `signoff`                                                                 |
 
 `double<T>` is the one node with a second term (`maxed`); it stays a dim box, not a readable
-square, until its three ladders are full. The map is a radial tree (`stage/util/skill-layout.ts`):
-a ring per depth, each subtree a wedge sized to what it needs, so the spine arcs round the root.
+square, until its three ladders are full. The map is orthogonal (`stage/util/skill-layout.ts`):
+the root in the middle, one arm per compass point. The ADR ladder is a spine running east with
+each rung's branches hanging north and south; the widest other arm grows west, the other two
+north and south. Every arm is a tidy tree — a layer per depth, a lane per leaf — wired in right
+angles. Nodes with more than five ranks draw their pips in rows of five.
 
 **Icons.** Every square draws `assets/skills/<nodeId>.png`; the five per-line kinds share
 `line-<kind>.png` (`stage/model/skill-icon.model.ts`). The files are generated from
