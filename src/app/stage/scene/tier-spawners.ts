@@ -1,9 +1,10 @@
 import * as Phaser from 'phaser';
 
 import { SPAWNERS } from '../../game/model/spawner.model';
-import { LANE, LANE_PACK } from '../model/board.consts';
+import { LANE, LANE_ARRIVAL, LANE_PACK } from '../model/board.consts';
 import { LPC_FOOT } from '../model/lpc-sheet.model';
 import { spawnerSkins } from '../model/spawner-skin.model';
+import { ATLAS_KEY, GLOW_FRAME } from '../util/board-atlas';
 import { LpcSprite } from '../util/lpc-sprite';
 
 interface Pace {
@@ -25,6 +26,7 @@ interface Walker {
   readonly lane: number;
   x: number;
   direction: 1 | -1;
+  glow: Phaser.GameObjects.Image | null;
 }
 
 /**
@@ -41,6 +43,8 @@ export class TierSpawners {
   #left = 0;
   #right = 0;
   #top = 0;
+  /** The first sync restores a save; only walkers bought after it arrive. */
+  #primed = false;
 
   constructor(scene: Phaser.Scene, depth: number) {
     this.#scene = scene;
@@ -62,8 +66,9 @@ export class TierSpawners {
       const wanted = Math.min(counts(row.adr), LANE.perLine);
       if (this.#counts.get(row.adr) === wanted) continue;
       this.#counts.set(row.adr, wanted);
-      this.#fit(row.adr, wanted);
+      this.#fit(row.adr, wanted, this.#primed);
     }
+    this.#primed = true;
   }
 
   update(deltaMs: number): void {
@@ -98,7 +103,7 @@ export class TierSpawners {
     this.#counts.clear();
   }
 
-  #fit(adr: number, wanted: number): void {
+  #fit(adr: number, wanted: number, announce: boolean): void {
     const walkers = this.#lines.get(adr) ?? [];
     this.#lines.set(adr, walkers);
 
@@ -120,6 +125,7 @@ export class TierSpawners {
         lane,
         x: 0,
         direction: index % 2 === 0 ? 1 : -1,
+        glow: null,
       };
       walker.bodies.forEach((body, at) => {
         const offset = LANE_PACK.offsets[at] ?? LANE_PACK.offsets[0];
@@ -127,9 +133,38 @@ export class TierSpawners {
         body.setDepth(this.#depth + (lane * LANE.height + offset.y) / 1000);
       });
       walkers.push(walker);
+      if (announce) this.#arrive(walker);
       this.#place(index, walker);
       this.#walk(walker);
     }
+  }
+
+  #arrive(walker: Walker): void {
+    const glow = this.#scene.add
+      .image(0, 0, ATLAS_KEY, GLOW_FRAME)
+      .setTint(LANE_ARRIVAL.glowInk)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(this.#depth - 0.01);
+    walker.glow = glow;
+    this.#scene.tweens.add({
+      targets: glow,
+      alpha: { from: 1, to: 0, ease: 'Quad.easeIn' },
+      scale: LANE_ARRIVAL.glowScale,
+      duration: LANE_ARRIVAL.glowMs,
+      repeat: LANE_ARRIVAL.glowPulses - 1,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        glow.destroy();
+        if (walker.glow === glow) walker.glow = null;
+      },
+    });
+    this.#scene.tweens.add({
+      targets: walker.bodies,
+      scale: { from: 0, to: walker.scale },
+      duration: LANE_ARRIVAL.popMs,
+      ease: 'Back.easeOut',
+      easeParams: [LANE_ARRIVAL.overshoot],
+    });
   }
 
   #place(index: number, walker: Walker): void {
@@ -146,6 +181,7 @@ export class TierSpawners {
       const dx = offset.x * walker.direction;
       body.setPosition(walker.x + dx, foot + offset.y);
     });
+    walker.glow?.setPosition(walker.x, foot - (LPC_FOOT * walker.scale) / 2);
   }
 
   #walk(walker: Walker): void {
@@ -155,6 +191,12 @@ export class TierSpawners {
   }
 
   #drop(walker: Walker): void {
+    this.#scene.tweens.killTweensOf(walker.bodies);
     for (const body of walker.bodies) body.destroy();
+    if (walker.glow) {
+      this.#scene.tweens.killTweensOf(walker.glow);
+      walker.glow.destroy();
+      walker.glow = null;
+    }
   }
 }

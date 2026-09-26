@@ -205,6 +205,16 @@ export const LANE = {
   stride: 48,
 } as const;
 
+/** A newly bought walker pops onto the path under a pulsing halo, so the buy is seen landing. */
+export const LANE_ARRIVAL = {
+  popMs: 520,
+  overshoot: 3.2,
+  glowMs: 700,
+  glowPulses: 3,
+  glowScale: { from: 0.8, to: 2.6 },
+  glowInk: 0xfff1c9,
+} as const;
+
 /** A line of several skins walks as one pack, smaller than a single body. */
 export const LANE_PACK = {
   scale: 0.5,
