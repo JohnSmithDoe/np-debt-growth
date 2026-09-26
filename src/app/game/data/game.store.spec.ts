@@ -536,6 +536,17 @@ describe('an ADR is a tree node (parity #23)', () => {
     expect(store.skillRank(adrNodeId(1))).toBe(1);
   });
 
+  it('names every ladder a double still waits on', () => {
+    const store = storeWith({
+      storyPoints: 1e9,
+      skills: { root: 1, valueLint: 1, estimatesLint: 5 },
+    });
+    expect(store.skillLockReason('doubleLint')?.params?.['by']).toEqual([
+      'skill.spawnLint.1.label',
+      'skill.incomeLint.1.label',
+    ]);
+  });
+
   it('chains the rungs, so none can be skipped', () => {
     const store = storeWith({ storyPoints: 1e9, skills: { root: 1 } });
     expect(store.skillAvailable(adrNodeId(2))).toBe(false);

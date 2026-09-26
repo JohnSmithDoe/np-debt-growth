@@ -17,7 +17,7 @@ catalogue's; ids in `code`. Paths are relative to `src/app/game/`. The design re
 
 | Node                                       | Ranks | Cost                               | Effect                                                          |
 | ------------------------------------------ | ----- | ---------------------------------- | --------------------------------------------------------------- |
-| Click Radius `radius`                      | 3     | 100 / 440 / 1 650                  | click radius ×1.25, ×1.28, ×1.22                                |
+| Mouse Radius `radius`                      | 3     | 100 / 440 / 1 650                  | mouse radius ×1.25, ×1.28, ×1.22                                |
 | Bigger Sprints `capacity`                  | 10    | 120 → 480 000                      | +`SPRINT_SLOTS_STEP` slots per lane a rank                      |
 | Platform Team `cans` _(ADR-1)_             | 9     | 1 500 → 3 750 000                  | +1 swimlane with its own release train                          |
 | Timebox Renegotiated `duration`            | 5     | 80 → 7 000                         | train back `HAUL_SHAVE_PER_RANK` sooner a rank                  |

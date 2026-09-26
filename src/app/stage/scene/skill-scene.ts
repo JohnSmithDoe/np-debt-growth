@@ -34,7 +34,12 @@ import { PanZoomScene } from './pan-zoom-scene';
 
 const CODE_SCALE = 2;
 const ICON_BOX = SKILL_ICON_SIZE;
-const ICON_DIM = 0.55;
+/** Unbought squares show dimmer, and boxes are all but black. */
+const ICON_ALPHA: Readonly<Record<SquareState, number>> = {
+  owned: 1,
+  open: 0.55,
+  box: 0.2,
+};
 const ICON_CY = 21;
 const CODE_TOP = 7;
 const PIP = { top: 38, height: 4, width: 8, gap: 3, perRow: 5 } as const;
@@ -68,7 +73,14 @@ const INK = {
   effect: 0x9aa3b2,
   blurb: 0x6b7482,
   band: 0x8d97a6,
+  box: 0x3d4450,
 } as const;
+
+const CODE_INK: Readonly<Record<SquareState, number>> = {
+  owned: INK.code,
+  open: INK.codeDim,
+  box: INK.box,
+};
 
 const FILL: Readonly<Record<SquareState, number>> = {
   owned: SCREEN_INK.panel,
@@ -260,8 +272,6 @@ export class SkillScene extends PanZoomScene {
     frames.fillRect(square.x, square.y, square.width, square.height);
     this.#frame(frames, square, this.#edgeColour(node, state));
 
-    if (state === 'box') return;
-
     if (!this.#stampIcon(square, state)) {
       const code = skillCode(node.label);
       const k = grow(square);
@@ -270,14 +280,14 @@ export class SkillScene extends PanZoomScene {
           (square.width - code.length * this.#glyph * CODE_SCALE * k) / 2,
         square.y + CODE_TOP * k,
         code,
-        state === 'owned' ? INK.code : INK.codeDim,
+        CODE_INK[state],
         square.width,
         CODE_SCALE * k
       );
     }
 
     this.#drawPips(frames, square, node);
-    this.#drawPrice(square, node);
+    this.#drawPrice(square, node, state);
     this.#drawBadge(square, node, state);
   }
 
@@ -294,7 +304,7 @@ export class SkillScene extends PanZoomScene {
       square.x + square.width - (STROKE + this.#glyph + BADGE.inset) * k,
       square.y + (STROKE + BADGE.inset) * k,
       badge,
-      state === 'owned' ? INK.code : INK.codeDim,
+      CODE_INK[state],
       square.width,
       k
     );
@@ -332,7 +342,11 @@ export class SkillScene extends PanZoomScene {
     }
   }
 
-  #drawPrice(square: SkillSquare, node: SkillNodeView): void {
+  #drawPrice(
+    square: SkillSquare,
+    node: SkillNodeView,
+    state: SquareState
+  ): void {
     if (node.maxed || node.cost <= 0) return;
     const eur = node.currency === 'eur';
     const price = eur
@@ -344,7 +358,7 @@ export class SkillScene extends PanZoomScene {
       square.x + (square.width - price.length * this.#glyph * k) / 2,
       square.y + PRICE_TOP * k,
       price,
-      eur ? SCREEN_INK.money : SCREEN_INK.points,
+      state === 'box' ? INK.box : eur ? SCREEN_INK.money : SCREEN_INK.points,
       PRICE_ROOM * k,
       k
     );
@@ -381,7 +395,7 @@ export class SkillScene extends PanZoomScene {
       square.y + ICON_CY * k,
       skillIconKey(icon),
       ICON_BOX * k,
-      state === 'owned' ? 1 : ICON_DIM
+      ICON_ALPHA[state]
     );
     return true;
   }
@@ -449,7 +463,7 @@ export class SkillScene extends PanZoomScene {
     byId: ReadonlyMap<string, SkillNodeView>
   ): readonly { text: string; colour: number }[] {
     const state = this.#shown.get(id);
-    if (state === undefined || state === 'box') return [];
+    if (state === undefined) return [];
 
     const node = byId.get(id);
     if (!node) return [];
@@ -529,7 +543,7 @@ export class SkillScene extends PanZoomScene {
   protected hitAt(x: number, y: number): HitRect | null {
     const square = squareAt(x, y);
     const state = square ? this.#shown.get(square.id) : undefined;
-    return square && state !== undefined && state !== 'box' ? square : null;
+    return square && state !== undefined ? square : null;
   }
 
   protected tap(target: HitRect): boolean {

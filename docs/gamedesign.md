@@ -364,7 +364,7 @@ game uses:
   (≈ `MEAN_WALK`), or the nearest of four sampled cards with `nearest`, and by how full a
   senior's sweep batch can get at that density.
 - **Hand** takes one aimed card per sweep (gold first, then the dearest) plus a proportional mix
-  of whatever other cards lie in the click radius, counted on the heap grid (`cellsInReach`):
+  of whatever other cards lie in the mouse radius, counted on the heap grid (`cellsInReach`):
   a radius narrower than a column reaches only its own column. Crew sweep batches count the same way.
 - All of it clamped by `ceilingPerSec`; € and SP priced as at pickup.
 

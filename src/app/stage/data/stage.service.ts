@@ -242,12 +242,16 @@ export class StageService {
   }
 
   #lockText(lock: SkillLock): string {
-    const params = { ...lock.params };
-    for (const name of lock.resolveParams ?? []) {
-      const value = params[name];
-      if (typeof value === 'string') {
-        params[name] = this.#translate.instant(value);
-      }
+    const params: Record<string, string | number> = {};
+    for (const [name, value] of Object.entries(lock.params ?? {})) {
+      const resolve = lock.resolveParams?.includes(name) === true;
+      params[name] =
+        typeof value === 'number'
+          ? value
+          : [value]
+              .flat()
+              .map((key) => (resolve ? this.#translate.instant(key) : key))
+              .join(', ');
     }
     return this.#translate.instant(lock.key, params);
   }

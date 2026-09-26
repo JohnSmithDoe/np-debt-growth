@@ -105,7 +105,10 @@ export interface SkillNode {
 
 export interface SkillLock {
   readonly key: string;
-  readonly params?: Readonly<Record<string, string | number>>;
+  readonly params?: Readonly<
+    Record<string, string | number | readonly string[]>
+  >;
+  /** Params holding catalogue keys; a list resolves to its labels, comma-joined. */
   readonly resolveParams?: readonly string[];
 }
 

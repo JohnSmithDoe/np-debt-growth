@@ -4,7 +4,7 @@ import { ticketTitleEntries } from './ticket-titles';
 export const DE: Readonly<Record<string, string>> = {
   ...ticketTitleEntries(DE_TICKET_TITLES),
   'skill.effect.debtInterest': '{{pct}} Chance auf eine Stufe höher',
-  'skill.effect.clickRadius': '{{pct}} Klick-Radius',
+  'skill.effect.clickRadius': '{{pct}} Maus-Radius',
   'skill.effect.escalation': '{{pct}} Eskalations-Auszahlung',
   'skill.effect.global': '{{pct}} auf alles Abgerechnete',
   'skill.effect.nearestClaim':
@@ -166,7 +166,7 @@ export const DE: Readonly<Record<string, string>> = {
   'settings.off': 'Aus',
   'settings.on': 'An',
   'settings.ring.blurb': 'Zeigt rund um den Zeiger, wie weit ein Klick reicht.',
-  'settings.ring.label': 'Klick-Radius anzeigen',
+  'settings.ring.label': 'Maus-Radius anzeigen',
   'settings.sound.blurb':
     'Jeder Ton wird synthetisiert. Es gibt keine Dateien.',
   'settings.sound.label': 'Ton',
@@ -318,7 +318,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.o7.1.label': 'Eckbüro',
   'skill.o7.blurb': 'Eine Tür, die zugeht. Eskalationen sind mehr wert.',
   'skill.office.1.label': 'Die Fläche',
-  'skill.radius.1.label': 'Klickradius',
+  'skill.radius.1.label': 'Mausradius',
   'skill.radius.2.label': 'Muscle Memory',
   'skill.radius.3.label': 'Backlog Grooming',
   'skill.radius.blurb': 'Erfasst alles im Umkreis des Zeigers.',

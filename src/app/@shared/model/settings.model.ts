@@ -5,5 +5,5 @@ export interface Settings {
 }
 
 export const SETTINGS_DEFAULTS: Required<Settings> = {
-  showClickRadius: false,
+  showClickRadius: true,
 } as const;

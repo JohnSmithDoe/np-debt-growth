@@ -17,12 +17,12 @@ import * as economy from './economy';
  */
 
 /** The first of `node.maxed` not yet fully bought, if any. */
-function unmaxed(state: Consultancy, id: string): string | null {
-  for (const need of SKILL_BY_ID.get(id)?.maxed ?? []) {
-    const levels = SKILL_BY_ID.get(need)?.levels.length ?? 0;
-    if (economy.skillRank(state, need) < levels) return need;
-  }
-  return null;
+function unmaxed(state: Consultancy, id: string): readonly string[] {
+  return (SKILL_BY_ID.get(id)?.maxed ?? []).filter(
+    (need) =>
+      economy.skillRank(state, need) <
+      (SKILL_BY_ID.get(need)?.levels.length ?? 0)
+  );
 }
 
 export function skillAvailable(state: Consultancy, id: string): boolean {
@@ -31,7 +31,7 @@ export function skillAvailable(state: Consultancy, id: string): boolean {
   if (economy.skillRank(state, id) >= node.levels.length) return false;
   const parent = skillParent(id);
   if (parent !== null && economy.skillRank(state, parent) === 0) return false;
-  return unmaxed(state, id) === null;
+  return unmaxed(state, id).length === 0;
 }
 
 export function skillLockReason(
@@ -51,10 +51,10 @@ export function skillLockReason(
     };
   }
   const short = unmaxed(state, id);
-  if (short !== null) {
+  if (short.length > 0) {
     return {
       key: 'skill.lock.needs-maxed',
-      params: { by: skillLabelKey(short) },
+      params: { by: short.map((need) => skillLabelKey(need)) },
       resolveParams: ['by'],
     };
   }

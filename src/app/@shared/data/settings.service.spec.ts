@@ -7,22 +7,22 @@ describe('SettingsService', () => {
   beforeEach(() => localStorage.clear());
 
   it('defaults every setting an absent record does not mention', () => {
-    expect(new SettingsService().showClickRadius()).toBe(false);
+    expect(new SettingsService().showClickRadius()).toBe(true);
   });
 
   it('defaults rather than throwing on a record that is not one', () => {
     localStorage.setItem(SETTINGS_KEY, 'not json');
-    expect(new SettingsService().showClickRadius()).toBe(false);
+    expect(new SettingsService().showClickRadius()).toBe(true);
 
     localStorage.setItem(SETTINGS_KEY, '"a string"');
-    expect(new SettingsService().showClickRadius()).toBe(false);
+    expect(new SettingsService().showClickRadius()).toBe(true);
   });
 
   it('round-trips a choice through storage', () => {
     const settings = new SettingsService();
-    settings.setShowClickRadius(true);
+    settings.setShowClickRadius(false);
 
-    expect(settings.showClickRadius()).toBe(true);
-    expect(new SettingsService().showClickRadius()).toBe(true);
+    expect(settings.showClickRadius()).toBe(false);
+    expect(new SettingsService().showClickRadius()).toBe(false);
   });
 });
