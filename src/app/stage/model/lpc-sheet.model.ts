@@ -1,6 +1,9 @@
 import type { CastSkin } from '../../game/model/cast.model';
 import { CAST } from '../../game/model/cast.model';
 
+import type { SpawnerSkin } from './spawner-skin.model';
+import { SPAWNER_SKINS } from './spawner-skin.model';
+
 export const LPC_FRAME = 64;
 
 export const LPC_FOOT = 62;
@@ -42,9 +45,13 @@ const OFFSETS: Record<LpcBlock, number> = (() => {
   return offsets;
 })();
 
-export type LpcSkin = CastSkin;
+export type LpcSkin = CastSkin | SpawnerSkin;
 
-export const LPC_SKINS: readonly LpcSkin[] = CAST.map((entry) => entry.skin);
+/** Packer order: filenames sorted, so every `spawner-*` lands after the cast. */
+export const LPC_SKINS: readonly LpcSkin[] = [
+  ...CAST.map((entry) => entry.skin),
+  ...SPAWNER_SKINS,
+];
 
 export const CREW_ATLAS = {
   key: 'cb-crew',

@@ -1,8 +1,10 @@
 import * as Phaser from 'phaser';
 
 import { SPAWNERS } from '../../game/model/spawner.model';
-import { LANE } from '../model/board.consts';
-import { ATLAS_KEY, SPAWNER_FRAMES } from '../util/board-atlas';
+import { LANE, LANE_PACK } from '../model/board.consts';
+import { LPC_FOOT } from '../model/lpc-sheet.model';
+import { spawnerSkins } from '../model/spawner-skin.model';
+import { LpcSprite } from '../util/lpc-sprite';
 
 interface Pace {
   readonly speed: number;
@@ -17,9 +19,11 @@ function paceOf(adr: number, index: number): Pace {
 }
 
 interface Walker {
-  readonly image: Phaser.GameObjects.Image;
+  readonly bodies: readonly LpcSprite[];
+  readonly scale: number;
   readonly speed: number;
   readonly lane: number;
+  x: number;
   direction: 1 | -1;
 }
 
@@ -32,6 +36,7 @@ export class TierSpawners {
   readonly #depth: number;
   readonly #lines = new Map<number, Walker[]>();
   readonly #counts = new Map<number, number>();
+  readonly #origin = new Phaser.Math.Vector2();
 
   #left = 0;
   #right = 0;
@@ -64,32 +69,30 @@ export class TierSpawners {
   update(deltaMs: number): void {
     for (const walkers of this.#lines.values()) {
       for (const walker of walkers) {
-        const step = (walker.speed * walker.direction * deltaMs) / 1000;
-        walker.image.x += step;
-        if (walker.image.x < this.#left || walker.image.x > this.#right) {
+        walker.x += (walker.speed * walker.direction * deltaMs) / 1000;
+        if (walker.x < this.#left || walker.x > this.#right) {
           walker.direction = walker.direction < 0 ? 1 : -1;
-          walker.image.x = Phaser.Math.Clamp(
-            walker.image.x,
-            this.#left,
-            this.#right
-          );
+          walker.x = Phaser.Math.Clamp(walker.x, this.#left, this.#right);
+          this.#walk(walker);
         }
-        walker.image.setFlipX(walker.direction < 0);
+        this.#stand(walker);
       }
     }
   }
 
-  /** Where a card of this line falls from: one of the bodies that dropped it. */
-  originOf(adr: number): Phaser.GameObjects.Image | null {
+  /** Where a card of this line falls from: the chest of a body that dropped it. */
+  originOf(adr: number): Phaser.Math.Vector2 | null {
     const walkers = this.#lines.get(adr);
     if (!walkers || walkers.length === 0) return null;
-    const at = Math.floor(Math.random() * walkers.length);
-    return walkers[at]?.image ?? null;
+    const walker = walkers[Math.floor(Math.random() * walkers.length)];
+    const body = walker?.bodies[0];
+    if (!walker || !body) return null;
+    return this.#origin.set(body.x, body.y - (LPC_FOOT * walker.scale) / 2);
   }
 
   destroy(): void {
     for (const walkers of this.#lines.values()) {
-      for (const walker of walkers) walker.image.destroy();
+      for (const walker of walkers) this.#drop(walker);
     }
     this.#lines.clear();
     this.#counts.clear();
@@ -99,30 +102,59 @@ export class TierSpawners {
     const walkers = this.#lines.get(adr) ?? [];
     this.#lines.set(adr, walkers);
 
-    while (walkers.length > wanted) walkers.pop()?.image.destroy();
+    while (walkers.length > wanted) {
+      const walker = walkers.pop();
+      if (walker) this.#drop(walker);
+    }
     while (walkers.length < wanted) {
       const index = walkers.length;
       const { speed, lane } = paceOf(adr, index);
+      const skins = spawnerSkins(adr);
+      const scale = LANE.scale * (skins.length > 1 ? LANE_PACK.scale : 1);
       const walker: Walker = {
-        image: this.#scene.add
-          .image(0, 0, ATLAS_KEY, SPAWNER_FRAMES[adr] ?? SPAWNER_FRAMES[0])
-          .setScale(LANE.scale)
-          .setDepth(this.#depth + (lane < 0.5 ? 0 : 1)),
+        bodies: skins.map((skin) =>
+          new LpcSprite(this.#scene, 0, 0, skin).setScale(scale)
+        ),
+        scale,
         speed,
         lane,
+        x: 0,
         direction: index % 2 === 0 ? 1 : -1,
       };
+      walker.bodies.forEach((body, at) => {
+        const offset = LANE_PACK.offsets[at] ?? LANE_PACK.offsets[0];
+        body.anims.timeScale = speed / LANE.stride;
+        body.setDepth(this.#depth + (lane * LANE.height + offset.y) / 1000);
+      });
       walkers.push(walker);
       this.#place(index, walker);
+      this.#walk(walker);
     }
   }
 
   #place(index: number, walker: Walker): void {
     const span = Math.max(1, this.#right - this.#left);
     const spread = (index + 0.5) / Math.max(1, LANE.perLine);
-    walker.image.setPosition(
-      this.#left + ((spread + walker.lane) % 1) * span,
-      this.#top + walker.lane * LANE.height
-    );
+    walker.x = this.#left + ((spread + walker.lane) % 1) * span;
+    this.#stand(walker);
+  }
+
+  #stand(walker: Walker): void {
+    const foot = this.#top + walker.lane * LANE.height;
+    walker.bodies.forEach((body, at) => {
+      const offset = LANE_PACK.offsets[at] ?? LANE_PACK.offsets[0];
+      const dx = offset.x * walker.direction;
+      body.setPosition(walker.x + dx, foot + offset.y);
+    });
+  }
+
+  #walk(walker: Walker): void {
+    for (const body of walker.bodies) {
+      body.face(walker.direction < 0 ? 'left' : 'right').perform('walk');
+    }
+  }
+
+  #drop(walker: Walker): void {
+    for (const body of walker.bodies) body.destroy();
   }
 }

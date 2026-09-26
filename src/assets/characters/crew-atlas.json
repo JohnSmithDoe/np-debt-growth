@@ -2,7 +2,11 @@
   "frame": 64,
   "cols": 64,
   "framesPerSkin": 68,
-  "blocks": ["walk", "slash", "idle"],
+  "blocks": [
+    "walk",
+    "slash",
+    "idle"
+  ],
   "skins": [
     "junior-f-01",
     "junior-f-02",
@@ -73,6 +77,17 @@
     "senior-m-11",
     "senior-m-12",
     "senior-m-13",
-    "senior-m-14"
+    "senior-m-14",
+    "spawner-0",
+    "spawner-1",
+    "spawner-2",
+    "spawner-3",
+    "spawner-4",
+    "spawner-5",
+    "spawner-6",
+    "spawner-7",
+    "spawner-8a",
+    "spawner-8b",
+    "spawner-8c"
   ]
 }

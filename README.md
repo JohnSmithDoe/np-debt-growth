@@ -71,7 +71,8 @@ resolving to a file the build actually ships.
 
 ### Character art
 
-The crew is 70 characters built from the [Universal LPC Spritesheet Character
+The crew and the spawners on the lane above the board are 81 characters — 70
+people, 11 creatures — built from the [Universal LPC Spritesheet Character
 Generator](https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator).
 `art/characters/` holds the full source sheets and is not shipped;
 `src/assets/characters/crew-atlas.png` is the packed atlas the game loads, and
@@ -79,12 +80,13 @@ Generator](https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Charac
 file is the attribution, and it must stay next to the art in the build output.**
 
 Each character is a flattened composite of separately-authored layers, and the
-atlas flattens all 70 together. **That makes the election cast-wide rather than
+atlas flattens all 81 together. **That makes the election cast-wide rather than
 per character:** one copyleft-only layer anywhere binds the whole image.
 
-Across the 578 credited layer entries there are no CC-BY-SA-only assets, so every
-one offers OGA-BY 3.0, CC0 or GPL-3.0. **43** of the distinct file paths — the
-neckties, the bowler hats, several hairstyles, some boots and glasses — offer no
+Across the 591 credited layer entries there are no CC-BY-SA-only assets, so every
+one offers OGA-BY 3.0, CC0 or GPL-3.0. **46** of the distinct file paths — the
+neckties, the bowler hats, several hairstyles, some boots and glasses, the
+sheep, wolf, minotaur and zombie heads — offer no
 attribution-only option, so:
 
 **The crew atlas is elected under GPL-3.0**, which is compatible with this

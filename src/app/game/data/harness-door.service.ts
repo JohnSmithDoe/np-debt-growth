@@ -15,6 +15,7 @@ export interface HarnessDoors {
   startRound(): void;
   buySkill(id: string): boolean;
   buyLine(line: PurchaseId): boolean;
+  buySpawner(adr: number): boolean;
   /** Drops one card on the board; `NO_TICKET` when there is no room. */
   place(type: TicketTypeId, golden?: boolean): number;
 }
@@ -40,6 +41,7 @@ export class HarnessDoor {
       startRound: () => void this.#store.startRound(this.#clock.now()),
       buySkill: (id) => this.#store.buySkill(id),
       buyLine: (line) => this.#store.buyLine(line),
+      buySpawner: (adr) => this.#store.buySpawner(adr),
       place: (type, golden = false) => {
         const ticket = addTicket(
           this.#store.board,

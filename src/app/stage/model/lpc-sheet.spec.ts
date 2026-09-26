@@ -39,8 +39,11 @@ describe('crew atlas', () => {
     expect(manifest.frame).toBe(64);
   });
 
-  it('lists the cast in the order the atlas packed them', () => {
-    expect(CAST.map((entry) => entry.skin)).toEqual(manifest.skins);
+  it('lists the cast and the spawners in the order the atlas packed them', () => {
+    expect([...LPC_SKINS]).toEqual(manifest.skins);
+    expect(LPC_SKINS.slice(0, CAST.length)).toEqual(
+      CAST.map((entry) => entry.skin)
+    );
   });
 
   it('starts each skin on its own block of frames', () => {

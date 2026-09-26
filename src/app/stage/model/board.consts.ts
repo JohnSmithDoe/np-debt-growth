@@ -192,12 +192,25 @@ export const VOTES = {
   coachX: 16,
 } as const;
 
+/** `top` and `height` bound the walkers' feet, in screen pixels. */
 export const LANE = {
-  top: 6,
-  height: 62,
+  top: 44,
+  height: 40,
   margin: 34,
-  scale: 0.62,
+  scale: 0.7,
   perLine: 50,
+  /** Walk speed, px/s, at which the LPC walk cycle plays at its own rate. */
+  stride: 48,
+} as const;
+
+/** A line of several skins walks as one pack, smaller than a single body. */
+export const LANE_PACK = {
+  scale: 0.5,
+  offsets: [
+    { x: 0, y: 0 },
+    { x: -13, y: 4 },
+    { x: 11, y: 7 },
+  ],
 } as const;
 
 export const BOARD_INK = {
