@@ -8,6 +8,7 @@ import {
 } from '../../game/model/ticket.model';
 import type { SceneDeps } from '../model/scene-deps.model';
 import {
+  BOARD_INK,
   CARD_HEIGHT,
   CARD_WIDTH,
   CLAIM_SLOTS,
@@ -55,6 +56,14 @@ export function goldFrame(id: TicketTypeId): string {
 
 export const GOLD_INK = 0xf2c14e;
 
+/** Work a planning-poker vote re-estimated: its SP bonus, made visible. */
+export function voteFrame(id: TicketTypeId): string {
+  return `vote-${id}`;
+}
+
+/** The vote border alone, laid over a falling card while it fades in. */
+export const VOTE_RING_FRAME = 'vote-ring';
+
 export function buildBoardAtlas(
   scene: Phaser.Scene,
   text: SceneDeps['text']
@@ -86,7 +95,16 @@ export function buildBoardAtlas(
     const gold = shelf.place(CARD_WIDTH, CARD_HEIGHT);
     drawCard(ctx, gold.x, gold.y, type.prefix, hex(GOLD_INK));
     texture.add(goldFrame(id), 0, gold.x, gold.y, CARD_WIDTH, CARD_HEIGHT);
+
+    const vote = shelf.place(CARD_WIDTH, CARD_HEIGHT);
+    drawCard(ctx, vote.x, vote.y, type.prefix, hex(type.colour));
+    drawVoteRing(ctx, vote.x, vote.y);
+    texture.add(voteFrame(id), 0, vote.x, vote.y, CARD_WIDTH, CARD_HEIGHT);
   }
+
+  const ring = shelf.place(CARD_WIDTH, CARD_HEIGHT);
+  drawVoteRing(ctx, ring.x, ring.y);
+  texture.add(VOTE_RING_FRAME, 0, ring.x, ring.y, CARD_WIDTH, CARD_HEIGHT);
 
   for (let slot = 0; slot < CLAIM_SLOTS; slot++) {
     const at = shelf.place(CARD_WIDTH, CARD_HEIGHT);
@@ -120,12 +138,14 @@ export function paintClaimCard(
   texture: Phaser.Textures.CanvasTexture,
   slot: number,
   prefix: string,
-  colour: number
+  colour: number,
+  voted: boolean
 ): void {
   const frame = texture.get(claimFrame(slot));
   const ctx = texture.context;
   ctx.clearRect(frame.cutX, frame.cutY, CARD_WIDTH, CARD_HEIGHT);
   drawCard(ctx, frame.cutX, frame.cutY, prefix, hex(colour));
+  if (voted) drawVoteRing(ctx, frame.cutX, frame.cutY);
 }
 
 function hex(colour: number): string {
@@ -163,6 +183,16 @@ function drawCard(
   ctx.fillStyle = '#39434f';
   ctx.fillRect(x + 9, y + CARD_HEIGHT * 0.58, CARD_WIDTH - 18, 2);
   ctx.fillRect(x + 9, y + CARD_HEIGHT * 0.73, CARD_WIDTH - 26, 2);
+}
+
+function drawVoteRing(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number
+): void {
+  ctx.strokeStyle = hex(BOARD_INK.vote);
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 1, y + 1, CARD_WIDTH - 2, CARD_HEIGHT - 2);
 }
 
 function drawRareCard(

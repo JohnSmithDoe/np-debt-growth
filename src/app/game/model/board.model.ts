@@ -1,6 +1,12 @@
 import type { TicketTypeId } from './ticket.model';
 import type { CrewKind } from './crew.model';
-import { HEAP_OVERFLOW_ROWS, LOGICAL_BOARD, TICKET_SLOT } from './geometry';
+import {
+  HEAP_OVERFLOW_ROWS,
+  HEAP_SPAWN_GAP_ROWS,
+  LOGICAL_BOARD,
+  TICKET_SLOT,
+  VOTE_BEAMS,
+} from './geometry';
 
 export const NO_TICKET = -1;
 export const NEVER_EXPIRES = -1;
@@ -23,7 +29,7 @@ export interface BoardTicket {
   titleKey: string;
   reborn: boolean;
   golden: boolean;
-  /** SP the planning-poker votes it fell through add at pickup. */
+  /** SP the live votes whose beam it landed below add at pickup. */
   spBonus: number;
   /** Counts down while unclaimed; `NEVER_EXPIRES` for hand-only cards. */
   lifeLeftMs: number;
@@ -138,6 +144,13 @@ export function cellX(col: number): number {
 export function cellY(row: number): number {
   return HEAP_FLOOR - row * TICKET_SLOT.height;
 }
+
+export function voteBeamY(index: number): number {
+  return VOTE_BEAMS.top + index * VOTE_BEAMS.spacing;
+}
+
+/** Rows new work scatters into; only a crowded board stacks above them. */
+export const HEAP_SPAWN_ROWS = HEAP_FIELD_ROWS - HEAP_SPAWN_GAP_ROWS;
 
 export function meetingSpot(id: number): { x: number; y: number } {
   const column = id % MEETING_ROOM.columns;

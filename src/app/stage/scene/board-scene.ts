@@ -13,7 +13,7 @@ import type {
 import { pickWithin } from '../../game/util/board';
 import { hazardLabelKey } from '../../game/model/hazard.model';
 import type { CrewKind } from '../../game/model/crew.model';
-import { LOGICAL_BOARD } from '../../game/model/geometry';
+import { LOGICAL_BOARD, VOTE_BEAMS } from '../../game/model/geometry';
 import type { TicketTypeId } from '../../game/model/ticket.model';
 import { ticketLabelKey, TICKET_TYPES } from '../../game/model/ticket.model';
 import { spawnerFor } from '../../game/model/spawner.model';
@@ -40,12 +40,14 @@ import {
   HOVER_WIDTH,
   RARE_CARD_HEIGHT,
   RARE_CARD_WIDTH,
+  LANE,
   RARE_LIFT,
   SPRINT_STRIP_HEIGHT,
+  VOTES,
   WONT_FIX_FADE,
 } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
-import { cardFrame, buildBoardAtlas } from '../util/board-atlas';
+import { cardFrame, buildBoardAtlas, voteFrame } from '../util/board-atlas';
 import { loadCrewAtlas, registerCrewAnimations } from '../util/lpc-sprite';
 import { FLIGHT, FlyerPool } from '../util/flyer-pool';
 import { NONE, TicketHeap } from '../util/ticket-heap';
@@ -81,6 +83,7 @@ const DEPTH = {
   hover: 60,
 } as const;
 const MIN_BOARD_HEIGHT = 80;
+const MIN_SCALE_Y = 0.25;
 const SECRET_NOTE = '// TODO(2011): remove before launch';
 const HAZARD_BANNER_LIFT = 34;
 
@@ -152,7 +155,10 @@ function cardAt(
 export class BoardScene extends CbScene {
   static readonly KEY = 'board';
 
-  #scale = 1;
+  #scaleX = 1;
+  #scaleY = 1;
+  /** Board units to screen px for anything drawn round: √(x·y), so area matches the sim. */
+  #ringScale = 1;
   #offX = 0;
   #offY = 0;
 
@@ -309,8 +315,8 @@ export class BoardScene extends CbScene {
     this.#wontFix = new Set(this.deps.takeWontFix());
     parts.heap.sync(
       board,
-      (id, type, x, y) => this.#land(parts, id, type, x, y),
-      (id, type, x, y) => this.#leave(parts, id, type, x, y)
+      (id, type, x, y, voted) => this.#land(parts, id, type, x, y, voted),
+      (id, type, x, y, voted) => this.#leave(parts, id, type, x, y, voted)
     );
     this.#preTint(parts, board);
     parts.crew.sync(board, board.juniors, this.deps.womanEvery('juniors'));
@@ -355,10 +361,10 @@ export class BoardScene extends CbScene {
     if (!party) return;
     circle
       .setPosition(
-        party.x * this.#scale + this.#offX,
-        party.y * this.#scale + this.#offY
+        party.x * this.#scaleX + this.#offX,
+        party.y * this.#scaleY + this.#offY
       )
-      .setRadius(party.radius * this.#scale * (0.35 + 0.65 * party.left));
+      .setRadius(party.radius * this.#ringScale * (0.35 + 0.65 * party.left));
   }
 
   #sweepFrame(): void {
@@ -379,10 +385,11 @@ export class BoardScene extends CbScene {
     id: number,
     type: TicketTypeId,
     x: number,
-    y: number
+    y: number,
+    voted: boolean
   ): boolean {
     const source = parts.spawners.originOf(spawnerFor(type)?.adr ?? -1);
-    return parts.flyers.launch(
+    const launched = parts.flyers.launch(
       cardFrame(type),
       FLIGHT.drop,
       id,
@@ -393,6 +400,8 @@ export class BoardScene extends CbScene {
       DROP_MS,
       DROP_HOP
     );
+    if (launched && voted) parts.flyers.markVoted(id);
+    return launched;
   }
 
   #leave(
@@ -400,12 +409,14 @@ export class BoardScene extends CbScene {
     id: number,
     type: TicketTypeId,
     x: number,
-    y: number
+    y: number,
+    voted: boolean
   ): void {
+    const frame = voted ? voteFrame(type) : cardFrame(type);
     const from = parts.flyers.catch(id) ?? { x, y };
     if (this.#wontFix.has(id)) {
       parts.flyers.launch(
-        cardFrame(type),
+        frame,
         FLIGHT.fade,
         NONE,
         from.x,
@@ -420,7 +431,7 @@ export class BoardScene extends CbScene {
     if (this.#carried(id)) return;
     const slot = this.#claimSlot(type);
     parts.flyers.launch(
-      cardFrame(type),
+      frame,
       FLIGHT.harvest,
       NONE,
       from.x,
@@ -541,19 +552,23 @@ export class BoardScene extends CbScene {
       return this.#placeHover(px, py);
     }
 
-    const x = (px - this.#offX) / this.#scale;
-    const y = (py - this.#offY) / this.#scale;
+    const x = (px - this.#offX) / this.#scaleX;
+    const y = (py - this.#offY) / this.#scaleY;
     const board = this.deps.board();
-    const near = pickWithin(board, x, y, PICK_RADIUS / this.#scale).filter(
-      (id) => !parts.flyers.isFalling(id)
-    );
+    const near = pickWithin(
+      board,
+      x,
+      y,
+      PICK_RADIUS / this.#scaleX,
+      PICK_RADIUS / this.#scaleY
+    ).filter((id) => !parts.flyers.isFalling(id));
     const id = cardAt(
       board,
       near,
       px,
       py,
-      (at) => this.#offX + at * this.#scale,
-      (at) => this.#offY + at * this.#scale
+      (at) => this.#offX + at * this.#scaleX,
+      (at) => this.#offY + at * this.#scaleY
     );
     const ticket = id === NONE ? undefined : board.byId.get(id);
     const title = id === NONE ? null : parts.heap.titleOf(id);
@@ -604,7 +619,9 @@ export class BoardScene extends CbScene {
   #placeRing(px: number, py: number): void {
     this.#onBoard = py < this.#boardHeight;
     if (!this.#onBoard) return;
-    this.#ring?.setPosition(px, py).setRadius(this.deps.radius() * this.#scale);
+    this.#ring
+      ?.setPosition(px, py)
+      .setRadius(this.deps.radius() * this.#ringScale);
   }
 
   #placeHover(px: number, py: number): void {
@@ -632,14 +649,15 @@ export class BoardScene extends CbScene {
     const parts = this.#parts;
     if (!parts) return;
     const { flyers } = parts;
-    const radius = this.deps.radius();
+    const ring = this.deps.radius() * this.#ringScale;
     const ids = pickWithin(
       this.deps.board(),
-      (px - this.#offX) / this.#scale,
-      (py - this.#offY) / this.#scale,
-      radius
+      (px - this.#offX) / this.#scaleX,
+      (py - this.#offY) / this.#scaleY,
+      ring / this.#scaleX,
+      ring / this.#scaleY
     ).filter((id) => !flyers.isFalling(id));
-    flyers.fallingWithin(px, py, radius * this.#scale, ids);
+    flyers.fallingWithin(px, py, ring, ids);
     if (ids.length === 0) return;
 
     const { taken, refused, value, sp, big, headline } = this.deps.harvest(ids);
@@ -669,7 +687,7 @@ export class BoardScene extends CbScene {
     const ring = this.#ring;
     if (!ring?.visible) return;
     this.tweens.killTweensOf(ring);
-    ring.setPosition(px, py).setRadius(this.deps.radius() * this.#scale);
+    ring.setPosition(px, py).setRadius(this.deps.radius() * this.#ringScale);
     this.tweens.add({
       targets: ring,
       alpha: { from: CLICK_RING.flashAlpha, to: CLICK_RING.alpha },
@@ -686,8 +704,8 @@ export class BoardScene extends CbScene {
       ...due.filter((close) => !close.big),
     ].slice(0, CLOSE_FLOATS_PER_FRAME);
     for (const close of shown) {
-      const x = close.x * this.#scale + this.#offX;
-      const y = close.y * this.#scale + this.#offY;
+      const x = close.x * this.#scaleX + this.#offX;
+      const y = close.y * this.#scaleY + this.#offY;
       if (close.big) {
         this.floatBig(
           x,
@@ -755,24 +773,31 @@ export class BoardScene extends CbScene {
       height - SPRINT_STRIP_HEIGHT
     );
 
-    this.#scale = width / LOGICAL_BOARD.width;
+    this.#scaleX = width / LOGICAL_BOARD.width;
+    const beam = LANE.top + LANE.height + VOTES.belowSpawners;
+    this.#scaleY = Math.max(
+      MIN_SCALE_Y,
+      (this.#boardHeight - beam) / (LOGICAL_BOARD.height - VOTE_BEAMS.top)
+    );
+    this.#ringScale = Math.sqrt(this.#scaleX * this.#scaleY);
     this.#offX = 0;
-    this.#offY = this.#boardHeight - LOGICAL_BOARD.height * this.#scale;
+    this.#offY = this.#boardHeight - LOGICAL_BOARD.height * this.#scaleY;
 
     parts.ground.layout(
-      this.#scale,
+      this.#scaleX,
       this.#offX,
       this.#offY,
       width,
       this.#boardHeight
     );
     parts.strip.layout(width, height);
-    parts.heap.layout(this.#scale, this.#offX, this.#offY);
+    parts.heap.layout(this.#scaleX, this.#scaleY, this.#offX, this.#offY);
     parts.spawners.layout(0, 0, width);
-    parts.votes.layout(width);
-    parts.crew.layout(this.#scale, this.#offX, this.#offY);
-    parts.seniors.layout(this.#scale, this.#offX, this.#offY);
-    parts.managers.layout(this.#scale, this.#offX, this.#offY);
+    parts.votes.layout(width, this.#scaleY, this.#offY);
+    parts.flyers.voteTop = this.#offY + VOTE_BEAMS.top * this.#scaleY;
+    for (const crew of [parts.crew, parts.seniors, parts.managers]) {
+      crew.layout(this.#scaleX, this.#scaleY, this.#offX, this.#offY);
+    }
 
     this.#floorLine?.setPosition(0, this.#boardHeight).setSize(width, 1);
     this.#secret?.setPosition(12, 8);

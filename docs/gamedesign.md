@@ -283,8 +283,14 @@ a ring per depth, each subtree a wedge sized to what it needs, so the spine arcs
 **Planning poker** (`coaches` 600 → 1 950 000, `deck` 900 → 2 400 000, 10 ranks each, from
 ADR-2): coaches on the lane edge hold
 votes live for `VOTE_ON_MS` 1.4 s of every `VOTE_CYCLE_MS` 4 s, offset from each other. A
-non-golden ticket falling through a live vote gains `VOTE_BONUS_BASE` 45 SP + 15 a `deck` rank (the reference pays 30).
-Drawn by `stage/scene/vote-beams.ts`. The reference's gum angels.
+non-golden ticket that lands below a live vote's beam gains `VOTE_BONUS_BASE` 45 SP + 15 a `deck` rank (the reference pays 30).
+The beams sit in board units (`VOTE_BEAMS`, `voteBeamY`), so a ticket landing above one is passed over;
+decided at spawn from the landing cell. New work scatters only below the top `HEAP_SPAWN_GAP_ROWS`
+field rows, so it falls through the beams; a crowded board stacks above them and misses the vote.
+The stage scales the board separately across and down (`board-scene.ts` `#layout`), so y 100 always
+sits `VOTES.belowSpawners` under the fixed spawner path and the floor on the sprint strip; round
+things (sweep ring, pizza) use √(x·y), so the hand covers the board area the sim prices. Drawn by `stage/scene/vote-beams.ts`; a re-estimated card
+wears a purple border (`voteFrame`) that fades in as it falls past the beams. The reference's gum angels.
 
 ### The ADR ladder
 

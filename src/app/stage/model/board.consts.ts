@@ -185,11 +185,13 @@ export const FLOOR_SCATTER = {
  */
 /** The planning-poker band, just under the lane the work falls from. */
 export const VOTES = {
-  top: 150,
-  spacing: 7,
+  /** Screen px from the spawner path's lowest feet to the first beam. */
+  belowSpawners: 12,
   amplitude: 3,
   wavelength: 38,
   coachX: 16,
+  /** Pixels below the first beam over which a re-estimated card's border fades in. */
+  fade: 36,
 } as const;
 
 /** `top` and `height` bound the walkers' feet, in screen pixels. */
@@ -228,7 +230,7 @@ export const BOARD_INK = {
   trainWindow: 0x1f6feb,
   tunnel: 0x07090c,
   tunnelFrame: 0x3a4452,
-  vote: 0xe06c9f,
+  vote: 0xa855f7,
   pizza: 0xf97316,
   card: 0xe6e9ef,
   coach: 0x98a1b0,

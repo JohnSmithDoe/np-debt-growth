@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 
+import { voteBeamY } from '../../game/model/board.model';
 import { BOARD_INK, VOTES } from '../model/board.consts';
 
 /**
@@ -10,6 +11,8 @@ import { BOARD_INK, VOTES } from '../model/board.consts';
 export class VoteBeams {
   readonly #graphics: Phaser.GameObjects.Graphics;
   #width = 0;
+  #scale = 1;
+  #offY = 0;
   #drawn = '';
   #phase = 0;
 
@@ -17,8 +20,10 @@ export class VoteBeams {
     this.#graphics = scene.add.graphics().setDepth(depth);
   }
 
-  layout(width: number): void {
+  layout(width: number, scaleY: number, offY: number): void {
     this.#width = width;
+    this.#scale = scaleY;
+    this.#offY = offY;
     this.#drawn = '';
   }
 
@@ -32,7 +37,7 @@ export class VoteBeams {
     const g = this.#graphics;
     g.clear();
     for (const [index, live] of votes.entries()) {
-      const y = VOTES.top + index * VOTES.spacing;
+      const y = this.#offY + voteBeamY(index) * this.#scale;
       this.#beam(y, live, index);
       this.#coach(y, live);
     }

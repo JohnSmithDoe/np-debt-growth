@@ -41,7 +41,8 @@ export class CrewLayer {
   readonly #claimedId: number[] = [];
   #claims: Claim[] = [];
 
-  #scale = 1;
+  #scaleX = 1;
+  #scaleY = 1;
   #offX = 0;
   #offY = 0;
   #shown = 0;
@@ -129,11 +130,15 @@ export class CrewLayer {
     return this.#kind;
   }
 
-  layout(scale: number, offX: number, offY: number): void {
-    this.#scale = scale;
+  layout(scaleX: number, scaleY: number, offX: number, offY: number): void {
+    this.#scaleX = scaleX;
+    this.#scaleY = scaleY;
     this.#offX = offX;
     this.#offY = offY;
-    this.#tally.setPosition(offX + 10, offY + 10 + this.#tallyRow * 14);
+    this.#tally.setPosition(
+      offX + 10,
+      Math.max(0, offY) + 10 + this.#tallyRow * 14
+    );
   }
 
   sync(
@@ -176,8 +181,8 @@ export class CrewLayer {
     for (let index = 0; index < this.#shown; index++) {
       const member = members[index];
       if (!member) continue;
-      const x = this.#offX + member.x * this.#scale;
-      const y = this.#offY + member.y * this.#scale;
+      const x = this.#offX + member.x * this.#scaleX;
+      const y = this.#offY + member.y * this.#scaleY;
       this.#targetX[index] = x;
       this.#targetY[index] = y;
       this.#block[index] = blockFor(board, member);

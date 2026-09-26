@@ -23,9 +23,17 @@ import {
   GLOW_FRAME,
   GOLD_INK,
   paintClaimCard,
+  voteFrame,
 } from './board-atlas';
 
 export const NONE = -1;
+
+/** Above any 24-bit colour, so a voted claim paint never matches a plain one. */
+const VOTED_PAINT = 0x1000000;
+
+function voted(ticket: BoardTicket): boolean {
+  return ticket.spBonus > 0;
+}
 
 const DEPTH = { goldGlow: 9, layer: 10, glow: 11, rare: 12 } as const;
 
@@ -58,7 +66,8 @@ export class TicketHeap {
   readonly #rareGlows: Phaser.GameObjects.Image[] = [];
   readonly #rareFree: number[] = [];
 
-  #scale = 1;
+  #scaleX = 1;
+  #scaleY = 1;
   #offX = 0;
   #offY = 0;
 
@@ -101,25 +110,38 @@ export class TicketHeap {
     return this.#drawn.size;
   }
 
-  layout(scale: number, offX: number, offY: number): void {
-    this.#scale = scale;
+  layout(scaleX: number, scaleY: number, offX: number, offY: number): void {
+    this.#scaleX = scaleX;
+    this.#scaleY = scaleY;
     this.#offX = offX;
     this.#offY = offY;
     for (const ticket of this.#drawn.values()) this.#draw(ticket);
   }
 
   px(x: number): number {
-    return this.#offX + x * this.#scale;
+    return this.#offX + x * this.#scaleX;
   }
 
   py(y: number): number {
-    return this.#offY + y * this.#scale;
+    return this.#offY + y * this.#scaleY;
   }
 
   sync(
     board: Board,
-    onLand: (id: number, type: TicketTypeId, x: number, y: number) => boolean,
-    onGone: (id: number, type: TicketTypeId, x: number, y: number) => void
+    onLand: (
+      id: number,
+      type: TicketTypeId,
+      x: number,
+      y: number,
+      voted: boolean
+    ) => boolean,
+    onGone: (
+      id: number,
+      type: TicketTypeId,
+      x: number,
+      y: number,
+      voted: boolean
+    ) => void
   ): void {
     for (const ticket of board.tickets) {
       if (this.#drawnAs.get(ticket.id) !== ticket.type) {
@@ -135,7 +157,13 @@ export class TicketHeap {
       this.#slotOf.set(ticket.id, slot);
       this.#drawn.set(ticket.id, ticket);
       if (
-        !onLand(ticket.id, ticket.type, this.px(ticket.x), this.py(ticket.y))
+        !onLand(
+          ticket.id,
+          ticket.type,
+          this.px(ticket.x),
+          this.py(ticket.y),
+          voted(ticket)
+        )
       ) {
         this.#draw(ticket);
       }
@@ -143,7 +171,13 @@ export class TicketHeap {
 
     for (const [id, ticket] of this.#drawn) {
       if (board.byId.has(id)) continue;
-      onGone(id, ticket.type, this.px(ticket.x), this.py(ticket.y));
+      onGone(
+        id,
+        ticket.type,
+        this.px(ticket.x),
+        this.py(ticket.y),
+        voted(ticket)
+      );
       this.#drop(id);
     }
   }
@@ -167,13 +201,15 @@ export class TicketHeap {
         this.#claimSlot.set(id, slot);
       }
 
-      if (this.#claimPainted.get(slot) !== colour) {
-        this.#claimPainted.set(slot, colour);
+      const paint = voted(ticket) ? colour | VOTED_PAINT : colour;
+      if (this.#claimPainted.get(slot) !== paint) {
+        this.#claimPainted.set(slot, paint);
         paintClaimCard(
           this.#atlas,
           slot,
           TICKET_TYPES[ticket.type].prefix,
-          colour
+          colour,
+          voted(ticket)
         );
         repainted = true;
       } else if (!fresh) {
@@ -297,7 +333,9 @@ export class TicketHeap {
         ? claimFrame(claim)
         : ticket.golden
           ? goldFrame(ticket.type)
-          : cardFrame(ticket.type);
+          : voted(ticket)
+            ? voteFrame(ticket.type)
+            : cardFrame(ticket.type);
     this.#member.x = x;
     this.#member.y = y;
     this.#member.rotation = ((ticket.id % 13) - 6) * 0.01;

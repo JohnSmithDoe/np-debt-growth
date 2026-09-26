@@ -3,9 +3,11 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 import {
+  cellY,
   emptyBoard,
   HEAP_COLS,
   HEAP_ROWS,
+  HEAP_SPAWN_ROWS,
   NO_TICKET,
 } from '../model/board.model';
 import type { Board, BoardTicket, Close } from '../model/board.model';
@@ -574,14 +576,15 @@ describe('the board fills up', () => {
     expect(HEAP_COLS * HEAP_ROWS).toBeGreaterThan(BOARD_CAPACITY);
   });
 
-  it('scatters a sparse board over the field instead of the floor', () => {
+  it('scatters a sparse board below the vote beams instead of the floor', () => {
     const board = emptyBoard();
     fill(board, 'lint', 30, cycling());
     const ys = board.tickets.map((ticket) => ticket.y);
-    const high = ys.filter((y) => y < LOGICAL_BOARD.height / 2).length;
+    const top = cellY(HEAP_SPAWN_ROWS - 1);
+    const high = ys.filter((y) => y < (top + cellY(0)) / 2).length;
 
     expect(high).toBeGreaterThan(5);
-    expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(top);
   });
 });
 

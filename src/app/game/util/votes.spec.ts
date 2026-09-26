@@ -7,21 +7,34 @@ import {
   VOTE_CYCLE_MS,
   VOTE_ON_MS,
 } from '../model/balance/flow';
-import { emptyBoard } from '../model/board.model';
+import { cellY, emptyBoard, voteBeamY } from '../model/board.model';
 import { SpawnBudget } from './spawn-budget';
 import { spawnInto } from './supply';
 import * as economy from './economy';
 
+const FLOOR = cellY(0);
+
 describe('planning poker (the reference gum angels)', () => {
   it('holds no vote until a coach is hired', () => {
-    expect(economy.voteBonus(consultancy(), 0)).toBe(0);
+    expect(economy.voteBonus(consultancy(), 0, FLOOR)).toBe(0);
   });
 
   it('pays each live vote once, and nothing between votes', () => {
     const one = consultancy({ skills: { coaches: 1 } });
-    expect(economy.voteBonus(one, 0)).toBe(VOTE_BONUS_BASE);
-    expect(economy.voteBonus(one, VOTE_ON_MS + 1)).toBe(0);
-    expect(economy.voteBonus(one, VOTE_CYCLE_MS)).toBe(VOTE_BONUS_BASE);
+    expect(economy.voteBonus(one, 0, FLOOR)).toBe(VOTE_BONUS_BASE);
+    expect(economy.voteBonus(one, VOTE_ON_MS + 1, FLOOR)).toBe(0);
+    expect(economy.voteBonus(one, VOTE_CYCLE_MS, FLOOR)).toBe(VOTE_BONUS_BASE);
+  });
+
+  it('passes over work that lands above its beam', () => {
+    const two = consultancy({ skills: { coaches: 2 } });
+    const between = (voteBeamY(0) + voteBeamY(1)) / 2;
+    for (let ms = 0; ms < VOTE_CYCLE_MS; ms += 50) {
+      expect(economy.voteBonus(two, ms, voteBeamY(0) - 1)).toBe(0);
+      expect(economy.voteBonus(two, ms, between)).toBe(
+        economy.voteLive(two, 0, ms) ? VOTE_BONUS_BASE : 0
+      );
+    }
   });
 
   it('adds the deck per vote, and every coach votes on its own beat', () => {
@@ -31,7 +44,7 @@ describe('planning poker (the reference gum angels)', () => {
 
     let seen = 0;
     for (let ms = 0; ms < VOTE_CYCLE_MS; ms += 50) {
-      seen = Math.max(seen, economy.voteBonus(state, ms) / perVote);
+      seen = Math.max(seen, economy.voteBonus(state, ms, FLOOR) / perVote);
     }
     expect(seen).toBeGreaterThanOrEqual(1);
     expect(seen).toBeLessThan(4);

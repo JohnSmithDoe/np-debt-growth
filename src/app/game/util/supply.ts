@@ -42,7 +42,11 @@ export function spawnInto(
         rand() < golden
       );
       if (ticket && !ticket.golden) {
-        ticket.spBonus = economy.voteBonus(state, from + n * VOTE_SPREAD_MS);
+        ticket.spBonus = economy.voteBonus(
+          state,
+          from + n * VOTE_SPREAD_MS,
+          ticket.y
+        );
       }
     }
   }

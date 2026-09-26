@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 
-import { FLYER_CAPACITY } from '../model/board.consts';
-import { ATLAS_KEY } from './board-atlas';
+import { FLYER_CAPACITY, VOTES } from '../model/board.consts';
+import { ATLAS_KEY, VOTE_RING_FRAME } from './board-atlas';
 
 export const FLIGHT = {
   drop: 0,
@@ -17,6 +17,7 @@ const IDLE = -1;
 
 export class FlyerPool {
   readonly #images: Phaser.GameObjects.Image[] = [];
+  readonly #rings: Phaser.GameObjects.Image[] = [];
   readonly #free: number[] = [];
   readonly #active: number[] = [];
 
@@ -30,9 +31,11 @@ export class FlyerPool {
   readonly #span = new Float32Array(FLYER_CAPACITY);
   readonly #elapsed = new Float32Array(FLYER_CAPACITY);
   readonly #hold = new Float32Array(FLYER_CAPACITY);
+  readonly #voted = new Uint8Array(FLYER_CAPACITY);
   readonly #falling = new Map<number, number>();
 
   #onArrive: Arrival = () => undefined;
+  #voteTop = 0;
 
   constructor(scene: Phaser.Scene, depth: number) {
     for (let slot = FLYER_CAPACITY - 1; slot >= 0; slot--) {
@@ -42,10 +45,23 @@ export class FlyerPool {
       this.#free.push(slot);
       this.#kind[slot] = IDLE;
     }
+    for (let slot = FLYER_CAPACITY - 1; slot >= 0; slot--) {
+      this.#rings.push(
+        scene.add
+          .image(0, 0, ATLAS_KEY, VOTE_RING_FRAME)
+          .setDepth(depth)
+          .setVisible(false)
+      );
+    }
   }
 
   set onArrive(handler: Arrival) {
     this.#onArrive = handler;
+  }
+
+  /** Screen y of the first planning-poker beam. */
+  set voteTop(y: number) {
+    this.#voteTop = y;
   }
 
   launch(
@@ -84,6 +100,14 @@ export class FlyerPool {
       .setAlpha(1)
       .setVisible(true);
     return true;
+  }
+
+  /** The drop crosses the planning-poker beams and comes out re-estimated. */
+  markVoted(ticket: number): void {
+    const slot = this.#falling.get(ticket);
+    if (slot === undefined) return;
+    this.#voted[slot] = 1;
+    this.#rings[slot]?.setAlpha(0).setVisible(true);
   }
 
   isFalling(ticket: number): boolean {
@@ -145,6 +169,7 @@ export class FlyerPool {
         if (kind === FLIGHT.fade) image.alpha = 1 - progress;
         else
           image.rotation = (1 - progress) * 0.4 * ((slot & 1) === 0 ? 1 : -1);
+        if (this.#voted[slot]) this.#followRing(slot, image);
       }
 
       if (progress < 1) continue;
@@ -159,8 +184,24 @@ export class FlyerPool {
     }
   }
 
+  #followRing(slot: number, card: Phaser.GameObjects.Image): void {
+    const ring = this.#rings[slot];
+    if (!ring) return;
+    const crossed = Phaser.Math.Clamp(
+      (card.y - this.#voteTop) / VOTES.fade,
+      0,
+      1
+    );
+    ring
+      .setPosition(card.x, card.y)
+      .setRotation(card.rotation)
+      .setAlpha(Math.max(ring.alpha, crossed));
+  }
+
   #retire(slot: number): void {
     this.#images[slot]?.setVisible(false);
+    this.#rings[slot]?.setVisible(false);
+    this.#voted[slot] = 0;
     this.#free.push(slot);
     if (this.#kind[slot] === FLIGHT.drop)
       this.#falling.delete(this.#ticket[slot] ?? IDLE);
@@ -168,6 +209,7 @@ export class FlyerPool {
 
   destroy(): void {
     for (const image of this.#images) image.destroy();
+    for (const ring of this.#rings) ring.destroy();
   }
 }
 

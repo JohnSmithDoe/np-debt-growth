@@ -2,7 +2,11 @@ import type { Consultancy } from '../model/consultancy.model';
 import type { CrewKind } from '../model/crew.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
-import { HEAP_COLS, HEAP_FIELD_ROWS } from '../model/board.model';
+import {
+  HEAP_COLS,
+  HEAP_FIELD_ROWS,
+  HEAP_SPAWN_ROWS,
+} from '../model/board.model';
 import { BOARD_CAPACITY, LOGICAL_BOARD, TICKET_SLOT } from '../model/geometry';
 import {
   TICKET_LIFE_MS,
@@ -53,6 +57,8 @@ const BOARD_AREA = LOGICAL_BOARD.width * LOGICAL_BOARD.height;
 const DENSITY_PASSES = 8;
 /** Cards past this stack in the overflow rows above the field, out of the sweep. */
 const FIELD_CELLS = HEAP_COLS * HEAP_FIELD_ROWS;
+/** Where new work scatters, below the vote beams; landings past it stack above them. */
+const SPAWN_CELLS = HEAP_COLS * HEAP_SPAWN_ROWS;
 
 /** Closer kinds in claim order; managers relabel rather than close. */
 const CLOSERS: readonly CrewKind[] = ['seniors', 'juniors'];
@@ -151,6 +157,11 @@ function cellsInReach(radius: number): number {
   return mean;
 }
 
+/** Cells the cards cover: the spawn area until it fills, then upward over the field. */
+function spreadOver(density: number): number {
+  return Math.min(FIELD_CELLS, Math.max(SPAWN_CELLS, density));
+}
+
 /** How many cards a claim samples before picking one (`board.ts`). */
 const CLAIM_SAMPLES = 4;
 
@@ -183,7 +194,7 @@ function crewCapacity(
 
   const batch = economy.crewBatch(state, crew);
   const sweep = economy.crewSweepRadius(state, crew);
-  const near = (claimable * cellsInReach(sweep)) / FIELD_CELLS;
+  const near = (claimable * cellsInReach(sweep)) / spreadOver(density);
   const filled = Math.min(batch, 1 + near) / batch;
 
   return (ceiling * filled * closeMs) / (closeMs + walkMs);
@@ -237,7 +248,8 @@ function collect(
   const radius = economy.clickRadius(state);
   const onField = Math.min(density, FIELD_CELLS);
   const others =
-    (Math.max(0, onField - 1) * cellsInReach(radius)) / (FIELD_CELLS - 1);
+    (Math.max(0, onField - 1) * cellsInReach(radius)) /
+    (spreadOver(density) - 1);
   takeMixed(all, policy.clicksPerSec * others, 'hand');
 }
 
@@ -274,6 +286,7 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
   const pays = economy.pickupsPaySp(state);
   const votes = pays
     ? (economy.coachCount(state) *
+        Math.min(1, SPAWN_CELLS / Math.max(1, density)) *
         VOTE_ON_MS *
         economy.voteBonusPerCrossing(state)) /
       VOTE_CYCLE_MS

@@ -9,8 +9,8 @@ import {
   cellX,
   cellY,
   HEAP_COLS,
-  HEAP_FIELD_ROWS,
   HEAP_ROWS,
+  HEAP_SPAWN_ROWS,
   meetingSpot,
   NEVER_EXPIRES,
   NO_TICKET,
@@ -427,17 +427,19 @@ export function comeBack(board: Board, ticket: BoardTicket): void {
   board.pending.push({ type: ticket.type, leftMs: FLAKY_COMEBACK_MS });
 }
 
+/** Tickets inside the ellipse of `radius` across and `radiusY` down. */
 export function pickWithin(
   board: Board,
   x: number,
   y: number,
-  radius: number
+  radius: number,
+  radiusY = radius
 ): number[] {
   const found: number[] = [];
   for (const ticket of board.tickets) {
-    const dx = ticket.x - x;
-    const dy = ticket.y - y;
-    if (dx * dx + dy * dy <= radius * radius) found.push(ticket.id);
+    const dx = (ticket.x - x) / radius;
+    const dy = (ticket.y - y) / radiusY;
+    if (dx * dx + dy * dy <= 1) found.push(ticket.id);
   }
   return found;
 }
@@ -514,7 +516,7 @@ function release(board: Board, crewId: number): void {
 function claimCell(board: Board, rand: () => number): number {
   for (let sample = 0; sample < SCATTER_SAMPLES; sample++) {
     const col = Math.floor(rand() * HEAP_COLS);
-    const cell = col * HEAP_ROWS + Math.floor(rand() * HEAP_FIELD_ROWS);
+    const cell = col * HEAP_ROWS + Math.floor(rand() * HEAP_SPAWN_ROWS);
     if (board.grid[cell] === NO_TICKET) return cell;
   }
   const sampled = lowestFreeCell(board, chooseColumn(board, rand));
