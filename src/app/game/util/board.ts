@@ -21,7 +21,11 @@ import { TICKET_TYPES } from '../model/ticket.model';
 import type { CrewRules, CrewSeat, HirePace, Rush } from '../model/crew.model';
 import { FLAKY_COMEBACK_MS } from '../model/ticket.model';
 import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
-import { GOLDEN_LIFE_MS, TICKET_LIFE_MS } from '../model/balance/flow';
+import {
+  GOLDEN_LIFE_MS,
+  TICKET_LIFE_MS,
+  WONT_FIX_FADE_MS,
+} from '../model/balance/flow';
 
 const OUT_OF_POOL = -1;
 const COLUMN_SAMPLES = 4;
@@ -134,6 +138,7 @@ export function addTicket(
       : golden
         ? GOLDEN_LIFE_MS
         : TICKET_LIFE_MS,
+    fadeLeftMs: WONT_FIX_FADE_MS,
     x: cellX(col),
     y: cellY(cell - col * HEAP_ROWS),
     claimedBy: NO_TICKET,
@@ -159,10 +164,6 @@ export function removeTicket(board: Board, ticket: BoardTicket): void {
 }
 
 /**
- * Closes as "won't fix" whatever nobody reached in time. A claimed card holds
- * its clock: someone is on the way. Won't-fix never comes back.
- */
-/**
  * A full board makes room for new work by closing the card nearest its own
  * expiry, golden only once nothing else is left. Claimed and hand-only cards
  * are never pushed out.
@@ -185,6 +186,16 @@ function displacesBefore(a: BoardTicket, b: BoardTicket): boolean {
   return a.lifeLeftMs < b.lifeLeftMs;
 }
 
+/** 1 while the card lives, falling to 0 over its fade. */
+export function fadeOf(ticket: BoardTicket): number {
+  return ticket.lifeLeftMs === 0 ? ticket.fadeLeftMs / WONT_FIX_FADE_MS : 1;
+}
+
+/**
+ * Closes as "won't fix" whatever nobody reached in time, after a fade the
+ * hand can still rescue it from. A claimed card holds its clock: someone is
+ * on the way. Won't-fix never comes back.
+ */
 export function expireTickets(
   board: Board,
   dtMs: number,
@@ -196,8 +207,14 @@ export function expireTickets(
     const ticket = board.tickets[at];
     if (!ticket || ticket.lifeLeftMs === NEVER_EXPIRES) continue;
     if (ticket.claimedBy !== NO_TICKET) continue;
-    ticket.lifeLeftMs -= dtMs;
-    if (ticket.lifeLeftMs > 0) continue;
+    if (ticket.lifeLeftMs > 0) {
+      ticket.lifeLeftMs = Math.max(0, ticket.lifeLeftMs - dtMs);
+      if (ticket.lifeLeftMs > 0) continue;
+      leavePool(board, ticket);
+      continue;
+    }
+    ticket.fadeLeftMs -= dtMs;
+    if (ticket.fadeLeftMs > 0) continue;
     into.push(ticket);
     removeTicket(board, ticket);
   }
@@ -410,6 +427,7 @@ function sweep(
       (ticket): ticket is BoardTicket =>
         ticket !== undefined &&
         ticket !== target &&
+        ticket.lifeLeftMs !== 0 &&
         rules.claims(ticket.type) &&
         (!ticket.golden || rules.golden)
     )

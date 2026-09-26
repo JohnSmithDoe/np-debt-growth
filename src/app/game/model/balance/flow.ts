@@ -39,6 +39,8 @@ export const VOTE_SPREAD_MS = 37;
  * spawn rate × this, so it tracks what the player bought.
  */
 export const TICKET_LIFE_MS = 3_500;
+/** An expired card fades this long before it closes; only the hand can still take it. */
+export const WONT_FIX_FADE_MS = 900;
 /** Golden work waits longer, but not forever: a hoarded board still clears. */
 export const GOLDEN_LIFE_MS = 20_000;
 

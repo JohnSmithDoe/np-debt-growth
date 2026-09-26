@@ -14,6 +14,8 @@ export type FlightKind = (typeof FLIGHT)[keyof typeof FLIGHT];
 export type Arrival = (kind: FlightKind, ticket: number) => void;
 
 const IDLE = -1;
+/** A card taken mid-fade is fully back by this share of its flight. */
+const REVIVE_SHARE = 0.35;
 
 export class FlyerPool {
   readonly #images: Phaser.GameObjects.Image[] = [];
@@ -32,6 +34,7 @@ export class FlyerPool {
   readonly #elapsed = new Float32Array(FLYER_CAPACITY);
   readonly #hold = new Float32Array(FLYER_CAPACITY);
   readonly #voted = new Uint8Array(FLYER_CAPACITY);
+  readonly #alpha = new Float32Array(FLYER_CAPACITY);
   readonly #falling = new Map<number, number>();
 
   #onArrive: Arrival = () => undefined;
@@ -74,7 +77,8 @@ export class FlyerPool {
     toY: number,
     span: number,
     arc: number,
-    hold = 0
+    hold = 0,
+    alpha = 1
   ): boolean {
     const slot = this.#free.pop();
     if (slot === undefined) return false;
@@ -89,6 +93,7 @@ export class FlyerPool {
     this.#span[slot] = Math.max(1, span);
     this.#elapsed[slot] = 0;
     this.#hold[slot] = hold;
+    this.#alpha[slot] = alpha;
     this.#active.push(slot);
     if (kind === FLIGHT.drop && ticket !== IDLE)
       this.#falling.set(ticket, slot);
@@ -97,7 +102,7 @@ export class FlyerPool {
       ?.setFrame(frame)
       .setPosition(fromX, fromY)
       .setRotation(0)
-      .setAlpha(1)
+      .setAlpha(alpha)
       .setVisible(true);
     return true;
   }
@@ -166,9 +171,14 @@ export class FlyerPool {
           (this.#arc[slot] ?? 0) *
             lift(this.#kind[slot] ?? FLIGHT.drop, progress);
         const kind = this.#kind[slot];
-        if (kind === FLIGHT.fade) image.alpha = 1 - progress;
-        else
+        const alpha = this.#alpha[slot] ?? 1;
+        if (kind === FLIGHT.fade) image.alpha = alpha * (1 - progress);
+        else {
           image.rotation = (1 - progress) * 0.4 * ((slot & 1) === 0 ? 1 : -1);
+          if (alpha < 1)
+            image.alpha =
+              alpha + (1 - alpha) * Math.min(1, progress / REVIVE_SHARE);
+        }
         if (this.#voted[slot]) this.#followRing(slot, image);
       }
 

@@ -39,8 +39,8 @@ export const DROP_HOP = 90;
 export const HARVEST_MS = 1_600;
 export const HARVEST_HOP = 150;
 
-/** A won't-fix card sinks this far as it fades; it is not taken anywhere. */
-export const WONT_FIX_FADE = { ms: 900, sink: 10 } as const;
+/** A won't-fix card sinks this far over its fade (`WONT_FIX_FADE_MS`); the hand can still take it. */
+export const WONT_FIX_FADE = { sink: 10 } as const;
 
 export const RARE_TITLE_WIDTH = 168;
 export const RARE_TITLE_OFFSET = 26;

@@ -11,6 +11,7 @@ import type {
   SprintSlot,
 } from '../../game/model/board.model';
 import { pickWithin } from '../../game/util/board';
+import { WONT_FIX_FADE_MS } from '../../game/model/balance/flow';
 import { hazardLabelKey } from '../../game/model/hazard.model';
 import type { CrewKind } from '../../game/model/crew.model';
 import { LOGICAL_BOARD, VOTE_BEAMS } from '../../game/model/geometry';
@@ -316,7 +317,8 @@ export class BoardScene extends CbScene {
     parts.heap.sync(
       board,
       (id, type, x, y, voted) => this.#land(parts, id, type, x, y, voted),
-      (id, type, x, y, voted) => this.#leave(parts, id, type, x, y, voted)
+      (id, type, x, y, voted, alpha) =>
+        this.#leave(parts, id, type, x, y, voted, alpha)
     );
     this.#preTint(parts, board);
     parts.crew.sync(board, board.juniors, this.deps.womanEvery('juniors'));
@@ -410,11 +412,13 @@ export class BoardScene extends CbScene {
     type: TicketTypeId,
     x: number,
     y: number,
-    voted: boolean
+    voted: boolean,
+    alpha: number
   ): void {
     const frame = voted ? voteFrame(type) : cardFrame(type);
     const from = parts.flyers.catch(id) ?? { x, y };
     if (this.#wontFix.has(id)) {
+      if (alpha <= 0) return;
       parts.flyers.launch(
         frame,
         FLIGHT.fade,
@@ -422,9 +426,11 @@ export class BoardScene extends CbScene {
         from.x,
         from.y,
         from.x,
-        from.y + WONT_FIX_FADE.sink,
-        WONT_FIX_FADE.ms,
-        0
+        from.y + WONT_FIX_FADE.sink * alpha,
+        WONT_FIX_FADE_MS * alpha,
+        0,
+        0,
+        alpha
       );
       return;
     }
@@ -439,7 +445,9 @@ export class BoardScene extends CbScene {
       slot === NONE ? parts.strip.nextLaneX : parts.strip.slotX(slot),
       parts.strip.slotY,
       HARVEST_MS,
-      HARVEST_HOP
+      HARVEST_HOP,
+      0,
+      alpha
     );
   }
 

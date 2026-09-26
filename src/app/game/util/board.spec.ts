@@ -17,7 +17,11 @@ import { SAVE_VERSION } from '../model/game.consts';
 import { CALM } from '../model/hazard.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { CREW_STATS } from '../model/balance/crew';
-import { GOLDEN_LIFE_MS, TICKET_LIFE_MS } from '../model/balance/flow';
+import {
+  GOLDEN_LIFE_MS,
+  TICKET_LIFE_MS,
+  WONT_FIX_FADE_MS,
+} from '../model/balance/flow';
 import { GOLDEN_CREW_CONVERSION } from '../model/balance/flow';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPRINT_SLOTS_BASE } from '../model/balance/round';
@@ -32,6 +36,7 @@ import { TICKET_TYPES } from '../model/ticket.model';
 import {
   addTicket,
   expireTickets,
+  fadeOf,
   removeTicket,
   workCrews as stepCrews,
 } from './board';
@@ -539,7 +544,27 @@ describe('the board fills up', () => {
 
     const gone: BoardTicket[] = [];
     expireTickets(board, GOLDEN_LIFE_MS, gone);
+    expireTickets(board, WONT_FIX_FADE_MS, gone);
     expect(gone).toEqual([gold]);
+  });
+
+  it('fades an expired card out of the crew pool, closing it only after the fade', () => {
+    const board = emptyBoard();
+    const card = addTicket(board, 'lint')!;
+    const gone: BoardTicket[] = [];
+
+    expireTickets(board, TICKET_LIFE_MS, gone);
+    expect(gone).toEqual([]);
+    expect(board.byId.has(card.id)).toBe(true);
+    expect(board.claimable).toEqual([]);
+    expect(fadeOf(card)).toBe(1);
+
+    expireTickets(board, WONT_FIX_FADE_MS / 2, gone);
+    expect(fadeOf(card)).toBeCloseTo(0.5);
+
+    expireTickets(board, WONT_FIX_FADE_MS / 2, gone);
+    expect(gone).toEqual([card]);
+    expect(board.byId.has(card.id)).toBe(false);
   });
 
   it('pushes a golden card out only once nothing else is left', () => {

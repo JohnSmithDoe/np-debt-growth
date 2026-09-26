@@ -33,6 +33,8 @@ export interface BoardTicket {
   spBonus: number;
   /** Counts down while unclaimed; `NEVER_EXPIRES` for hand-only cards. */
   lifeLeftMs: number;
+  /** Runs down once `lifeLeftMs` hits 0; the card is closed as won't-fix at 0. */
+  fadeLeftMs: number;
   relabelled: boolean;
   readonly x: number;
   readonly y: number;

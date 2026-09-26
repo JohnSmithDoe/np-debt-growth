@@ -3,6 +3,7 @@ import * as Phaser from 'phaser';
 import type { Board, BoardTicket } from '../../game/model/board.model';
 import type { TicketTypeId } from '../../game/model/ticket.model';
 import { TICKET_TYPES } from '../../game/model/ticket.model';
+import { fadeOf } from '../../game/util/board';
 import {
   BOARD_TEXT,
   CLAIM_SLOTS,
@@ -14,6 +15,7 @@ import {
   RARE_LIFT,
   RARE_TITLE_OFFSET,
   RARE_TITLE_WIDTH,
+  WONT_FIX_FADE,
 } from '../model/board.consts';
 import {
   ATLAS_KEY,
@@ -33,6 +35,10 @@ const VOTED_PAINT = 0x1000000;
 
 function voted(ticket: BoardTicket): boolean {
   return ticket.spBonus > 0;
+}
+
+function sinkOf(fade: number): number {
+  return (1 - fade) * WONT_FIX_FADE.sink;
 }
 
 const DEPTH = { goldGlow: 9, layer: 10, glow: 11, rare: 12 } as const;
@@ -140,10 +146,15 @@ export class TicketHeap {
       type: TicketTypeId,
       x: number,
       y: number,
-      voted: boolean
+      voted: boolean,
+      alpha: number
     ) => void
   ): void {
     for (const ticket of board.tickets) {
+      if (ticket.lifeLeftMs === 0 && this.#drawn.has(ticket.id)) {
+        this.#draw(ticket);
+        continue;
+      }
       if (this.#drawnAs.get(ticket.id) !== ticket.type) {
         this.#drawnAs.set(ticket.id, ticket.type);
         if (this.#drawn.has(ticket.id)) {
@@ -171,12 +182,14 @@ export class TicketHeap {
 
     for (const [id, ticket] of this.#drawn) {
       if (board.byId.has(id)) continue;
+      const fade = Math.max(0, fadeOf(ticket));
       onGone(
         id,
         ticket.type,
         this.px(ticket.x),
-        this.py(ticket.y),
-        voted(ticket)
+        this.py(ticket.y) + sinkOf(fade),
+        voted(ticket),
+        fade
       );
       this.#drop(id);
     }
@@ -307,8 +320,9 @@ export class TicketHeap {
   #draw(ticket: BoardTicket): void {
     const slot = this.#slotOf.get(ticket.id);
     if (slot === undefined) return;
+    const fade = fadeOf(ticket);
     const x = this.px(ticket.x);
-    const y = this.py(ticket.y) - this.#lift(ticket.id);
+    const y = this.py(ticket.y) - this.#lift(ticket.id) + sinkOf(fade);
 
     if (TICKET_TYPES[ticket.type].handOnly) {
       const held = this.#rareSlot.get(ticket.id) ?? this.#rareFree.pop();
@@ -341,12 +355,12 @@ export class TicketHeap {
     this.#member.rotation = ((ticket.id % 13) - 6) * 0.01;
     this.#member.scaleX = 1;
     this.#member.scaleY = 1;
-    this.#member.alpha = 1;
+    this.#member.alpha = fade;
     this.#layer.editMember(slot, this.#member);
-    if (ticket.golden) this.#glowUnder(ticket.id, x, y);
+    if (ticket.golden) this.#glowUnder(ticket.id, x, y, fade);
   }
 
-  #glowUnder(id: number, x: number, y: number): void {
+  #glowUnder(id: number, x: number, y: number, fade: number): void {
     const slot = this.#glowSlot.get(id) ?? this.#glowFree.pop();
     if (slot === undefined) return;
     this.#glowSlot.set(id, slot);
@@ -372,8 +386,8 @@ export class TicketHeap {
     };
     glow.alpha = {
       ...pulse,
-      base: GOLD_GLOW.alpha,
-      amplitude: GOLD_GLOW.flare,
+      base: GOLD_GLOW.alpha * fade,
+      amplitude: GOLD_GLOW.flare * fade,
     };
     glow.tintTopLeft = GOLD_INK;
     glow.tintTopRight = GOLD_INK;
