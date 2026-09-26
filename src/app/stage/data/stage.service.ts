@@ -3,6 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import type * as Phaser from 'phaser';
 
 import { SettingsService } from '../../@shared/data/settings.service';
+import { GameClock } from '../../game/data/game-clock.service';
 import { GameStore } from '../../game/data/game.store';
 import type { SkillLock } from '../../game/model/skill.model';
 import {
@@ -34,6 +35,7 @@ interface ModeEntry {
 export class StageService {
   #phaser = inject(PhaserService);
   #store = inject(GameStore);
+  #clock = inject(GameClock);
   #translate = inject(TranslateService);
   #modes = inject(StageModeService);
   #settings = inject(SettingsService);
@@ -66,6 +68,7 @@ export class StageService {
     const arriving = this.#entry(next);
     this.#switching = true;
     this.#setInputEnabled(leaving.key, false);
+    if (next !== 'board') this.#clock.pause();
 
     void this.#fadeOut(leaving.key).then(() => {
       const scenes = this.#phaser.game.scene;
@@ -85,12 +88,14 @@ export class StageService {
 
   destroyStage(): void {
     this.#phaser.destroy();
+    this.#clock.resume();
     this.#modes.request('board');
     this.#showing = 'board';
     this.#switching = false;
   }
 
   #enter(entry: ModeEntry): void {
+    if (entry.key === BoardScene.KEY) this.#clock.resume();
     const scenes = this.#phaser.game.scene;
     if (scenes.getScene(entry.key)) {
       scenes.wake(entry.key);

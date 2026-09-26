@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { NEVER_EXPIRES } from '../model/board.model';
 import { resumed } from '../model/consultancy.model';
 import { FEED_LINES_PER_SEC, MAX_CATCHUP_MS } from '../model/game.consts';
 import {
@@ -101,8 +102,13 @@ describe('the sprint (C4, D20, D23)', () => {
 
   it('leaves the backlog on the board across a haul — debt accumulates', () => {
     const store = storeWith();
-    addTicket(store.board, 'lint');
-    addTicket(store.board, 'lint');
+    // Expiry is its own rule; this pins only that a haul does not wipe.
+    for (const ticket of [
+      addTicket(store.board, 'lint'),
+      addTicket(store.board, 'lint'),
+    ]) {
+      ticket!.lifeLeftMs = NEVER_EXPIRES;
+    }
     const standing = store.board.tickets.length;
 
     const slots = sprintSlots(store.snapshot());
@@ -118,11 +124,13 @@ describe('the sprint (C4, D20, D23)', () => {
   it('keeps the ticket that filled a slot readable after it left the board', () => {
     const store = storeWith();
     const ticket = addTicket(store.board, 'bug')!;
-    const written = ticket.title;
+    const written = ticket.titleKey;
     store.harvest([ticket.id]);
 
     expect(store.board.byId.has(ticket.id)).toBe(false);
-    expect(store.sprint()).toEqual([{ type: 'bug', title: written, lane: 0 }]);
+    expect(store.sprint()).toEqual([
+      { type: 'bug', titleKey: written, lane: 0 },
+    ]);
   });
 
   it('keeps a hotfix on its own clock when a train leaves', () => {
@@ -171,7 +179,8 @@ describe('purchases', () => {
     const node = SKILL_BY_ID.get('junior')!;
     const store = storeWith({
       storyPoints: node.levels[0]!.cost,
-      skills: { root: 1, crew: 1 },
+      tier: 1,
+      skills: { root: 1, adr1: 1 },
     });
     expect(store.buySkill('junior')).toBe(true);
     expect(store.levels().junior).toBe(1);
@@ -184,7 +193,7 @@ describe('purchases', () => {
     expect(store.buyLine('junior')).toBe(false);
   });
 
-  it('holds a skill behind its prerequisite and its gate', () => {
+  it('holds a skill behind its prerequisite', () => {
     const rich = storeWith({ storyPoints: 10_000 });
     expect(rich.buySkill('capacity')).toBe(false);
     expect(rich.buySkill('juniorSpeed')).toBe(false);
@@ -453,7 +462,7 @@ describe('the senior hire (D34)', () => {
       storyPoints: 1e6,
       tier: 3,
       levels: { junior: 1 },
-      skills: { ...rooms(3), root: 1, crew: 1, junior: 1 },
+      skills: { ...rooms(3), root: 1, adr1: 1, adr2: 1, adr3: 1, junior: 1 },
     });
 
   it('seats somebody the moment the line is opened', () => {

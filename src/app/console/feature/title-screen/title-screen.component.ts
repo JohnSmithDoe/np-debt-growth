@@ -16,7 +16,10 @@ import { SaveService } from '../../../game/data/save.service';
 import { DoorService } from '../../data/door.service';
 import { FullscreenService } from '../../data/fullscreen.service';
 import { CreditsComponent } from '../../ui/credits/credits.component';
+import { backlogTicker } from '../../util/backlog-ticker';
 import { CLOSING_OFFICE_ART, officeArtFor } from '../../util/office-art';
+
+const TICKER_LENGTH = 18;
 
 @Component({
   selector: 'cb-title-screen',
@@ -34,6 +37,9 @@ export class TitleScreenComponent {
   readonly art = computed(() =>
     this.#store.ended() ? CLOSING_OFFICE_ART : officeArtFor(this.#store.tier())
   );
+
+  readonly ticker = backlogTicker(TICKER_LENGTH);
+  readonly passes = [0, 1] as const;
 
   readonly languages = LANGUAGES;
   readonly language = bootLanguage();

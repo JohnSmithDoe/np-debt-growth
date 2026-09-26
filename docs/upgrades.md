@@ -7,7 +7,7 @@ catalogue's; ids in `code`. Paths are relative to `src/app/game/`. The design re
 - Tree nodes: `model/skill.model.ts` (`SKILL_NODES`, `LINE_NODES`, `ADR_NODES`), story points.
 - Rail rows: `model/balance/progression.ts` (`LINE_PLAN`, `INCOME_ROWS`), `model/spawner.model.ts`,
   `model/kit.model.ts`, euros.
-- _(ADR-n)_ marks a `gate: { tier: n }`. Crew nodes are also gated on the line being staffed.
+- _(ADR-n)_ marks a node that hangs directly off ADR-n; its parent is its only gate.
 
 ---
 
@@ -18,7 +18,7 @@ catalogue's; ids in `code`. Paths are relative to `src/app/game/`. The design re
 | Node                                       | Ranks | Cost                             | Effect                                                          |
 | ------------------------------------------ | ----- | -------------------------------- | --------------------------------------------------------------- |
 | Click Radius `radius`                      | 3     | 100 / 440 / 1 650                | click radius ×1.25, ×1.28, ×1.22                                |
-| Bigger Sprints `capacity`                  | 10    | 120 → 480 000                    | +`WIP_LIMIT_STEP` slots per lane a rank                         |
+| Bigger Sprints `capacity`                  | 10    | 120 → 480 000                    | +`SPRINT_SLOTS_STEP` slots per lane a rank                      |
 | Platform Team `cans` _(ADR-1)_             | 9     | 1 500 → 3 750 000                | +1 swimlane with its own release train                          |
 | Timebox Renegotiated `duration`            | 5     | 80 → 7 000                       | train back `HAUL_SHAVE_PER_RANK` sooner a rank                  |
 | Line of Sight `lineOfSight`                | 1     | 600                              | crew claim the nearest ticket                                   |
@@ -30,7 +30,7 @@ catalogue's; ids in `code`. Paths are relative to `src/app/game/`. The design re
 
 | Node                                            | Ranks | Cost                      | Effect                                              |
 | ----------------------------------------------- | ----- | ------------------------- | --------------------------------------------------- |
-| Junior Dev `junior`                             | 1     | 1 200                     | opens the junior rail line                          |
+| Junior Dev `junior` _(ADR-1)_                   | 1     | 1 200                     | opens the junior rail line                          |
 | Onboarding `juniorSpeed`                        | 3     | 1 500 / 4 000 / 10 000    | close ×1.25 / 1.22 / 1.2, walk ×1.2 / 1.18 / 1.15   |
 | Hot Desking `juniorReach`                       | 3     | 120 / 450 / 1 500         | sweep ×1.3 / 1.25 / 1.2; rank 2 also junior band +1 |
 | Standup Aura `juniorPresence`                   | 2     | 200 / 1 200               | +2 % per junior (cap ×1.5), then +1.5 % (cap ×1.6)  |
@@ -47,7 +47,7 @@ Each room hangs off its kind's speed node and adds `ROOM_SEATS` 5 to its line's 
 (`economy.lineCap`). Prices follow the reference's population/unlock ratio (20 000 / 1 200) off
 the kind's unlock, ×3 a rank.
 
-### Seniors (track E) — the line needs ADR-3
+### Seniors (track E) — `senior` hangs off ADR-3
 
 | Node                            | Ranks | Cost                        | Effect                                                      |
 | ------------------------------- | ----- | --------------------------- | ----------------------------------------------------------- |
@@ -68,12 +68,12 @@ the kind's unlock, ×3 a rank.
 
 ### The Debt (track D)
 
-| Node                                          | Ranks | Cost                | Effect                                         |
-| --------------------------------------------- | ----- | ------------------- | ---------------------------------------------- |
-| Technical Debt Interest `debtInterest`        | 3     | 600 / 1 900 / 5 600 | debt interest, `DEBT_INTEREST_PER_RANK` a rank |
-| Triage Policy `triagePolicy`                  | 2     | 500 / 1 600         | juniors leave lint, seniors leave bugs         |
-| Escalation Chance `spawnEscalation` _(ADR-5)_ | 1     | 8 500               | escalation arrivals ×1.5                       |
-| Incident Culture `spawnIncident` _(ADR-6)_    | 1     | 14 000              | incident arrivals ×1.4                         |
+| Node                                             | Ranks | Cost                | Effect                                         |
+| ------------------------------------------------ | ----- | ------------------- | ---------------------------------------------- |
+| Technical Debt Interest `debtInterest` _(ADR-2)_ | 3     | 600 / 1 900 / 5 600 | debt interest, `DEBT_INTEREST_PER_RANK` a rank |
+| Triage Policy `triagePolicy` (off `junior`)      | 2     | 500 / 1 600         | juniors leave lint, seniors leave bugs         |
+| Escalation Chance `spawnEscalation` _(ADR-5)_    | 1     | 8 500               | escalation arrivals ×1.5                       |
+| Incident Culture `spawnIncident` _(ADR-6)_       | 1     | 14 000              | incident arrivals ×1.4                         |
 
 ### The Client (track C)
 
@@ -82,8 +82,8 @@ the kind's unlock, ×3 a rank.
 | Bug Bounty `valueBug`                            | 1     | 500                     | bug ×2                                   |
 | Emergency Rates `escalation`                     | 3     | 1 300 / 4 000 / 12 000  | escalation ×1.4 / 1.3 / 1.25             |
 | Incident Payout `valueIncident` _(ADR-6)_        | 1     | 20 000                  | incident ×2                              |
-| Hire an Agile Coach `coaches` _(ADR-2)_          | 10    | 2 000 → 6 500 000       | +1 coach a rank                          |
-| Add a 13 `deck`                                  | 10    | 3 000 → 8 000 000       | vote bonus +`VOTE_BONUS_PER_RANK` a rank |
+| Hire an Agile Coach `coaches` _(ADR-2)_          | 10    | 600 → 1 950 000         | +1 coach a rank                          |
+| Add a 13 `deck`                                  | 10    | 900 → 2 400 000         | vote bonus +`VOTE_BONUS_PER_RANK` a rank |
 | Human in the Loop `assurance` _(ADR-6, track G)_ | 3     | 7 000 / 18 000 / 45 000 | everything ×1.15 a rank                  |
 
 ### Per line — `LINE_NODES`
@@ -97,7 +97,7 @@ double a line (`perTier`) unless stated.
 | `value…`     | 1     | `LINE_DOUBLE_COST`: 25, 1 500, 3 000, 6 000 … 140 000 | —         | ticket ×2                              |
 | `spawn…`     | 5     | 2 200                                                 | ×1.25     | arrivals +20 % a rank, ×2 maxed        |
 | `income…`    | 5     | 1 100                                                 | ×1.25     | pay +50 % a rank, ×3.5 maxed           |
-| `estimates…` | 5     | 75, then 400 from legacy                              | ×1.5      | +2 SP per ticket a rank                |
+| `estimates…` | 5     | 75, then 400 from legacy                              | ×1.5      | +`ESTIMATE_SP_PER_RANK` 20 SP a ticket |
 | `double…`    | 1     | 2 500                                                 | —         | ticket ×2; needs the three above maxed |
 
 ### ADR ladder (track N)
@@ -120,7 +120,7 @@ it drops. Costs are `DEBT_TIERS[].spCost` in `model/tier.model.ts`.
 
 ### End
 
-Sign the Closeout `signoff` _(ADR-8)_, 3 000 000 — ends the run. `root` ships bought;
+Sign the Closeout `signoff` _(ADR-8)_, 800 000 — ends the run. `root` ships bought;
 `secret` (everything ×1.1) is granted, not bought.
 
 ---

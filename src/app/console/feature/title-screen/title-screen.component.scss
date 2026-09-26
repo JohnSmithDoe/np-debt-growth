@@ -32,6 +32,49 @@
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
 }
 
+.ticker {
+  position: absolute;
+  inset: 0 0 auto;
+  overflow: hidden;
+  padding: 0.45rem 0;
+  background: rgb(6 8 11 / 0.62);
+  border-bottom: 1px solid var(--np-cb-rule);
+  font-family: var(--np-cb-font-util);
+  font-size: 0.72rem;
+  color: var(--np-cb-ink-2);
+  white-space: nowrap;
+}
+
+.ticker-track {
+  display: inline-flex;
+  animation: ticker 150s linear infinite;
+}
+
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+.ticker-item {
+  padding-right: 2.5rem;
+}
+
+.ticker-key {
+  margin-right: 0.4rem;
+  color: var(--np-cb-ink-3);
+}
+
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
+
 .title:has(cb-credits.open) .card {
   visibility: hidden;
 }

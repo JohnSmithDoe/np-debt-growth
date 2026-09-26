@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 
 import type { Board, CrewMember } from '../../game/model/board.model';
-import { meetingSpot } from '../../game/model/board.model';
+import { meetingSpot, NO_TICKET } from '../../game/model/board.model';
 import { crewName } from '../../game/model/cast.model';
 import { TICKET_TYPES } from '../../game/model/ticket.model';
 import type { CrewKind } from '../../game/model/crew.model';
@@ -19,6 +19,11 @@ import {
 } from '../model/board.consts';
 import { LpcSprite } from '../util/lpc-sprite';
 
+export interface Claim {
+  readonly index: number;
+  readonly titleKey: string;
+}
+
 export class CrewLayer {
   readonly #sprites: LpcSprite[] = [];
   readonly #held: Phaser.GameObjects.Rectangle[] = [];
@@ -33,6 +38,8 @@ export class CrewLayer {
   readonly #targetX: number[] = [];
   readonly #targetY: number[] = [];
   readonly #block: LpcBlock[] = [];
+  readonly #claimedId: number[] = [];
+  #claims: Claim[] = [];
 
   #scale = 1;
   #offX = 0;
@@ -90,6 +97,7 @@ export class CrewLayer {
       this.#targetX.push(0);
       this.#targetY.push(0);
       this.#block.push('idle');
+      this.#claimedId.push(NO_TICKET);
     }
   }
 
@@ -103,6 +111,18 @@ export class CrewLayer {
       return crewName(this.#kind, seat, woman);
     }
     return null;
+  }
+
+  /** Cards claimed since the last call, by sprite index. */
+  takeClaims(): readonly Claim[] {
+    const due = this.#claims;
+    this.#claims = [];
+    return due;
+  }
+
+  anchorOf(index: number): { x: number; y: number } | null {
+    const sprite = index < this.#shown ? this.#sprites[index] : undefined;
+    return sprite?.visible ? { x: sprite.x, y: sprite.y } : null;
   }
 
   get kind(): CrewKind {
@@ -131,6 +151,7 @@ export class CrewLayer {
       this.#targetX.length = 0;
       this.#targetY.length = 0;
       this.#block.length = 0;
+      this.#claimedId.length = 0;
       this.#placed = 0;
       this.#counted = -1;
       this.#womanEvery = womanEvery;
@@ -164,6 +185,13 @@ export class CrewLayer {
       const card = this.#held[index];
       card?.setVisible(carrying !== undefined);
       if (carrying) card?.setFillStyle(TICKET_TYPES[carrying.type].colour);
+      const claimed =
+        member.phase === 'toTicket' ? board.byId.get(member.target) : undefined;
+      const claimedId = claimed?.id ?? NO_TICKET;
+      if (claimed && claimedId !== this.#claimedId[index]) {
+        this.#claims.push({ index, titleKey: claimed.titleKey });
+      }
+      this.#claimedId[index] = claimedId;
       if (index >= this.#placed) {
         this.#sprites[index]?.setPosition(x, y);
         this.#placed = index + 1;

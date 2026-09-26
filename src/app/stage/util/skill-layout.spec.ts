@@ -43,17 +43,14 @@ describe('skill layout', () => {
     expect(touching).toEqual([]);
   });
 
-  it('hangs exactly seven arms off the root, and nothing else is rootless', () => {
+  it('hangs exactly four arms off the root, and nothing else is rootless', () => {
     const arms = SKILL_GRAPH.squares.filter(
       (square) => square.parent === SKILL_ROOT_ID
     );
     expect(arms.map((square) => square.id).sort()).toEqual([
       'adr1',
-      'debtInterest',
-      'junior',
       'o1',
       'radius',
-      'triagePolicy',
       'valueLint',
     ]);
     const orphans = SKILL_GRAPH.squares.filter(
@@ -128,29 +125,18 @@ describe('skill reveal', () => {
   it('opens as the root, readable, with a box on each arm it would open', () => {
     expect([...ranked({}).entries()].sort()).toEqual([
       ['adr1', 'box'],
-      ['debtInterest', 'box'],
-      ['junior', 'box'],
       ['o1', 'box'],
       ['radius', 'box'],
       [SKILL_ROOT_ID, 'open'],
-      ['triagePolicy', 'box'],
       ['valueLint', 'box'],
     ]);
   });
 
-  it('makes the seven arms readable once the root is bought', () => {
+  it('makes the four arms readable once the root is bought', () => {
     const shown = ranked({ root: 1 });
 
     expect(shown.get(SKILL_ROOT_ID)).toBe('owned');
-    for (const arm of [
-      'radius',
-      'junior',
-      'valueLint',
-      'debtInterest',
-      'triagePolicy',
-      'o1',
-      'adr1',
-    ]) {
+    for (const arm of ['radius', 'valueLint', 'o1', 'adr1']) {
       expect(shown.get(arm)).toBe('open');
     }
     expect(shown.get('capacity')).toBe('box');
@@ -162,13 +148,13 @@ describe('skill reveal', () => {
     expect(shown.get('capacity')).toBe('open');
     expect(shown.get('o1')).toBe('open');
     expect(shown.get('o3')).toBe('box');
-    expect(shown.get('senior')).toBe('box');
-    expect(shown.get('seniorSpeed')).toBeUndefined();
+    expect(shown.get('junior')).toBe('box');
+    expect(shown.get('juniorSpeed')).toBeUndefined();
     expect(shown.get('duration')).toBe('open');
   });
 
   it('reveals through a heading as if it were not there', () => {
-    const shown = ranked({ root: 1 });
+    const shown = ranked({ root: 1, adr1: 1 });
 
     expect(shown.get('junior')).toBe('open');
     expect(shown.get('juniorSpeed')).toBe('box');
@@ -178,15 +164,21 @@ describe('skill reveal', () => {
   });
 
   it('opens no new square for a rank past the first', () => {
-    const first = [...ranked({ root: 1, junior: 1 }).entries()].sort();
-    const maxed = [...ranked({ root: 1, junior: 5 }).entries()].sort();
+    const first = [...ranked({ root: 1, adr1: 1, junior: 1 }).entries()].sort();
+    const maxed = [...ranked({ root: 1, adr1: 1, junior: 5 }).entries()].sort();
 
     expect(maxed).toEqual(first);
     expect(new Map(maxed).get('juniorSpeed')).toBe('open');
   });
 
   it('never lets the frontier run more than two deep', () => {
-    const shown = ranked({ root: 1, radius: 1, capacity: 1, junior: 1 });
+    const shown = ranked({
+      root: 1,
+      adr1: 1,
+      radius: 1,
+      capacity: 1,
+      junior: 1,
+    });
     const parents = new Map(
       SKILL_GRAPH.squares.map((square) => [square.id, square.parent])
     );
@@ -197,5 +189,16 @@ describe('skill reveal', () => {
       if (state === 'open') expect(shown.get(parent)).toBe('owned');
       if (state === 'box') expect(shown.get(parent)).toBe('open');
     }
+  });
+
+  it('keeps a held-back square a box even under an owned parent', () => {
+    const owned = { root: 1, valueLint: 1, estimatesLint: 1 };
+    const shown = revealSquares(
+      (id) => owned[id as keyof typeof owned] ?? 0,
+      (id) => id !== 'doubleLint'
+    );
+
+    expect(shown.get('doubleLint')).toBe('box');
+    expect(shown.get('spawnLint')).toBe('open');
   });
 });

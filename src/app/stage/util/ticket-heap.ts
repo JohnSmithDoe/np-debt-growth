@@ -54,6 +54,7 @@ export class TicketHeap {
 
   readonly #rareCards: Phaser.GameObjects.Image[] = [];
   readonly #rareTitles: Phaser.GameObjects.Text[] = [];
+  readonly #text: (key: string) => string;
   readonly #rareGlows: Phaser.GameObjects.Image[] = [];
   readonly #rareFree: number[] = [];
 
@@ -61,8 +62,9 @@ export class TicketHeap {
   #offX = 0;
   #offY = 0;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, text: (key: string) => string) {
     this.#scene = scene;
+    this.#text = text;
     this.#atlas = scene.textures.get(
       ATLAS_KEY
     ) as Phaser.Textures.CanvasTexture;
@@ -227,7 +229,8 @@ export class TicketHeap {
   }
 
   titleOf(id: number): string | null {
-    return this.#drawn.get(id)?.title ?? null;
+    const ticket = this.#drawn.get(id);
+    return ticket ? this.#text(ticket.titleKey) : null;
   }
 
   destroy(): void {
@@ -281,7 +284,7 @@ export class TicketHeap {
           .setVisible(true);
         this.#rareGlows[held]?.setPosition(x, y - RARE_LIFT).setVisible(true);
         this.#rareTitles[held]
-          ?.setText(ticket.title)
+          ?.setText(this.#text(ticket.titleKey))
           .setPosition(x, y - RARE_LIFT + RARE_TITLE_OFFSET)
           .setVisible(true);
         return;

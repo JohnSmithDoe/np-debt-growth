@@ -21,7 +21,7 @@ export interface CloseRow {
   readonly seq: number;
   readonly who: string;
   readonly key: string;
-  readonly title: string;
+  readonly titleKey: string;
   readonly value: string;
   readonly rare: boolean;
 }
@@ -66,7 +66,7 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
             ? 'you'
             : crewName(line.close.by, line.close.poolSeat, line.close.woman),
         key: `${type.prefix}-${1000 + (line.seq % 8999)}`,
-        title: line.title,
+        titleKey: line.titleKey,
         value: eventLabel(type.effect, escalation) ?? formatMoney(line.value),
         rare: type.handOnly,
       };

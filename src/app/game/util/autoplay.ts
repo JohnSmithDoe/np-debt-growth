@@ -23,6 +23,8 @@ export interface AutoplayPolicy extends SimPolicy {
   readonly spendEveryMs: number;
   /** Bought first, in order, before anything else on the tree. */
   readonly openingPath: readonly string[];
+  /** Hold story points for the next ADR once it is this many seconds of SP away. */
+  readonly saveForAdrSec: number;
 }
 
 export const DEFAULT_POLICY: AutoplayPolicy = {
@@ -30,6 +32,7 @@ export const DEFAULT_POLICY: AutoplayPolicy = {
   spendFraction: 0.25,
   spendEveryMs: 5_000,
   openingPath: ['radius', 'capacity', 'duration'],
+  saveForAdrSec: 0,
 };
 
 export interface LedgerMark {
@@ -127,7 +130,8 @@ export function spend(state: Consultancy, policy: AutoplayPolicy): Consultancy {
     for (const id of policy.openingPath)
       next = purchase.buySkill(next, id) ?? next;
   }
-  next = buyCheapest(next, skillOffers);
+  const saving = savingForAdr(next, policy);
+  next = buyCheapest(next, (s) => skillOffers(s, saving));
   for (
     let id = purchase.nextAdrNodeId(next);
     id;
@@ -187,8 +191,15 @@ function buyCheapest(
   }
 }
 
-/** Tree nodes are bought in SP, the whole balance available. */
-function skillOffers(state: Consultancy): readonly Offer[] {
+function savingForAdr(state: Consultancy, policy: AutoplayPolicy): boolean {
+  const id = purchase.nextAdrNodeId(state);
+  if (id === null || policy.saveForAdrSec <= 0) return false;
+  const short = economy.skillRankCost(state, id) - state.storyPoints;
+  return short <= flow(state, policy).spPerSec * policy.saveForAdrSec;
+}
+
+/** Tree nodes are bought in SP, the whole balance available unless it is held for an ADR. */
+function skillOffers(state: Consultancy, saving: boolean): readonly Offer[] {
   return SKILL_NODES.filter(
     (node) =>
       node.id !== SECRET_SKILL_ID && purchase.skillAvailable(state, node.id)
@@ -198,7 +209,9 @@ function skillOffers(state: Consultancy): readonly Offer[] {
       cost: economy.skillRankCost(state, node.id),
       cap: eur
         ? state.budget * DEFAULT_POLICY.spendFraction
-        : state.storyPoints,
+        : saving
+          ? 0
+          : state.storyPoints,
       buy: () => purchase.buySkill(state, node.id),
     };
   });

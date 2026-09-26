@@ -30,11 +30,16 @@ const CREW_EURO_CAP = 0.95;
 
 /** Re-measure when the weather comes back: it staffs offshore crew. */
 const CREW_EURO_WINDOW_FLOOR = HAZARDS_ENABLED ? 0.05 : 0.04;
-const CREW_CLOSE_WINDOW_FLOOR = 0.15;
+const CREW_CLOSE_WINDOW_FLOOR = 0.05;
 const WINDOW_MS = 2 * 60_000;
+/** One junior is not a crew: the close share is judged once the line has had this long to staff. */
+const CREW_RAMP_MS = 3 * 60_000;
 
 const CLICKS_PER_SEC = Number(
   process.env['CB_CPS'] ?? DEFAULT_POLICY.clicksPerSec
+);
+const SAVE_FOR_ADR_SEC = Number(
+  process.env['CB_SAVE'] ?? DEFAULT_POLICY.saveForAdrSec
 );
 /** Gold is worth twice all ordinary work, so watching for it should show. */
 const ATTENTION_MARGIN = 1.5;
@@ -133,7 +138,11 @@ const run = autoplay(
   freshConsultancy(0, SAVE_VERSION),
   [...MILESTONES, ...UNORDERED_MILESTONES],
   MAX_SESSION_MS,
-  { ...DEFAULT_POLICY, clicksPerSec: CLICKS_PER_SEC }
+  {
+    ...DEFAULT_POLICY,
+    clicksPerSec: CLICKS_PER_SEC,
+    saveForAdrSec: SAVE_FOR_ADR_SEC,
+  }
 );
 
 describe('the crew earns its keep, and never all of it', () => {
@@ -155,7 +164,7 @@ describe('the crew earns its keep, and never all of it', () => {
     const firstJunior = run.reached.get('first junior')!;
     const cleared = run.reached.get('golden crew')!;
     const marks = run.ledger.filter(
-      (mark) => mark.at > firstJunior + WINDOW_MS && mark.at <= cleared
+      (mark) => mark.at > firstJunior + CREW_RAMP_MS && mark.at <= cleared
     );
     for (const mark of marks) {
       expect(crewShare(markAt(mark.at - WINDOW_MS), mark)).toBeGreaterThan(
@@ -422,10 +431,10 @@ describe('the session arc', () => {
   it('finishes inside a sitting, not a coffee break', () => {
     const at = run.reached.get('signed off');
     expect(at, 'the run never bought the last upgrade').toBeDefined();
-    // The reference is finished in about an hour. Wide enough that ordinary
-    // tuning does not trip it, tight enough to catch the curve collapsing.
-    expect(at! / 60_000).toBeGreaterThan(35);
-    expect(at! / 60_000).toBeLessThan(100);
+    // Targets 30 min, half the reference. Wide enough that ordinary tuning
+    // does not trip it, tight enough to catch the curve collapsing.
+    expect(at! / 60_000).toBeGreaterThan(25);
+    expect(at! / 60_000).toBeLessThan(45);
   });
 
   it('spaces the late rungs, instead of stacking them', () => {

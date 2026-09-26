@@ -3,7 +3,7 @@ import type { CrewKind } from '../model/crew.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
 import { HEAP_COLS, HEAP_FIELD_ROWS } from '../model/board.model';
-import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
+import { BOARD_CAPACITY, LOGICAL_BOARD, TICKET_SLOT } from '../model/geometry';
 import {
   TICKET_LIFE_MS,
   VOTE_CYCLE_MS,
@@ -119,6 +119,38 @@ const MEAN_WALK = ((): number => {
   return sum / (points.length * points.length);
 })();
 
+const reachMemo = new Map<number, number>();
+
+/**
+ * Mean count of other field cells within `radius` of a card. Cards sit on the
+ * heap grid, so a radius narrower than a column reaches only its own column.
+ */
+function cellsInReach(radius: number): number {
+  const known = reachMemo.get(radius);
+  if (known !== undefined) return known;
+  const { width, height } = TICKET_SLOT;
+  const cols = Math.floor(radius / width);
+  const rows = Math.floor(radius / height);
+  let sum = 0;
+  for (let col = 0; col < HEAP_COLS; col += 1) {
+    for (let row = 0; row < HEAP_FIELD_ROWS; row += 1) {
+      for (let dc = -cols; dc <= cols; dc += 1) {
+        const c = col + dc;
+        if (c < 0 || c >= HEAP_COLS) continue;
+        for (let dr = -rows; dr <= rows; dr += 1) {
+          const r = row + dr;
+          if ((dc === 0 && dr === 0) || r < 0 || r >= HEAP_FIELD_ROWS) continue;
+          if ((dc * width) ** 2 + (dr * height) ** 2 <= radius * radius)
+            sum += 1;
+        }
+      }
+    }
+  }
+  const mean = sum / FIELD_CELLS;
+  reachMemo.set(radius, mean);
+  return mean;
+}
+
 /** How many cards a claim samples before picking one (`board.ts`). */
 const CLAIM_SAMPLES = 4;
 
@@ -151,7 +183,7 @@ function crewCapacity(
 
   const batch = economy.crewBatch(state, crew);
   const sweep = economy.crewSweepRadius(state, crew);
-  const near = (claimable * Math.PI * sweep * sweep) / BOARD_AREA;
+  const near = (claimable * cellsInReach(sweep)) / FIELD_CELLS;
   const filled = Math.min(batch, 1 + near) / batch;
 
   return (ceiling * filled * closeMs) / (closeMs + walkMs);
@@ -204,8 +236,9 @@ function collect(
   }
   const radius = economy.clickRadius(state);
   const onField = Math.min(density, FIELD_CELLS);
-  const perSweep = (onField * Math.PI * radius * radius) / BOARD_AREA;
-  takeMixed(all, policy.clicksPerSec * Math.max(0, perSweep - 1), 'hand');
+  const others =
+    (Math.max(0, onField - 1) * cellsInReach(radius)) / (FIELD_CELLS - 1);
+  takeMixed(all, policy.clicksPerSec * others, 'hand');
 }
 
 export function flow(state: Consultancy, policy: SimPolicy): Flow {

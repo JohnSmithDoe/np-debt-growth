@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 
+import { GameClock } from '../../../game/data/game-clock.service';
 import { GameStore } from '../../../game/data/game.store';
 import { SaveService } from '../../../game/data/save.service';
 import { ServiceDoorService } from '../../data/service-door.service';
@@ -34,6 +35,7 @@ const ARMED_MS = 4_000;
 export class DebugBarComponent {
   #store = inject(GameStore);
   #save = inject(SaveService);
+  #clock = inject(GameClock);
   #armTimer?: ReturnType<typeof setTimeout>;
 
   readonly shown = inject(ServiceDoorService).isOpen;
@@ -56,7 +58,7 @@ export class DebugBarComponent {
       return;
     }
     this.armed.set(false);
-    this.#store.reset(Date.now());
+    this.#store.reset(this.#clock.now());
     this.#save.wipe();
   }
 }

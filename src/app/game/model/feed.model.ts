@@ -25,7 +25,7 @@ interface FeedBase {
 export interface CloseLine extends FeedBase {
   readonly kind: 'close';
   readonly close: Close;
-  readonly title: string;
+  readonly titleKey: string;
   readonly value: number;
 }
 

@@ -184,7 +184,7 @@ function globalMultiplier(state: Consultancy): number {
   return multOf(state, 'global');
 }
 
-/** One lane's WIP limit: the base plus every "raise the WIP limit" rank. */
+/** One lane's sprint scope: the base plus every `capacity` rank. */
 export function laneCapacity(
   state: Consultancy,
   weather: Weather = CALM

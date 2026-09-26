@@ -169,7 +169,7 @@ function reachedBy(board: Board, ids: readonly number[]): Reached {
     taken.push(id);
     closed.push({
       type: ticket.type,
-      title: ticket.title,
+      titleKey: ticket.titleKey,
       golden: ticket.golden,
       spBonus: ticket.spBonus,
       by: 'you',
@@ -811,10 +811,16 @@ export class GameStore {
     state: Consultancy,
     work: CrewWork,
     now: number
-  ): { next: Consultancy; value: number; sp: number; big: boolean } {
+  ): {
+    next: Consultancy;
+    value: number;
+    sp: number;
+    big: boolean;
+    headline: string | null;
+  } {
     const { closed, byWomen } = work;
     if (closed.length === 0) {
-      return { next: state, value: 0, sp: 0, big: false };
+      return { next: state, value: 0, sp: 0, big: false, headline: null };
     }
 
     const banked = this.#bankWork(state, closed, now);
@@ -861,6 +867,7 @@ export class GameStore {
       value: banked.value,
       sp: velocitySp,
       big: banked.big,
+      headline: banked.headline,
     };
   }
 
@@ -873,17 +880,19 @@ export class GameStore {
     crew: number;
     sp: number;
     big: boolean;
+    headline: string | null;
     took: Omit<SprintSlot, 'lane'>[];
   } {
     let value = 0;
     let crew = 0;
     let sp = 0;
     let big = false;
+    let headline: string | null = null;
     const took: Omit<SprintSlot, 'lane'>[] = [];
 
     const goldenMult = economy.goldenMultiplier(state);
     const conversion = economy.crewGoldenConversion(state);
-    for (const { type, title, by, x, y, golden, spBonus } of closed) {
+    for (const { type, titleKey, by, x, y, golden, spBonus } of closed) {
       if (TICKET_TYPES[type].effect !== 'value') continue;
       const gilded =
         golden || (by !== 'you' && conversion > 0 && this.#rand() < conversion);
@@ -891,17 +900,18 @@ export class GameStore {
         economy.closeValue(state, type, now) * (gilded ? goldenMult : 1);
       const loud = gilded || type === 'incident';
       big ||= loud;
+      if (loud) headline ??= titleKey;
       value += worth;
       sp +=
         economy.pickupStoryPoints(state, type, by !== 'you') +
         (economy.pickupsPaySp(state) ? spBonus : 0);
-      took.push({ type, title });
+      took.push({ type, titleKey });
       if (by !== 'you') {
         crew += worth;
-        this.#addCloseFloat(x, y, worth, loud);
+        this.#addCloseFloat(x, y, worth, loud ? titleKey : null);
       }
     }
-    return { value, crew, sp, big, took };
+    return { value, crew, sp, big, headline, took };
   }
 
   #billWholeBoard(now: number): number {
@@ -980,7 +990,7 @@ export class GameStore {
 
     this.#probeClick(now, ids.length, taken.length, state);
     if (taken.length === 0) {
-      return { taken, refused, value: 0, sp: 0, big: false };
+      return { taken, refused, value: 0, sp: 0, big: false, headline: null };
     }
 
     for (const ticket of reached.tickets) {
@@ -990,7 +1000,7 @@ export class GameStore {
       comeBack(this.#board, ticket);
       removeTicket(this.#board, ticket);
     }
-    const { next, value, sp, big } = this.#bank(
+    const { next, value, sp, big, headline } = this.#bank(
       state,
       { closed, byWomen: 0 },
       now
@@ -999,7 +1009,7 @@ export class GameStore {
     this.#lastLineAt = now;
     this.#logClose(state, dearest(state, closed, now), now);
     if (reached.quarterEnd) this.#billWholeBoard(now);
-    return { taken, refused, value, sp, big };
+    return { taken, refused, value, sp, big, headline };
   }
 
   takePayout(): number {
@@ -1008,7 +1018,13 @@ export class GameStore {
     return paid;
   }
 
-  #addCloseFloat(x: number, y: number, worth: number, big: boolean): void {
+  #addCloseFloat(
+    x: number,
+    y: number,
+    worth: number,
+    headline: string | null
+  ): void {
+    const big = headline !== null;
     const last = this.#closeFloats.at(-1);
     if (last && last.x === x && last.y === y) {
       this.#closeFloats[this.#closeFloats.length - 1] = {
@@ -1016,11 +1032,12 @@ export class GameStore {
         y,
         value: last.value + worth,
         big: last.big || big,
+        headline: last.headline ?? headline,
       };
       return;
     }
     if (this.#closeFloats.length >= CLOSE_FLOAT_BUFFER) return;
-    this.#closeFloats.push({ x, y, value: worth, big });
+    this.#closeFloats.push({ x, y, value: worth, big, headline });
   }
 
   takeCloseFloats(): readonly CloseFloat[] {
@@ -1233,7 +1250,7 @@ export class GameStore {
     this.#write({
       kind: 'close',
       close,
-      title: close.title,
+      titleKey: close.titleKey,
       value: economy.closeValue(state, close.type, now),
     });
   }

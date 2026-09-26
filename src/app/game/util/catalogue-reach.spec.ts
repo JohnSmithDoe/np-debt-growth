@@ -17,6 +17,10 @@ import {
   skillBlurbKey,
   skillLabelKey,
 } from '../model/skill.model';
+import {
+  TICKET_TITLE_COUNTS,
+  ticketTitleKey,
+} from '../model/ticket-copy.model';
 import { TICKET_TYPE_IDS, ticketLabelKey } from '../model/ticket.model';
 import { DEBT_TIERS, tierBlurbKey, tierNameKey } from '../model/tier.model';
 import { PURCHASE_IDS } from '../model/balance/progression';
@@ -43,6 +47,14 @@ const BUILT: readonly { readonly owns: RegExp; readonly keys: string[] }[] = [
   {
     owns: /^ticket\.type\./,
     keys: TICKET_TYPE_IDS.map(ticketLabelKey),
+  },
+  {
+    owns: /^ticket\.title\./,
+    keys: TICKET_TYPE_IDS.flatMap((id) =>
+      Array.from({ length: TICKET_TITLE_COUNTS[id] }, (_, at) =>
+        ticketTitleKey(id, at)
+      )
+    ),
   },
   {
     owns: /^hazard\.[a-z-]+\.(?:label|blurb)$/,

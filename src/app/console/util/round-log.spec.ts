@@ -14,11 +14,11 @@ function close(
   return {
     kind: 'close',
     seq,
-    title: `title ${seq}`,
+    titleKey: `title ${seq}`,
     value,
     close: {
       type,
-      title: `title ${seq}`,
+      titleKey: `title ${seq}`,
       golden: false,
       spBonus: 0,
       by: 'you',

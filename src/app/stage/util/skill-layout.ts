@@ -12,7 +12,7 @@ import { hits } from '../model/hit-rect.model';
 export const SQUARE = 64;
 /** Clear space every square keeps from every other. */
 const GAP = 45;
-/** Rest length of a wire, and the seed's ring step. */
+/** How far a heading's name floats off its arms. */
 const LINK = 170;
 const SEED_RING = 150;
 const FIRST_RING = 230;
@@ -90,31 +90,42 @@ function kidsOf(id: string): readonly string[] {
   return CHILDREN.get(id) ?? [];
 }
 
-function leavesOf(id: string, cache: Map<string, number>): number {
-  const known = cache.get(id);
-  if (known !== undefined) return known;
-  const kids = kidsOf(id);
-  const count =
-    kids.length === 0
-      ? 1
-      : kids.reduce((sum, kid) => sum + leavesOf(kid, cache), 0);
-  cache.set(id, count);
-  return count;
+/** Ring `depth`'s radius, every ring scaled by `scale`. */
+const ringAt = (depth: number, scale: number): number =>
+  depth === 0 ? 0 : scale * (FIRST_RING + (depth - 1) * SEED_RING);
+
+/** The angle a square on a ring of `radius` needs to clear its neighbours. */
+const clearance = (radius: number): number =>
+  2 * Math.asin(Math.min(1, (SQUARE + GAP) / (2 * radius)));
+
+/** The wedge a subtree needs: its own clearance, or its children's, whichever is wider. */
+function need(id: string, depth: number, scale: number): number {
+  const own = depth === 0 ? 0 : clearance(ringAt(depth, scale));
+  const kids = kidsOf(id).reduce(
+    (sum, kid) => sum + need(kid, depth + 1, scale),
+    0
+  );
+  return Math.max(own, kids);
 }
 
-/** Rings by depth, wedges by leaf count: crowded, but pointing the right way. */
+/**
+ * A radial tree: a ring per depth, a wedge per subtree sized to what it
+ * needs, the rings pushed out until the whole tree fits once round. No two
+ * squares on a ring touch and every wire stays inside its own wedge.
+ */
 function seed(): Map<string, Vec> {
-  const leaves = new Map<string, number>();
+  let scale = 1;
+  while (need(SKILL_ROOT_ID, 0, scale) > 2 * Math.PI) scale *= 1.02;
+  const spare = (2 * Math.PI) / need(SKILL_ROOT_ID, 0, scale);
+
   const out = new Map<string, Vec>();
   const walk = (id: string, depth: number, from: number, to: number): void => {
     const angle = (from + to) / 2;
-    const radius = depth === 0 ? 0 : FIRST_RING + (depth - 1) * SEED_RING;
+    const radius = ringAt(depth, scale);
     out.set(id, { x: radius * Math.cos(angle), y: radius * Math.sin(angle) });
-    const kids = kidsOf(id);
-    const total = leavesOf(id, leaves);
     let at = from;
-    for (const kid of kids) {
-      const share = ((to - from) * leavesOf(kid, leaves)) / total;
+    for (const kid of kidsOf(id)) {
+      const share = need(kid, depth + 1, scale) * spare;
       walk(kid, depth + 1, at, at + share);
       at += share;
     }
@@ -145,6 +156,8 @@ interface Body {
   readonly anchors: readonly number[];
   readonly hw: number;
   readonly hh: number;
+  /** A wire's rest length: its seeded span, so relaxing keeps the rings. */
+  readonly rest: number;
   x: number;
   y: number;
 }
@@ -220,21 +233,26 @@ function clearWire(body: Body, from: Body, to: Body): void {
 
 /**
  * Deterministic relaxation: squares and heading names shove each other apart
- * until `GAP` clears them, wires spring back towards `LINK`, names cling to
+ * until `GAP` clears them, wires spring back to their seeded span, names cling to
  * their arms, and nothing sits on a wire that is not its own. The root stays.
  */
 function relax(start: ReadonlyMap<string, Vec>): Map<string, Vec> {
   const ids = [...start.keys()];
   const index = new Map(ids.map((id, at) => [id, at]));
   const half = SQUARE / 2;
-  const bodies: Body[] = ids.map((id) => ({
-    id,
-    parent: index.get(PARENTS.get(id) ?? '') ?? -1,
-    anchors: [],
-    hw: half,
-    hh: half,
-    ...start.get(id)!,
-  }));
+  const bodies: Body[] = ids.map((id) => {
+    const at = start.get(id)!;
+    const from = start.get(PARENTS.get(id) ?? '');
+    return {
+      id,
+      parent: index.get(PARENTS.get(id) ?? '') ?? -1,
+      anchors: [],
+      hw: half,
+      hh: half,
+      rest: from ? Math.hypot(at.x - from.x, at.y - from.y) : LINK,
+      ...at,
+    };
+  });
   const rootStart = start.get(SKILL_ROOT_ID)!;
   for (const [heading, arms] of HEADING_ARMS) {
     const anchors = arms.map((arm) => index.get(arm)!);
@@ -247,6 +265,7 @@ function relax(start: ReadonlyMap<string, Vec>): Map<string, Vec> {
       anchors,
       hw: BAND_ROOM / 2,
       hh: BAND_HIGH / 2,
+      rest: 0,
       x: mid.x + ((mid.x - rootStart.x) / out) * lift,
       y: mid.y + ((mid.y - rootStart.y) / out) * lift,
     });
@@ -262,7 +281,7 @@ function relax(start: ReadonlyMap<string, Vec>): Map<string, Vec> {
     for (const body of bodies) {
       const anchor =
         body.parent >= 0
-          ? { at: bodies[body.parent]!, rest: LINK }
+          ? { at: bodies[body.parent]!, rest: body.rest }
           : isLabel(body)
             ? {
                 at: centroid(body.anchors.map((at) => bodies[at]!)),
@@ -420,13 +439,15 @@ export function squareAt(x: number, y: number): SkillSquare | null {
 
 export type SquareState = 'owned' | 'open' | 'box';
 
+/** `ready` holds back a square whose parent is owned but whose other terms are not met. */
 export function revealSquares(
-  rankOf: (nodeId: string) => number
+  rankOf: (nodeId: string) => number,
+  ready: (nodeId: string) => boolean = () => true
 ): ReadonlyMap<string, SquareState> {
   const shown = new Map<string, SquareState>();
 
   const walk = (id: string, from: SquareState): void => {
-    const state = stateOf(rankOf(id), from);
+    const state = stateOf(rankOf(id), from, () => ready(id));
     if (state === null) return;
     shown.set(id, state);
     for (const kid of kidsOf(id)) walk(kid, state);
@@ -436,8 +457,12 @@ export function revealSquares(
   return shown;
 }
 
-function stateOf(rank: number, parent: SquareState): SquareState | null {
+function stateOf(
+  rank: number,
+  parent: SquareState,
+  ready: () => boolean
+): SquareState | null {
   if (rank > 0) return 'owned';
-  if (parent === 'owned') return 'open';
+  if (parent === 'owned') return ready() ? 'open' : 'box';
   return parent === 'open' ? 'box' : null;
 }

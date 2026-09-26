@@ -124,6 +124,34 @@ export const BIG_FLOAT = {
   ms: 2_000,
 } as const;
 
+/** The ticket title riding under a big payout. */
+export const BIG_FLOAT_CAPTION = {
+  size: '12px',
+  colour: '#f6ecd2',
+  stroke: '#1b2029',
+  strokeThickness: 3,
+  width: 240,
+  gap: 2,
+  edge: 6,
+  everyMs: 1_500,
+} as const;
+
+export const SPEECH_BUBBLE = {
+  size: '10px',
+  ink: '#1b2029',
+  ground: '#f2eee3',
+  groundHex: 0xf2eee3,
+  pad: { x: 5, y: 3 },
+  width: 170,
+  tail: 5,
+  lift: 56,
+  edge: 4,
+  ms: 2_800,
+  fadeMs: 400,
+  gapMs: { min: 2_500, max: 5_500 },
+  limit: 2,
+} as const;
+
 export const CLICK_RING = {
   width: 1,
   alpha: 0.28,

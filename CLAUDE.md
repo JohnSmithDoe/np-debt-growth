@@ -81,9 +81,11 @@ Every line has the same five tree nodes (`LINE_NODES`): `value` ×2 opens `spawn
 ### The store is the only clock
 
 `GameStore` (`game/data/game.store.ts`) holds the whole `Consultancy` in one signal and is the sole
-mutator. `GameClock` ticks `advanceTo(Date.now())` every `TICK_MS` (100 ms); `advanceTo` walks
+mutator. `GameClock` ticks `advanceTo(clock.now())` every `TICK_MS` (100 ms); `advanceTo` walks
 fixed sub-ticks and clamps simulation to `MAX_CATCHUP_MS`; anything longer (a hidden tab, a closed
-app) is not played. The game is active-only.
+app) is not played. The game is active-only, and frozen while the skill tree is open.
+**`clock.now()` is game time** (wall time minus pauses). Anything handing the store a timestamp
+uses it, never `Date.now()`, or deadlines drift by the time spent paused.
 
 Two deliberate exceptions to "everything is a signal":
 
@@ -125,6 +127,10 @@ enforce that both carry identical keys, that no value is empty, and — in
 `game/util/catalogue-reach.spec.ts` — that every key a model *builds* (skills, tickets, tiers, kit,
 office, traits, hazards) exists in both. Add a game entity and that spec tells you which strings you
 still owe.
+
+Ticket titles are pools in `catalogue/ticket-titles.{en,de}.ts`, picked by index: a ticket carries
+its `titleKey`, never text. Changing a pool's length means changing `TICKET_TITLE_COUNTS` in
+`game/model/ticket-copy.model.ts`, in both languages.
 
 ## Conventions
 
@@ -174,7 +180,7 @@ about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.5 of a real 
 change how the board collects, change the sim with it.
 
 `game/data/balance.spec.ts` runs the autoplayer and **fails** if it does not reach sign-off in
-35–100 minutes, space the last five ADR rungs more than two minutes apart, or finish with the tree
+25–45 minutes (target 30), space the last five ADR rungs more than two minutes apart, or finish with the tree
 bought out. After any economy change, re-run it with the reports on:
 
 ```bash

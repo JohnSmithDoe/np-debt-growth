@@ -28,7 +28,7 @@ export const PIZZA_RADIUS = 240;
  */
 export const VOTE_CYCLE_MS = 4_000;
 export const VOTE_ON_MS = 1_400;
-export const VOTE_BONUS_BASE = 30;
+export const VOTE_BONUS_BASE = 45;
 export const VOTE_BONUS_PER_RANK = 15;
 /** Arrivals inside one step are spread by this, so a burst doesn't share one vote. */
 export const VOTE_SPREAD_MS = 37;
@@ -38,7 +38,7 @@ export const VOTE_SPREAD_MS = 37;
  * stays; it just leaves the board. What density the field shows is
  * spawn rate × this, so it tracks what the player bought.
  */
-export const TICKET_LIFE_MS = 15_000;
+export const TICKET_LIFE_MS = 3_500;
 
 export const TIER_BURST = { tier: 3, count: 10 } as const;
 
@@ -50,3 +50,6 @@ export const GOLDEN_VALUE_BASE = 100;
 export const GOLDEN_VALUE_PER_RANK = 50;
 /** Once the crew take golden work, this share of what they close turns golden. */
 export const GOLDEN_CREW_CONVERSION = 0.05;
+
+/** SP a ticket pays at pickup per `estimates<T>` rank on its line. */
+export const ESTIMATE_SP_PER_RANK = 20;

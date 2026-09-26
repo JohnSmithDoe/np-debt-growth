@@ -32,6 +32,7 @@ import { CLIENT_NAME, ENGAGEMENT_NAME } from './console/model/client.model';
 import { AudioService } from './audio/data/audio.service';
 import { StageModeService } from './stage/data/stage-mode.service';
 import type { StageMode } from './stage/model/stage-mode.model';
+import { GameClock } from './game/data/game-clock.service';
 import { GameStore } from './game/data/game.store';
 import { TICK_MS } from './game/model/game.consts';
 
@@ -64,6 +65,7 @@ const STEP_MODE: Partial<Record<NoticeTarget, StageMode>> = {
 })
 export class AppComponent {
   #store = inject(GameStore);
+  #clock = inject(GameClock);
   #audio = inject(AudioService);
   #stage = inject(StageModeService);
   #settings = inject(SettingsUiService);
@@ -91,7 +93,7 @@ export class AppComponent {
 
   startNextRound(): void {
     this.#stage.toBoard();
-    this.#store.startRound(Date.now());
+    this.#store.startRound(this.#clock.now());
   }
 
   readonly budget = this.#store.budget;
@@ -133,7 +135,7 @@ export class AppComponent {
       : `release ${formatCountdown(this.#store.roundLeftMs())}`
   );
 
-  #now = signal(Date.now());
+  #now = signal(this.#clock.now());
   #tickHandle?: ReturnType<typeof setInterval>;
 
   readonly hotfixRemaining = computed(() =>
@@ -176,7 +178,7 @@ export class AppComponent {
         this.#store.hotfixUntil() > 0 || this.#store.escalationFiresAt() > 0;
       if (active && this.#tickHandle === undefined) {
         this.#tickHandle = setInterval(
-          () => this.#now.set(Date.now()),
+          () => this.#now.set(this.#clock.now()),
           TICK_MS
         );
       } else if (!active && this.#tickHandle !== undefined) {

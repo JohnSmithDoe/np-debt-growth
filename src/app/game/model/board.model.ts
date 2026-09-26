@@ -10,7 +10,7 @@ export type CrewPhase = 'idle' | 'toTicket' | 'toDesk' | 'closing' | 'meeting';
 export interface Carried {
   readonly id: number;
   readonly type: TicketTypeId;
-  readonly title: string;
+  readonly titleKey: string;
   readonly golden: boolean;
   readonly reborn: boolean;
   readonly relabelled: boolean;
@@ -20,7 +20,7 @@ export interface Carried {
 export interface BoardTicket {
   readonly id: number;
   type: TicketTypeId;
-  title: string;
+  titleKey: string;
   reborn: boolean;
   golden: boolean;
   /** SP the planning-poker votes it fell through add at pickup. */
@@ -52,7 +52,7 @@ export type CloseAuthor = 'you' | CrewKind;
 
 export interface Close {
   readonly type: TicketTypeId;
-  readonly title: string;
+  readonly titleKey: string;
   readonly golden: boolean;
   readonly spBonus: number;
   readonly by: CloseAuthor;
@@ -64,7 +64,7 @@ export interface Close {
 
 export interface SprintSlot {
   readonly type: TicketTypeId;
-  readonly title: string;
+  readonly titleKey: string;
   readonly lane: number;
 }
 
@@ -82,6 +82,8 @@ export interface CloseFloat {
   readonly value: number;
   /** Golden or incident work was in it. */
   readonly big: boolean;
+  /** Title key of the first golden or incident ticket in it. */
+  readonly headline: string | null;
 }
 
 export interface Harvest {
@@ -92,6 +94,8 @@ export interface Harvest {
   readonly sp: number;
   /** Golden or incident work was in it. */
   readonly big: boolean;
+  /** Title key of the first golden or incident ticket in it. */
+  readonly headline: string | null;
 }
 
 export interface Comeback {

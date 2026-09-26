@@ -1,4 +1,8 @@
+import { DE_TICKET_TITLES } from './ticket-titles.de';
+import { ticketTitleEntries } from './ticket-titles';
+
 export const DE: Readonly<Record<string, string>> = {
+  ...ticketTitleEntries(DE_TICKET_TITLES),
   'skill.effect.debtInterest': '{{pct}} Chance auf eine Stufe höher',
   'skill.effect.clickRadius': '{{pct}} Klick-Radius',
   'skill.effect.escalation': '{{pct}} Eskalations-Auszahlung',
@@ -19,10 +23,6 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.triagePolicy.juniors': 'Juniors lassen {{ticket}} liegen',
   'skill.effect.triagePolicy.seniors': 'Seniors lassen {{ticket}} liegen',
   'skill.lock.blocked': 'Blockiert durch {{by}}',
-  'skill.lock.needs-adr': 'Braucht ADR-{{adr}}',
-  'skill.lock.needs-junior': 'Braucht einen Junior-Dev',
-  'skill.lock.needs-manager': 'Braucht einen Kundenbetreuer',
-  'skill.lock.needs-senior': 'Braucht einen Senior-Dev',
   'skill.lock.underfunded': 'Budget reicht nicht',
   'skill.lock.unknown': 'Unbekannt',
   'skill.status.maxed': 'Max',

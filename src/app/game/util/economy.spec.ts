@@ -372,7 +372,7 @@ describe('the can has two axes (parity #13, #14)', () => {
     expect(two - one).toBe(added(2));
   });
 
-  it('adds a whole swimlane per can, at the same WIP limit', () => {
+  it('adds a whole swimlane per can, at the same sprint scope', () => {
     const bare = slots({ capacity: 3 });
     expect(slots({ capacity: 3, cans: 1 })).toBe(bare * 2);
     expect(slots({ capacity: 3, cans: 2 })).toBe(bare * 3);

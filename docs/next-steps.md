@@ -19,22 +19,21 @@ What is open, ranked. The design as it stands is `gamedesign.md`. Checked agains
 
 ---
 
-## 1. Bring the pace closer to the reference
+## 1. Hold the 30-minute run
 
-The run passes every guard (`gamedesign.md` §10: sign-off at 89.4 min) but is slower than the
-reference in the part that is measured:
+The target is a 30-minute run, half the reference's full game (57–70). The autoplayer signs off
+at 31.1 min; ADR-1 at 5.2, ADR-2 at 11.6, ADR-3 at 16.5. Cards live 3.5 s (reference ~15 s),
+chosen by feel, and these departures from the reference pay for it: `estimates<T>` +20 SP a
+rank (reference +2), `VOTE_BONUS_BASE` 45 (reference 30), ADR-3 400 000 (reference 600 000), the
+ADR-4…8 ladder reshaped for even late gaps, `signoff` 800k, and the poker ladders at ×0.3. The run
+ends when the tree is bought out, so run length tracks total tree cost ÷ SP income.
 
-- **The gorilla (ADR-3) lands at 43.4 min**, against about 30 in the demo. ADR-1 → 2 takes
-  15.8 min and ADR-2 → 3 15.4, on the reference's own prices (10 000 and 600 000 SP). The
-  autoplayer buys every cheaper node before an ADR; check that against how the reference is
-  actually played before moving a measured price.
-- **Sign-off at 89.4 min**, against the full game's 57–70. ADR-4…8, `signoff` and the throw-two
-  rank step (×1.25) are ours and were sized to fit the band, not measured.
-- ADR-4 → 5 is 2.4 min, just over the two-minute floor.
-- The crew's € share after `goldenCrew` is 14–19 %; before it 2–4 % (the hand's gold). The
-  guard asks 4 % after and 15 % of the closes before.
-
-Apply measured reference values where they exist (§11 of the design) before inventing a curve.
+- ADR-2 lands at 11.6 whatever it costs: it is gated by the tree, not by its price.
+- Every late gap is 2.1–3.1 min; the guard's 2-minute floor makes ~29 min the practical minimum
+  once ADR-4 is at 18.7.
+- Returns on SP income flatten: estimates 12 → 24 moves sign-off 39.9 → 32.4 min.
+- The crew's close share before golden crew is 4–10 % early (floor 5 %): sparse cards fill
+  their batches thinly.
 
 ## 2. Copy and art
 
@@ -85,7 +84,7 @@ only weather ever staffed, were removed with `3524a98`; the `offshore` hazard we
 ## 6. Needs a design call
 
 - **The hidden node.** The reference hides a "Wow you found me!" node at the zoomed-out corner of
-  its tree. Ours: *the undocumented endpoint*.
+  its tree. Ours: _the undocumented endpoint_.
 - **Tree badges.** The reference uses four (`+`, `↑`, `%`, `✕`) by node kind; we stamp `+`/`%`.
 
 ---

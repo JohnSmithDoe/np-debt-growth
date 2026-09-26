@@ -1,0 +1,126 @@
+import * as Phaser from 'phaser';
+
+import { SPEECH_BUBBLE } from '../model/board.consts';
+import type { CrewLayer, Claim } from './crew-layer';
+
+interface Bubble {
+  readonly text: Phaser.GameObjects.Text;
+  readonly tail: Phaser.GameObjects.Triangle;
+  layer: CrewLayer | null;
+  index: number;
+  leftMs: number;
+}
+
+/** Now and then, a crew member reads the ticket they just picked up. */
+export class SpeechBubbles {
+  readonly #bubbles: Bubble[] = [];
+  readonly #text: (key: string) => string;
+  readonly #width: () => number;
+  #heard: { layer: CrewLayer; claim: Claim }[] = [];
+  #nextInMs: number = SPEECH_BUBBLE.gapMs.min;
+
+  constructor(
+    scene: Phaser.Scene,
+    depth: number,
+    text: (key: string) => string,
+    width: () => number
+  ) {
+    this.#text = text;
+    this.#width = width;
+    const { tail } = SPEECH_BUBBLE;
+    for (let at = 0; at < SPEECH_BUBBLE.limit; at++) {
+      this.#bubbles.push({
+        text: scene.add
+          .text(0, 0, '', {
+            fontFamily: 'monospace',
+            fontSize: SPEECH_BUBBLE.size,
+            color: SPEECH_BUBBLE.ink,
+            backgroundColor: SPEECH_BUBBLE.ground,
+            padding: SPEECH_BUBBLE.pad,
+            wordWrap: { width: SPEECH_BUBBLE.width },
+          })
+          .setOrigin(0.5, 1)
+          .setDepth(depth)
+          .setVisible(false),
+        tail: scene.add
+          .triangle(
+            0,
+            0,
+            0,
+            0,
+            tail * 2,
+            0,
+            tail,
+            tail,
+            SPEECH_BUBBLE.groundHex
+          )
+          .setOrigin(0.5, 0)
+          .setDepth(depth)
+          .setVisible(false),
+        layer: null,
+        index: 0,
+        leftMs: 0,
+      });
+    }
+  }
+
+  hear(layer: CrewLayer): void {
+    for (const claim of layer.takeClaims()) {
+      this.#heard.push({ layer, claim });
+    }
+  }
+
+  update(stepMs: number): void {
+    this.#nextInMs -= stepMs;
+    const idle = this.#bubbles.find((bubble) => bubble.layer === null);
+    if (this.#nextInMs <= 0 && idle && this.#heard.length > 0) {
+      const { layer, claim } =
+        this.#heard[Math.floor(Math.random() * this.#heard.length)]!;
+      this.#speak(idle, layer, claim);
+      const { min, max } = SPEECH_BUBBLE.gapMs;
+      this.#nextInMs = min + Math.random() * (max - min);
+    }
+    this.#heard = [];
+
+    for (const bubble of this.#bubbles) this.#follow(bubble, stepMs);
+  }
+
+  destroy(): void {
+    for (const bubble of this.#bubbles) {
+      bubble.text.destroy();
+      bubble.tail.destroy();
+    }
+  }
+
+  #speak(bubble: Bubble, layer: CrewLayer, claim: Claim): void {
+    bubble.layer = layer;
+    bubble.index = claim.index;
+    bubble.leftMs = SPEECH_BUBBLE.ms;
+    bubble.text.setText(this.#text(claim.titleKey));
+  }
+
+  #follow(bubble: Bubble, stepMs: number): void {
+    if (bubble.layer === null) return;
+    bubble.leftMs -= stepMs;
+    const anchor = bubble.layer.anchorOf(bubble.index);
+    if (bubble.leftMs <= 0 || anchor === null) return this.#hush(bubble);
+
+    const { text, tail } = bubble;
+    const half = text.width / 2;
+    const { edge, lift } = SPEECH_BUBBLE;
+    const x = Math.min(
+      Math.max(anchor.x, half + edge),
+      this.#width() - half - edge
+    );
+    const y = anchor.y - lift;
+    const alpha = Math.min(1, bubble.leftMs / SPEECH_BUBBLE.fadeMs);
+    text.setPosition(x, y).setAlpha(alpha).setVisible(true);
+    tail.setPosition(anchor.x, y).setAlpha(alpha).setVisible(true);
+  }
+
+  #hush(bubble: Bubble): void {
+    bubble.layer = null;
+    bubble.text.setVisible(false);
+    bubble.tail.setVisible(false);
+  }
+}

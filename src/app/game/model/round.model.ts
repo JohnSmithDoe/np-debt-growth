@@ -1,5 +1,5 @@
 /**
- * One swimlane: its WIP count, and how long its release train is still away.
+ * One swimlane: its sprint count, and how long its release train is still away.
  * A lane with `releaseLeftMs > 0` takes nothing; the others keep taking.
  */
 export interface Lane {

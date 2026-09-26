@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 
 import {
   BIG_FLOAT,
+  BIG_FLOAT_CAPTION,
   BOARD_TEXT,
   FLOAT_MS,
   MAX_FRAME_MS,
@@ -55,7 +56,12 @@ export abstract class CbScene extends Phaser.Scene {
     });
   }
 
-  protected floatBig(x: number, y: number, label: string): void {
+  protected floatBig(
+    x: number,
+    y: number,
+    label: string,
+    caption?: string
+  ): void {
     const text = this.add
       .text(x, y, label, {
         fontFamily: 'monospace',
@@ -66,14 +72,44 @@ export abstract class CbScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(51);
+    const targets = caption ? [text, this.#caption(text, caption)] : [text];
 
     this.tweens.add({
-      targets: text,
-      y: y - BIG_FLOAT.rise,
+      targets,
+      y: `-=${BIG_FLOAT.rise}`,
       alpha: 0,
       duration: BIG_FLOAT.ms,
       ease: 'Sine.easeOut',
-      onComplete: () => text.destroy(),
+      onComplete: () => {
+        for (const target of targets) target.destroy();
+      },
     });
+  }
+
+  /** Centred under `amount`, both pulled in from the canvas edges. */
+  #caption(
+    amount: Phaser.GameObjects.Text,
+    caption: string
+  ): Phaser.GameObjects.Text {
+    const line = this.add
+      .text(0, amount.y + amount.height / 2 + BIG_FLOAT_CAPTION.gap, caption, {
+        fontFamily: 'monospace',
+        fontSize: BIG_FLOAT_CAPTION.size,
+        color: BIG_FLOAT_CAPTION.colour,
+        stroke: BIG_FLOAT_CAPTION.stroke,
+        strokeThickness: BIG_FLOAT_CAPTION.strokeThickness,
+        align: 'center',
+        wordWrap: { width: BIG_FLOAT_CAPTION.width },
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(51);
+    const half = Math.max(line.width, amount.width) / 2;
+    const x = Phaser.Math.Clamp(
+      amount.x,
+      half + BIG_FLOAT_CAPTION.edge,
+      this.scale.width - half - BIG_FLOAT_CAPTION.edge
+    );
+    amount.setX(x);
+    return line.setX(x);
   }
 }

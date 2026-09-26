@@ -131,7 +131,10 @@ export class SkillScene extends PanZoomScene {
     const view = this.deps.skillView();
     if (view !== this.#drawn) {
       this.#drawn = view;
-      this.#shown = revealSquares((id) => this.#rankOf(view, id));
+      this.#shown = revealSquares(
+        (id) => this.#rankOf(view, id),
+        (id) => view.nodes.find((node) => node.id === id)?.available ?? true
+      );
       this.reframe();
       this.redraw();
     }
@@ -387,8 +390,7 @@ export class SkillScene extends PanZoomScene {
     if (state === 'owned') {
       return node.maxed ? SCREEN_INK.maxed : SCREEN_INK.owned;
     }
-    if (node.buyable) return SCREEN_INK.ready;
-    return node.available ? SCREEN_INK.frame : SCREEN_INK.warn;
+    return node.buyable ? SCREEN_INK.ready : SCREEN_INK.frame;
   }
 
   #drawTip(byId: ReadonlyMap<string, SkillNodeView>): void {

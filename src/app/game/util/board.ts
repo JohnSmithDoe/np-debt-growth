@@ -124,7 +124,7 @@ export function addTicket(
   const ticket: BoardTicket = {
     id: board.nextId++,
     type,
-    title: pickTicketTitle(type),
+    titleKey: pickTicketTitle(type),
     reborn,
     golden,
     spBonus: 0,
@@ -276,7 +276,7 @@ function deliverClose(
     if (banked === null) continue;
     closed.push({
       type: banked,
-      title: card.title,
+      titleKey: card.titleKey,
       golden: card.golden,
       spBonus: card.spBonus,
       by: rules.kind,
@@ -300,7 +300,7 @@ function pickUp(
   worker.carrying = taken.map((ticket) => ({
     id: ticket.id,
     type: ticket.type,
-    title: ticket.title,
+    titleKey: ticket.titleKey,
     golden: ticket.golden,
     spBonus: ticket.spBonus,
     reborn: ticket.reborn,

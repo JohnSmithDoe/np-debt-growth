@@ -1,5 +1,5 @@
 import type { Consultancy } from '../model/consultancy.model';
-import type { SkillGate, SkillLock } from '../model/skill.model';
+import type { SkillLock } from '../model/skill.model';
 import {
   FINAL_SKILL_ID,
   SKILL_BY_ID,
@@ -16,32 +16,6 @@ import * as economy from './economy';
  * be bought. The store and the simulator share these, so they cannot drift.
  */
 
-function gateReason(
-  state: Consultancy,
-  gate: SkillGate | undefined
-): SkillLock | null {
-  switch (gate) {
-    case undefined:
-      return null;
-    case 'junior':
-      return state.levels.junior === 0
-        ? { key: 'skill.lock.needs-junior' }
-        : null;
-    case 'senior':
-      return state.levels.senior === 0
-        ? { key: 'skill.lock.needs-senior' }
-        : null;
-    case 'manager':
-      return state.levels.manager === 0
-        ? { key: 'skill.lock.needs-manager' }
-        : null;
-    default:
-      return state.tier < gate.tier
-        ? { key: 'skill.lock.needs-adr', params: { adr: gate.tier } }
-        : null;
-  }
-}
-
 /** The first of `node.maxed` not yet fully bought, if any. */
 function unmaxed(state: Consultancy, id: string): string | null {
   for (const need of SKILL_BY_ID.get(id)?.maxed ?? []) {
@@ -57,8 +31,7 @@ export function skillAvailable(state: Consultancy, id: string): boolean {
   if (economy.skillRank(state, id) >= node.levels.length) return false;
   const parent = skillParent(id);
   if (parent !== null && economy.skillRank(state, parent) === 0) return false;
-  if (unmaxed(state, id) !== null) return false;
-  return gateReason(state, node.gate) === null;
+  return unmaxed(state, id) === null;
 }
 
 export function skillLockReason(
@@ -69,8 +42,6 @@ export function skillLockReason(
   if (!node) return { key: 'skill.lock.unknown' };
   if (economy.skillRank(state, id) >= node.levels.length) return null;
 
-  const gate = gateReason(state, node.gate);
-  if (gate !== null) return gate;
   const parent = skillParent(id);
   if (parent !== null && economy.skillRank(state, parent) === 0) {
     return {

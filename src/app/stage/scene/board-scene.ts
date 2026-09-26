@@ -26,6 +26,7 @@ import {
   CLAIM_TINT_STEPS,
   CLICK_RING,
   REFUSED_MS,
+  BIG_FLOAT_CAPTION,
   CLOSE_FLOAT,
   CLOSE_FLOATS_PER_FRAME,
   DROP_HOP,
@@ -49,6 +50,7 @@ import { loadCrewAtlas, registerCrewAnimations } from '../util/lpc-sprite';
 import { FLIGHT, FlyerPool } from '../util/flyer-pool';
 import { NONE, TicketHeap } from '../util/ticket-heap';
 import { CrewLayer } from './crew-layer';
+import { SpeechBubbles } from './speech-bubbles';
 import { CbScene } from './cb-scene';
 import { GroundLayer } from './ground-layer';
 import { SprintStrip } from './sprint-strip';
@@ -62,6 +64,7 @@ interface BoardParts {
   readonly crew: CrewLayer;
   readonly seniors: CrewLayer;
   readonly managers: CrewLayer;
+  readonly bubbles: SpeechBubbles;
   readonly spawners: TierSpawners;
   readonly votes: VoteBeams;
   readonly strip: SprintStrip;
@@ -73,6 +76,7 @@ const DEPTH = {
   flyer: 20,
   spawner: 22,
   ring: 24,
+  bubble: 26,
   strip: 30,
   hover: 60,
 } as const;
@@ -99,7 +103,7 @@ const PICK_RADIUS = Math.max(
 );
 
 const stripHoverKey = (slot: number, held: SprintSlot): string =>
-  `sprint:${slot}:${held.title}`;
+  `sprint:${slot}:${held.titleKey}`;
 
 function claimProgress(worker: CrewMember, ticket: BoardTicket): number {
   const gap = Math.hypot(ticket.x - worker.x, ticket.y - worker.y);
@@ -161,6 +165,7 @@ export class BoardScene extends CbScene {
 
   #hover?: Phaser.GameObjects.Text;
   #hovering = '';
+  #captionAt = 0;
   #hoverSlot = NONE;
 
   #ring?: Phaser.GameObjects.Arc;
@@ -223,11 +228,17 @@ export class BoardScene extends CbScene {
     const strip = new SprintStrip(this, this.deps, DEPTH.strip);
     const parts: BoardParts = {
       ground: new GroundLayer(this, DEPTH.floor - 1),
-      heap: new TicketHeap(this),
+      heap: new TicketHeap(this, (key) => this.deps.text(key)),
       flyers: new FlyerPool(this, DEPTH.flyer),
       crew: new CrewLayer(this, DEPTH.crew, 'juniors', 0),
       seniors: new CrewLayer(this, DEPTH.crew + 1, 'seniors', 1),
       managers: new CrewLayer(this, DEPTH.crew + 2, 'managers', 2),
+      bubbles: new SpeechBubbles(
+        this,
+        DEPTH.bubble,
+        (key) => this.deps.text(key),
+        () => this.#width
+      ),
       spawners: new TierSpawners(this, DEPTH.spawner),
       votes: new VoteBeams(this, DEPTH.spawner - 1),
       strip,
@@ -314,6 +325,9 @@ export class BoardScene extends CbScene {
       this.deps.womanEvery('seniors'),
       (seat) => this.deps.seniorPoolSeat(seat)
     );
+    parts.bubbles.hear(parts.crew);
+    parts.bubbles.hear(parts.seniors);
+    parts.bubbles.hear(parts.managers);
 
     parts.spawners.update(step);
     parts.votes.update(this.deps.votes(), step);
@@ -321,6 +335,7 @@ export class BoardScene extends CbScene {
     parts.crew.update(step);
     parts.seniors.update(step);
     parts.managers.update(step);
+    parts.bubbles.update(step);
     parts.flyers.update(step);
     parts.strip.update();
     this.#weather();
@@ -559,7 +574,7 @@ export class BoardScene extends CbScene {
     this.#hoverSlot = slot;
     this.#showHover(stripHoverKey(slot, held), [
       this.deps.text(ticketLabelKey(held.type)),
-      held.title,
+      this.deps.text(held.titleKey),
     ]);
     this.#placeHover(px, py);
   }
@@ -627,14 +642,21 @@ export class BoardScene extends CbScene {
     flyers.fallingWithin(px, py, radius * this.#scale, ids);
     if (ids.length === 0) return;
 
-    const { taken, refused, value, sp, big } = this.deps.harvest(ids);
+    const { taken, refused, value, sp, big, headline } = this.deps.harvest(ids);
     if (refused.length > 0) {
       this.#refusedUntil = this.time.now + REFUSED_MS;
       parts.heap.bounce(refused.filter((id) => !flyers.isFalling(id)));
     }
     if (taken.length === 0) return;
-    if (value > 0 && big) this.floatBig(px, py - 22, `+${formatMoney(value)}`);
-    else if (value > 0) this.floatPayout(px, py - 14, `+${formatMoney(value)}`);
+    if (value > 0 && big) {
+      this.floatBig(
+        px,
+        py - 22,
+        `+${formatMoney(value)}`,
+        this.#caption(headline)
+      );
+    } else if (value > 0)
+      this.floatPayout(px, py - 14, `+${formatMoney(value)}`);
     if (sp > 0) {
       this.floatPayout(px, py + 8, `+${formatCompactWhole(sp)} SP`, {
         colour: BOARD_TEXT.points,
@@ -667,7 +689,12 @@ export class BoardScene extends CbScene {
       const x = close.x * this.#scale + this.#offX;
       const y = close.y * this.#scale + this.#offY;
       if (close.big) {
-        this.floatBig(x, y, formatMoney(close.value));
+        this.floatBig(
+          x,
+          y,
+          formatMoney(close.value),
+          this.#caption(close.headline)
+        );
         continue;
       }
       this.floatPayout(x, y, formatMoney(close.value), {
@@ -676,6 +703,12 @@ export class BoardScene extends CbScene {
         rise: CLOSE_FLOAT.rise,
       });
     }
+  }
+
+  #caption(titleKey: string | null): string | undefined {
+    if (titleKey === null || this.time.now < this.#captionAt) return undefined;
+    this.#captionAt = this.time.now + BIG_FLOAT_CAPTION.everyMs;
+    return this.deps.text(titleKey);
   }
 
   #bill(parts: BoardParts): void {
@@ -761,6 +794,7 @@ export class BoardScene extends CbScene {
     parts.crew.destroy();
     parts.seniors.destroy();
     parts.managers.destroy();
+    parts.bubbles.destroy();
     parts.spawners.destroy();
     parts.votes.destroy();
     parts.flyers.destroy();
