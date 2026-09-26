@@ -49,6 +49,8 @@ const HOVER_STROKE = 6;
 const PRICE_TOP = SQUARE - STROKE - GLYPH_CELL;
 const PRICE_ROOM = SQUARE - STROKE * 2;
 const WASH = 0.18;
+/** Contents are laid out for a `SQUARE`; a bigger square draws them this much larger. */
+const grow = (square: HitRect): number => square.width / SQUARE;
 
 const TIP = {
   width: 250,
@@ -255,20 +257,22 @@ export class SkillScene extends PanZoomScene {
     state: SquareState
   ): void {
     frames.fillStyle(this.#fillFor(node, state));
-    frames.fillRect(square.x, square.y, SQUARE, SQUARE);
+    frames.fillRect(square.x, square.y, square.width, square.height);
     this.#frame(frames, square, this.#edgeColour(node, state));
 
     if (state === 'box') return;
 
     if (!this.#stampIcon(square, state)) {
       const code = skillCode(node.label);
+      const k = grow(square);
       this.label(
-        square.x + (SQUARE - code.length * this.#glyph * CODE_SCALE) / 2,
-        square.y + CODE_TOP,
+        square.x +
+          (square.width - code.length * this.#glyph * CODE_SCALE * k) / 2,
+        square.y + CODE_TOP * k,
         code,
         state === 'owned' ? INK.code : INK.codeDim,
-        SQUARE,
-        CODE_SCALE
+        square.width,
+        CODE_SCALE * k
       );
     }
 
@@ -285,12 +289,14 @@ export class SkillScene extends PanZoomScene {
   ): void {
     const badge = skillBadge(square.node, Math.min(node.rank + 1, node.ranks));
     if (badge === null) return;
+    const k = grow(square);
     this.label(
-      square.x + SQUARE - STROKE - this.#glyph - BADGE.inset,
-      square.y + STROKE + BADGE.inset,
+      square.x + square.width - (STROKE + this.#glyph + BADGE.inset) * k,
+      square.y + (STROKE + BADGE.inset) * k,
       badge,
       state === 'owned' ? INK.code : INK.codeDim,
-      SQUARE
+      square.width,
+      k
     );
   }
 
@@ -311,7 +317,7 @@ export class SkillScene extends PanZoomScene {
       const first = row * PIP.perRow;
       const count = Math.min(PIP.perRow, node.ranks - first);
       const span = count * PIP.width + (count - 1) * PIP.gap;
-      const left = square.x + (SQUARE - span) / 2;
+      const left = square.x + (square.width - span) / 2;
       for (let at = 0; at < count; at += 1) {
         frames.fillStyle(
           first + at < node.rank ? SCREEN_INK.pipFull : SCREEN_INK.pipEmpty
@@ -333,12 +339,14 @@ export class SkillScene extends PanZoomScene {
       ? formatCompactMoney(node.cost)
       : formatCompactWhole(node.cost);
 
+    const k = grow(square);
     this.label(
-      square.x + (SQUARE - price.length * this.#glyph) / 2,
-      square.y + PRICE_TOP,
+      square.x + (square.width - price.length * this.#glyph * k) / 2,
+      square.y + PRICE_TOP * k,
       price,
       eur ? SCREEN_INK.money : SCREEN_INK.points,
-      PRICE_ROOM
+      PRICE_ROOM * k,
+      k
     );
   }
 
@@ -367,11 +375,12 @@ export class SkillScene extends PanZoomScene {
     const icon = skillIconOf(square.node.id);
     if (icon === null) return false;
     if (!this.labelsVisible(CODE_SCALE)) return true;
+    const k = grow(square);
     this.#icons?.stamp(
-      square.x + SQUARE / 2,
-      square.y + ICON_CY,
+      square.x + square.width / 2,
+      square.y + ICON_CY * k,
       skillIconKey(icon),
-      ICON_BOX,
+      ICON_BOX * k,
       state === 'owned' ? 1 : ICON_DIM
     );
     return true;

@@ -1,5 +1,6 @@
 import type { Consultancy } from '../model/consultancy.model';
 import {
+  FINAL_SKILL_ID,
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_NODES,
@@ -208,7 +209,9 @@ function skillOffers(state: Consultancy, saving: boolean): readonly Offer[] {
     return {
       cost: economy.skillRankCost(state, node.id),
       cap: eur
-        ? state.budget * DEFAULT_POLICY.spendFraction
+        ? node.id === FINAL_SKILL_ID
+          ? state.budget
+          : state.budget * DEFAULT_POLICY.spendFraction
         : saving
           ? 0
           : state.storyPoints,

@@ -246,7 +246,7 @@ five +20 % ranks end at exactly ×2. First-rank prices double a tier: `value` 25
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | **A** Hand      | `radius`, `capacity` (sprint scope +25 ×10), `cans` (+1 lane ×9, tier 1), `duration`, `lineOfSight`, `golden` → `goldenValue` → `goldenCrew` |
 | **B** Juniors   | `junior` (1 200), `juniorSpeed`, `juniorRoom`, `juniorReach`, `juniorPresence`, `ticketStacking`, `timesheets`, `pizza`                      |
-| **E** Seniors   | `senior` (6 000, ADR-3), speed, reach, presence, `seniorRoom`                                                                                |
+| **E** Seniors   | `senior` (240 000, ADR-3), speed, reach, presence, `seniorRoom`                                                                              |
 | **H** Managers  | `manager`, speed, `relabel`, `managerRoom`                                                                                                   |
 | **C** Client    | the per-line `value` / `income` / `estimates` / `double` nodes, `valueBug`, `valueIncident`, `escalation`, `coaches`, `deck`                 |
 | **D** Debt      | the per-line `spawn` nodes, `debtInterest`, `triagePolicy`, `spawnEscalation`, `spawnIncident`                                               |
@@ -261,23 +261,28 @@ There are no global spawn-rate or income nodes: a line only grows through its ow
 whatever a rung unlocks hangs off it, so a node the player can read is a node they can buy. The
 root opens four arms — the Lint line, the Hand, the Office and ADR-1. After that:
 
-| Rung  | Opens                                                                                 |
-| ----- | ------------------------------------------------------------------------------------- |
-| ADR-1 | Legacy line, `junior` (the whole crew arm, `triagePolicy` under it), `cans`, `golden` |
-| ADR-2 | Flaky line, `timesheets`, `coaches` → `deck`, `debtInterest`                          |
-| ADR-3 | Conflict line, `senior` (and `manager` under it)                                      |
-| ADR-4 | Slop line                                                                             |
-| ADR-5 | Rockstar line, `pizza`, `stretch`, `spawnEscalation`                                  |
-| ADR-6 | Zombie line, `spawnIncident`, `valueIncident`, `assurance`, `goldenCrew`              |
-| ADR-7 | Rewrite line                                                                          |
-| ADR-8 | Swarm line, `signoff`                                                                 |
+Every rung opens its line and at least one mechanic, so no rung is only more of the same. A
+rung's extras are priced for its SP income — together about a minute of it on arrival — so a
+new rung is a choice, not a shopping spree:
+
+| Rung  | Opens                                                                       |
+| ----- | --------------------------------------------------------------------------- |
+| ADR-1 | Legacy line, `junior` (the whole crew arm, `triagePolicy` under it), `cans` |
+| ADR-2 | Flaky line, `coaches` → `deck`, `golden`                                    |
+| ADR-3 | Conflict line, `senior`                                                     |
+| ADR-4 | Slop line, `manager`, `debtInterest`                                        |
+| ADR-5 | Rockstar line, `pizza`, `timesheets`                                        |
+| ADR-6 | Zombie line, `spawnIncident`, `valueIncident`, `spawnEscalation`            |
+| ADR-7 | Rewrite line, `goldenCrew`, `stretch`                                       |
+| ADR-8 | Swarm line, `assurance`, `signoff`                                          |
 
 `double<T>` is the one node with a second term (`maxed`); it stays a dim box, not a readable
 square, until its three ladders are full. The map is orthogonal (`stage/util/skill-layout.ts`):
 the root in the middle, one arm per compass point. The ADR ladder is a spine running east with
 each rung's branches hanging north and south; the widest other arm grows west, the other two
 north and south. Every arm is a tidy tree — a layer per depth, a lane per leaf — wired in right
-angles. Nodes with more than five ranks draw their pips in rows of five.
+angles. `signoff` sits alone on the spine well east of ADR-8, drawn twice the size: it is the
+final. Nodes with more than five ranks draw their pips in rows of five.
 
 **Icons.** Every square draws `assets/skills/<nodeId>.png`; the five per-line kinds share
 `line-<kind>.png` (`stage/model/skill-icon.model.ts`). The files are generated from
@@ -305,15 +310,17 @@ ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR modal's approve butto
 | --- | --------- | ---------- | ---------------------- |
 | 1   | 750       | `legacy`   | reference (dogs)       |
 | 2   | 10 000    | `flaky`    | reference (bike)       |
-| 3   | 400 000   | `conflict` | ours (gorilla 600 000) |
-| 4   | 800 000   | `slop`     | ours                   |
-| 5   | 1 300 000 | `rockstar` | ours                   |
-| 6   | 2 000 000 | `zombie`   | ours                   |
-| 7   | 2 200 000 | `rewrite`  | ours                   |
-| 8   | 2 400 000 | `swarm`    | ours                   |
+| 3   | 300 000   | `conflict` | ours (gorilla 600 000) |
+| 4   | 500 000   | `slop`     | ours                   |
+| 5   | 800 000   | `rockstar` | ours                   |
+| 6   | 1 200 000 | `zombie`   | ours                   |
+| 7   | 1 400 000 | `rewrite`  | ours                   |
+| 8   | 1 600 000 | `swarm`    | ours                   |
 
-**`signoff`** (800 000 SP, off ADR-8) is `FINAL_SKILL_ID`: buying it sets
-`endedAt` and ends the run. No prestige.
+**`signoff`** (€100 T, off ADR-8) is `FINAL_SKILL_ID`: buying it sets `endedAt` and ends the
+run. No prestige. It is the tree's only euro node: SP income plateaus near 1.5 M/min from ADR-3,
+while euros keep compounding until the rail is bought out (~32 T/min), so the final is a harvest —
+about 7 minutes of it after ADR-8.
 
 Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buySpawner`,
 `buyIncome`); `GameStore` commits the result and handles the side effects.
@@ -411,9 +418,9 @@ field, and the sim counts that.
 **Measured run** (26 Sep 2026, autoplayer, 3.5 s card life):
 
 ```
-ADR-1 5.2    first junior 7.5    ADR-2 11.6   ADR-3 16.5   ADR-4 18.7
-ADR-5 21.8   ADR-6 24.1          ADR-7 26.2   ADR-8 29.0   signed off 31.1   tree bought out
-golden crew 25.2 · crew: 4–66 % of closes, 3–6 % of euros before golden crew, ~33 % after
+ADR-1 5.2    first junior 7.1    ADR-2 11.0   ADR-3 16.0   ADR-4 19.6
+ADR-5 22.2   ADR-6 26.5          ADR-7 30.4   ADR-8 34.9   signed off 42.4   tree bought out
+golden crew 33.9 · crew: 4–66 % of closes, 3–8 % of euros before golden crew, ~16 % after
 ```
 
 ### Load-bearing, do not undo

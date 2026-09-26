@@ -1,5 +1,6 @@
 import type { SkillNode } from '../../game/model/skill.model';
 import {
+  FINAL_SKILL_ID,
   isSkillHeading,
   SECRET_SKILL_ID,
   SKILL_NODES,
@@ -15,6 +16,10 @@ const LANE = SQUARE + 30;
 /** One step outwards; the gap between layers carries the wire elbows. */
 const LAYER = SQUARE + 92;
 const MARGIN = SQUARE;
+/** The last purchase ends the run, so it is drawn bigger than the rest. */
+const FINAL_SIDE = SQUARE * 2;
+/** How far past the last rung's branches the final sits on the spine. */
+const FINAL_RUN = LAYER * 3;
 /** A heading's name at band scale: the longest catalogue entry, 25 glyphs of 14 px. */
 const BAND_ROOM = 360;
 const BAND_HIGH = 24;
@@ -92,7 +97,10 @@ const isRung = (id: string): boolean =>
   ) === true;
 
 const branches = (id: string): readonly string[] =>
-  kidsOf(id).filter((kid) => !isRung(kid));
+  kidsOf(id).filter((kid) => !isRung(kid) && kid !== FINAL_SKILL_ID);
+
+const sideOf = (id: string): number =>
+  id === FINAL_SKILL_ID ? FINAL_SIDE : SQUARE;
 
 /** A subtree's breadth in lanes: one per leaf. */
 function breadth(id: string): number {
@@ -223,6 +231,15 @@ function seed(): Map<string, Vec> {
     plantForest(downIds, { ...SOUTH, origin: { x, y: 0 } }, out);
   });
 
+  const last = split.at(-1);
+  if (last && BY_NODE.has(FINAL_SKILL_ID)) {
+    const [up, down] = half(last);
+    out.set(FINAL_SKILL_ID, {
+      x: x + Math.max(up, down) + FINAL_RUN + FINAL_SIDE / 2,
+      y: 0,
+    });
+  }
+
   return out;
 }
 
@@ -274,16 +291,15 @@ const boxAround = (centre: Vec, hw: number, hh: number): Box => ({
 const BAND_NEAR = 3;
 
 /**
- * A heading's name beside its first arm: the nearest spot clear of squares,
+ * A heading's name beside its arms: the nearest spot clear of squares,
  * wires and other names, or failing that of squares and names alone.
  */
 function bandCentres(
   centres: ReadonlyMap<string, Vec>,
   wires: readonly (readonly Vec[])[]
 ): Map<string, Vec> {
-  const half = SQUARE / 2;
-  const solid: Box[] = [...centres.values()].map((one) =>
-    boxAround(one, half, half)
+  const solid: Box[] = [...centres].map(([id, one]) =>
+    boxAround(one, sideOf(id) / 2, sideOf(id) / 2)
   );
   const wired: Box[] = wires.flatMap((wire) =>
     wire.slice(1).map((to, at) => {
@@ -302,15 +318,28 @@ function bandCentres(
   const out = new Map<string, Vec>();
 
   for (const [heading, arms] of HEADING_ARMS) {
-    const arm = centres.get(arms[0]!);
-    if (!arm) continue;
+    const placed = arms.flatMap((id) => {
+      const at = centres.get(id);
+      return at ? [boxAround(at, sideOf(id) / 2, sideOf(id) / 2)] : [];
+    });
+    if (placed.length === 0) continue;
+    const span: Box = {
+      left: Math.min(...placed.map((box) => box.left)),
+      top: Math.min(...placed.map((box) => box.top)),
+      right: Math.max(...placed.map((box) => box.right)),
+      bottom: Math.max(...placed.map((box) => box.bottom)),
+    };
+    const [cx, cy] = [
+      (span.left + span.right) / 2,
+      (span.top + span.bottom) / 2,
+    ];
     const ring = (far: number): Vec[] => {
       const off = far * 16;
       return [
-        { x: arm.x, y: arm.y - half - hh - off },
-        { x: arm.x, y: arm.y + half + hh + off },
-        { x: arm.x + half + hw + off, y: arm.y },
-        { x: arm.x - half - hw - off, y: arm.y },
+        { x: cx, y: span.top - hh - off },
+        { x: cx, y: span.bottom + hh + off },
+        { x: span.right + hw + off, y: cy },
+        { x: span.left - hw - off, y: cy },
       ];
     };
     const near = Array.from({ length: BAND_NEAR }, (_, far) =>
@@ -343,9 +372,10 @@ function build(): SkillGraph {
     [...raw.keys()].map((id) => wireOf(id, raw))
   );
 
-  const half = SQUARE / 2;
   const boxes = [
-    ...[...raw.values()].map((one) => boxAround(one, half, half)),
+    ...[...raw].map(([id, one]) =>
+      boxAround(one, sideOf(id) / 2, sideOf(id) / 2)
+    ),
     ...[...named.values()].map((one) =>
       boxAround(one, BAND_ROOM / 2, BAND_HIGH / 2)
     ),
@@ -362,13 +392,14 @@ function build(): SkillGraph {
   for (const node of ON_TREE) {
     const centre = centres.get(node.id);
     if (!centre) continue;
+    const side = sideOf(node.id);
     squares.push({
       id: node.id,
       node,
-      x: centre.x - half,
-      y: centre.y - half,
-      width: SQUARE,
-      height: SQUARE,
+      x: centre.x - side / 2,
+      y: centre.y - side / 2,
+      width: side,
+      height: side,
       parent: PARENTS.get(node.id) ?? null,
       wire: wireOf(node.id, centres),
     });
@@ -390,12 +421,12 @@ function build(): SkillGraph {
     bands,
     width:
       Math.max(
-        ...squares.map((one) => one.x + SQUARE),
+        ...squares.map((one) => one.x + one.width),
         ...bands.map((one) => one.x + one.width)
       ) + MARGIN,
     height:
       Math.max(
-        ...squares.map((one) => one.y + SQUARE),
+        ...squares.map((one) => one.y + one.height),
         ...bands.map((one) => one.y + BAND_HIGH)
       ) + MARGIN,
   };

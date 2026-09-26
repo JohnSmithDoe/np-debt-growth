@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  FINAL_SKILL_ID,
   SECRET_SKILL_ID,
   SKILL_NODES,
   SKILL_ROOT_ID,
@@ -36,8 +37,12 @@ describe('skill layout', () => {
     for (const a of SKILL_GRAPH.squares) {
       for (const b of SKILL_GRAPH.squares) {
         if (a.id >= b.id) continue;
-        const apart = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
-        if (apart < SQUARE) touching.push(`${a.id}/${b.id}`);
+        const clear =
+          a.x + a.width <= b.x ||
+          b.x + b.width <= a.x ||
+          a.y + a.height <= b.y ||
+          b.y + b.height <= a.y;
+        if (!clear) touching.push(`${a.id}/${b.id}`);
       }
     }
     expect(touching).toEqual([]);
@@ -72,9 +77,9 @@ describe('skill layout', () => {
             const y = from.y + ((to.y - from.y) * run) / length;
             if (
               x > other.x &&
-              x < other.x + SQUARE &&
+              x < other.x + other.width &&
               y > other.y &&
-              y < other.y + SQUARE
+              y < other.y + other.height
             ) {
               crossed.push(
                 `${square.parent}->${square.id} through ${other.id}`
@@ -106,12 +111,12 @@ describe('skill layout', () => {
       const parent = skillSquare(square.parent);
       expect(parent).toBeDefined();
       expect(square.wire.at(0)).toEqual({
-        x: parent!.x + SQUARE / 2,
-        y: parent!.y + SQUARE / 2,
+        x: parent!.x + parent!.width / 2,
+        y: parent!.y + parent!.height / 2,
       });
       expect(square.wire.at(-1)).toEqual({
-        x: square.x + SQUARE / 2,
-        y: square.y + SQUARE / 2,
+        x: square.x + square.width / 2,
+        y: square.y + square.height / 2,
       });
     }
   });
@@ -120,9 +125,19 @@ describe('skill layout', () => {
     for (const square of SKILL_GRAPH.squares) {
       expect(square.x).toBeGreaterThanOrEqual(0);
       expect(square.y).toBeGreaterThanOrEqual(0);
-      expect(square.x + SQUARE).toBeLessThanOrEqual(SKILL_GRAPH.width);
-      expect(square.y + SQUARE).toBeLessThanOrEqual(SKILL_GRAPH.height);
+      expect(square.x + square.width).toBeLessThanOrEqual(SKILL_GRAPH.width);
+      expect(square.y + square.height).toBeLessThanOrEqual(SKILL_GRAPH.height);
     }
+  });
+
+  it('sets the final apart: bigger, and well east of everything else', () => {
+    const final = skillSquare(FINAL_SKILL_ID)!;
+    const rung = skillSquare(final.parent!)!;
+    expect(final.width).toBeGreaterThan(SQUARE);
+    expect(final.y + final.height / 2).toBe(rung.y + rung.height / 2);
+    const others = SKILL_GRAPH.squares.filter((one) => one !== final);
+    const east = Math.max(...others.map((one) => one.x + one.width));
+    expect(final.x - east).toBeGreaterThan(SQUARE * 2);
   });
 
   it('hit tests a square by its own corner, and misses the gap', () => {

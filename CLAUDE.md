@@ -68,7 +68,8 @@ a pickup, and no offline progress.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
-row costs euros. SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
+row costs euros. The one exception is `signoff`, €100 T: SP plateaus from ADR-3 while euros keep
+compounding, so the final is a euro harvest with the tree bought out. SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
 bills**, once the €25 `velocity` row is bought, plus the per-ticket `+2` nodes and planning-poker
 votes a ticket fell through (`voteBonus`, decided at spawn). Euro upgrades never touch SP, as the
 reference's gum works. Don't add a euro node or an SP rail row without meaning to.

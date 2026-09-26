@@ -181,11 +181,23 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
     const spawn = `spawn${name}`;
     const income = `income${name}`;
     const estimates = `estimates${name}`;
+    const heading = `${ticket}Line`;
     return [
+      ...(tier === 0
+        ? []
+        : [
+            {
+              id: heading,
+              track: 'C' as const,
+              requires: adrNodeId(tier),
+              heading: true,
+              levels: [],
+            },
+          ]),
       {
         id: value,
         track: 'C' as const,
-        requires: tier === 0 ? 'client' : adrNodeId(tier),
+        requires: tier === 0 ? 'client' : heading,
         levels: [
           {
             cost: LINE_DOUBLE_COST[tier]!,
@@ -256,9 +268,15 @@ export const SKILL_NODES: readonly SkillNode[] = [
 
   { id: 'hand', track: 'A', requires: 'root', heading: true, levels: [] },
   { id: 'crew', track: 'B', requires: 'adr1', heading: true, levels: [] },
-  { id: 'debt', track: 'D', requires: 'adr2', heading: true, levels: [] },
+  { id: 'debt', track: 'D', requires: 'adr4', heading: true, levels: [] },
   { id: 'client', track: 'C', requires: 'root', heading: true, levels: [] },
   { id: 'office', track: 'O', requires: 'root', heading: true, levels: [] },
+  { id: 'poker', track: 'C', requires: 'adr2', heading: true, levels: [] },
+  { id: 'partner', track: 'A', requires: 'adr2', heading: true, levels: [] },
+  { id: 'seniors', track: 'E', requires: 'adr3', heading: true, levels: [] },
+  { id: 'managers', track: 'H', requires: 'adr4', heading: true, levels: [] },
+  { id: 'morale', track: 'B', requires: 'adr5', heading: true, levels: [] },
+  { id: 'incidents', track: 'D', requires: 'adr6', heading: true, levels: [] },
   {
     id: ADR_HEADING_ID,
     track: 'N',
@@ -409,8 +427,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'senior',
     track: 'E',
-    requires: 'adr3',
-    levels: [{ cost: 6000, effects: [{ kind: 'line', line: 'senior' }] }],
+    requires: 'seniors',
+    levels: [{ cost: 240_000, effects: [{ kind: 'line', line: 'senior' }] }],
   },
   {
     id: 'seniorRoom',
@@ -427,21 +445,21 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'senior',
     levels: [
       {
-        cost: 400,
+        cost: 16_000,
         effects: [
           { kind: 'pace', crew: 'seniors', field: 'close', mult: 1.22 },
           { kind: 'pace', crew: 'seniors', field: 'walk', mult: 1.2 },
         ],
       },
       {
-        cost: 1300,
+        cost: 52_000,
         effects: [
           { kind: 'pace', crew: 'seniors', field: 'close', mult: 1.2 },
           { kind: 'pace', crew: 'seniors', field: 'walk', mult: 1.18 },
         ],
       },
       {
-        cost: 4000,
+        cost: 160_000,
         effects: [
           { kind: 'pace', crew: 'seniors', field: 'close', mult: 1.18 },
           { kind: 'pace', crew: 'seniors', field: 'walk', mult: 1.15 },
@@ -455,17 +473,17 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'senior',
     levels: [
       {
-        cost: 550,
+        cost: 22_000,
         effects: [
           { kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.25 },
         ],
       },
       {
-        cost: 1700,
+        cost: 68_000,
         effects: [{ kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.2 }],
       },
       {
-        cost: 5000,
+        cost: 200_000,
         effects: [
           { kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.18 },
         ],
@@ -477,17 +495,17 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'E',
     requires: 'senior',
     levels: [
-      { cost: 900, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
-      { cost: 2600, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
-      { cost: 7500, effects: [{ kind: 'topOfBand' }] },
+      { cost: 36_000, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
+      { cost: 104_000, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
+      { cost: 300_000, effects: [{ kind: 'topOfBand' }] },
     ],
   },
 
   {
     id: 'manager',
     track: 'H',
-    requires: 'senior',
-    levels: [{ cost: 9000, effects: [{ kind: 'line', line: 'manager' }] }],
+    requires: 'managers',
+    levels: [{ cost: 360_000, effects: [{ kind: 'line', line: 'manager' }] }],
   },
   {
     id: 'managerSpeed',
@@ -495,21 +513,21 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'manager',
     levels: [
       {
-        cost: 700,
+        cost: 28_000,
         effects: [
           { kind: 'pace', crew: 'managers', field: 'close', mult: 1.25 },
           { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.2 },
         ],
       },
       {
-        cost: 2000,
+        cost: 80_000,
         effects: [
           { kind: 'pace', crew: 'managers', field: 'close', mult: 1.22 },
           { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.18 },
         ],
       },
       {
-        cost: 6000,
+        cost: 240_000,
         effects: [
           { kind: 'pace', crew: 'managers', field: 'close', mult: 1.2 },
           { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.15 },
@@ -522,9 +540,9 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'H',
     requires: 'manager',
     levels: [
-      { cost: 1100, effects: [{ kind: 'relabelSteps', add: 1 }] },
-      { cost: 3300, effects: [{ kind: 'relabelFillerFirst' }] },
-      { cost: 9000, effects: [{ kind: 'relabelSteps', add: 1 }] },
+      { cost: 44_000, effects: [{ kind: 'relabelSteps', add: 1 }] },
+      { cost: 132_000, effects: [{ kind: 'relabelFillerFirst' }] },
+      { cost: 360_000, effects: [{ kind: 'relabelSteps', add: 1 }] },
     ],
   },
   {
@@ -533,7 +551,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'managerSpeed',
     levels: [
       {
-        cost: 150_000,
+        cost: 600_000,
         effects: [{ kind: 'room', line: 'manager', add: ROOM_SEATS }],
       },
     ],
@@ -545,15 +563,15 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'debt',
     levels: [
       {
-        cost: 600,
+        cost: 24_000,
         effects: [{ kind: 'debtInterest', approach: DEBT_INTEREST_PER_RANK }],
       },
       {
-        cost: 1900,
+        cost: 76_000,
         effects: [{ kind: 'debtInterest', approach: DEBT_INTEREST_PER_RANK }],
       },
       {
-        cost: 5600,
+        cost: 224_000,
         effects: [{ kind: 'debtInterest', approach: DEBT_INTEREST_PER_RANK }],
       },
     ],
@@ -576,10 +594,10 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'spawnEscalation',
     track: 'D',
-    requires: 'adr5',
+    requires: 'adr6',
     levels: [
       {
-        cost: 8500,
+        cost: 255_000,
         effects: [{ kind: 'spawnRate', target: 'escalation', mult: 1.5 }],
       },
     ],
@@ -587,10 +605,10 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'spawnIncident',
     track: 'D',
-    requires: 'adr6',
+    requires: 'incidents',
     levels: [
       {
-        cost: 14_000,
+        cost: 420_000,
         effects: [{ kind: 'spawnRate', target: 'incident', mult: 1.4 }],
       },
     ],
@@ -609,7 +627,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'coaches',
     track: 'C',
-    requires: 'adr2',
+    requires: 'poker',
     levels: [
       600, 1500, 3600, 9000, 22_500, 54_000, 135_000, 330_000, 810_000,
       1_950_000,
@@ -630,14 +648,14 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'pizza',
     track: 'B',
-    requires: 'adr5',
-    levels: [{ cost: 200_000, effects: [{ kind: 'pizza' }] }],
+    requires: 'morale',
+    levels: [{ cost: 600_000, effects: [{ kind: 'pizza' }] }],
   },
   {
     id: 'timesheets',
     track: 'B',
-    requires: 'adr2',
-    levels: [{ cost: 15_000, effects: [{ kind: 'crewSp' }] }],
+    requires: 'morale',
+    levels: [{ cost: 450_000, effects: [{ kind: 'crewSp' }] }],
   },
   {
     id: 'valueBug',
@@ -650,10 +668,10 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'valueIncident',
     track: 'C',
-    requires: 'adr6',
+    requires: 'incidents',
     levels: [
       {
-        cost: 20_000,
+        cost: 600_000,
         effects: [{ kind: 'ticketValue', target: 'incident', mult: 2 }],
       },
     ],
@@ -662,18 +680,18 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'assurance',
     track: 'G',
-    requires: 'adr6',
+    requires: 'adr8',
     levels: [
-      { cost: 7000, effects: [{ kind: 'global', mult: 1.15 }] },
-      { cost: 18_000, effects: [{ kind: 'global', mult: 1.15 }] },
-      { cost: 45_000, effects: [{ kind: 'global', mult: 1.15 }] },
+      { cost: 105_000, effects: [{ kind: 'global', mult: 1.15 }] },
+      { cost: 270_000, effects: [{ kind: 'global', mult: 1.15 }] },
+      { cost: 675_000, effects: [{ kind: 'global', mult: 1.15 }] },
     ],
   },
   {
     id: 'stretch',
     track: 'G',
-    requires: 'adr5',
-    levels: [{ cost: 10_000, effects: [{ kind: 'juniorBand', add: 1 }] }],
+    requires: 'adr7',
+    levels: [{ cost: 300_000, effects: [{ kind: 'juniorBand', add: 1 }] }],
   },
 
   {
@@ -738,8 +756,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'golden',
     track: 'A',
-    requires: 'adr1',
-    levels: [{ cost: 2000, effects: [{ kind: 'goldenChance', add: 0.02 }] }],
+    requires: 'partner',
+    levels: [{ cost: 50_000, effects: [{ kind: 'goldenChance', add: 0.02 }] }],
   },
   {
     id: 'goldenValue',
@@ -747,19 +765,19 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'golden',
     levels: [
       {
-        cost: 2000,
+        cost: 6000,
         effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
       },
       {
-        cost: 9000,
+        cost: 27_000,
         effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
       },
       {
-        cost: 38_000,
+        cost: 114_000,
         effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
       },
       {
-        cost: 160_000,
+        cost: 480_000,
         effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
       },
     ],
@@ -767,15 +785,16 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'goldenCrew',
     track: 'A',
-    requires: 'adr6',
-    levels: [{ cost: 400_000, effects: [{ kind: 'goldenCrew' }] }],
+    requires: 'adr7',
+    levels: [{ cost: 800_000, effects: [{ kind: 'goldenCrew' }] }],
   },
 
   {
     id: 'signoff',
     track: 'G',
+    currency: 'eur',
     requires: 'adr8',
-    levels: [{ cost: 800_000, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 100_000_000_000_000, effects: [{ kind: 'none' }] }],
   },
 
   {

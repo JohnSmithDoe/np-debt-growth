@@ -15,16 +15,16 @@ catalogue's; ids in `code`. Paths are relative to `src/app/game/`. The design re
 
 ### The Hand (track A)
 
-| Node                                       | Ranks | Cost                             | Effect                                                          |
-| ------------------------------------------ | ----- | -------------------------------- | --------------------------------------------------------------- |
-| Click Radius `radius`                      | 3     | 100 / 440 / 1 650                | click radius ×1.25, ×1.28, ×1.22                                |
-| Bigger Sprints `capacity`                  | 10    | 120 → 480 000                    | +`SPRINT_SLOTS_STEP` slots per lane a rank                      |
-| Platform Team `cans` _(ADR-1)_             | 9     | 1 500 → 3 750 000                | +1 swimlane with its own release train                          |
-| Timebox Renegotiated `duration`            | 5     | 80 → 7 000                       | train back `HAUL_SHAVE_PER_RANK` sooner a rank                  |
-| Line of Sight `lineOfSight`                | 1     | 600                              | crew claim the nearest ticket                                   |
-| Partner-Only Work `golden` _(ADR-1)_       | 1     | 2 000                            | 2 % of arrivals golden                                          |
-| Partner Rate `goldenValue`                 | 4     | 2 000 / 9 000 / 38 000 / 160 000 | golden pays +`GOLDEN_VALUE_PER_RANK` a rank                     |
-| Delegated Authority `goldenCrew` _(ADR-6)_ | 1     | 400 000                          | every kind takes golden; 5 % of closes and re-files turn golden |
+| Node                                       | Ranks | Cost                               | Effect                                                          |
+| ------------------------------------------ | ----- | ---------------------------------- | --------------------------------------------------------------- |
+| Click Radius `radius`                      | 3     | 100 / 440 / 1 650                  | click radius ×1.25, ×1.28, ×1.22                                |
+| Bigger Sprints `capacity`                  | 10    | 120 → 480 000                      | +`SPRINT_SLOTS_STEP` slots per lane a rank                      |
+| Platform Team `cans` _(ADR-1)_             | 9     | 1 500 → 3 750 000                  | +1 swimlane with its own release train                          |
+| Timebox Renegotiated `duration`            | 5     | 80 → 7 000                         | train back `HAUL_SHAVE_PER_RANK` sooner a rank                  |
+| Line of Sight `lineOfSight`                | 1     | 600                                | crew claim the nearest ticket                                   |
+| Partner-Only Work `golden` _(ADR-2)_       | 1     | 50 000                             | 2 % of arrivals golden                                          |
+| Partner Rate `goldenValue`                 | 4     | 6 000 / 27 000 / 114 000 / 480 000 | golden pays +`GOLDEN_VALUE_PER_RANK` a rank                     |
+| Delegated Authority `goldenCrew` _(ADR-7)_ | 1     | 800 000                            | every kind takes golden; 5 % of closes and re-files turn golden |
 
 ### Juniors (track B)
 
@@ -36,9 +36,9 @@ catalogue's; ids in `code`. Paths are relative to `src/app/game/`. The design re
 | Standup Aura `juniorPresence`                   | 2     | 200 / 1 200               | +2 % per junior (cap ×1.5), then +1.5 % (cap ×1.6)  |
 | Ticket Stacking `ticketStacking`                | 1     | 700                       | juniors carry +1, close takes ×2                    |
 | Bullpen `juniorRoom`                            | 3     | 20 000 / 60 000 / 180 000 | +5 junior seats a rank                              |
-| Timesheet Padding `timesheets` _(ADR-2)_        | 1     | 15 000                    | crew and pipeline closes pay double SP              |
-| Pizza Party `pizza` _(ADR-5)_                   | 1     | 200 000                   | pizza                                               |
-| Stretch Assignment `stretch` _(ADR-5, track G)_ | 1     | 10 000                    | junior band +1                                      |
+| Timesheet Padding `timesheets` _(ADR-5)_        | 1     | 450 000                   | crew and pipeline closes pay double SP              |
+| Pizza Party `pizza` _(ADR-5)_                   | 1     | 600 000                   | pizza                                               |
+| Stretch Assignment `stretch` _(ADR-7, track G)_ | 1     | 300 000                   | junior band +1                                      |
 
 Bands (`balance/crew.ts`): juniors take tiers 0–4, widened at the top by `juniorBand`; seniors
 tier 3 and up; the two share 3–4. Managers re-file any value ticket.
@@ -51,40 +51,40 @@ the kind's unlock, ×3 a rank.
 
 | Node                            | Ranks | Cost                        | Effect                                                      |
 | ------------------------------- | ----- | --------------------------- | ----------------------------------------------------------- |
-| Senior Dev `senior`             | 1     | 6 000                       | opens the senior rail line                                  |
-| Senior Onboarding `seniorSpeed` | 3     | 400 / 1 300 / 4 000         | close ×1.22 / 1.2 / 1.18, walk ×1.2 / 1.18 / 1.15           |
-| Sweep Radius `seniorReach`      | 3     | 550 / 1 700 / 5 000         | sweep ×1.25 / 1.2 / 1.18                                    |
-| Batch Review `seniorPresence`   | 3     | 900 / 2 600 / 7 500         | batch +1, batch +1, then seniors take the top of their band |
+| Senior Dev `senior`             | 1     | 240 000                     | opens the senior rail line                                  |
+| Senior Onboarding `seniorSpeed` | 3     | 16 000 / 52 000 / 160 000   | close ×1.22 / 1.2 / 1.18, walk ×1.2 / 1.18 / 1.15           |
+| Sweep Radius `seniorReach`      | 3     | 22 000 / 68 000 / 200 000   | sweep ×1.25 / 1.2 / 1.18                                    |
+| Batch Review `seniorPresence`   | 3     | 36 000 / 104 000 / 300 000  | batch +1, batch +1, then seniors take the top of their band |
 | Quiet Corner `seniorRoom`       | 3     | 100 000 / 300 000 / 900 000 | +5 senior seats a rank                                      |
 
-### Account managers (track H) — hangs off `senior`, so it waits for ADR-3 too
+### Account managers (track H) — hangs off ADR-4
 
-| Node                              | Ranks | Cost                  | Effect                                            |
-| --------------------------------- | ----- | --------------------- | ------------------------------------------------- |
-| Account Manager `manager`         | 1     | 9 000                 | opens the manager rail line                       |
-| Account Management `managerSpeed` | 3     | 700 / 2 000 / 6 000   | close ×1.25 / 1.22 / 1.2, walk ×1.2 / 1.18 / 1.15 |
-| Scope Creep `relabel`             | 3     | 1 100 / 3 300 / 9 000 | re-file +1 step, filler first, +1 step            |
-| Client Lounge `managerRoom`       | 1     | 150 000               | +5 manager seats                                  |
+| Node                              | Ranks | Cost                       | Effect                                            |
+| --------------------------------- | ----- | -------------------------- | ------------------------------------------------- |
+| Account Manager `manager`         | 1     | 360 000                    | opens the manager rail line                       |
+| Account Management `managerSpeed` | 3     | 28 000 / 80 000 / 240 000  | close ×1.25 / 1.22 / 1.2, walk ×1.2 / 1.18 / 1.15 |
+| Scope Creep `relabel`             | 3     | 44 000 / 132 000 / 360 000 | re-file +1 step, filler first, +1 step            |
+| Client Lounge `managerRoom`       | 1     | 600 000                    | +5 manager seats                                  |
 
 ### The Debt (track D)
 
-| Node                                             | Ranks | Cost                | Effect                                         |
-| ------------------------------------------------ | ----- | ------------------- | ---------------------------------------------- |
-| Technical Debt Interest `debtInterest` _(ADR-2)_ | 3     | 600 / 1 900 / 5 600 | debt interest, `DEBT_INTEREST_PER_RANK` a rank |
-| Triage Policy `triagePolicy` (off `junior`)      | 2     | 500 / 1 600         | juniors leave lint, seniors leave bugs         |
-| Escalation Chance `spawnEscalation` _(ADR-5)_    | 1     | 8 500               | escalation arrivals ×1.5                       |
-| Incident Culture `spawnIncident` _(ADR-6)_       | 1     | 14 000              | incident arrivals ×1.4                         |
+| Node                                             | Ranks | Cost                      | Effect                                         |
+| ------------------------------------------------ | ----- | ------------------------- | ---------------------------------------------- |
+| Technical Debt Interest `debtInterest` _(ADR-4)_ | 3     | 24 000 / 76 000 / 224 000 | debt interest, `DEBT_INTEREST_PER_RANK` a rank |
+| Triage Policy `triagePolicy` (off `junior`)      | 2     | 500 / 1 600               | juniors leave lint, seniors leave bugs         |
+| Escalation Chance `spawnEscalation` _(ADR-6)_    | 1     | 255 000                   | escalation arrivals ×1.5                       |
+| Incident Culture `spawnIncident` _(ADR-6)_       | 1     | 420 000                   | incident arrivals ×1.4                         |
 
 ### The Client (track C)
 
-| Node                                             | Ranks | Cost                    | Effect                                   |
-| ------------------------------------------------ | ----- | ----------------------- | ---------------------------------------- |
-| Bug Bounty `valueBug`                            | 1     | 500                     | bug ×2                                   |
-| Emergency Rates `escalation`                     | 3     | 1 300 / 4 000 / 12 000  | escalation ×1.4 / 1.3 / 1.25             |
-| Incident Payout `valueIncident` _(ADR-6)_        | 1     | 20 000                  | incident ×2                              |
-| Hire an Agile Coach `coaches` _(ADR-2)_          | 10    | 600 → 1 950 000         | +1 coach a rank                          |
-| Add a 13 `deck`                                  | 10    | 900 → 2 400 000         | vote bonus +`VOTE_BONUS_PER_RANK` a rank |
-| Human in the Loop `assurance` _(ADR-6, track G)_ | 3     | 7 000 / 18 000 / 45 000 | everything ×1.15 a rank                  |
+| Node                                             | Ranks | Cost                        | Effect                                   |
+| ------------------------------------------------ | ----- | --------------------------- | ---------------------------------------- |
+| Bug Bounty `valueBug`                            | 1     | 500                         | bug ×2                                   |
+| Emergency Rates `escalation`                     | 3     | 1 300 / 4 000 / 12 000      | escalation ×1.4 / 1.3 / 1.25             |
+| Incident Payout `valueIncident` _(ADR-6)_        | 1     | 600 000                     | incident ×2                              |
+| Hire an Agile Coach `coaches` _(ADR-2)_          | 10    | 600 → 1 950 000             | +1 coach a rank                          |
+| Add a 13 `deck`                                  | 10    | 900 → 2 400 000             | vote bonus +`VOTE_BONUS_PER_RANK` a rank |
+| Human in the Loop `assurance` _(ADR-8, track G)_ | 3     | 105 000 / 270 000 / 675 000 | everything ×1.15 a rank                  |
 
 ### Per line — `LINE_NODES`
 
@@ -120,7 +120,7 @@ it drops. Costs are `DEBT_TIERS[].spCost` in `model/tier.model.ts`.
 
 ### End
 
-Sign the Closeout `signoff` _(ADR-8)_, 800 000 — ends the run. `root` ships bought;
+Sign the Closeout `signoff` _(ADR-8)_, €100 T — the tree's only euro node; ends the run. `root` ships bought;
 `secret` (everything ×1.1) is granted, not bought.
 
 ---
