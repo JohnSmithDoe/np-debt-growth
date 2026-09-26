@@ -120,10 +120,8 @@ export const BIG_FLOAT = {
   colour: '#f0c86a',
   stroke: '#d99a3f',
   strokeThickness: 2,
-  rise: 120,
-  ms: 1500,
-  /** Share of `ms` it stays fully opaque before fading. */
-  hold: 0.5,
+  rise: 46,
+  ms: 2_000,
 } as const;
 
 export const CLICK_RING = {

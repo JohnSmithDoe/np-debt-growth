@@ -70,14 +70,9 @@ export abstract class CbScene extends Phaser.Scene {
     this.tweens.add({
       targets: text,
       y: y - BIG_FLOAT.rise,
+      alpha: 0,
       duration: BIG_FLOAT.ms,
       ease: 'Sine.easeOut',
-    });
-    this.tweens.add({
-      targets: text,
-      alpha: 0,
-      delay: BIG_FLOAT.ms * BIG_FLOAT.hold,
-      duration: BIG_FLOAT.ms * (1 - BIG_FLOAT.hold),
       onComplete: () => text.destroy(),
     });
   }
