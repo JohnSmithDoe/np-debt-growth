@@ -15,6 +15,14 @@ export class SettingsService {
     () => this.#settings().showAgent ?? SETTINGS_DEFAULTS.showAgent
   );
 
+  readonly railTab = computed(
+    () => this.#settings().railTab ?? SETTINGS_DEFAULTS.railTab
+  );
+
+  setRailTab(value: string): void {
+    this.#write({ ...this.#settings(), railTab: value });
+  }
+
   setShowAgent(value: boolean): void {
     this.#write({ ...this.#settings(), showAgent: value });
   }

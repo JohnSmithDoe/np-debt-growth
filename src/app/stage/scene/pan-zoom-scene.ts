@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 
+import { HOLD_REPEAT, holdGapMs } from '../../@shared/model/hold-repeat.model';
 import { SCREEN_INK } from '../model/board.consts';
 import type { HitRect } from '../model/hit-rect.model';
 import type { SceneDeps } from '../model/scene-deps.model';
@@ -25,6 +26,8 @@ export abstract class PanZoomScene extends CbScene {
   #travel = 0;
   #lastX = 0;
   #lastY = 0;
+  #holding?: Phaser.Time.TimerEvent;
+  #held = 0;
   #labels?: LabelPool;
   #canvas?: HTMLCanvasElement;
 
@@ -114,7 +117,24 @@ export abstract class PanZoomScene extends CbScene {
     this.#travel = 0;
     this.#lastX = pointer.x;
     this.#lastY = pointer.y;
+    const hit = this.hitAt(pointer.worldX, pointer.worldY);
+    if (hit) this.#hold(hit, HOLD_REPEAT.delayMs);
   };
+
+  #hold(target: HitRect, delayMs: number): void {
+    this.#holding = this.time.delayedCall(delayMs, () => {
+      if (this.#travel > DRAG_SLOP || !this.tap(target)) return this.#letGo();
+      this.flash(target);
+      this.#held += 1;
+      this.#hold(target, holdGapMs(this.#held));
+    });
+  }
+
+  #letGo(): void {
+    this.#holding?.remove();
+    this.#holding = undefined;
+    this.#held = 0;
+  }
 
   #onMove = (pointer: Phaser.Input.Pointer): void => {
     if (this.#dragging) return this.#drag(pointer);
@@ -141,7 +161,9 @@ export abstract class PanZoomScene extends CbScene {
 
   #onUp = (pointer: Phaser.Input.Pointer): void => {
     this.#dragging = false;
-    if (this.#travel > DRAG_SLOP) return;
+    const held = this.#held > 0;
+    this.#letGo();
+    if (held || this.#travel > DRAG_SLOP) return;
 
     const hit = this.hitAt(pointer.worldX, pointer.worldY);
     if (!hit) return;
@@ -224,6 +246,7 @@ export abstract class PanZoomScene extends CbScene {
   }
 
   #release = (): void => {
+    this.#letGo();
     this.scale.off(Phaser.Scale.Events.RESIZE, this.#onResize);
     if (this.#canvas) this.#canvas.style.cursor = 'default';
     this.#hover = null;

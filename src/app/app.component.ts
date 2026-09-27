@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -36,9 +35,9 @@ import { FinaleService } from './@shared/data/finale.service';
 import { AudioService } from './audio/data/audio.service';
 import { StageModeService } from './stage/data/stage-mode.service';
 import { GameStore } from './game/data/game.store';
-import { epicKey } from './game/model/tier.model';
-
-const RATE_WINDOW_MS = 10_000;
+import { BillingRateService } from './console/data/billing-rate.service';
+import { FINAL_SKILL_ID } from './game/model/skill.model';
+import { adrNodeId, epicKey, MAX_TIER } from './game/model/tier.model';
 
 @Component({
   selector: 'cb-root',
@@ -106,8 +105,7 @@ export class AppComponent {
     })
   );
 
-  readonly #billing: { at: number; billed: number }[] = [];
-  readonly rate = signal(0);
+  readonly rate = inject(BillingRateService).perSec;
 
   readonly sprintFill = computed(() => {
     const slots = this.sprintSlots();
@@ -115,6 +113,18 @@ export class AppComponent {
   });
 
   readonly closes = this.#store.sprint;
+
+  readonly goal = computed(() => {
+    if (!this.treeOpen()) return null;
+    const tier = this.#store.tier();
+    const adr = tier < MAX_TIER ? tier + 1 : null;
+    const cost = this.#store.skillRankCost(
+      adr ? adrNodeId(adr) : FINAL_SKILL_ID
+    );
+    if (!Number.isFinite(cost)) return null;
+    const pct = Math.min(100, Math.floor((this.storyPoints() / cost) * 100));
+    return { adr, pct };
+  });
   readonly epic = computed(() =>
     epicKey(this.#store.tier(), this.#store.inAcceptance())
   );
@@ -144,28 +154,5 @@ export class AppComponent {
 
   constructor() {
     onRise(this.#store.awardCount, () => this.awardPaid.set(true), 0);
-    effect(() => this.#sampleRate(this.#store.state()));
-  }
-
-  #sampleRate({
-    runMs,
-    lifetimeBilled,
-  }: {
-    runMs: number;
-    lifetimeBilled: number;
-  }): void {
-    const samples = this.#billing;
-    const newest = samples.at(-1);
-    if (newest && runMs < newest.at) samples.length = 0;
-    if (newest?.at === runMs) return;
-    samples.push({ at: runMs, billed: lifetimeBilled });
-    while (samples.length > 2 && runMs - samples[1]!.at >= RATE_WINDOW_MS) {
-      samples.shift();
-    }
-    const oldest = samples[0]!;
-    const span = runMs - oldest.at;
-    this.rate.set(
-      span > 0 ? ((lifetimeBilled - oldest.billed) * 1000) / span : 0
-    );
   }
 }

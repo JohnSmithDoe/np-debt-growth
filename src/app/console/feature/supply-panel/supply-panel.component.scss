@@ -82,7 +82,8 @@
       grid-column: 2 / -1;
     }
 
-    .blurb {
+    .blurb,
+    .eta {
       grid-column: 2;
     }
 
@@ -220,6 +221,13 @@
   font-size: 0.82em;
   line-height: 1.35;
   opacity: 0.72;
+}
+
+.eta {
+  grid-column: 1;
+  font-size: 0.75em;
+  font-variant-numeric: tabular-nums;
+  color: var(--np-cb-ink-3);
 }
 
 .held {

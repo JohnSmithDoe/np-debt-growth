@@ -201,6 +201,8 @@ export const DE: Readonly<Record<string, string>> = {
   'award.milestone': 'Meilenstein',
   'award.waiting': '+{{count}} weitere',
   'hud.budget': 'Budget',
+  'hud.goal.adr': '{{pct}} % bis ADR-{{adr}}',
+  'hud.goal.signoff': '{{pct}} % bis zur Abnahme',
   'hud.points': 'Story Points',
   'hud.points.exact': '{{points}} Story Points',
   'hud.rate': '{{rate}}/s',
@@ -598,6 +600,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.managerRoom5.1.label': 'Kundenlounge',
   'skill.managerRoom.blurb':
     'Fünf Account-Manager-Plätze mehr, und ein Sofa für den Kunden.',
+  'rail.eta': 'bezahlbar in {{time}}',
   'rail.more.adr': 'Danach {{count}} weitere.',
   'rail.more.rate': 'Danach {{count}} weitere.',
   'rail.teaser.adr': 'Öffnet mit ADR-{{adr}}.',

@@ -1,5 +1,9 @@
 /* Translated labels resolve inside computeds: the catalogue loads lazily, so a field initialiser reads raw keys. */
 import {
+  HOLD_REPEAT,
+  holdGapMs,
+} from '../../../@shared/model/hold-repeat.model';
+import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -10,7 +14,11 @@ import {
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { BoardIcons } from '../../../@shared/data/board-icons.service';
-import { formatCompactMoney } from '../../../@shared/util/format-quantity';
+import { SettingsService } from '../../../@shared/data/settings.service';
+import {
+  formatCompactMoney,
+  formatDuration,
+} from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import type { PurchaseId } from '../../../game/model/balance/progression';
 import type { Consultancy } from '../../../game/model/consultancy.model';
@@ -32,14 +40,13 @@ import {
   spawnerLabelKey,
 } from '../../../game/model/spawner.model';
 import * as economy from '../../../game/util/economy';
+import { BillingRateService } from '../../data/billing-rate.service';
 import { PanelComponent } from '../../ui/panel/panel.component';
 import { sameRecord } from '../../util/same-record';
 
 const TABS = ['supply', 'income', 'crew'] as const;
 
 type Tab = (typeof TABS)[number];
-
-const HOLD = { delayMs: 350, everyMs: 90, fastMs: 40, fastAfter: 10 } as const;
 
 const SP_UNLOCK: PurchaseId = 'velocity';
 
@@ -78,6 +85,11 @@ const CREW_ROWS: readonly PurchaseId[] = [
   ...PURCHASE_IDS.filter((line) => line !== 'kit' && line !== SP_UNLOCK),
 ];
 
+const maxedLast = (rows: readonly Row[]): readonly Row[] => [
+  ...rows.filter((row) => !row.maxed),
+  ...rows.filter((row) => row.maxed),
+];
+
 const percent = (mult: number): string => `+${Math.round((mult - 1) * 100)}%`;
 
 const samePriced = (a: Consultancy, b: Consultancy): boolean =>
@@ -107,7 +119,13 @@ export class SupplyPanelComponent {
   #text = inject(TranslateService);
   #icons = inject(BoardIcons);
 
-  readonly tab = signal<Tab>('supply');
+  #settings = inject(SettingsService);
+  #rate = inject(BillingRateService).perSec;
+
+  readonly tab = computed<Tab>(() => {
+    const saved = this.#settings.railTab();
+    return TABS.find((tab) => tab === saved) ?? 'supply';
+  });
   readonly flash = signal<{ key: string; beat: number } | null>(null);
 
   #holdTimer: ReturnType<typeof setTimeout> | undefined;
@@ -321,8 +339,29 @@ export class SupplyPanelComponent {
     });
   });
 
-  readonly rows = computed<readonly Row[]>(() => {
-    switch (this.tab()) {
+  readonly rows = computed<readonly Row[]>(() =>
+    maxedLast(this.#tabRows(this.tab()))
+  );
+
+  readonly etas = computed<ReadonlyMap<string, string>>(() => {
+    const budget = this.#store.budget();
+    const rate = this.#rate();
+    const etas = new Map<string, string>();
+    if (rate <= 0) return etas;
+    for (const row of this.rows()) {
+      if (row.price === null || budget >= row.price) continue;
+      etas.set(
+        row.key,
+        this.#say('rail.eta', {
+          time: formatDuration((row.price - budget) / rate),
+        })
+      );
+    }
+    return etas;
+  });
+
+  #tabRows(tab: Tab): readonly Row[] {
+    switch (tab) {
       case 'supply':
         return this.supply();
       case 'income':
@@ -330,10 +369,10 @@ export class SupplyPanelComponent {
       case 'crew':
         return this.crew();
     }
-  });
+  }
 
   show(tab: Tab): void {
-    this.tab.set(tab);
+    this.#settings.setRailTab(tab);
   }
 
   pick(event: MouseEvent, key: string): void {
@@ -349,12 +388,9 @@ export class SupplyPanelComponent {
     const again = (): void => {
       if (!this.#buy(tab, key)) return this.release();
       bought += 1;
-      this.#holdTimer = setTimeout(
-        again,
-        bought > HOLD.fastAfter ? HOLD.fastMs : HOLD.everyMs
-      );
+      this.#holdTimer = setTimeout(again, holdGapMs(bought));
     };
-    this.#holdTimer = setTimeout(again, HOLD.delayMs);
+    this.#holdTimer = setTimeout(again, HOLD_REPEAT.delayMs);
   }
 
   release(): void {

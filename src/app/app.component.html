@@ -30,6 +30,17 @@
         [cbRolling]="storyPoints()"
         [rollingFormat]="points"
       ></dd>
+      <span class="rate" [attr.aria-hidden]="goal() ? null : true">
+        @if (goal(); as goal) {
+          @if (goal.adr) {
+            {{ 'hud.goal.adr' | translate: goal }}
+          } @else {
+            {{ 'hud.goal.signoff' | translate: goal }}
+          }
+        } @else {
+          &nbsp;
+        }
+      </span>
     </div>
     <div class="round">
       <dt>{{ 'hud.round' | translate }}</dt>
