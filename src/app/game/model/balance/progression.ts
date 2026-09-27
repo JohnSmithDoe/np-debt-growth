@@ -34,7 +34,7 @@ export const INCOME_ROWS: Readonly<Partial<Record<TicketTypeId, IncomeRow>>> =
 export const INCOME_COST_OF_SPAWNER = 125;
 export const INCOME_VALUE_ADD = 3;
 
-export const ACCEPTANCE = { goal: 1e16, spawn: 3, value: 12 } as const;
+export const ACCEPTANCE = { goal: 2e16, spawn: 3, value: 12 } as const;
 
 export const PURCHASE_IDS = [
   'junior',

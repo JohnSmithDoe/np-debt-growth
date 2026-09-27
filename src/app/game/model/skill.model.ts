@@ -791,7 +791,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'signoff',
     track: 'G',
     requires: 'adr8',
-    levels: [{ cost: 9_000_000, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 16_000_000, effects: [{ kind: 'none' }] }],
   },
 
   {

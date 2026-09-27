@@ -258,7 +258,7 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'None approved',
   'skill.golden.1.label': 'Partner-Only Work',
   'skill.signoff.blurb':
-    'The closeout starts the acceptance push: work pours in, every ticket bills overtime, and the client signs when the budget reaches €10 Qa.',
+    'The closeout starts the acceptance push: work pours in, every ticket bills overtime, and the client signs when the budget reaches €20 Qa.',
   'skill.signoff.1.label': 'Sign the Closeout',
   'skill.golden.blurb':
     'Some work arrives flagged partner-only. It pays a fortune, and the crew will not go near it.',
@@ -855,7 +855,7 @@ export const EN: Readonly<Record<string, string>> = {
   'help.loop.4':
     'Story points buy the skill tree. Approve ADRs there to open new lines of ever dearer debt. Drag to pan, wheel to zoom, hover a square to read it; a black box says only that something is there.',
   'help.loop.5':
-    'Last on the tree, Sign the Closeout starts the acceptance push. The engagement is done when the budget reaches €10 Qa.',
+    'Last on the tree, Sign the Closeout starts the acceptance push. The engagement is done when the budget reaches €20 Qa.',
   'award.m-first-close.label': 'First ticket triaged',
   'award.m-first-close.blurb': 'Somebody had to.',
   'award.m-first-invoice.label': 'First invoice raised',

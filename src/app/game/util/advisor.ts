@@ -1,6 +1,7 @@
 /*
- * ADR_SLACK: 0 starves the crew gates, which pay back in euros; measured best
- * at 0.3–0.5.
+ * ADR_SLACK: 0 stalls in tier 1, the first junior pays back too late for a
+ * one-step estimate; 0.5 dawdles, a run 4 min longer. Measured best at 0.2
+ * with POCKET_SHARE 0.05.
  */
 import type { Consultancy } from '../model/consultancy.model';
 import {
@@ -233,7 +234,7 @@ function secondsTo(
   );
 }
 
-const ADR_SLACK = 0.5;
+const ADR_SLACK = 0.2;
 
 function towards(
   state: Consultancy,
@@ -283,6 +284,24 @@ function spare(state: Consultancy, policy: SimPolicy): Pick | null {
   return cheapest ? { ...toPick(state, policy, cheapest), spare: true } : null;
 }
 
+const POCKET_SHARE = 0.05;
+
+function pocketChange(
+  state: Consultancy,
+  policy: SimPolicy,
+  goal: Goal
+): Pick | null {
+  const limit = goal.cost * POCKET_SHARE;
+  let cheapest: Candidate | null = null;
+  for (const buy of offers(state)) {
+    const cost = costOf(state, buy);
+    if (cost.currency !== goal.currency || !(cost.cost <= limit)) continue;
+    if (!cheapest || cost.cost < cheapest.cost)
+      cheapest = { buy, then: null, ...cost, score: 0 };
+  }
+  return cheapest ? toPick(state, policy, cheapest) : null;
+}
+
 export function advise(state: Consultancy, policy: SimPolicy): Advice {
   if (state.endedAt > 0) return { eur: null, sp: null };
   const ranked = rank(state, policy);
@@ -291,8 +310,10 @@ export function advise(state: Consultancy, policy: SimPolicy): Advice {
     return found ? toPick(state, policy, found) : null;
   };
   const goal = purchase.nextAdrNodeId(state) ?? FINAL_SKILL_ID;
+  const target = goalOf(state, goal);
   const sp = purchase.skillAvailable(state, goal)
-    ? towards(state, policy, ranked, goalOf(state, goal), ADR_SLACK)
+    ? (pocketChange(state, policy, target) ??
+      towards(state, policy, ranked, target, ADR_SLACK))
     : (top('sp') ?? spare(state, policy));
   return { eur: top('eur'), sp };
 }

@@ -17,7 +17,7 @@ The design as the code has it. Every number names the file it lives in; paths ar
    until it is back.
 5. **€ buys supply, SP buys the tree.** The rail sells heads, rate rows and crew; the tree
    sells everything else, the ADRs included. `signoff` starts the acceptance push; the run
-   ends at €10 Qa.
+   ends at €20 Qa.
 6. **Income = collected tickets/s × their worth**, where collected is the least of what the
    lines throw, what the hand and crew reach, and what the sprint takes. `util/sim.ts` computes
    exactly this without a board (§9).
@@ -372,10 +372,10 @@ record; the rail has no ADR panel.
 The prices grow with the rung because SP income does; the late ones stay low so the rung's extras,
 not the ADR, take most of the tier.
 
-**`signoff`** (9 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced so tier 8 is a short last act. Buying it
+**`signoff`** (16 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced so tier 8 is a short last act. Buying it
 starts the **acceptance push** (`ACCEPTANCE` in `balance/progression.ts`, `economy.inAcceptance`):
 spawns run ×3, everything bills ×12 overtime (in `globalMultiplier`), and a pink banner on the
-board counts the budget up to €10 Qa. Reaching it sets `endedAt` (`economy.accepted`, checked each
+board counts the budget up to €20 Qa. Reaching it sets `endedAt` (`economy.accepted`, checked each
 store step and in the autoplayer) and the post-mortem opens. No prestige. About three and a half
 minutes after ADR-8 to sign-off, and three for the push.
 
@@ -463,8 +463,10 @@ field, and the sim counts that.
 
 `util/advisor.ts` is the Synergy Analyser (AI Powered): it ranks every offer by (Δln €/s + Δln SP/s) over the seconds
 of income it costs, scores a gate together with the best purchase it opens, and once `signoff` is
-on offer buys only what shortens the time to it. An SP buy gives way to the next ADR when it
-would delay the ADR by more than `ADR_SLACK` (half). `autoplay.advisedSpend` plays a run on it, and
+on offer buys only what shortens the time to it. The next ADR comes first: an SP buy costing at most `POCKET_SHARE` (5 %)
+of it is filled up at once, cheapest first, as a player tops up old lines; anything dearer must not
+delay the ADR by more than `ADR_SLACK` (a fifth). Buying only what reaches the ADR sooner stalls in
+tier 1: the first junior pays back too late for any one-step estimate. `autoplay.advisedSpend` plays a run on it, and
 `data/advisor.spec.ts` fails unless that run signs off sooner than cheapest-first. The console's
 paperclip (`console/feature/agent/`, on by default, switchable in settings) shows its € and SP picks,
 behind a once-only warning that it is cheating. Its auto-buy switch (`AgentService.auto`, off by default,
