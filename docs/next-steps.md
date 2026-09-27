@@ -55,70 +55,32 @@ Found while playing.
 - **Start with a smaller mouse radius**, about 5 screen px (today `CLICK_RADIUS_BASE` 34 logical,
   23–51 screen px by viewport). The ring is the hit test: `pickWithin` takes cards whose
   **centre** is inside it, and a card is 58 × 16. At 5 px a sweep would have to cross each
-  card's centre, and the pointer is sampled per move event, so fast sweeps skip. Decide first
-  whether a small ring should hit any card it _touches_ (box overlap); `util/sim.ts` `cellsInReach` must follow. Do it in the balance pass.
+  card's centre, so the hit test becomes **box overlap** (decided): the ring hits any card it
+  touches, and `util/sim.ts` `cellsInReach` follows. Do it in the balance pass.
 
-### Tree copy
+### Triage Policy auto-closes (decided)
 
-- **Triage Policy leaves lint with nobody but the hand.** `triagePolicy` rank 1 removes lint
-  from the juniors' claims (`economy.crewClaims` → `triageSkips`). No other crew kind takes
-  tier 0, so from then on lint is collected by the hand or expires as "won't fix". That's by
-  design (juniors stop filling the sprint with 1 € cards), but the effect text ("Juniors leave
-  lint alone") doesn't say what happens to the lint. Make the consequence visible. Rank 2
-  (seniors leave bugs) still does nothing, because seniors never take tier 0. Candidate answer,
-  undecided: rank 1 starts a lint-only auto-close pipeline (see _Parked: the CI auto-close
-  pipeline_); whether it bills, takes lane slots, or only clears is open.
+`triagePolicy` rank 1 no longer only takes lint off the juniors: every lint card still on the board
+auto-closes **2 s** after it spawns (unless the hand takes it first), shown as a tint ramp on the
+card, then fills a lane slot and bills like any close, SP included. Rank 2 does the same for bugs
+once bugs arrive from tier 0. If every train is away when the 2 s run out, the card has nowhere to
+ship and **goes straight to prod: it spawns an `incident`**. Uncapped on purpose: a player who
+learns to keep the trains away farms P0s, and an award ("Works on my machine") marks the find.
+This makes auto-close a third collector; `util/sim.ts` prices it in closed form (lint arrival ×
+value, split by lane availability) and CLAUDE.md's "two collectors" line changes with it.
 
-## 2. The late game runs out of decisions
+## 2. The late game (decided)
 
-Not started. Measured 27 Sep 2026 on the greedy autoplayer (`spend`, 1 sweep/s) with the award
-SP already removed. Purchases per five minutes:
+Measured 27 Sep 2026 (greedy autoplayer): tree buys per five minutes fall 50 → 8 and rail buys
+79 → 3 from minute 10 to 45; after ADR-8 only `signoff` €100 T is left, 7–10 minutes of sweeping.
 
-| min   | tree buys | rail buys | tier | SP held |
-| ----- | --------- | --------- | ---- | ------- |
-| 10–15 | 50        | 79        | 2    | 17k     |
-| 15–20 | 43        | 131       | 3    | 94k     |
-| 25–30 | 30        | 115       | 6    | 160k    |
-| 35–40 | 17        | 58        | 8    | 360k    |
-| 40–45 | 8         | 3         | 8    | 779k    |
-
-Choice peaks around ADR-3 and drains away; the last five minutes offer one purchase every
-~27 s while the player sweeps a full board.
-
-### What is wrong
-
-- **The ending is a counter, not a moment.** After ADR-8 the only goal is `signoff` €100 T: the
-  rail is nearly bought out, the tree is done, SP piles up unspent. 7–10 minutes of sweeping
-  while one number climbs; the climax is the flattest stretch of the run.
-- **ADR-4…8 are the same rung again.** Each adds a card worth ×10 at the same 0.25/s with the
-  same five `LINE_NODES`; prices scale with it, so relative power never moves, only the digits.
-  The early rungs changed how the board plays (crew, beams, golden, seniors); the late extras are
-  mostly passive percentages (`debtInterest`, `timesheets`, `spawnIncident`, `stretch`). The board
-  is full at 600 cards from mid-run, so a new tier only recolours the heap.
-- **SP stops meaning anything.** SP income plateaus from ADR-3, so every late rung is "wait 3–4
-  minutes". Once the tree is bought out, every SP source (poker beams, `estimates<T>`) pays into
-  nothing — the purple board §1 wants as a late-game sight is worthless exactly then.
-- **The hand learns no new verb.** Hand-only cards arrive at flat rates whatever the tier;
-  `escalation` (×5 for 6 s, the best moment in the game) comes about once every 11 minutes
-  (0.0015/s). Pizza is the only late toy.
-
-### What to do, most fun per effort first
-
-1. **Late tiers get a behaviour, not just a value.** `flaky` and `zombie` already respawn. Give
-   `rewrite` and `swarm` their own: a swarm card splits into several when closed, a rewrite takes
-   two sweeps. Ticket data plus a step in `util/board.ts`; each new rung then changes the board.
-   The sim must price it (`sim.spec` ×1.5).
-2. **Hand-only cards scale with tier.** More escalations and hotfixes as the run climbs gives the
-   hand targets worth aiming for and puts spikes into the late curve.
-3. **SP stays alive to the end.** An infinite SP sink that pays euros, e.g. an "Overtime" node:
-   unlimited ranks, +euro % each, price ×2 a rank. The harvest then has an SP decision, and the
-   beams pay off late.
-4. **Sign-off is an event.** Shorten the harvest to ~3 min (price `signoff` off ADR-8 income),
-   or make it a short final phase: an acceptance push where the board speeds up and something
-   specific must be cleared.
-
-Every one of these moves the balance: re-run the balance spec with the reports on, and hold the
-late ADR gaps above the two-minute floor.
+- **Hand-only cards scale with tier.** Escalations, hotfixes and incidents arrive more often as
+  the run climbs, so the hand has targets worth aiming for late.
+- **Sign-off starts the Acceptance phase.** Buying `signoff` no longer ends the run: the board
+  speeds up (faster spawns, shorter card life) and the run ends when the budget reaches
+  **€1 Qa**. Sized to 3–4 minutes on the advised run; `balance.spec` measures to the end of it.
+- Not doing: per-tier card behaviours (swarm split, two-sweep rewrite) and an infinite SP sink —
+  players don't notice them.
 
 ## 3. Hold the 30-minute run
 
@@ -184,12 +146,6 @@ This is more than flipping `HAZARDS_ENABLED`: `meeting` was tuned against a 10 s
 `CREW_EURO_WINDOW_FLOOR` needs re-measuring; `grooming` is a no-op; `migration`'s `supply: 0`
 has no counterplay; the two 120 s cadences coincide by accident. Offshore contractors, which
 only weather ever staffed, were removed with `3524a98`; the `offshore` hazard went with them.
-
-## 8. Needs a design call
-
-- **The hidden node.** The reference hides a "Wow you found me!" node at the zoomed-out corner of
-  its tree. Ours: _the undocumented endpoint_.
-- **Tree badges.** The reference uses four (`+`, `↑`, `%`, `✕`) by node kind; we stamp `+`/`%`.
 
 ---
 
