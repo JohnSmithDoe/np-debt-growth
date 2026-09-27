@@ -157,8 +157,10 @@ stops resolving to a file the build ships. **If that footer moves, it moves some
 unavoidable.** Read `README.md` before touching credits, the atlas, or the asset pipeline.
 
 Art is generated, not sourced: `tools/art-batch.mjs` is the manifest (one row per image, prompt
-included), `tools/pixelate.mjs` / `icon-knockout.mjs` force everything onto the palette whose first
-block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored — takes, not assets.
+included). Illustrations ship un-pixelated as WebP via `tools/backdrop.mjs`; icons, floor plates
+and the 2011 easter egg go through `tools/pixelate.mjs` / `icon-knockout.mjs` onto the palette
+whose first block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored —
+takes, not assets, and the only source of the raw art.
 
 ## Debug doors
 
@@ -171,11 +173,10 @@ block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored 
 
 ## The docs, and what each is for
 
-| File                 | What it is                                                                                                                                                                                                |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/gamedesign.md` | The design **as the code has it** — loop, currencies, crew, progression, where every knob lives, the current measured run, and the reference's measured numbers (§11). Read this before touching balance. |
-| `docs/upgrades.md`   | Every tree node and rail row: cost, ranks, effect, and where two purchases overlap.                                                                                                                       |
-| `docs/next-steps.md` | What is open, ranked, including the stage-performance leads and the traps that cost this project time.                                                                                                    |
+| File                 | What it is                                                                                                                                                                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/gamedesign.md` | The design **as the code has it** — loop, currencies, crew, progression, where every knob lives, the current measured run, the reference's measured numbers (§11) and what the screen shows (§12). Read this before touching balance. |
+| `docs/upgrades.md`   | Every tree node and rail row: cost, ranks, effect, and where two purchases overlap.                                                                                                                                                   |
 
 Docs describe the current state only — no history; git has that.
 
@@ -202,4 +203,4 @@ CB_CLOCK=1 CB_LADDER=1 CB_SHARE=1 CB_INCOME=1 pnpm vitest run src/app/game/data/
 A green suite, a clean build and a screenshot of the first twenty seconds all passed once while the
 skill tree was unreachable and ADRs were unbuyable. Drive the real app before claiming a feature
 works — `pnpm start`, then a Playwright script through `globalThis.debtGrowth` covers a whole run in
-under a minute.
+under a minute. Buying an ADR opens a modal; click `cb-adr-modal .btn.primary` before the next click.

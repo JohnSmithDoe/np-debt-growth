@@ -1,7 +1,7 @@
 # Debt Growth — game design
 
 The design as the code has it. Every number names the file it lives in; paths are relative to
-`src/app/game/` unless stated. Open work is in `next-steps.md`.
+`src/app/game/` unless stated.
 
 The reference is **Garbage Growth** (Steam demo, ends at the gorilla). Its measured numbers are
 in §11; they go in as they are.
@@ -208,7 +208,7 @@ mult }` and `{ kind: 'batch', crew, add, closeMult? }`. Senior traits use the sa
 
 The crew and Triage Policy's auto-close (§2) are the only automation; the only crew kinds are
 juniors, seniors and managers. Hand-only cards are the player's alone. The CI auto-close
-pipeline, offshore contractors and the Promotion Round are gone (see _Parked_ in `next-steps.md`).
+pipeline, an offshore-contractor crew kind and the Promotion Round were removed.
 
 ---
 
@@ -466,6 +466,15 @@ ADR-1 3.9    ADR-2 7.2    ADR-3 9.8    ADR-4 10.8   ADR-5 13.6   ADR-6 16.7
 ADR-7 19.7   ADR-8 24.0   signed off 28.3   accepted 31.6
 ```
 
+What that run cannot see, because the sim does not price it:
+
+- **Prod incidents.** A real board sends 3–5 auto-closed cards a second to prod from ADR-1 to
+  ADR-3 (lint arrives at 9–25/s and the trains are often away); the live cap of 3 keeps that
+  from flooding. Incidents bill 150 € × tier, so they matter early and not at all late.
+- **Weather** is on and unpriced; `storm` and `page` stack with the hand-only tier climb.
+- **Triage Policy** costs 500 / 1 600 SP for what is the biggest single SP source of the opening
+  (every lint card bills); tier-0 estimates were cut to +4 to hold the pace instead.
+
 ### Load-bearing, do not undo
 
 - Lanes are a hard cap, and the haul is the only forced wait. Softening it brings the wall clock
@@ -514,3 +523,47 @@ Only rank 1 of each line's throw-two and +50 % nodes is measured; ranks 2–5, t
 paper, and every tier above the dog are extrapolated (value ×10 a tier, € prices ×5, SP prices
 ×2). ADR-4…8 have no reference counterpart; the reference's first area ends at the gorilla and
 continues on a second screen (the sea), which we do not build.
+
+---
+
+## 12. The screen
+
+What the player sees, and where it lives. Paths are relative to `src/app/`.
+
+- **Window.** Built for 1280 × 800 and up (`--np-cb-min-width` / `--np-cb-min-height` in
+  `global.scss`, `minWidth` / `minHeight` in `tauri.conf.json`); the desktop window opens at
+  1440 × 900. `tools/viewport-check.mjs` measures 1280, 1440 and 1920 and fails if the page scrolls.
+- **Backdrop.** Each tier's art sits behind the cards at 40 % (`TIER_BACKDROP`,
+  `stage/scene/tier-backdrop.ts`): its title screen first, then its ADR plate, swapping every 30 s
+  with a 4 s crossfade; a new ADR switches to its title screen. Tier 0 pairs the lift with the
+  empty office. The files are `assets/board/backdrop/<tier>-<office|tier>.webp`, named by
+  `@shared/util/backdrop-art.ts`; the title screen and the ADR modal read the same files.
+- **Illustrations ship un-pixelated** as WebP, converted from `image-staging/` by
+  `tools/backdrop.mjs`. Pixelated on purpose: the 2011 easter egg, the finale party, the skill
+  icons, the office floor plates and every sprite.
+- **Walkers.** One sprite per debt line (`stage/model/spawner-skin.model.ts`), dressed for the
+  office and armed: the fresh grad, a skeleton on a cane, Frankenstein with a hammer, a contractor
+  with a pickaxe, a hooded figure with a staff, the Rockstar, a zombie with an axe, a demolition
+  worker with a sledgehammer, and three agents in suits. People or undead, no animals. Hashes in
+  `.claude/skills/lpc-character/presets.json`.
+- **Crew** wear their role: juniors short-sleeved in bright colours, seniors long-sleeved in dark
+  ones, managers in hat and vest (`stage/model/lpc-uniform.spec.ts`).
+- **Payouts.** Every sweep floats its own `+€` and `+SP` and fades (`floatPayout`, pooled in
+  `stage/util/float-pool.ts`, capped by `FLOAT_CAP`). The sprint strip keeps one float per lane
+  and updates its sum while money keeps landing.
+- **Sprint strip.** One bar per lane, filled left to right in up to ten segments tinted by the
+  lane's newest ticket; a lane that is away shows its train between two portals
+  (`stage/scene/sprint-strip.ts`).
+- **Masthead.** Budget and SP roll to their value and glow as they climb
+  (`console/ui/rolling/`); Budget shows €/s over the last 10 s of game time.
+- **Awards** stack in the board's bottom-left corner, three at a time, the rest behind a count
+  (`console/feature/award-banner/`).
+- **Rail.** Debt rows show their line's walker, Rates rows the card they bill; the next two
+  locked rows are silhouettes. Affordable rows glow on hover and flash when bought.
+- **Tree.** Opens framed on what can be bought; buyable squares pulse, bought paths are lit green,
+  lines into a buyable square are blue (`stage/scene/skill-scene.ts`).
+- **Canvas-drawn**, not art: the planning-poker coaches, the release train, the pizza circle and
+  the lane actors (`stage/util/board-atlas.ts`).
+- **Performance.** Profiled 27 Sep 2026 (Chrome, M-series Mac, 1280 × 800, dev build) at ADR-6
+  with 350 walkers and a full 600-card board, sweeping: 60 fps flat, the main thread 80–84 % idle.
+  Re-profile on a slower machine before optimising anything on the stage.
