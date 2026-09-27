@@ -142,7 +142,7 @@ export class SupplyPanelComponent {
         cost: `ADR-${row.adr}`,
         maxed: false,
         affordable: false,
-        icon: this.#cardOf(row.produces[0]),
+        icon: this.#walkerOf(row.adr),
       }));
   }
 
@@ -184,7 +184,7 @@ export class SupplyPanelComponent {
             : formatCompactMoney(this.#store.spawnerCost(row.adr)),
           maxed,
           affordable: this.#store.canBuySpawner(row.adr),
-          icon: this.#cardOf(row.produces[0]),
+          icon: this.#walkerOf(row.adr),
         };
       }
     );
@@ -382,6 +382,10 @@ export class SupplyPanelComponent {
           seconds: effect.seconds,
         });
     }
+  }
+
+  #walkerOf(adr: number): Row['icon'] | undefined {
+    return this.#icon('crew', this.#icons.icons().spawners.get(adr));
   }
 
   #cardOf(id: TicketTypeId | undefined): Row['icon'] | undefined {

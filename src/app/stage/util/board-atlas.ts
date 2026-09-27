@@ -9,6 +9,7 @@ import {
 import type { CrewKind } from '../../game/model/crew.model';
 import type { SceneDeps } from '../model/scene-deps.model';
 import { CREW_ATLAS, packedFrames } from '../model/lpc-sheet.model';
+import { SPAWNER_CAST, spawnerSkins } from '../model/spawner-skin.model';
 import {
   BOARD_INK,
   crewSkin,
@@ -143,9 +144,11 @@ const ICON_CREW: readonly CrewKind[] = ['juniors', 'seniors', 'managers'];
 export function boardIconUrls(scene: Phaser.Scene): {
   tickets: Map<TicketTypeId, string>;
   crew: Map<CrewKind, string>;
+  spawners: Map<number, string>;
 } {
   const tickets = new Map<TicketTypeId, string>();
   const crew = new Map<CrewKind, string>();
+  const spawners = new Map<number, string>();
   for (const id of TICKET_TYPE_IDS) {
     if (TICKET_TYPES[id].handOnly) continue;
     tickets.set(id, scene.textures.getBase64(ATLAS_KEY, cardFrame(id)));
@@ -157,8 +160,14 @@ export function boardIconUrls(scene: Phaser.Scene): {
       const frame = packedFrames(skin, 'idle down').start;
       crew.set(kind, scene.textures.getBase64(CREW_ATLAS.key, frame));
     }
+    for (let adr = 0; adr < SPAWNER_CAST.length; adr++) {
+      const skin = spawnerSkins(adr)[0];
+      if (!skin) continue;
+      const frame = packedFrames(skin, 'idle down').start;
+      spawners.set(adr, scene.textures.getBase64(CREW_ATLAS.key, frame));
+    }
   }
-  return { tickets, crew };
+  return { tickets, crew, spawners };
 }
 
 export function paintClaimCard(

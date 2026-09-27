@@ -56,6 +56,7 @@ export interface SceneDeps {
   publishIcons(icons: {
     readonly tickets: ReadonlyMap<TicketTypeId, string>;
     readonly crew: ReadonlyMap<CrewKind, string>;
+    readonly spawners: ReadonlyMap<number, string>;
   }): void;
 
   skillView(): SkillView;
