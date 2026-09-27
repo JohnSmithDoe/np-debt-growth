@@ -28,6 +28,10 @@
   inset: auto 1rem 1rem;
   max-width: 42rem;
   margin: 0 auto;
+  padding: 0.35rem 1rem;
+  border-radius: var(--np-cb-radius);
+  background: rgb(6 8 11 / 0.62);
+  color: var(--np-cb-ink-2);
   text-align: center;
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
 }
@@ -74,16 +78,20 @@ h1 {
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
 }
 
-.languages,
-.screen {
+.languages {
   display: flex;
   gap: var(--np-cb-space-2, 0.5rem);
+  align-items: center;
   justify-content: center;
   margin-top: var(--np-cb-space-4, 1rem);
 }
 
-.screen {
-  margin-top: var(--np-cb-space-4, 1rem);
+.divider {
+  width: 1px;
+  height: 1.2rem;
+  margin-inline: 0.35rem;
+  background: currentcolor;
+  opacity: 0.3;
 }
 
 .lang {

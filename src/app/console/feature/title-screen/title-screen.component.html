@@ -22,10 +22,8 @@
             {{ 'language.' + option | translate }}
           </button>
         }
-      </div>
-
-      @if (canFullscreen) {
-        <div class="screen">
+        @if (canFullscreen) {
+          <span class="divider" aria-hidden="true"></span>
           <button
             type="button"
             class="lang"
@@ -36,8 +34,8 @@
               (fullscreen() ? 'title.windowed' : 'title.fullscreen') | translate
             }}
           </button>
-        </div>
-      }
+        }
+      </div>
     </div>
 
     <cb-credits class="legal" />
