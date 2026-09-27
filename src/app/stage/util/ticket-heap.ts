@@ -59,6 +59,8 @@ export class TicketHeap {
   readonly #slotOf = new Map<number, number>();
   readonly #drawn = new Map<number, BoardTicket>();
   readonly #drawnAs = new Map<number, TicketTypeId>();
+  /** Still in the air: the flyer draws them until `reveal`. */
+  readonly #airborne = new Set<number>();
   readonly #rareSlot = new Map<number, number>();
 
   readonly #bouncing = new Map<number, number>();
@@ -190,6 +192,8 @@ export class TicketHeap {
         )
       ) {
         this.#draw(ticket);
+      } else {
+        this.#airborne.add(ticket.id);
       }
     }
 
@@ -256,6 +260,7 @@ export class TicketHeap {
   }
 
   reveal(id: number): void {
+    this.#airborne.delete(id);
     const ticket = this.#drawn.get(id);
     if (ticket) this.#draw(ticket);
   }
@@ -304,6 +309,7 @@ export class TicketHeap {
   }
 
   #drop(id: number): void {
+    this.#airborne.delete(id);
     const slot = this.#slotOf.get(id);
     if (slot === undefined) return;
     const claim = this.#claimSlot.get(id);
@@ -331,6 +337,7 @@ export class TicketHeap {
   }
 
   #draw(ticket: BoardTicket): void {
+    if (this.#airborne.has(ticket.id)) return;
     const slot = this.#slotOf.get(ticket.id);
     if (slot === undefined) return;
     const fade = fadeOf(ticket);

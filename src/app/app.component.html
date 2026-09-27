@@ -12,11 +12,13 @@
         [cbRolling]="budget()"
         [rollingFormat]="money"
       ></dd>
-      @if (rate() > 0) {
-        <span class="rate">{{
-          'hud.rate' | translate: { rate: money(rate()) }
-        }}</span>
-      }
+      <span class="rate" [attr.aria-hidden]="rate() > 0 ? null : true">
+        @if (rate() > 0) {
+          {{ 'hud.rate' | translate: { rate: money(rate()) } }}
+        } @else {
+          &nbsp;
+        }
+      </span>
     </div>
     <div>
       <dt>{{ 'hud.points' | translate }}</dt>

@@ -23,39 +23,68 @@ export class FlyerPool {
   readonly #free: number[] = [];
   readonly #active: number[] = [];
 
-  readonly #kind = new Int32Array(FLYER_CAPACITY);
-  readonly #ticket = new Int32Array(FLYER_CAPACITY);
-  readonly #fromX = new Float32Array(FLYER_CAPACITY);
-  readonly #fromY = new Float32Array(FLYER_CAPACITY);
-  readonly #toX = new Float32Array(FLYER_CAPACITY);
-  readonly #toY = new Float32Array(FLYER_CAPACITY);
-  readonly #arc = new Float32Array(FLYER_CAPACITY);
-  readonly #span = new Float32Array(FLYER_CAPACITY);
-  readonly #elapsed = new Float32Array(FLYER_CAPACITY);
-  readonly #hold = new Float32Array(FLYER_CAPACITY);
-  readonly #voted = new Uint8Array(FLYER_CAPACITY);
-  readonly #alpha = new Float32Array(FLYER_CAPACITY);
+  #kind = new Int32Array(FLYER_CAPACITY);
+  #ticket = new Int32Array(FLYER_CAPACITY);
+  #fromX = new Float32Array(FLYER_CAPACITY);
+  #fromY = new Float32Array(FLYER_CAPACITY);
+  #toX = new Float32Array(FLYER_CAPACITY);
+  #toY = new Float32Array(FLYER_CAPACITY);
+  #arc = new Float32Array(FLYER_CAPACITY);
+  #span = new Float32Array(FLYER_CAPACITY);
+  #elapsed = new Float32Array(FLYER_CAPACITY);
+  #hold = new Float32Array(FLYER_CAPACITY);
+  #voted = new Uint8Array(FLYER_CAPACITY);
+  #alpha = new Float32Array(FLYER_CAPACITY);
   readonly #falling = new Map<number, number>();
 
   #onArrive: Arrival = () => undefined;
   #voteTop = 0;
 
+  readonly #scene: Phaser.Scene;
+  readonly #depth: number;
+
   constructor(scene: Phaser.Scene, depth: number) {
-    for (let slot = FLYER_CAPACITY - 1; slot >= 0; slot--) {
+    this.#scene = scene;
+    this.#depth = depth;
+    this.#add(0, FLYER_CAPACITY);
+  }
+
+  #add(from: number, to: number): void {
+    for (let slot = from; slot < to; slot++) {
       this.#images.push(
-        scene.add.image(0, 0, ATLAS_KEY).setDepth(depth).setVisible(false)
-      );
-      this.#free.push(slot);
-      this.#kind[slot] = IDLE;
-    }
-    for (let slot = FLYER_CAPACITY - 1; slot >= 0; slot--) {
-      this.#rings.push(
-        scene.add
-          .image(0, 0, ATLAS_KEY, VOTE_RING_FRAME)
-          .setDepth(depth)
+        this.#scene.add
+          .image(0, 0, ATLAS_KEY)
+          .setDepth(this.#depth)
           .setVisible(false)
       );
+      this.#rings.push(
+        this.#scene.add
+          .image(0, 0, ATLAS_KEY, VOTE_RING_FRAME)
+          .setDepth(this.#depth)
+          .setVisible(false)
+      );
+      this.#kind[slot] = IDLE;
     }
+    for (let slot = to - 1; slot >= from; slot--) this.#free.push(slot);
+  }
+
+  /** Doubles the pool: no card is ever denied its flight. */
+  #grow(): void {
+    const from = this.#images.length;
+    const to = from * 2;
+    this.#kind = widen(this.#kind, new Int32Array(to));
+    this.#ticket = widen(this.#ticket, new Int32Array(to));
+    this.#fromX = widen(this.#fromX, new Float32Array(to));
+    this.#fromY = widen(this.#fromY, new Float32Array(to));
+    this.#toX = widen(this.#toX, new Float32Array(to));
+    this.#toY = widen(this.#toY, new Float32Array(to));
+    this.#arc = widen(this.#arc, new Float32Array(to));
+    this.#span = widen(this.#span, new Float32Array(to));
+    this.#elapsed = widen(this.#elapsed, new Float32Array(to));
+    this.#hold = widen(this.#hold, new Float32Array(to));
+    this.#voted = widen(this.#voted, new Uint8Array(to));
+    this.#alpha = widen(this.#alpha, new Float32Array(to));
+    this.#add(from, to);
   }
 
   set onArrive(handler: Arrival) {
@@ -80,6 +109,7 @@ export class FlyerPool {
     hold = 0,
     alpha = 1
   ): boolean {
+    if (this.#free.length === 0) this.#grow();
     const slot = this.#free.pop();
     if (slot === undefined) return false;
 
@@ -222,6 +252,14 @@ export class FlyerPool {
     for (const image of this.#images) image.destroy();
     for (const ring of this.#rings) ring.destroy();
   }
+}
+
+function widen<T extends Int32Array | Float32Array | Uint8Array>(
+  from: T,
+  to: T
+): T {
+  to.set(from);
+  return to;
 }
 
 function ease(kind: number, progress: number): number {
