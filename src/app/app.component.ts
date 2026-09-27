@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
   formatCompactMoney,
@@ -14,6 +15,7 @@ import {
   formatPoints,
   formatPointsExact,
 } from './@shared/util/format-quantity';
+import { RollingNumberDirective } from './console/ui/rolling/rolling-number.directive';
 import { BacklogTickerComponent } from './console/ui/backlog-ticker/backlog-ticker.component';
 import { AgentComponent } from './console/feature/agent/agent.component';
 import { AdrModalComponent } from './console/feature/adr-modal/adr-modal.component';
@@ -31,9 +33,8 @@ import { AudioService } from './audio/data/audio.service';
 import { StageModeService } from './stage/data/stage-mode.service';
 import { GameStore } from './game/data/game.store';
 
-function formatCountdown(remainingMs: number): string {
-  return `${Math.ceil(remainingMs / 1000)}s`;
-}
+/** Billing measured over this much game time for the €/s readout. */
+const RATE_WINDOW_MS = 10_000;
 
 @Component({
   selector: 'cb-root',
@@ -53,6 +54,8 @@ function formatCountdown(remainingMs: number): string {
     TitleScreenComponent,
     PostMortemComponent,
     SettingsModalComponent,
+    RollingNumberDirective,
+    TranslatePipe,
   ],
 })
 export class AppComponent {
@@ -60,6 +63,7 @@ export class AppComponent {
   #audio = inject(AudioService);
   #stage = inject(StageModeService);
   #settings = inject(SettingsUiService);
+  #translate = inject(TranslateService);
 
   readonly client = CLIENT_NAME;
   readonly engagement = ENGAGEMENT_NAME;
@@ -87,9 +91,14 @@ export class AppComponent {
   readonly points = formatPoints;
 
   readonly exactMoney = computed(() => formatMoney(this.budget()));
-  readonly exactPoints = computed(
-    () => `${formatPointsExact(this.storyPoints())} Story Points`
+  readonly exactPoints = computed(() =>
+    this.#translate.instant('hud.points.exact', {
+      points: formatPointsExact(this.storyPoints()),
+    })
   );
+
+  readonly #billing: { at: number; billed: number }[] = [];
+  readonly rate = signal(0);
 
   readonly sprintFill = computed(() => {
     const slots = this.sprintSlots();
@@ -107,8 +116,10 @@ export class AppComponent {
   readonly canFull = this.#store.canFull;
   readonly roundLabel = computed(() =>
     this.running()
-      ? 'open'
-      : `release ${formatCountdown(this.#store.roundLeftMs())}`
+      ? this.#translate.instant('hud.round.open')
+      : this.#translate.instant('hud.round.release', {
+          seconds: Math.ceil(this.#store.roundLeftMs() / 1000),
+        })
   );
 
   readonly awardPaid = signal(false);
@@ -132,5 +143,28 @@ export class AppComponent {
       if (awarded > this.#awarded) this.awardPaid.set(true);
       this.#awarded = awarded;
     });
+    effect(() => this.#sampleRate(this.#store.state()));
+  }
+
+  #sampleRate({
+    runMs,
+    lifetimeBilled,
+  }: {
+    runMs: number;
+    lifetimeBilled: number;
+  }): void {
+    const samples = this.#billing;
+    const newest = samples.at(-1);
+    if (newest && runMs < newest.at) samples.length = 0;
+    if (newest?.at === runMs) return;
+    samples.push({ at: runMs, billed: lifetimeBilled });
+    while (samples.length > 2 && runMs - samples[1]!.at >= RATE_WINDOW_MS) {
+      samples.shift();
+    }
+    const oldest = samples[0]!;
+    const span = runMs - oldest.at;
+    this.rate.set(
+      span > 0 ? ((lifetimeBilled - oldest.billed) * 1000) / span : 0
+    );
   }
 }

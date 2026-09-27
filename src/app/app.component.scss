@@ -84,6 +84,30 @@
     color: var(--np-cb-points);
   }
 
+  .money,
+  .points {
+    transform-origin: left center;
+  }
+
+  .money.gain {
+    --gain-glow: var(--np-cb-money);
+    animation: gain 600ms ease-out;
+  }
+
+  .points.gain {
+    --gain-glow: var(--np-cb-points);
+    animation: gain 600ms ease-out;
+  }
+
+  .rate {
+    display: block;
+    font-family: var(--np-cb-font-util);
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--np-cb-ink-3);
+  }
+
   .points.paid {
     animation: paid 700ms ease-out;
     transform-origin: left center;
@@ -163,6 +187,21 @@
   }
 }
 
+@keyframes gain {
+  0% {
+    transform: scale(1);
+  }
+
+  30% {
+    transform: scale(1.08);
+    text-shadow: 0 0 0.5rem var(--gain-glow);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
 @keyframes still {
   from {
     opacity: 1;
@@ -170,7 +209,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .readout .points.paid {
+  .readout .points.paid,
+  .readout .gain {
     animation: still 1ms linear;
   }
 }

@@ -5,35 +5,44 @@
   </div>
   <dl class="readout">
     <div>
-      <dt>Budget</dt>
-      <dd class="money" data-payout-target="money" [title]="exactMoney()">
-        {{ money(budget()) }}
-      </dd>
+      <dt>{{ 'hud.budget' | translate }}</dt>
+      <dd
+        class="money"
+        data-payout-target="money"
+        [title]="exactMoney()"
+        [cbRolling]="budget()"
+        [rollingFormat]="money"
+      ></dd>
+      @if (rate() > 0) {
+        <span class="rate">{{
+          'hud.rate' | translate: { rate: money(rate()) }
+        }}</span>
+      }
     </div>
     <div>
-      <dt>Story Points</dt>
+      <dt>{{ 'hud.points' | translate }}</dt>
       <dd
         class="points"
         data-payout-target="points"
         [class.paid]="awardPaid()"
         [title]="exactPoints()"
         (animationend)="awardPaid.set(false)"
-      >
-        {{ points(storyPoints()) }}
-      </dd>
+        [cbRolling]="storyPoints()"
+        [rollingFormat]="points"
+      ></dd>
     </div>
     <div class="round">
-      <dt>Round</dt>
+      <dt>{{ 'hud.round' | translate }}</dt>
       <dd>{{ roundSeq() }} · {{ roundLabel() }}</dd>
     </div>
     <div class="sprint">
-      <dt>Sprint</dt>
+      <dt>{{ 'hud.sprint' | translate }}</dt>
       <dd>
         @if (running()) {
           {{ sprintCount() }}/{{ sprintSlots() }}
           <span class="pending">{{ money(sprintValue()) }}</span>
           @if (canFull()) {
-            <span class="chip sev0">full · release train out</span>
+            <span class="chip sev0">{{ 'hud.sprint.full' | translate }}</span>
           }
         } @else {
           <span class="muted">—</span>
@@ -47,20 +56,23 @@
   <div class="controls">
     @if (treeOpen() && !onTree()) {
       <button type="button" class="btn primary small tree" (click)="toTree()">
-        Open the tree
+        {{ 'hud.tree.open' | translate }}
         @if (storyPoints() > 0) {
           <span class="chip points">{{ points(storyPoints()) }}</span>
         }
         @if (skillAffordable()) {
-          <span class="buyable" aria-label="something to buy"></span>
+          <span
+            class="buyable"
+            [attr.aria-label]="'hud.tree.buyable' | translate"
+          ></span>
         }
       </button>
     }
     <button
       type="button"
       class="btn ghost small settings"
-      title="Settings"
-      aria-label="Settings"
+      [title]="'hud.settings' | translate"
+      [attr.aria-label]="'hud.settings' | translate"
       (click)="openSettings()"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -84,7 +96,7 @@
     @if (onTree()) {
       <div class="interval-bar">
         <button type="button" class="btn primary" (click)="toReview()">
-          Back to the floor
+          {{ 'hud.tree.back' | translate }}
         </button>
       </div>
     }
