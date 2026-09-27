@@ -1,0 +1,178 @@
+.finale {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  color: var(--np-cb-ink);
+  text-align: center;
+  text-shadow:
+    0 2px 0 rgb(6 8 11 / 0.9),
+    0 0 0.6rem rgb(6 8 11 / 0.8);
+}
+
+.lane {
+  position: absolute;
+  inset: 0 50%;
+  width: min(32rem, 92vw);
+  transform: translateX(-50%);
+  overflow: hidden;
+  background: radial-gradient(
+    ellipse 50% 70% at 50% 50%,
+    rgb(6 8 11 / 0.42),
+    rgb(6 8 11 / 0.18) 70%,
+    transparent
+  );
+}
+
+.roll {
+  position: absolute;
+  inset: 0 0 auto;
+  padding: 0 2rem 4rem;
+  animation-name: roll;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes roll {
+  from {
+    transform: translateY(100vh);
+  }
+
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+section {
+  margin-bottom: 4.5rem;
+}
+
+.opening h1 {
+  font-family: var(--np-cb-font-display);
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  margin-bottom: 0.8rem;
+  font-family: var(--np-cb-font-pixel);
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--np-cb-money);
+}
+
+h3 {
+  margin: 1.1rem 0 0.35rem;
+  font-family: var(--np-cb-font-util);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--np-cb-ink-3);
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1.7;
+}
+
+.names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 1rem;
+  justify-content: center;
+}
+
+.name {
+  font-size: 1.05rem;
+}
+
+.artists .name {
+  line-height: 1.9;
+}
+
+p {
+  margin: 0.4rem 0 0;
+  line-height: 1.5;
+}
+
+.aside {
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--np-cb-ink-2);
+}
+
+.thanks {
+  margin-top: 1.2rem;
+  font-size: 1rem;
+  color: var(--np-cb-points);
+}
+
+.skip {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  pointer-events: auto;
+  text-shadow: none;
+}
+
+.card {
+  position: relative;
+  max-width: 40rem;
+  margin: clamp(0.8rem, 4vh, 2.4rem) auto 0;
+  padding: 1.4rem 1.8rem 1.5rem;
+  pointer-events: auto;
+  background: rgb(15 18 22 / 0.82);
+  border: 1px solid var(--np-cb-rule);
+  border-radius: var(--np-cb-radius);
+  box-shadow: var(--np-cb-lift);
+  animation: rise 700ms ease-out;
+
+  h1 {
+    font-family: var(--np-cb-font-display);
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    letter-spacing: -0.02em;
+  }
+
+  .stats {
+    font-family: var(--np-cb-font-util);
+    font-size: 0.78rem;
+    color: var(--np-cb-money);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 1.1rem;
+  text-shadow: none;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lane {
+    overflow-y: auto;
+    pointer-events: auto;
+  }
+
+  .roll {
+    position: static;
+    padding-top: 3rem;
+    animation: none;
+  }
+
+  .card {
+    animation: none;
+  }
+}

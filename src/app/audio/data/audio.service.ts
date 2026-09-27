@@ -1,8 +1,10 @@
 import { effect, inject, Injectable, signal } from '@angular/core';
 
+import { FinaleService } from '../../@shared/data/finale.service';
 import { GameStore } from '../../game/data/game.store';
 import {
   AUDIO_MUTE_KEY,
+  FINALE_TRACK,
   MASTER_GAIN,
   MAX_CLICKS_PER_TICK,
   MAX_VOICES_PER_WINDOW,
@@ -22,6 +24,7 @@ type Voice = (ctx: AudioContext, destination: AudioNode) => void;
 @Injectable({ providedIn: 'root' })
 export class AudioService {
   #store = inject(GameStore);
+  #finale = inject(FinaleService);
 
   #ctx: AudioContext | null = null;
   #master: GainNode | null = null;
@@ -40,6 +43,7 @@ export class AudioService {
   #music: HTMLAudioElement | null = null;
   #track = 0;
   #musicOn = signal(false);
+  #finaleOn = false;
 
   readonly muted = signal(this.#loadMuted());
 
@@ -48,6 +52,11 @@ export class AudioService {
     window.addEventListener('keydown', this.#unlock);
 
     effect(() => {
+      const finale = this.#finale.act() !== 'closed';
+      if (finale !== this.#finaleOn) {
+        this.#finaleOn = finale;
+        if (this.#music) this.#load(this.#music);
+      }
       if (this.#musicOn() && !this.muted()) this.#playMusic();
       else this.#music?.pause();
     });
@@ -147,7 +156,9 @@ export class AudioService {
     const music = new Audio();
     music.preload = 'auto';
     music.addEventListener('ended', () => {
-      this.#track = (this.#track + 1) % MUSIC_TRACKS.length;
+      if (!this.#finaleOn) {
+        this.#track = (this.#track + 1) % MUSIC_TRACKS.length;
+      }
       this.#load(music);
       if (this.#musicOn() && !this.muted()) this.#playMusic();
     });
@@ -157,7 +168,7 @@ export class AudioService {
   }
 
   #load(music: HTMLAudioElement): void {
-    const track = MUSIC_TRACKS[this.#track];
+    const track = this.#finaleOn ? FINALE_TRACK : MUSIC_TRACKS[this.#track];
     if (!track) return;
     music.src = track.src;
     music.volume = track.volume;

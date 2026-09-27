@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 
 import type {
+  FinaleMove,
   LpcAnimation,
   LpcBlock,
   LpcDirection,
@@ -8,6 +9,8 @@ import type {
 } from '../model/lpc-sheet.model';
 import {
   CREW_ATLAS,
+  FINALE_ATLAS,
+  FINALE_MOVE_ORDER,
   FRAMES_PER_SKIN,
   LPC_BLOCK_RATE,
   LPC_FOOT,
@@ -16,6 +19,7 @@ import {
   LPC_SKINS,
   PACKED_BLOCKS,
   lpcAnimations,
+  finaleFrames,
   lpcFacing,
   packedFrames,
 } from '../model/lpc-sheet.model';
@@ -58,6 +62,62 @@ export function registerCrewAnimations(scene: Phaser.Scene): void {
   }
 }
 
+/** Poses (`sit`, `emote`) are held, not played; `run` and `spellcast` loop. */
+const FINALE_PLAY: Partial<
+  Record<FinaleMove, { readonly rate: number; readonly repeat: number }>
+> = {
+  'run left': { rate: 14, repeat: -1 },
+  'run right': { rate: 14, repeat: -1 },
+  'jump down': { rate: 12, repeat: 0 },
+  'spellcast down': { rate: 10, repeat: -1 },
+  'hurt down': { rate: 8, repeat: 0 },
+};
+
+export const finaleAnimationKey = (skin: LpcSkin, move: FinaleMove): string =>
+  `${skin}:finale:${move}`;
+
+export function loadFinaleAtlas(scene: Phaser.Scene): void {
+  if (scene.textures.exists(FINALE_ATLAS.key)) return;
+  scene.load.spritesheet(FINALE_ATLAS.key, FINALE_ATLAS.url, {
+    frameWidth: LPC_FRAME,
+    frameHeight: LPC_FRAME,
+  });
+}
+
+export function registerFinaleAnimations(scene: Phaser.Scene): void {
+  scene.textures
+    .get(FINALE_ATLAS.key)
+    .setFilter(Phaser.Textures.FilterMode.NEAREST);
+  for (const skin of LPC_SKINS) {
+    for (const move of FINALE_MOVE_ORDER) {
+      const play = FINALE_PLAY[move];
+      const key = finaleAnimationKey(skin, move);
+      if (!play || scene.anims.exists(key)) continue;
+      scene.anims.create({
+        key,
+        frames: scene.anims.generateFrameNumbers(
+          FINALE_ATLAS.key,
+          finaleFrames(skin, move)
+        ),
+        frameRate: play.rate,
+        repeat: play.repeat,
+      });
+    }
+  }
+}
+
+/** The finale atlas is 51 MiB of VRAM and only the curtain call reads it. */
+export function releaseFinaleAtlas(scene: Phaser.Scene): void {
+  for (const skin of LPC_SKINS) {
+    for (const move of FINALE_MOVE_ORDER) {
+      scene.anims.remove(finaleAnimationKey(skin, move));
+    }
+  }
+  if (scene.textures.exists(FINALE_ATLAS.key)) {
+    scene.textures.remove(FINALE_ATLAS.key);
+  }
+}
+
 function assertAtlas(scene: Phaser.Scene): void {
   const image = scene.textures.get(CREW_ATLAS.key).getSourceImage();
   const capacity =
@@ -82,6 +142,10 @@ export class LpcSprite extends Phaser.GameObjects.Sprite {
     this.#skin = skin;
     this.setOrigin(0.5, LPC_FOOT / LPC_FRAME);
     scene.add.existing(this);
+  }
+
+  get skin(): LpcSkin {
+    return this.#skin;
   }
 
   get facing(): LpcDirection {
@@ -109,5 +173,21 @@ export class LpcSprite extends Phaser.GameObjects.Sprite {
 
   playLpc(animation: LpcAnimation): this {
     return this.play(animationKey(this.#skin, animation), true);
+  }
+
+  /** A finale move; the next `perform` starts afresh whatever it was. */
+  playFinale(move: FinaleMove, restart = false): this {
+    this.#block = undefined;
+    return this.play(finaleAnimationKey(this.#skin, move), !restart);
+  }
+
+  /** Holds one frame of a finale move still. */
+  holdFinale(move: FinaleMove, frame: number): this {
+    this.#block = undefined;
+    this.stop();
+    return this.setTexture(
+      FINALE_ATLAS.key,
+      finaleFrames(this.#skin, move).start + frame
+    );
   }
 }

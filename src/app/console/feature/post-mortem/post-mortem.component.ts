@@ -1,4 +1,4 @@
-import { TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +6,7 @@ import {
   inject,
 } from '@angular/core';
 
+import { FinaleService } from '../../../@shared/data/finale.service';
 import {
   formatMoney,
   formatWhole,
@@ -41,16 +42,20 @@ interface Authorisation {
   templateUrl: './post-mortem.component.html',
   styleUrl: './post-mortem.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BackdropDirective],
+  imports: [BackdropDirective, TranslatePipe],
   host: { '(document:keydown.escape)': 'leaveOnBackdrop()' },
 })
 export class PostMortemComponent {
   #store = inject(GameStore);
   #translate = inject(TranslateService);
   #retro = inject(RetroService);
+  #finale = inject(FinaleService);
 
   readonly final = this.#store.ended;
-  readonly shown = computed(() => this.final() || this.#retro.isOpen());
+  readonly shown = computed(
+    () =>
+      (this.final() || this.#retro.isOpen()) && this.#finale.act() === 'closed'
+  );
 
   readonly client = CLIENT_NAME;
   readonly engagement = ENGAGEMENT_NAME;
@@ -61,6 +66,10 @@ export class PostMortemComponent {
 
   close(): void {
     this.#retro.close();
+  }
+
+  toFinale(): void {
+    this.#finale.open();
   }
 
   leaveOnBackdrop(): void {

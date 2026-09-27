@@ -1,0 +1,105 @@
+@if (act() !== 'closed') {
+  <div class="finale" [class.curtain]="act() === 'curtain'">
+    @if (act() === 'roll') {
+      <div class="lane">
+        <div
+          class="roll"
+          role="region"
+          [attr.aria-label]="'finale.roll.label' | translate"
+          [style.animation-duration.ms]="rollMs"
+          (animationend)="curtain()"
+        >
+          <section class="opening">
+            <h1>{{ 'title.name' | translate }}</h1>
+            <p>{{ 'title.strap' | translate }}</p>
+          </section>
+
+          <section>
+            <h2>{{ 'finale.roll.made' | translate }}</h2>
+            <p class="name">{{ author }}</p>
+          </section>
+
+          <section>
+            <h2>{{ 'finale.roll.crew' | translate }}</h2>
+            @for (line of crew; track line.key) {
+              <h3>{{ line.key | translate }}</h3>
+              <ul class="names">
+                @for (name of line.names; track name) {
+                  <li>{{ name }}</li>
+                }
+              </ul>
+            }
+          </section>
+
+          <section>
+            <h2>{{ 'finale.roll.adrs' | translate }}</h2>
+            <ul>
+              @for (adr of adrs(); track adr) {
+                <li>{{ adr }}</li>
+              }
+            </ul>
+            <p class="aside">{{ 'finale.roll.adrs.note' | translate }}</p>
+          </section>
+
+          <section>
+            <h2>{{ 'finale.roll.approved' | translate: { client } }}</h2>
+            <ul>
+              @for (approver of approvers; track approver) {
+                <li>{{ approver }}</li>
+              }
+            </ul>
+          </section>
+
+          <section class="artists">
+            <h2>{{ 'finale.roll.drawn' | translate }}</h2>
+            <ul>
+              @for (artist of artists; track artist) {
+                <li class="name">{{ artist }}</li>
+              }
+            </ul>
+            <p class="aside">{{ 'finale.roll.drawn.unnamed' | translate }}</p>
+            <p>{{ 'finale.roll.drawn.via' | translate }}</p>
+            <p class="thanks">{{ 'finale.roll.drawn.thanks' | translate }}</p>
+          </section>
+
+          <section>
+            <h2>{{ 'finale.roll.built' | translate }}</h2>
+            @for (credit of built; track credit.what) {
+              <h3>{{ credit.what }}</h3>
+              <p>{{ credit.who }}</p>
+            }
+          </section>
+
+          <section>
+            <p class="aside">{{ 'finale.roll.aside.harm' | translate }}</p>
+            <p class="aside">{{ 'finale.roll.aside.backlog' | translate }}</p>
+            <p class="aside">
+              {{ 'finale.roll.aside.resemblance' | translate }}
+            </p>
+          </section>
+        </div>
+      </div>
+
+      <button type="button" class="btn small ghost skip" (click)="curtain()">
+        {{ 'finale.skip' | translate }}
+      </button>
+    } @else {
+      <article class="card" aria-live="polite">
+        <cb-confetti class="sparks" [pieces]="36" />
+        <h1>{{ 'finale.curtain.title' | translate }}</h1>
+        <p>{{ 'finale.curtain.body' | translate }}</p>
+        <p class="stats">{{ stats() }}</p>
+        <p>{{ 'finale.curtain.artists' | translate }}</p>
+        <p class="aside">{{ 'finale.curtain.action' | translate }}</p>
+        <div class="actions">
+          <button type="button" class="btn primary" (click)="newEngagement()">
+            {{ 'finale.curtain.again' | translate }}
+          </button>
+          <button type="button" class="btn ghost" (click)="backToPostMortem()">
+            {{ 'finale.curtain.back' | translate }}
+          </button>
+        </div>
+      </article>
+    }
+  </div>
+}

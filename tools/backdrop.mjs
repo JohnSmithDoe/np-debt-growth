@@ -30,6 +30,10 @@ const TIERS = [
 const SCREENS = [
   { take: 'title-tower', out: 'src/assets/art/office/tower.webp' },
   { take: 'screen-post-mortem', out: 'src/assets/art/screen/post-mortem.webp' },
+  {
+    take: 'finale-party.498864617',
+    out: 'src/assets/art/screen/finale-party.webp',
+  },
 ];
 
 const quality = process.argv.find((a) => a.startsWith('--quality='));

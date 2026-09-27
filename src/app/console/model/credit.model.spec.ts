@@ -5,9 +5,12 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ART_LICENSE_URL,
+  ARTIST_ALIASES,
   CREDITS,
   LICENSE_URL,
+  LPC_ARTISTS,
   SOURCE_URL,
+  UNNAMED_ARTIST,
 } from './credit.model';
 
 interface AssetEntry {
@@ -48,5 +51,34 @@ describe('credits', () => {
     for (const url of linked) {
       expect(sources(url).some(existsSync), url).toBe(true);
     }
+  });
+});
+
+describe('the LPC artists on the closing roll', () => {
+  const named = (): Set<string> => {
+    const file = readFileSync(
+      'src/assets/characters/crew-atlas.credits.txt',
+      'utf8'
+    );
+    const names = new Set<string>();
+    let inAuthors = false;
+    for (const line of file.split('\n')) {
+      if (/^\t- Authors:/.test(line)) inAuthors = true;
+      else if (/^\t- /.test(line) || !line.startsWith('\t\t- ')) {
+        inAuthors = false;
+      } else if (inAuthors) {
+        const name = line.slice(4).trim();
+        if (name !== UNNAMED_ARTIST) names.add(ARTIST_ALIASES[name] ?? name);
+      }
+    }
+    return names;
+  };
+
+  it('names everyone the shipped sheets credit, and no one else', () => {
+    expect(new Set(LPC_ARTISTS)).toEqual(named());
+  });
+
+  it('names each of them once', () => {
+    expect(new Set(LPC_ARTISTS).size).toBe(LPC_ARTISTS.length);
   });
 });

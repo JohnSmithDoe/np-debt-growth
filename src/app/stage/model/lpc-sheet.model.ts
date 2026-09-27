@@ -76,6 +76,40 @@ export function packedFrames(
   return { start, end: start + frames - 1 };
 }
 
+export const FINALE_ATLAS = {
+  key: 'cb-finale',
+  url: 'assets/characters/finale-atlas.png',
+} as const;
+
+/** The curtain call's moves, in packing order, each one facing only. */
+export const FINALE_MOVES = {
+  'run left': 8,
+  'run right': 8,
+  'jump down': 5,
+  'sit down': 3,
+  'emote down': 3,
+  'spellcast down': 7,
+  'hurt down': 6,
+} as const;
+
+export type FinaleMove = keyof typeof FINALE_MOVES;
+
+export const FINALE_MOVE_ORDER = Object.keys(FINALE_MOVES) as FinaleMove[];
+
+export const FINALE_FRAMES_PER_SKIN = FINALE_MOVE_ORDER.reduce(
+  (total, move) => total + FINALE_MOVES[move],
+  0
+);
+
+export function finaleFrames(skin: LpcSkin, move: FinaleMove): LpcFrames {
+  let start = LPC_SKINS.indexOf(skin) * FINALE_FRAMES_PER_SKIN;
+  for (const earlier of FINALE_MOVE_ORDER) {
+    if (earlier === move) break;
+    start += FINALE_MOVES[earlier];
+  }
+  return { start, end: start + FINALE_MOVES[move] - 1 };
+}
+
 export function lpcAnimations(block: LpcBlock): readonly LpcAnimation[] {
   return LPC_DIRECTIONS.map((d) => `${block} ${d}` as LpcAnimation);
 }

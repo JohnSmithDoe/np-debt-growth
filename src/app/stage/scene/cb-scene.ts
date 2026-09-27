@@ -47,7 +47,7 @@ export abstract class CbScene extends Phaser.Scene {
       }
     };
     this.events.on(Phaser.Scenes.Events.ADDED_TO_SCENE, onAdded);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+    this.onLeave(() =>
       this.events.off(Phaser.Scenes.Events.ADDED_TO_SCENE, onAdded)
     );
     if (!fixedCamera) return;
@@ -56,9 +56,19 @@ export abstract class CbScene extends Phaser.Scene {
     };
     fit();
     this.scale.on(Phaser.Scale.Events.RESIZE, fit);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
-      this.scale.off(Phaser.Scale.Events.RESIZE, fit)
-    );
+    this.onLeave(() => this.scale.off(Phaser.Scale.Events.RESIZE, fit));
+  }
+
+  /** Once, on stop or on removal: `scene.remove` destroys without a shutdown. */
+  protected onLeave(teardown: () => void): void {
+    let done = false;
+    const once = (): void => {
+      if (done) return;
+      done = true;
+      teardown();
+    };
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, once);
+    this.events.once(Phaser.Scenes.Events.DESTROY, once);
   }
 
   protected get floats(): FloatPool {

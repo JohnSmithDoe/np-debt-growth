@@ -1,5 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 
+import { FinaleService } from '../../@shared/data/finale.service';
+
 import type { PurchaseId } from '../model/balance/progression';
 import { NO_TICKET } from '../model/board.model';
 import type { TicketTypeId } from '../model/ticket.model';
@@ -18,6 +20,8 @@ export interface HarnessDoors {
   buySpawner(adr: number): boolean;
   /** Drops one card on the board; `NO_TICKET` when there is no room. */
   place(type: TicketTypeId, golden?: boolean): number;
+  /** Opens the curtain call; `true` skips the roll to the thank-you. */
+  finale(curtain?: boolean): void;
 }
 
 interface HarnessGlobal {
@@ -29,6 +33,7 @@ export class HarnessDoor {
   #store = inject(GameStore);
   #save = inject(SaveService);
   #clock = inject(GameClock);
+  #finale = inject(FinaleService);
 
   open(): void {
     (globalThis as unknown as HarnessGlobal).debtGrowth = {
@@ -52,6 +57,10 @@ export class HarnessDoor {
           golden
         );
         return ticket ? ticket.id : NO_TICKET;
+      },
+      finale: (curtain = false) => {
+        this.#finale.open();
+        if (curtain) this.#finale.curtain();
       },
     };
   }

@@ -1,3 +1,4 @@
+import type { FinaleAct } from '../../@shared/model/finale.model';
 import type { BuffNotice, Lane } from '../../game/model/round.model';
 import type {
   Board,
@@ -61,4 +62,6 @@ export interface SceneDeps {
 
   skillView(): SkillView;
   buySkill(id: string): boolean;
+
+  finaleAct(): FinaleAct;
 }

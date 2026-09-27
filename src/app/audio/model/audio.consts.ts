@@ -34,3 +34,9 @@ export const MUSIC_TRACKS: readonly MusicTrack[] = [
   { src: 'assets/audio/uptempo-chiptune.ogg', volume: 0.12 },
   { src: 'assets/audio/boss-battle-2.ogg', volume: 0.12 },
 ];
+
+/** Loops for the whole curtain call, outside the rotation. */
+export const FINALE_TRACK: MusicTrack = {
+  src: 'assets/audio/shanty.ogg',
+  volume: 0.14,
+};

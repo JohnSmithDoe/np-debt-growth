@@ -13,6 +13,8 @@ export const LICENSE_URL = 'assets/legal/LICENSE.txt';
 
 export const ART_LICENSE_URL = 'assets/legal/GPL-3.0.txt';
 
+export const CREW_CREDITS_URL = 'assets/characters/crew-atlas.credits.txt';
+
 export const CREDITS: readonly Credit[] = [
   {
     what: 'App framework — Angular 21',
@@ -57,7 +59,7 @@ export const CREDITS: readonly Credit[] = [
       'Durrani, Matthew Krohn (makrohn), laetissima, Thane Brimhall (pennomi), ' +
       'Pierre Vigier (pvigier), and the others named in the linked file',
     license: 'GPL-3.0 elected, cast-wide',
-    url: 'assets/characters/crew-atlas.credits.txt',
+    url: CREW_CREDITS_URL,
   },
   {
     what: 'Trophy icon — Material Symbols “emoji_events”',
@@ -72,7 +74,7 @@ export const CREDITS: readonly Credit[] = [
     url: 'https://github.com/filipstrand/mflux',
   },
   {
-    what: 'Music — “Uptempo Chiptune”, “Boss Battle #2” (C64)',
+    what: 'Music — “Uptempo Chiptune”, “Boss Battle #2”, “Shanty” (C64)',
     who: 'Skrjablin; TheOuterLinux, after nene',
     license: 'CC0-1.0',
     url: 'assets/audio/music.credits.txt',
@@ -87,4 +89,50 @@ export const CREDITS: readonly Credit[] = [
     who: 'written for this game',
     license: 'AGPL-3.0-only',
   },
+];
+
+/** Spellings the sheets disagree on, folded onto one name for the roll. */
+export const ARTIST_ALIASES: Readonly<Record<string, string>> = {
+  ElizaWy: 'Eliza Wyatt (ElizaWy)',
+  Bluecarrot16: 'bluecarrot16',
+  Makrohn: 'Matthew Krohn (makrohn)',
+  Napsio: 'Napsio (Vitruvian Studio)',
+};
+
+/** A sheet that kept no name; the roll thanks them without one. */
+export const UNNAMED_ARTIST = '??';
+
+/** Everyone `crew-atlas.credits.txt` names, most layers first. */
+export const LPC_ARTISTS: readonly string[] = [
+  'JaidynReiman',
+  'Stephen Challener (Redshrike)',
+  'Eliza Wyatt (ElizaWy)',
+  'bluecarrot16',
+  'Johannes Sjölund (wulax)',
+  'Benjamin K. Smith (BenCreating)',
+  'Matthew Krohn (makrohn)',
+  'TheraHedwig',
+  'MuffinElZangano',
+  'Evert',
+  'Durrani',
+  'laetissima',
+  'Thane Brimhall (pennomi)',
+  'Pierre Vigier (pvigier)',
+  'Nila122',
+  'Joe White',
+  'Manuel Riecke (MrBeast)',
+  'Mandi Paugh',
+  'Michael Whitlock (bigbeargames)',
+  'William.Thompsonj',
+  'Nyom',
+  'Luke Mehl',
+  'thecilekli',
+  'Tuomo Untinen (reemax)',
+  'Page',
+  'Carlo Enrico Victoria (Nemisys)',
+  'Napsio (Vitruvian Studio)',
+  'Skorpio',
+  'Sander Frenken (castelonia)',
+  'Barbara Riviera',
+  'macmanmatty',
 ];

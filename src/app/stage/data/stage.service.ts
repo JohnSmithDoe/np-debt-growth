@@ -3,6 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import type * as Phaser from 'phaser';
 
 import { BoardIcons } from '../../@shared/data/board-icons.service';
+import { FinaleService } from '../../@shared/data/finale.service';
 import { SettingsService } from '../../@shared/data/settings.service';
 import { GameClock } from '../../game/data/game-clock.service';
 import { GameStore } from '../../game/data/game.store';
@@ -22,6 +23,7 @@ import { skillEffectText } from '../util/skill-copy';
 import type { StageMode } from '../model/stage-mode.model';
 import { BoardScene } from '../scene/board-scene';
 import { DemoScene } from '../scene/demo-scene';
+import { FinaleScene } from '../scene/finale-scene';
 import { SkillScene } from '../scene/skill-scene';
 import { PhaserService } from './phaser.service';
 import { StageModeService } from './stage-mode.service';
@@ -41,12 +43,17 @@ export class StageService {
   #modes = inject(StageModeService);
   #settings = inject(SettingsService);
   #icons = inject(BoardIcons);
+  #finale = inject(FinaleService);
 
   #showing: StageMode = 'board';
   #switching = false;
 
+  #wanted = computed<StageMode>(() =>
+    this.#finale.act() === 'closed' ? this.#modes.mode() : 'finale'
+  );
+
   protected readonly follow = effect(() => {
-    const wanted = this.#modes.mode();
+    const wanted = this.#wanted();
     if (!this.#phaser.initialized()) return;
     this.#showMode(wanted);
   });
@@ -80,7 +87,7 @@ export class StageService {
       this.#showing = next;
       this.#enter(arriving);
       this.#switching = false;
-      this.#showMode(this.#modes.mode());
+      this.#showMode(this.#wanted());
     });
   }
 
@@ -122,6 +129,12 @@ export class StageService {
         return {
           key: SkillScene.KEY,
           build: () => new SkillScene(this.#deps()),
+          persistent: false,
+        };
+      case 'finale':
+        return {
+          key: FinaleScene.KEY,
+          build: () => new FinaleScene(this.#deps()),
           persistent: false,
         };
     }
@@ -240,6 +253,7 @@ export class StageService {
       publishIcons: (icons) => this.#icons.publish(icons),
       skillView: () => this.#skillView(),
       buySkill: (id: string) => store.buySkill(id),
+      finaleAct: () => this.#finale.act(),
     };
   }
 

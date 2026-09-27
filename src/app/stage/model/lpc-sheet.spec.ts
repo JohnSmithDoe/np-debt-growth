@@ -7,7 +7,12 @@ import { CAST } from '../../game/model/cast.model';
 import type { LpcSkin } from './lpc-sheet.model';
 import {
   CREW_ATLAS,
+  FINALE_ATLAS,
+  FINALE_FRAMES_PER_SKIN,
+  FINALE_MOVE_ORDER,
+  FINALE_MOVES,
   FRAMES_PER_SKIN,
+  finaleFrames,
   LPC_BLOCKS,
   LPC_SKINS,
   PACKED_BLOCKS,
@@ -90,5 +95,34 @@ describe('crew atlas', () => {
     expect(
       readFileSync('src/assets/characters/crew-atlas.png').length
     ).toBeGreaterThan(0);
+  });
+});
+
+describe('finale atlas', () => {
+  const finale = JSON.parse(
+    readFileSync('src/assets/characters/finale-atlas.json', 'utf8')
+  ) as { framesPerSkin: number; runs: string[]; skins: string[] };
+
+  it('agrees with the packer about the layout', () => {
+    expect(finale.runs).toEqual(FINALE_MOVE_ORDER);
+    expect(finale.framesPerSkin).toBe(FINALE_FRAMES_PER_SKIN);
+    expect(finale.skins).toEqual([...LPC_SKINS]);
+  });
+
+  it('packs every move of every skin end to end', () => {
+    let expected = 0;
+    for (const skin of LPC_SKINS) {
+      for (const move of FINALE_MOVE_ORDER) {
+        const { start, end } = finaleFrames(skin, move);
+        expect(start).toBe(expected);
+        expect(end - start + 1).toBe(FINALE_MOVES[move]);
+        expected = end + 1;
+      }
+    }
+    expect(expected).toBe(LPC_SKINS.length * FINALE_FRAMES_PER_SKIN);
+  });
+
+  it('points at an atlas that is actually shipped', () => {
+    expect(readFileSync(`src/${FINALE_ATLAS.url}`).length).toBeGreaterThan(0);
   });
 });

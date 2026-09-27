@@ -196,6 +196,41 @@ export const DE: Readonly<Record<string, string>> = {
   'hud.tree.back': 'Zurück auf die Etage',
   'hud.tree.buyable': 'etwas zu kaufen',
   'hud.tree.open': 'Den Baum öffnen',
+  'finale.curtain.action': 'Maßnahme: noch einmal spielen. Verantwortlich: du.',
+  'finale.curtain.again': 'Neues Mandat',
+  'finale.curtain.artists':
+    'Und danke an alle Künstlerinnen und Künstler im Abspann. Die Crew gibt es nur, weil ihr sie gezeichnet und verschenkt habt.',
+  'finale.curtain.back': 'Zurück zum Post-Mortem',
+  'finale.curtain.body':
+    'Ganz ehrlich: danke. Du hast ein ganzes Mandat lang eine Codebasis mit Absicht verschlechtert, und du warst richtig, richtig gut darin.',
+  'finale.curtain.stats':
+    '{{billed}} abgerechnet · {{closed}} Tickets geschlossen · {{sprints}} Sprints',
+  'finale.curtain.title': 'Danke fürs Spielen.',
+  'finale.roll.adrs': 'Und erstmals dabei, in der Reihenfolge ihrer Freigabe',
+  'finale.roll.adrs.note': 'Alle acht sind noch in Produktion.',
+  'finale.roll.approved': 'Schriftlich freigegeben für {{client}} von',
+  'finale.roll.aside.backlog': 'Das Backlog ist immer noch nicht leer.',
+  'finale.roll.aside.harm':
+    'Bei der Entstehung dieses Spiels kam kein Ticket zu Schaden. Einige wurden als „Won’t fix“ geschlossen.',
+  'finale.roll.aside.resemblance':
+    'Ähnlichkeiten mit einem echten Mandat sind der ganze Witz.',
+  'finale.roll.built': 'Gebaut mit',
+  'finale.roll.crew': 'Die Crew',
+  'finale.roll.drawn': 'Gezeichnet wurde die Crew von',
+  'finale.roll.drawn.thanks':
+    'Sie haben diese Leute umsonst gezeichnet, damit Fremde so etwas bauen können. Danke.',
+  'finale.roll.drawn.unnamed':
+    'und den Künstlerinnen und Künstlern, deren Namen kein Sheet behalten hat',
+  'finale.roll.drawn.via':
+    'für den Liberated Pixel Cup, zusammengesetzt mit dem Universal LPC Spritesheet Character Generator.',
+  'finale.roll.juniors': 'Juniors',
+  'finale.roll.label': 'Abspann',
+  'finale.roll.made': 'Geschrieben, gestaltet und abgerechnet von',
+  'finale.roll.managers': 'Manager',
+  'finale.roll.seniors': 'Seniors',
+  'finale.skip': 'Zum Ende springen',
+  'finale.stage.cake': 'zu viel Kuchen',
+  'postmortem.finale': 'Mandat schließen',
   'postmortem.no-tier': 'Keiner freigegeben',
   'skill.golden.1.label': 'Partnersache',
   'skill.signoff.blurb':

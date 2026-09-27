@@ -164,7 +164,7 @@ block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored 
 
 - `globalThis.debtGrowth` — `grant`, `reset`, `endRound` (send every train that is home),
   `startRound` (bring them all back), `buySkill`, `buyLine`, `buySpawner(adr)`, `place(type, golden?)` (drop one
-  card). Always open; the viewport and art harnesses drive the game through it, and a whole run
+  card), `finale(curtain?)` (the curtain call; `true` skips the roll). Always open; the viewport and art harnesses drive the game through it, and a whole run
   scripts in a few lines.
 - The in-app debug bar unlocks with the Konami code (`ServiceDoorService`).
 - `/demo` route renders `DemoScene` alone for floor-plate work.

@@ -9,6 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 
+import { FinaleService } from '../../../@shared/data/finale.service';
 import { StageModeService } from '../../data/stage-mode.service';
 import { StageService } from '../../data/stage.service';
 import type { StageMode } from '../../model/stage-mode.model';
@@ -30,6 +31,11 @@ const HEADINGS: Record<
       'Drag to pan, wheel to zoom, hover a square to read it. A square is a skill, its pips are how far in you are, and a black box says only that something is there.',
     chip: 'Story Points',
   },
+  finale: {
+    title: 'Wrap Party',
+    blurb: 'The engagement is closed. The crew stayed for cake.',
+    chip: 'Engagement closed',
+  },
 };
 
 @Component({
@@ -37,12 +43,16 @@ const HEADINGS: Record<
   templateUrl: './stage.component.html',
   styleUrl: './stage.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.finale]': 'finale()' },
 })
 export class StageComponent implements AfterViewInit, OnDestroy {
   readonly container = viewChild.required<ElementRef<HTMLElement>>('stage');
 
   #stage = inject(StageService);
   #modes = inject(StageModeService);
+  #finale = inject(FinaleService);
+
+  readonly finale = computed(() => this.#finale.act() !== 'closed');
 
   readonly heading = computed(() => HEADINGS[this.#modes.mode()]);
 

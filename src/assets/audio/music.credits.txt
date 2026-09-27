@@ -18,4 +18,13 @@
 		- https://opengameart.org/content/c64-fanmade-version-of-nenes-boss-battle-2-8-bit
 		- https://opengameart.org/content/boss-battle-2-8-bit
 
+=== shanty.ogg ===
+"Shanty", shipped unmodified as shanty_c64.ogg — the closing credits
+	- Licenses:
+		- CC0 1.0
+	- Authors:
+		- Skrjablin (GoatTracker, rendered with sidplayfp)
+	- Links:
+		- https://opengameart.org/content/6-genuinely-c64-soundtracks-released-as-public-domain-may-2017
+
 CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/

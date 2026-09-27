@@ -73,6 +73,8 @@ const ORDER = [
   ['modules', 'shell', MODULE, 3, SHELL('An unfinished floor plate under construction: coiled cable drums, folded stepladders, stacks of cardboard boxes, paint buckets, a wheelbarrow and orange traffic cones, drawn small and simple and gathered in the middle, with yellow and black hazard tape strung between them. Absolutely no desks, no chairs and no computers.')],
   ['modules', 'shell-b', MODULE, 3, SHELL('An unfinished floor plate under construction: a cement mixer, a stack of timber planks, two sawhorses with a plank across them, rolls of insulation, a pallet of paint tins, a red toolbox and a leaning broom, drawn small and simple and gathered in the middle, with yellow and black hazard tape strung between them. Absolutely no desks, no chairs and no computers.')],
 
+  ['finale', 'finale-party', BANNER, 3, PLATE('A leaving party set up in the middle of the office floor: one long buffet table with open pizza boxes, a big iced sheet cake, a punch bowl and stacks of paper cups, a little DJ desk with two chunky speakers beside it, bunches of colourful balloons tied to the table legs, paper streamers and confetti scattered on the carpet around it, a small disco ball on a stand. Absolutely no people, no desks and no computers.')],
+
   ['icons', 'skill-root', EMBLEM_SIZE, 2, EMBLEM('One bold thick circular hub with four fat spokes radiating straight out from it to the top, right, bottom and left.')],
 
   ['icons', 'skill-radius', EMBLEM_SIZE, 2, EMBLEM('A computer mouse cursor arrow with a wide circle drawn around it, showing reach.')],

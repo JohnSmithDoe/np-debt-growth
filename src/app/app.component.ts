@@ -24,11 +24,13 @@ import { MomentModalComponent } from './console/feature/moment-modal/moment-moda
 import { DebugBarComponent } from './console/feature/debug-bar/debug-bar.component';
 import { AchievementsPanelComponent } from './console/feature/achievements-panel/achievements-panel.component';
 import { SupplyPanelComponent } from './console/feature/supply-panel/supply-panel.component';
+import { FinaleComponent } from './console/feature/finale/finale.component';
 import { PostMortemComponent } from './console/feature/post-mortem/post-mortem.component';
 import { SettingsModalComponent } from './console/feature/settings-modal/settings-modal.component';
 import { TitleScreenComponent } from './console/feature/title-screen/title-screen.component';
 import { SettingsUiService } from './console/data/settings-ui.service';
 import { CLIENT_NAME, ENGAGEMENT_NAME } from './console/model/client.model';
+import { FinaleService } from './@shared/data/finale.service';
 import { AudioService } from './audio/data/audio.service';
 import { StageModeService } from './stage/data/stage-mode.service';
 import { GameStore } from './game/data/game.store';
@@ -41,6 +43,7 @@ const RATE_WINDOW_MS = 10_000;
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.finale]': 'finale()' },
   imports: [
     BacklogTickerComponent,
     RouterOutlet,
@@ -53,6 +56,7 @@ const RATE_WINDOW_MS = 10_000;
     MomentModalComponent,
     TitleScreenComponent,
     PostMortemComponent,
+    FinaleComponent,
     SettingsModalComponent,
     RollingNumberDirective,
     TranslatePipe,
@@ -64,9 +68,12 @@ export class AppComponent {
   #stage = inject(StageModeService);
   #settings = inject(SettingsUiService);
   #translate = inject(TranslateService);
+  #finale = inject(FinaleService);
 
   readonly client = CLIENT_NAME;
   readonly engagement = ENGAGEMENT_NAME;
+
+  readonly finale = computed(() => this.#finale.act() !== 'closed');
 
   readonly onTree = computed(() => this.#stage.mode() === 'skills');
   /** The tree opens with the SP unlock, as the reference's gum row does. */

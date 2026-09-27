@@ -22,7 +22,7 @@
  * Requires ImageMagick 7 (`magick`).
  *
  * Usage:
- *   node pack-sheets.mjs --in <dir of <skin>.png> --out <dir> [--name crew-atlas]
+ *   node pack-sheets.mjs --in <dir of <skin>.png> --out <dir> [--name crew-atlas | finale-atlas]
  */
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -38,23 +38,34 @@ import { basename, join, resolve } from 'node:path';
 const LPC_FRAME = 64;
 const LPC_DIRECTIONS = ['up', 'left', 'down', 'right'];
 const LPC_BLOCKS = {
+    spellcast: { row: 0, frames: 7 },
     walk: { row: 8, frames: 9 },
     slash: { row: 12, frames: 6 },
+    hurt: { row: 20, frames: 6, directional: false },
     idle: { row: 22, frames: 2 },
+    jump: { row: 26, frames: 5 },
+    sit: { row: 30, frames: 3 },
+    emote: { row: 34, frames: 3 },
+    run: { row: 38, frames: 8 },
 };
-/** Order is the packing order; changing it renumbers every frame in the atlas. */
-const PACKED_BLOCKS = ['walk', 'slash', 'idle'];
 
-const OFFSETS = {};
-let running = 0;
-for (const block of PACKED_BLOCKS) {
-    OFFSETS[block] = running;
-    running += LPC_BLOCKS[block].frames * LPC_DIRECTIONS.length;
-}
-const FRAMES_PER_SKIN = running;
-
-const packedLocal = (block, direction, frame) =>
-    OFFSETS[block] + LPC_DIRECTIONS.indexOf(direction) * LPC_BLOCKS[block].frames + frame;
+/**
+ * One layout per atlas. Order is the packing order; changing it renumbers every
+ * frame. `crew-atlas` packs every direction of its blocks; `finale-atlas` (the
+ * curtain call) only the facings it plays, which keeps it at 40 frames a skin.
+ */
+const LAYOUTS = {
+    'crew-atlas': ['walk', 'slash', 'idle'].flatMap((block) => LPC_DIRECTIONS.map((d) => [block, d])),
+    'finale-atlas': [
+        ['run', 'left'],
+        ['run', 'right'],
+        ['jump', 'down'],
+        ['sit', 'down'],
+        ['emote', 'down'],
+        ['spellcast', 'down'],
+        ['hurt', 'down'],
+    ],
+};
 
 /** Frames per atlas row. 64 × 64px = 4096px wide, the common max texture size. */
 const ATLAS_COLS = 64;
@@ -69,11 +80,22 @@ const args = Object.fromEntries(
 const inDir = resolve(args.in ?? 'src/assets/characters');
 const outDir = resolve(args.out ?? inDir);
 const name = args.name ?? 'crew-atlas';
+const RUNS = LAYOUTS[args.layout ?? name];
+if (!RUNS) throw new Error(`no layout ${args.layout ?? name}; known: ${Object.keys(LAYOUTS).join(', ')}`);
+const PACKED_BLOCKS = [...new Set(RUNS.map(([block]) => block))];
+
+const OFFSETS = [];
+let running = 0;
+for (const [block] of RUNS) {
+    OFFSETS.push(running);
+    running += LPC_BLOCKS[block].frames;
+}
+const FRAMES_PER_SKIN = running;
 
 const magick = (...a) => execFileSync('magick', a, { stdio: ['ignore', 'pipe', 'pipe'] });
 
 const skins = readdirSync(inDir)
-    .filter((f) => f.endsWith('.png') && !f.startsWith(name))
+    .filter((f) => f.endsWith('.png') && !Object.keys(LAYOUTS).some((layout) => f.startsWith(layout)))
     .map((f) => basename(f, '.png'))
     .sort();
 if (!skins.length) throw new Error(`no sheets in ${inDir}`);
@@ -89,23 +111,21 @@ try {
             throw new Error(`${skin}: ${Math.round(w / LPC_FRAME)} columns, expected at least ${SOURCE_COLS}`);
         }
 
-        for (const block of PACKED_BLOCKS) {
-            const { row, frames } = LPC_BLOCKS[block];
-            for (const [dir, direction] of LPC_DIRECTIONS.entries()) {
-                // One call per source row: crop the run of frames, then split it.
-                // Per-frame calls would be 68 processes a character instead of 12.
-                const prefix = join(work, `${String(skinIndex * FRAMES_PER_SKIN + packedLocal(block, direction, 0)).padStart(6, '0')}-`);
-                magick(
-                    sheet,
-                    '-crop', `${frames * LPC_FRAME}x${LPC_FRAME}+0+${(row + dir) * LPC_FRAME}`,
-                    '+repage',
-                    '-crop', `${LPC_FRAME}x${LPC_FRAME}`,
-                    '+repage',
-                    '+adjoin',
-                    `${prefix}%02d.png`,
-                );
-                written += frames;
-            }
+        for (const [run, [block, direction]] of RUNS.entries()) {
+            const { row, frames, directional = true } = LPC_BLOCKS[block];
+            const sourceRow = directional ? row + LPC_DIRECTIONS.indexOf(direction) : row;
+            // One call per source row: crop the run of frames, then split it.
+            const prefix = join(work, `${String(skinIndex * FRAMES_PER_SKIN + OFFSETS[run]).padStart(6, '0')}-`);
+            magick(
+                sheet,
+                '-crop', `${frames * LPC_FRAME}x${LPC_FRAME}+0+${sourceRow * LPC_FRAME}`,
+                '+repage',
+                '-crop', `${LPC_FRAME}x${LPC_FRAME}`,
+                '+repage',
+                '+adjoin',
+                `${prefix}%02d.png`,
+            );
+            written += frames;
         }
     }
 
@@ -131,7 +151,8 @@ try {
 
     const [aw, ah] = magick('identify', '-format', '%w %h', atlas).toString().split(' ').map(Number);
 
-    // The credits are the licence obligation and must survive the merge.
+    // The credits are the licence obligation and must survive the merge. Every
+    // layout cuts the same sheets, so the crew atlas's file covers them all.
     const credits = skins
         .map((s) => {
             try {
@@ -141,9 +162,10 @@ try {
             }
         })
         .join('\n');
-    writeFileSync(join(outDir, `${name}.credits.txt`), credits);
+    if (name === 'crew-atlas') writeFileSync(join(outDir, `${name}.credits.txt`), credits);
 
     const manifest = { frame: LPC_FRAME, cols: ATLAS_COLS, framesPerSkin: FRAMES_PER_SKIN, blocks: PACKED_BLOCKS, skins };
+    if (name !== 'crew-atlas') manifest.runs = RUNS.map((pair) => pair.join(' '));
     writeFileSync(join(outDir, `${name}.json`), JSON.stringify(manifest, null, 2) + '\n');
 
     const mib = (n) => `${(n / 1024 / 1024).toFixed(1)} MiB`;

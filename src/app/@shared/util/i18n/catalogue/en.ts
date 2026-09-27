@@ -193,6 +193,41 @@ export const EN: Readonly<Record<string, string>> = {
   'hud.tree.back': 'Back to the floor',
   'hud.tree.buyable': 'something to buy',
   'hud.tree.open': 'Open the tree',
+  'finale.curtain.action': 'Action item: play again. Owner: you.',
+  'finale.curtain.again': 'New engagement',
+  'finale.curtain.artists':
+    'And thank you to every artist in the roll. The crew only exists because you drew them and gave them away.',
+  'finale.curtain.back': 'Back to the post-mortem',
+  'finale.curtain.body':
+    'Honestly, thank you. You spent a whole engagement making a codebase worse on purpose, and you were very, very good at it.',
+  'finale.curtain.stats':
+    '{{billed}} billed · {{closed}} tickets closed · {{sprints}} sprints',
+  'finale.curtain.title': 'Thank you for playing.',
+  'finale.roll.adrs': 'And introducing, in order of approval',
+  'finale.roll.adrs.note': 'All eight are still in production.',
+  'finale.roll.approved': 'Approved in writing for {{client}} by',
+  'finale.roll.aside.backlog': 'The backlog is still not empty.',
+  'finale.roll.aside.harm':
+    'No tickets were harmed in the making of this game. Several were closed as won’t fix.',
+  'finale.roll.aside.resemblance':
+    'Any resemblance to a real engagement is the whole point.',
+  'finale.roll.built': 'Built on',
+  'finale.roll.crew': 'The crew',
+  'finale.roll.drawn': 'The crew were drawn by',
+  'finale.roll.drawn.thanks':
+    'They drew these people for free, so that strangers could make things like this. Thank you.',
+  'finale.roll.drawn.unnamed':
+    'and the artists whose names a sheet did not keep',
+  'finale.roll.drawn.via':
+    'for the Liberated Pixel Cup, assembled with the Universal LPC Spritesheet Character Generator.',
+  'finale.roll.juniors': 'Juniors',
+  'finale.roll.label': 'Closing credits',
+  'finale.roll.made': 'Written, designed and billed by',
+  'finale.roll.managers': 'Managers',
+  'finale.roll.seniors': 'Seniors',
+  'finale.skip': 'Skip to the end',
+  'finale.stage.cake': 'too much cake',
+  'postmortem.finale': 'Close the engagement',
   'postmortem.no-tier': 'None approved',
   'skill.golden.1.label': 'Partner-Only Work',
   'skill.signoff.blurb':

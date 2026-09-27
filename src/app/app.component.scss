@@ -344,3 +344,24 @@ cb-debug-bar {
     animation: none;
   }
 }
+
+:host(.finale) {
+  padding: 0;
+  gap: 0;
+
+  .masthead,
+  .ticker,
+  .rail,
+  .interval-bar {
+    display: none;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+:host(.finale) cb-agent,
+:host(.finale) cb-award-banner {
+  display: none;
+}

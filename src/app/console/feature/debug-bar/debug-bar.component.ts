@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 
+import { FinaleService } from '../../../@shared/data/finale.service';
 import { GameClock } from '../../../game/data/game-clock.service';
 import { GameStore } from '../../../game/data/game.store';
 import { SaveService } from '../../../game/data/save.service';
@@ -36,6 +37,7 @@ export class DebugBarComponent {
   #store = inject(GameStore);
   #save = inject(SaveService);
   #clock = inject(GameClock);
+  #finale = inject(FinaleService);
   #armTimer?: ReturnType<typeof setTimeout>;
 
   readonly shown = inject(ServiceDoorService).isOpen;
@@ -48,6 +50,10 @@ export class DebugBarComponent {
 
   apply(grant: Grant): void {
     this.#store.grant(grant.budget, grant.points);
+  }
+
+  finale(): void {
+    this.#finale.open();
   }
 
   reset(): void {
