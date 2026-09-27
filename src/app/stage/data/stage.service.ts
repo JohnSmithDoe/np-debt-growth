@@ -70,7 +70,7 @@ export class StageService {
     const arriving = this.#entry(next);
     this.#switching = true;
     this.#setInputEnabled(leaving.key, false);
-    if (next !== 'board') this.#clock.pause();
+    if (next !== 'board') this.#clock.pause('tree');
 
     void this.#fadeOut(leaving.key).then(() => {
       const scenes = this.#phaser.game.scene;
@@ -90,14 +90,14 @@ export class StageService {
 
   destroyStage(): void {
     this.#phaser.destroy();
-    this.#clock.resume();
+    this.#clock.resume('tree');
     this.#modes.request('board');
     this.#showing = 'board';
     this.#switching = false;
   }
 
   #enter(entry: ModeEntry): void {
-    if (entry.key === BoardScene.KEY) this.#clock.resume();
+    if (entry.key === BoardScene.KEY) this.#clock.resume('tree');
     const scenes = this.#phaser.game.scene;
     if (scenes.getScene(entry.key)) {
       scenes.wake(entry.key);

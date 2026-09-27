@@ -402,6 +402,11 @@ export class GameStore {
     this.#state.set({ ...this.#state(), lastTick: now });
   }
 
+  /** Moves the tick mark to `now` without playing the gap. */
+  rebase(now: number): void {
+    this.#state.set({ ...this.#state(), lastTick: now });
+  }
+
   haulMs(): number {
     return economy.haulMs(this.#state());
   }

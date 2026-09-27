@@ -36,20 +36,60 @@ describe('the game clock', () => {
   it('plays nothing while paused, and does not catch up on resume', () => {
     vi.advanceTimersByTime(1_000);
     const before = store.snapshot().runMs;
-    clock.pause();
+    clock.pause('tree');
     vi.advanceTimersByTime(60_000);
     expect(store.snapshot().runMs).toBe(before);
 
-    clock.resume();
+    clock.resume('tree');
     vi.advanceTimersByTime(1_000);
     expect(store.snapshot().runMs - before).toBeLessThanOrEqual(1_100);
   });
 
   it('holds absolute deadlines still across a pause', () => {
     const left = store.hotfixUntil() - clock.now();
-    clock.pause();
+    clock.pause('tree');
     vi.advanceTimersByTime(60_000);
-    clock.resume();
+    clock.resume('tree');
     expect(store.hotfixUntil() - clock.now()).toBe(left);
+  });
+
+  it('does not play the time before it started', () => {
+    clock.stop();
+    vi.advanceTimersByTime(30_000);
+    const before = store.snapshot().runMs;
+    clock.start();
+    vi.advanceTimersByTime(100);
+    expect(store.snapshot().runMs - before).toBeLessThanOrEqual(100);
+  });
+
+  it('plays nothing while the tab is hidden', () => {
+    const hidden = vi.spyOn(document, 'hidden', 'get');
+    vi.advanceTimersByTime(1_000);
+    const before = store.snapshot().runMs;
+    const left = store.hotfixUntil() - clock.now();
+
+    hidden.mockReturnValue(true);
+    document.dispatchEvent(new Event('visibilitychange'));
+    vi.advanceTimersByTime(60_000);
+    expect(store.snapshot().runMs).toBe(before);
+
+    hidden.mockReturnValue(false);
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(store.hotfixUntil() - clock.now()).toBe(left);
+    hidden.mockRestore();
+  });
+
+  it('stays paused for the tree when the tab comes back', () => {
+    const hidden = vi.spyOn(document, 'hidden', 'get');
+    clock.pause('tree');
+    hidden.mockReturnValue(true);
+    document.dispatchEvent(new Event('visibilitychange'));
+    hidden.mockReturnValue(false);
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(clock.paused()).toBe(true);
+
+    clock.resume('tree');
+    expect(clock.paused()).toBe(false);
+    hidden.mockRestore();
   });
 });

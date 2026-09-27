@@ -28,7 +28,7 @@ export function spawnInto(
     const drought = TICKET_TYPES[id].handOnly ? 1 : weather.supply;
     const rate = economy.spawnRate(state, id) * storm * drought;
     if (rate <= 0) continue;
-    const due = budget.due(id, rate, seconds, SPAWN_BURST_CAP);
+    const due = budget.due(id, rate, seconds, SPAWN_BURST_CAP, rand);
     if (due === 0) continue;
     const dearer = interest > 0 ? economy.interestTarget(state, id) : null;
     for (let n = 0; n < due; n++) {
