@@ -5,10 +5,6 @@ import { GameStore } from './game.store';
 
 export type PauseReason = 'tree' | 'hidden' | 'help';
 
-/**
- * Game time is wall time minus every pause, so the state's absolute deadlines
- * (hotfix, escalation, pizza) stand still while the game does.
- */
 @Injectable({ providedIn: 'root' })
 export class GameClock {
   #store = inject(GameStore);

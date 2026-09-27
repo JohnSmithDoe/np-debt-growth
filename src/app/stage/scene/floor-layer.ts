@@ -10,7 +10,6 @@ import {
 
 export class FloorLayer {
   readonly #plates: readonly Phaser.GameObjects.Image[];
-  #built = -1;
 
   constructor(scene: Phaser.Scene, depth: number) {
     this.#plates = OFFICE_PLAN.map((_plate, index) =>
@@ -28,18 +27,7 @@ export class FloorLayer {
     }
   }
 
-  built(count: number): void {
-    if (count === this.#built) return;
-    this.#built = count;
-    this.#plates.forEach((image, index) =>
-      image.setTexture(
-        index < count ? OFFICE_PLAN[index]!.id : officeShellKey(index)
-      )
-    );
-  }
-
   texture(key: string): void {
-    this.#built = -1;
     for (const image of this.#plates) image.setTexture(key);
   }
 

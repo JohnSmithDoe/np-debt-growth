@@ -20,19 +20,19 @@ describe('the first act', () => {
   });
 
   it('holds the rate off until its own beat has landed', () => {
-    expect(heldBack('incident', 0, 0)).toBe(true);
-    expect(heldBack('incident', FIRST_INCIDENT_AT_MS - 1, 0)).toBe(true);
-    expect(heldBack('incident', FIRST_INCIDENT_AT_MS, 0)).toBe(false);
+    expect(heldBack('incident', 0)).toBe(true);
+    expect(heldBack('incident', FIRST_INCIDENT_AT_MS - 1)).toBe(true);
+    expect(heldBack('incident', FIRST_INCIDENT_AT_MS)).toBe(false);
   });
 
   it('lets bugs share the opening with lint', () => {
-    expect(heldBack('bug', 0, 0)).toBe(false);
-    expect(heldBack('lint', 0, 0)).toBe(false);
+    expect(heldBack('bug', 0)).toBe(false);
+    expect(heldBack('lint', 0)).toBe(false);
   });
 
   it('leaves every other type to its rate', () => {
     for (const type of ['legacy', 'flaky', 'conflict', 'escalation'] as const) {
-      expect(heldBack(type, 0, 0)).toBe(false);
+      expect(heldBack(type, 0)).toBe(false);
     }
   });
 });

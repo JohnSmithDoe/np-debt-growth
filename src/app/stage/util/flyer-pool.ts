@@ -14,11 +14,9 @@ export type FlightKind = (typeof FLIGHT)[keyof typeof FLIGHT];
 
 export type Arrival = (kind: FlightKind, ticket: number) => void;
 
-/** A falling card crossed beam `beam` at screen `x`, and that beam voted on it. */
 export type VoteCrossing = (beam: number, x: number) => void;
 
 const IDLE = -1;
-/** A card taken mid-fade is fully back by this share of its flight. */
 const REVIVE_SHARE = 0.35;
 
 export class FlyerPool {
@@ -37,7 +35,6 @@ export class FlyerPool {
   #span = new Float32Array(FLYER_CAPACITY);
   #elapsed = new Float32Array(FLYER_CAPACITY);
   #hold = new Float32Array(FLYER_CAPACITY);
-  /** Beams still to cross that voted on this card, bit per coach. */
   #votes = new Int32Array(FLYER_CAPACITY);
   #voteTotal = new Uint8Array(FLYER_CAPACITY);
   #lastY = new Float32Array(FLYER_CAPACITY);
@@ -106,7 +103,6 @@ export class FlyerPool {
     this.#onVote = handler;
   }
 
-  /** Where the planning-poker beams sit on screen: `offY + voteBeamY(i) * scaleY`. */
   beams(offY: number, scaleY: number): void {
     this.#beamTop = offY;
     this.#beamScale = scaleY;
@@ -154,7 +150,6 @@ export class FlyerPool {
     return true;
   }
 
-  /** The drop will be re-estimated by every beam in `mask` as it falls through it. */
   markVoted(ticket: number, mask: number): void {
     const slot = this.#falling.get(ticket);
     if (slot === undefined || mask === 0) return;
@@ -167,8 +162,6 @@ export class FlyerPool {
     return this.#falling.has(ticket);
   }
 
-  /** Tickets still in the air whose card is within `radius` of the pointer. */
-  /** Falling cards the ring touches, by their drawn box. */
   fallingWithin(x: number, y: number, radius: number, into: number[]): void {
     for (const [ticket, slot] of this.#falling) {
       const image = this.#images[slot];
@@ -179,7 +172,6 @@ export class FlyerPool {
     }
   }
 
-  /** Ends a drop in the air, without landing it; returns where it was. */
   catch(ticket: number): { x: number; y: number } | null {
     const slot = this.#falling.get(ticket);
     if (slot === undefined) return null;
@@ -296,17 +288,14 @@ function ease(kind: number, progress: number): number {
   return progress * progress * (3 - 2 * progress);
 }
 
-/** Share of a harvest spent rising; the apex eases in, the fall accelerates out. */
 const HARVEST_APEX = 0.42;
 
-/** A hop: the peak comes at a quarter of the flight, the rest is the fall. */
 function lift(kind: number, progress: number): number {
   if (kind === FLIGHT.fade) return 0;
   if (kind === FLIGHT.harvest) return arc(progress, HARVEST_APEX);
   return Math.sin(Math.PI * Math.sqrt(progress));
 }
 
-/** Two parabolas meeting at `apex`: finite launch speed, zero speed at the top. */
 function arc(progress: number, apex: number): number {
   const t =
     progress < apex ? 1 - progress / apex : (progress - apex) / (1 - apex);

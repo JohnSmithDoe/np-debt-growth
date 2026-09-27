@@ -11,13 +11,10 @@ export const RARE_CARD_HEIGHT = 56;
 export const HEAP_CAPACITY = 4096;
 
 export const FLYER_CAPACITY = 320;
-/** The pool doubles up to this; past it a card lands without its flight. */
 export const FLYER_CEILING = 2_560;
 export const RARE_CAPACITY = 24;
 
-/** Room for every golden card a full board can hold at the chance cap. */
 export const GOLD_GLOW_CAPACITY = 160;
-/** A halo behind a golden card, pulsed on the GPU. Scales are of the 64px glow frame. */
 export const GOLD_GLOW = {
   scaleX: 1.9,
   scaleY: 1.35,
@@ -27,15 +24,12 @@ export const GOLD_GLOW = {
   ms: 700,
 } as const;
 
-/** New work is thrown on the same hop a harvest takes, slow enough to catch mid-air. */
 export const DROP_MS = 1_850;
 export const DROP_HOP = 90;
 
-/** A taken card hops `HARVEST_HOP` px, then falls into its slot. */
 export const HARVEST_MS = 1_600;
 export const HARVEST_HOP = 150;
 
-/** A won't-fix card sinks this far over its fade (`WONT_FIX_FADE_MS`); the hand can still take it. */
 export const WONT_FIX_FADE = { sink: 10 } as const;
 
 export const RARE_TITLE_WIDTH = 168;
@@ -45,7 +39,6 @@ export const RARE_LIFT = 14;
 
 export const SPRINT_STRIP_HEIGHT = 48;
 
-/** An auto-closing card's tint, full by the time it ships itself. */
 export const AUTO_CLOSE_RAMP = { ink: 0x5cff9d, peak: 1 } as const;
 
 export const BUFF_BANNER = {
@@ -56,7 +49,6 @@ export const BUFF_BANNER = {
   fade: 0.12,
   gap: 6,
 } as const;
-/** Varible_37's ghost train; frames are each sheet's opaque box, resting on one rail row. */
 export const GHOST_TRAIN = {
   loco: {
     key: 'ghost-train',
@@ -71,7 +63,6 @@ export const GHOST_TRAIN = {
   gap: 2,
 } as const;
 
-/** The release, told across the board. */
 export const RELEASE_BANNER = {
   titleSize: '13px',
   currentSize: '44px',
@@ -79,10 +70,8 @@ export const RELEASE_BANNER = {
   gap: 8,
   stepGap: 8,
   doneAlpha: 0.45,
-  /** Share of the board's height the block is centred on. */
   centre: 0.32,
 } as const;
-export const SPRINT_PIP_LIMIT = 40;
 export const SPRINT_BAR_WIDTH = 420;
 
 export const MAX_FRAME_MS = 250;
@@ -156,10 +145,8 @@ export const HOVER_OFFSET = { x: 14, y: 10, edge: 4 } as const;
 export const CLOSE_FLOAT = { size: '13px', rise: 30 } as const;
 export const FLOAT_MS = 750;
 
-/** Live payout labels at most; past `small` the oldest is recycled. */
 export const FLOAT_CAP = { small: 48, big: 4 } as const;
 
-/** Payouts with golden or incident work in them, sized to be read. */
 export const BIG_FLOAT = {
   size: '24px',
   colour: '#f0c86a',
@@ -169,7 +156,6 @@ export const BIG_FLOAT = {
   ms: 2_000,
 } as const;
 
-/** The ticket title riding under a big payout. */
 export const BIG_FLOAT_CAPTION = {
   size: '12px',
   colour: '#f6ecd2',
@@ -206,16 +192,10 @@ export const CLICK_RING = {
   refused: 0xd2604a,
 } as const;
 
-/** How long the ring stays red after a sweep the full can turned away. */
 export const REFUSED_MS = 220;
 
-/**
- * A full can does not just tint the ring: the work you tried to take hops
- * where it lies and stays there. The refusal is on the card, not the cursor.
- */
 export const REFUSAL_BOUNCE = { ms: 260, lift: 9 } as const;
 
-/** Scatter dressing on the floor — drawn, never collectible. */
 export const FLOOR_SCATTER = {
   tile: 192,
   count: 26,
@@ -224,37 +204,25 @@ export const FLOOR_SCATTER = {
   alpha: 0.5,
 } as const;
 
-/**
- * The lane above the board. One band, every line's actors mixed into it, so
- * the crowd on the path is the receipt for everything the rail sold.
- */
-/** The planning-poker band, just under the lane the work falls from. */
 export const VOTES = {
-  /** Screen px from the spawner path's lowest feet to the first beam. */
   belowSpawners: 12,
   amplitude: 3,
   wavelength: 38,
   coachX: 16,
-  /** How long a beam stays lit where a card it voted on crossed it. */
   pulseMs: 520,
-  /** Screen px either side of the crossing the flash reaches. */
   reach: 110,
-  /** Flashes drawn at once; a busy beam simply stays lit. */
   maxPulses: 48,
 } as const;
 
-/** `top` and `height` bound the walkers' feet, in screen pixels. */
 export const LANE = {
   top: 44,
   height: 40,
   margin: 34,
   scale: 0.7,
   perLine: 50,
-  /** Walk speed, px/s, at which the LPC walk cycle plays at its own rate. */
   stride: 48,
 } as const;
 
-/** A newly bought walker pops onto the path under a pulsing halo, so the buy is seen landing. */
 export const LANE_ARRIVAL = {
   popMs: 520,
   overshoot: 3.2,
@@ -264,7 +232,6 @@ export const LANE_ARRIVAL = {
   glowInk: 0xfff1c9,
 } as const;
 
-/** A line of several skins walks as one pack, smaller than a single body. */
 export const LANE_PACK = {
   scale: 0.5,
   offsets: [
@@ -274,7 +241,6 @@ export const LANE_PACK = {
   ],
 } as const;
 
-/** A manager's reach, drawn on the floor under the crew. */
 export const AURA = { fill: 0.08, stroke: 0.45, line: 1.5 } as const;
 
 export const BOARD_INK = {
@@ -284,10 +250,7 @@ export const BOARD_INK = {
   stripRule: 0x2a323c,
   pipEmpty: 0x2a323c,
   pipFull: 0x4ade80,
-  button: 0x1f6feb,
-  buttonIdle: 0x232b35,
   gold: 0xd8b34a,
-  trainAway: 0x1b2129,
   tunnel: 0x07090c,
   tunnelFrame: 0x3a4452,
   vote: 0xa855f7,
@@ -319,15 +282,9 @@ export const SCREEN_INK = {
   wireLit: 0x5fb37a,
   pipEmpty: 0x2a323c,
   pipFull: 0x4ade80,
-  ink: 0xe6e9ef,
-  ink2: 0x98a1b0,
   ink3: 0x6b7482,
-  dim: 0x49525e,
   money: 0xd8b34a,
   points: 0xe06c9f,
-  good: 0x5fb37a,
-  warn: 0xd99a3f,
-  sev0: 0xe05252,
 } as const;
 
 export const CARRIED_CARD = {

@@ -9,7 +9,6 @@ import { ticketLabelKey } from '../../game/model/ticket.model';
 import type { Advice, Buy } from '../../game/util/advisor';
 import * as economy from '../../game/util/economy';
 
-/** A translation key and params that are themselves keys. */
 export interface Phrase {
   readonly key: string;
   readonly params?: Readonly<Record<string, string>>;
@@ -33,7 +32,6 @@ export function buyName(state: Consultancy, buy: Buy): Phrase {
   }
 }
 
-/** What the paperclip says it looks like you are trying to do. */
 export function goalKey(advice: Advice): string {
   const picks = [advice.sp, advice.eur];
   if (picks.some((p) => p?.buy.kind === 'skill' && p.buy.id === FINAL_SKILL_ID))

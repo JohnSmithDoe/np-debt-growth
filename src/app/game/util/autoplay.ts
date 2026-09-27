@@ -14,18 +14,10 @@ import * as purchase from './purchase';
 import type { SimPolicy } from './sim';
 import { flow } from './sim';
 
-/**
- * A whole run with no board: earn what `sim.flow` says, spend like a player.
- * The policy is data, so the pacing can be measured for more than one player.
- */
-
 export interface AutoplayPolicy extends SimPolicy {
-  /** Never spend more than this share of the budget on one purchase. */
   readonly spendFraction: number;
   readonly spendEveryMs: number;
-  /** Bought first, in order, before anything else on the tree. */
   readonly openingPath: readonly string[];
-  /** Hold story points for the next ADR once it is this many seconds of SP away. */
   readonly saveForAdrSec: number;
 }
 
@@ -47,9 +39,7 @@ export interface LedgerMark {
 
 export interface Run {
   readonly end: Consultancy;
-  /** Milestone label → run ms it was first reached. */
   readonly reached: ReadonlyMap<string, number>;
-  /** One state every `sampleEveryMs`. */
   readonly samples: readonly Consultancy[];
   readonly ledger: readonly LedgerMark[];
 }
@@ -129,7 +119,6 @@ function earn(
   return economy.accepted(next) ? { ...next, endedAt: next.lastTick } : next;
 }
 
-/** Buys greedily, cheapest first, until nothing affordable is left. */
 export function spend(state: Consultancy, policy: AutoplayPolicy): Consultancy {
   let next = state;
   if ((next.skills['cutRetro'] ?? 0) < 1) {
@@ -178,7 +167,6 @@ export function spend(state: Consultancy, policy: AutoplayPolicy): Consultancy {
 
 const ADVISED_BUYS_PER_SPEND = 200;
 
-/** Buys whatever the advisor names while it is affordable, and saves otherwise. */
 export function advisedSpend(
   state: Consultancy,
   policy: AutoplayPolicy
@@ -222,7 +210,6 @@ function savingForAdr(state: Consultancy, policy: AutoplayPolicy): boolean {
   return short <= flow(state, policy).spPerSec * policy.saveForAdrSec;
 }
 
-/** Tree nodes are bought in SP, the whole balance available unless it is held for an ADR. */
 function skillOffers(state: Consultancy, saving: boolean): readonly Offer[] {
   return SKILL_NODES.filter(
     (node) =>

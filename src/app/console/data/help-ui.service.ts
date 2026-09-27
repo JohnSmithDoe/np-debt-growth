@@ -2,7 +2,6 @@ import { inject, Injectable, signal } from '@angular/core';
 
 import { GameClock } from '../../game/data/game-clock.service';
 
-/** The field guide; the game holds still while it is read. */
 @Injectable({ providedIn: 'root' })
 export class HelpUiService {
   #clock = inject(GameClock);

@@ -1,3 +1,6 @@
+/*
+ * LPC_SKINS follows the atlas packer order (sorted filenames): every spawner-* after the cast.
+ */
 import type { CastSkin } from '../../game/model/cast.model';
 import { CAST } from '../../game/model/cast.model';
 
@@ -47,7 +50,6 @@ const OFFSETS: Record<LpcBlock, number> = (() => {
 
 export type LpcSkin = CastSkin | SpawnerSkin;
 
-/** Packer order: filenames sorted, so every `spawner-*` lands after the cast. */
 export const LPC_SKINS: readonly LpcSkin[] = [
   ...CAST.map((entry) => entry.skin),
   ...SPAWNER_SKINS,
@@ -81,7 +83,6 @@ export const FINALE_ATLAS = {
   url: 'assets/characters/finale-atlas.png',
 } as const;
 
-/** The curtain call's moves, in packing order, each one facing only. */
 export const FINALE_MOVES = {
   'run left': 8,
   'run right': 8,

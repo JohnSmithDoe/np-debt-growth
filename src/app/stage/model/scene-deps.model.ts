@@ -26,14 +26,11 @@ export interface SceneDeps {
   slots(): number;
   filled(): number;
   sprint(): readonly SprintSlot[];
-  /** Planning-poker coaches, one beam each. */
   coaches(): number;
-  /** The live pizza party in board units, with the share of it left. */
   pizza(): { x: number; y: number; radius: number; left: number } | null;
   pending(): number;
   tier(): number;
   spawnerCount(adr: number): number;
-  /** Board units around each manager where crew closes bill the aura. */
   managerReach(): number;
   crewCeiling(crew: CrewKind): TicketTypeId | null;
   hazardNotice(): HazardNotice | null;
@@ -43,18 +40,15 @@ export interface SceneDeps {
   womanEvery(crew: CrewKind): number;
 
   harvest(ids: readonly number[]): Harvest;
-  /** Types that close themselves when their life runs out. */
   autoClosed(): ReadonlySet<TicketTypeId>;
   running(): boolean;
   roundLeftMs(): number;
   haulMs(): number;
   releasePhases(): readonly ReleasePhase[];
-  /** Euros billed since the last call. */
   takePayouts(): number;
   takeCloseFloats(): readonly CloseFloat[];
   takeWontFix(): readonly number[];
   unlockSecret(): void;
-  /** Hands the board's card and crew frames to the DOM rail. */
   publishIcons(icons: {
     readonly tickets: ReadonlyMap<TicketTypeId, string>;
     readonly marks: ReadonlyMap<'golden' | 'voted', string>;

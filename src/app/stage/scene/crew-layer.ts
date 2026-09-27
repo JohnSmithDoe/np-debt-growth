@@ -118,7 +118,6 @@ export class CrewLayer {
     return null;
   }
 
-  /** Cards claimed since the last call, by sprite index. */
   takeClaims(): readonly Claim[] {
     const due = this.#claims;
     this.#claims = [];

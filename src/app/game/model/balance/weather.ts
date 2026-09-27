@@ -8,5 +8,4 @@ export const INVITATION_EVERY_MS = 120_000;
 export const INVITATION_WINDOW_MS = 4_000;
 export const FACT_EVERY_MS = 120_000;
 export const FACT_COUNTDOWN_MS = 5_000;
-/** Facts run half a cadence behind invitations, so the two never land together. */
 export const FACT_OFFSET_MS = 60_000;

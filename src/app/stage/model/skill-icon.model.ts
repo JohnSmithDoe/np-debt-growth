@@ -1,4 +1,3 @@
-/** Nodes drawn with their own icon, `assets/skills/<id>.png`. */
 const OWN_ICONS: readonly string[] = [
   'root',
   'radius',
@@ -51,15 +50,12 @@ const OWN_ICONS: readonly string[] = [
   'adr8',
 ];
 
-/** Every line's five nodes share one icon per kind, `assets/skills/line-<kind>.png`. */
 const LINE_KINDS = ['value', 'spawn', 'income', 'estimates', 'double'] as const;
 const LINE_NODE = /^(value|spawn|income|estimates|double)[A-Z]/;
 
-/** Every crew line's room node shares the one headcount icon. */
 const ROOM_ICON = 'headcount';
 const ROOM_NODE = /^(junior|senior|manager)Room$/;
 
-/** Tiered sprint nodes share their family's icon; every ceremony cut shares one. */
 const TIERED_NODE = /^(capacity|cans)\d+$/;
 const CUT_NODE = /^cut[A-Z]/;
 const CUT_ICON = 'duration';

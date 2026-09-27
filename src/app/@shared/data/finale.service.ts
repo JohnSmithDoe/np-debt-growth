@@ -2,7 +2,6 @@ import { Injectable, signal } from '@angular/core';
 
 import type { FinaleAct } from '../model/finale.model';
 
-/** The curtain call after the post-mortem; the stage, the roll and the music follow it. */
 @Injectable({ providedIn: 'root' })
 export class FinaleService {
   readonly #act = signal<FinaleAct>('closed');

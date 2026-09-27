@@ -7,14 +7,9 @@ import {
   input,
 } from '@angular/core';
 
-/** Share of the gap closed per 60 Hz frame; lands in about half a second. */
 const EASE = 0.14;
 const GAIN_CLASS = 'gain';
 
-/**
- * Writes a number into its host, easing from the last value shown to the new
- * one, and marks the host `gain` while it climbs.
- */
 @Directive({ selector: '[cbRolling]' })
 export class RollingNumberDirective {
   readonly cbRolling = input.required<number>();

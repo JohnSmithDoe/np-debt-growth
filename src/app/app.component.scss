@@ -235,7 +235,6 @@
   overflow: hidden;
 }
 
-// The shop takes what the rail has left and scrolls its own rows.
 .rail cb-supply-panel {
   flex: 1 1 auto;
   min-height: 0;
@@ -314,13 +313,6 @@ cb-debug-bar {
   .readout {
     grid-area: 2 / 1 / 3 / 3;
   }
-}
-.rail cb-adr-panel {
-  display: block;
-  padding: 0.9rem 1rem 1rem;
-  border: 1px solid var(--np-cb-line);
-  border-radius: 6px;
-  background: var(--np-cb-panel);
 }
 
 .controls .tree {

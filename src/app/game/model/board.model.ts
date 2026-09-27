@@ -12,7 +12,7 @@ import {
 export const NO_TICKET = -1;
 export const NEVER_EXPIRES = -1;
 
-export type CrewPhase = 'idle' | 'toTicket' | 'toDesk' | 'closing' | 'meeting';
+export type CrewPhase = 'idle' | 'toTicket' | 'closing' | 'meeting';
 
 export interface Carried {
   readonly id: number;
@@ -25,17 +25,13 @@ export interface Carried {
 
 export interface BoardTicket {
   readonly id: number;
-  type: TicketTypeId;
-  titleKey: string;
-  reborn: boolean;
+  readonly type: TicketTypeId;
+  readonly titleKey: string;
+  readonly reborn: boolean;
   golden: boolean;
-  /** SP the live votes whose beam it landed below add at pickup. */
   spBonus: number;
-  /** Bit per coach: the beams it fell through on arrival, for the stage to show. */
   voteMask: number;
-  /** Counts down while unclaimed; `NEVER_EXPIRES` for hand-only cards. */
   lifeLeftMs: number;
-  /** Runs down once `lifeLeftMs` hits 0; the card is closed as won't-fix at 0. */
   fadeLeftMs: number;
   readonly x: number;
   readonly y: number;
@@ -88,21 +84,16 @@ export interface CloseFloat {
   readonly x: number;
   readonly y: number;
   readonly value: number;
-  /** Golden or incident work was in it. */
   readonly big: boolean;
-  /** Title key of the first golden or incident ticket in it. */
   readonly headline: string | null;
 }
 
 export interface Harvest {
   readonly taken: readonly number[];
-  /** Reached but left on the board because the can was full. */
   readonly refused: readonly number[];
   readonly value: number;
   readonly sp: number;
-  /** Golden or incident work was in it. */
   readonly big: boolean;
-  /** Title key of the first golden or incident ticket in it. */
   readonly headline: string | null;
 }
 
@@ -119,7 +110,6 @@ export interface Board {
   readonly seniors: CrewMember[];
   readonly managers: CrewMember[];
   readonly pending: Comeback[];
-  /** Cards a full board pushed out for newer work; drained as won't fix. */
   readonly displaced: BoardTicket[];
   readonly byId: Map<number, BoardTicket>;
   readonly crewById: Map<number, CrewMember>;
@@ -127,12 +117,10 @@ export interface Board {
   readonly lowFree: Int32Array;
   nextId: number;
   nextCrewId: number;
-  /** How long a new plain card lives; the store sets it by tier. */
   lifeMs: number;
 }
 
 export const HEAP_COLS = Math.floor(LOGICAL_BOARD.width / TICKET_SLOT.width);
-/** Rows that lie on the visible field; the overflow rows stack above it. */
 export const HEAP_FIELD_ROWS = Math.floor(
   LOGICAL_BOARD.height / TICKET_SLOT.height
 );
@@ -153,14 +141,12 @@ export function voteBeamY(index: number): number {
   return VOTE_BEAMS.top + index * VOTE_BEAMS.spacing;
 }
 
-/** Beams set in a vote mask. */
 export function voteCount(mask: number): number {
   let count = 0;
   for (let rest = mask; rest !== 0; rest &= rest - 1) count += 1;
   return count;
 }
 
-/** Rows new work scatters into; only a crowded board stacks above them. */
 export const HEAP_SPAWN_ROWS = HEAP_FIELD_ROWS - HEAP_SPAWN_GAP_ROWS;
 
 export function meetingSpot(id: number): { x: number; y: number } {

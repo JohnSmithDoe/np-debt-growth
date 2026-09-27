@@ -1,3 +1,7 @@
+/*
+ * sharpen() must be the first call in create().
+ * onLeave covers stop and removal: scene.remove destroys without a shutdown event.
+ */
 import * as Phaser from 'phaser';
 
 import {
@@ -22,12 +26,10 @@ export abstract class CbScene extends Phaser.Scene {
     super(key);
   }
 
-  /** Backing pixels per CSS pixel; `PhaserService` shows the game at 1 / this. */
   protected get backing(): number {
     return 1 / (this.scale.zoom || 1);
   }
 
-  /** The view in CSS pixels, which is what every scene lays out in. */
   protected get viewWidth(): number {
     return this.scale.width / this.backing;
   }
@@ -36,10 +38,6 @@ export abstract class CbScene extends Phaser.Scene {
     return this.scale.height / this.backing;
   }
 
-  /**
-   * Call first in `create`: text renders at backing resolution, and unless
-   * the scene pans and zooms itself, the camera maps CSS pixels onto it.
-   */
   protected sharpen(fixedCamera: boolean): void {
     const onAdded = (object: Phaser.GameObjects.GameObject): void => {
       if (object instanceof Phaser.GameObjects.Text) {
@@ -59,7 +57,6 @@ export abstract class CbScene extends Phaser.Scene {
     this.onLeave(() => this.scale.off(Phaser.Scale.Events.RESIZE, fit));
   }
 
-  /** Once, on stop or on removal: `scene.remove` destroys without a shutdown. */
   protected onLeave(teardown: () => void): void {
     let done = false;
     const once = (): void => {
@@ -157,7 +154,6 @@ export abstract class CbScene extends Phaser.Scene {
     });
   }
 
-  /** Centred under `amount`, both pulled in from the canvas edges. */
   #caption(
     amount: Phaser.GameObjects.Text,
     caption: string

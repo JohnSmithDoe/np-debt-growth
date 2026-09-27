@@ -9,7 +9,6 @@ import {
 } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
 
-/** The release train blocks the board, so its story is told across it. */
 export class ReleaseBanner {
   readonly #scene: Phaser.Scene;
   readonly #deps: SceneDeps;
@@ -86,7 +85,6 @@ export class ReleaseBanner {
     }
   }
 
-  /** Sets the step texts and returns the row's width. */
   #layoutSteps(
     ids: readonly Parameters<typeof releasePhaseKey>[0][],
     at: number,
@@ -138,7 +136,6 @@ export class ReleaseBanner {
     }
   }
 
-  /** The big payout's gold, or its caption's outlined ink. */
   #text(size: string, gold = false): Phaser.GameObjects.Text {
     const ink = gold ? BIG_FLOAT : BIG_FLOAT_CAPTION;
     return this.#scene.add

@@ -34,7 +34,6 @@ import { PanZoomScene } from './pan-zoom-scene';
 
 const CODE_SCALE = 2;
 const ICON_BOX = SKILL_ICON_SIZE;
-/** Unbought squares show dimmer, and boxes are all but black. */
 const ICON_ALPHA: Readonly<Record<SquareState, number>> = {
   owned: 1,
   open: 0.55,
@@ -43,7 +42,6 @@ const ICON_ALPHA: Readonly<Record<SquareState, number>> = {
 const ICON_CY = 21;
 const CODE_TOP = 7;
 const PIP = { top: 38, height: 4, width: 8, gap: 3, perRow: 5 } as const;
-/** Two rows share the strip between the icon and the price. */
 const PIP_ROWS = { top: 37, height: 3, gap: 1 } as const;
 const BAND = { scale: 2 } as const;
 const BADGE = { inset: 2 } as const;
@@ -54,7 +52,6 @@ const HOVER_STROKE = 6;
 const PRICE_TOP = SQUARE - STROKE - GLYPH_CELL;
 const PRICE_ROOM = SQUARE - STROKE * 2;
 const WASH = 0.18;
-/** Contents are laid out for a `SQUARE`; a bigger square draws them this much larger. */
 const grow = (square: HitRect): number => square.width / SQUARE;
 
 const TIP = {
@@ -64,7 +61,6 @@ const TIP = {
   offset: 10,
 } as const;
 
-/** A buyable square breathes a ring this far outside its frame. */
 const PULSE = {
   depth: 2.5,
   gap: 3,
@@ -74,7 +70,6 @@ const PULSE = {
   high: 0.9,
 } as const;
 const WIRE = { width: 2, lit: 3, glow: 9, glowAlpha: 0.18 } as const;
-/** Room kept around the buyable squares when the tree opens on them. */
 const FIT_MARGIN = 96;
 
 const TIP_DEPTH = 30;
@@ -293,28 +288,31 @@ export class SkillScene extends PanZoomScene {
     this.#icons?.release();
     this.releaseLabels();
 
-    for (const square of SKILL_GRAPH.squares) {
-      const state = this.#shown.get(square.id);
-      const node = byId.get(square.id);
-      if (state === undefined || !node) continue;
-      this.#drawWire(wires, square, state, node);
-      this.#drawSquare(frames, square, node, state);
+    for (const lit of [false, true]) {
+      for (const square of SKILL_GRAPH.squares) {
+        const state = this.#shown.get(square.id);
+        const node = byId.get(square.id);
+        if (state === undefined || !node) continue;
+        this.#drawWire(wires, square, state, node, lit);
+        if (!lit) this.#drawSquare(frames, square, node, state);
+      }
     }
 
     this.#drawBands(view);
     this.#drawTip(byId);
   }
 
-  /** Bought-to-bought is lit, into something buyable is blue, the rest dim. */
   #drawWire(
     wires: Phaser.GameObjects.Graphics,
     square: SkillSquare,
     state: SquareState,
-    node: SkillNodeView
+    node: SkillNodeView,
+    lit: boolean
   ): void {
     if (square.parent === null) return;
     const parentOwned = this.#shown.get(square.parent) === 'owned';
-    if (state === 'owned' && parentOwned) {
+    if ((state === 'owned' && parentOwned) !== lit) return;
+    if (lit) {
       this.#strokeWire(
         wires,
         square,
@@ -379,7 +377,6 @@ export class SkillScene extends PanZoomScene {
     this.#drawBadge(square, node, state);
   }
 
-  /** `+` adds, `%` compounds — the one thing a shopper reads before the price. */
   #drawBadge(
     square: SkillSquare,
     node: SkillNodeView,
@@ -581,7 +578,7 @@ export class SkillScene extends PanZoomScene {
   }
 
   #tipStatus(node: SkillNodeView): string {
-    if (node.maxed) return 'Maxed';
+    if (node.maxed) return node.status;
     const price =
       node.currency === 'eur'
         ? formatMoney(node.cost)

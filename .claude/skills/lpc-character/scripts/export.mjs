@@ -1,32 +1,9 @@
 #!/usr/bin/env node
 /**
- * export.mjs — drive the hosted Universal LPC Spritesheet Character Generator
- * and save the character as a PNG spritesheet + credits.txt.
- *
- * It does what a human does: open the generator at a config URL (the
- * `#sex=…&head=…` hash), wait for the render to settle, then click the page's
- * own download buttons. The generator composites the layers itself, so z-order
- * and palette recolors are its problem, not ours.
- *
- * `playwright-core` is resolved at RUNTIME — project `node_modules` first, then
- * the npm global root — and it drives the system Google Chrome. Nothing is
- * added to this repo's dependencies for a tool that runs a handful of times.
- * One-time setup, if it is missing: `npm i -g playwright-core`.
- *
- * Usage:
- *   node export.mjs --out DIR [--name slug] (--preset NAME | --hash "k=v&…" | --url URL)
- *
- *   --preset  a name from presets.json (the junior/senior devs)
- *   --hash    "sex=male&head=Human_Male_light&body=Body_Color_light"
- *   --url     a full generator URL including its #fragment
- *   --out     output directory (default: cwd)
- *   --name    output basename (default: the preset name, else "character")
- *   --timeout per-step timeout ms (default 60000)
- *   --channel chrome (default) | chrome-beta | msedge | chromium
- *   --headed  show the browser
- *
- * Prints one JSON line for the caller to parse. See ../reference.md for the
- * hash grammar and ../SKILL.md for the workflow.
+ * Drives the hosted Universal LPC generator and saves a PNG spritesheet + credits.txt; prints one JSON line.
+ * Needs playwright-core (project or `npm i -g`) and system Chrome.
+ * Usage: node export.mjs --out DIR [--name slug] (--preset NAME | --hash "k=v&…" | --url URL)
+ *        [--timeout ms] [--channel chrome|chrome-beta|msedge|chromium] [--headed]
  */
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
@@ -37,20 +14,15 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_BASE = 'https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/';
 
-/** A bare ESM import cannot reach either candidate from inside .claude/skills/. */
 function loadPlaywright() {
     const bases = [join(process.cwd(), '__resolve__.js')];
     try {
         bases.push(join(execSync('npm root -g', { encoding: 'utf8' }).trim(), '__resolve__.js'));
-    } catch {
-        /* npm absent — the project-local candidate may still resolve */
-    }
+    } catch {}
     for (const base of bases) {
         try {
             return createRequire(base)('playwright-core');
-        } catch {
-            /* try the next root */
-        }
+        } catch {}
     }
     console.log(JSON.stringify({ ok: false, error: 'playwright-core not found. Install once: npm i -g playwright-core (nvm: globals are per Node version)' }));
     process.exit(1);
@@ -83,11 +55,6 @@ function resolveHash(args) {
     throw new Error('Provide one of --preset, --hash or --url');
 }
 
-/**
- * Strided checksum of the preview canvas plus "did anything draw". The caller
- * waits for it to stop changing: the generator has no "render finished" event,
- * and layers stream in one image at a time.
- */
 function probeCanvasInBrowser() {
     const canvas = ['#mithril-spritesheet-preview canvas', '#mithril-preview canvas', 'canvas']
         .map((s) => document.querySelector(s))
@@ -136,18 +103,11 @@ async function clickAndSave(page, buttonName, dest, timeout) {
     return dest;
 }
 
-/** PNG dimensions live in the IHDR chunk — no decoder needed to learn the geometry. */
 function pngSize(path) {
     const head = readFileSync(path).subarray(0, 33);
     return { width: head.readUInt32BE(16), height: head.readUInt32BE(20) };
 }
 
-/**
- * The credits file lists one unindented asset line, then its licences indented.
- * The sheet is flattened, so it is bound by its strictest layer — which is worth
- * knowing before the art is in the repo rather than after. `catalog.mjs check`
- * predicts the same thing from the hash; this is the rendered truth.
- */
 function auditCredits(txt) {
     const assets = [];
     let current = null;
@@ -165,9 +125,7 @@ function auditCredits(txt) {
     const permissive = (l) => l.startsWith('OGA-BY') || l.startsWith('CC0');
     return {
         assets: assets.length,
-        // Nothing GPL-compatible to elect — cannot ship in this AGPL-3.0 repo.
         incompatible: licensed.filter((a) => !a.licences.some((l) => permissive(l) || l.startsWith('GPL'))).map((a) => a.asset),
-        // Ships fine under GPL-3.0, but takes the flattened sheet's licence with it.
         copyleftOnly: licensed.filter((a) => !a.licences.some(permissive)).map((a) => a.asset),
     };
 }

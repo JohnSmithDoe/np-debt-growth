@@ -105,7 +105,6 @@ export const CREDITS: readonly Credit[] = [
   },
 ];
 
-/** Spellings the sheets disagree on, folded onto one name for the roll. */
 export const ARTIST_ALIASES: Readonly<Record<string, string>> = {
   ElizaWy: 'Eliza Wyatt (ElizaWy)',
   Bluecarrot16: 'bluecarrot16',
@@ -113,10 +112,8 @@ export const ARTIST_ALIASES: Readonly<Record<string, string>> = {
   Napsio: 'Napsio (Vitruvian Studio)',
 };
 
-/** A sheet that kept no name; the roll thanks them without one. */
 export const UNNAMED_ARTIST = '??';
 
-/** Everyone `crew-atlas.credits.txt` names, most layers first. */
 export const LPC_ARTISTS: readonly string[] = [
   'JaidynReiman',
   'Stephen Challener (Redshrike)',

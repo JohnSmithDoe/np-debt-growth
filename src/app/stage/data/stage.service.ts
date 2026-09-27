@@ -154,7 +154,7 @@ export class StageService {
         0,
         0,
         0,
-        false,
+        true,
         (_camera: Phaser.Cameras.Scene2D.Camera, at: number) => {
           if (at === 1) resolve();
         }
@@ -200,7 +200,6 @@ export class StageService {
 
     const secret = SKILL_BY_ID.get(SECRET_SKILL_ID);
     return {
-      storyPoints: store.storyPoints(),
       nodes,
       headings: SKILL_HEADING_IDS.map((id) => ({
         id,

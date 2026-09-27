@@ -1,9 +1,5 @@
 import type { TicketTypeId } from './ticket.model';
 
-/**
- * An ADR is a tree node: it unlocks the spawner line and the ticket type
- * together, and it is paid for in story points like every other node.
- */
 export interface DebtTier {
   readonly index: number;
   readonly spCost: number;
@@ -44,7 +40,6 @@ export function tierAt(index: number): DebtTier | undefined {
   return DEBT_TIERS[index - 1];
 }
 
-/** The tree node that approves a rung; `adrNodeId(3)` is ADR-3's square. */
 export const adrNodeId = (index: number): string => `adr${index}`;
 
 export const ADR_HEADING_ID = 'adrs';

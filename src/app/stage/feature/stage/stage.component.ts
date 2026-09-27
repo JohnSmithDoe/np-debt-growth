@@ -30,6 +30,7 @@ export class StageComponent implements AfterViewInit, OnDestroy {
 
   #resizeObserver?: ResizeObserver;
   #booted = false;
+  #destroyed = false;
   #frame = 0;
   #width = 0;
   #height = 0;
@@ -42,6 +43,7 @@ export class StageComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.#destroyed = true;
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = undefined;
     cancelAnimationFrame(this.#frame);
@@ -62,7 +64,9 @@ export class StageComponent implements AfterViewInit, OnDestroy {
     this.#height = height;
     if (!this.#booted) {
       this.#booted = true;
-      void whenPixelFontReady().then(() => this.#stage.initStage(container));
+      void whenPixelFontReady().then(() => {
+        if (!this.#destroyed) this.#stage.initStage(container);
+      });
       return;
     }
     this.#stage.resizeStage(width, height);

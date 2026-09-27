@@ -9,11 +9,6 @@ interface Pulse {
   age: number;
 }
 
-/**
- * Planning poker: one coach per beam at the edge of the path. A beam lights
- * only where, and when, a card it re-estimated falls through it; the
- * simulation decides the vote, the flyer reports the crossing.
- */
 export class VoteBeams {
   readonly #graphics: Phaser.GameObjects.Graphics;
   readonly #pulses: Pulse[] = [];

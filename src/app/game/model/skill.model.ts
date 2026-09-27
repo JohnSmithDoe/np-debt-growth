@@ -13,7 +13,6 @@ import { SPRINT_SLOTS_STEP, type ReleasePhaseId } from './balance/round';
 import { ROOM_SEATS } from './balance/crew';
 import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from './tier.model';
 
-/** What a crew pace effect speeds up. */
 export type PaceField = 'close' | 'walk' | 'sweep';
 
 export type SkillEffect =
@@ -43,7 +42,6 @@ export type SkillEffect =
       readonly kind: 'batch';
       readonly crew: CrewKind;
       readonly add: number;
-      /** Carrying more costs time: the close takes this much longer. */
       readonly closeMult?: number;
     }
   | { readonly kind: 'juniorBand'; readonly add: number }
@@ -94,7 +92,6 @@ export interface SkillNode {
   readonly track: SkillTrack;
   readonly currency?: SkillCurrency;
   readonly requires: string | null;
-  /** Nodes that must be fully bought first, on top of `requires`. */
   readonly maxed?: readonly string[];
   readonly granted?: boolean;
   readonly heading?: boolean;
@@ -106,7 +103,6 @@ export interface SkillLock {
   readonly params?: Readonly<
     Record<string, string | number | readonly string[]>
   >;
-  /** Params holding catalogue keys; a list resolves to its labels, comma-joined. */
   readonly resolveParams?: readonly string[];
 }
 
@@ -118,10 +114,6 @@ const TIERED_NODE = /^(capacity|cans)\d+$/;
 export const skillBlurbKey = (id: string): string =>
   `skill.${TIERED_NODE.exec(id)?.[1] ?? id}.blurb`;
 
-/**
- * One node per ADR, chained. Approving it opens that rung's spawner line and
- * the ticket type it drops — the two arrive together, as one purchase.
- */
 const ADR_NODES: readonly SkillNode[] = DEBT_TIERS.map((tier) => ({
   id: adrNodeId(tier.index),
   track: 'N' as const,
@@ -131,7 +123,6 @@ const ADR_NODES: readonly SkillNode[] = DEBT_TIERS.map((tier) => ({
   ],
 }));
 
-/** The line each ADR opens, by tier; a line's nodes hang off its ADR. */
 const LINE_TICKETS: readonly TicketTypeId[] = [
   'lint',
   'legacy',
@@ -144,22 +135,15 @@ const LINE_TICKETS: readonly TicketTypeId[] = [
   'swarm',
 ];
 
-/** First price of each line's first ×2; ADR-0 and ADR-1 are measured. */
 const LINE_DOUBLE_COST = [
   25, 1500, 3000, 6000, 11_000, 20_000, 35_000, 70_000, 140_000,
 ];
 
-/** First-rank prices double a tier (+50 % income 1 100 → 2 200). */
 const perTier = (base: number, tier: number): number => base * 2 ** tier;
 
-/** The estimates node's first rank: lint 75, legacy 400, then doubling a tier. */
 const lineEstimate = (tier: number): number =>
   tier === 0 ? 75 : 400 * 2 ** (tier - 1);
 
-/**
- * `ranks` steps of `+step`, additive: rank k multiplies by (1 + k·step) /
- * (1 + (k−1)·step), so five +20 % ranks end at exactly ×2.
- */
 const additiveRanks = (ranks: number, step: number): readonly number[] =>
   Array.from(
     { length: ranks },
@@ -173,11 +157,6 @@ const LINE_RANKS = 5;
 
 const capitalised = (id: string): string => id[0]!.toUpperCase() + id.slice(1);
 
-/**
- * Every line's upgrades, one shape: `value` ×2 opens `spawn` (5 × +20 %,
- * ending at ×2), `income` (5 × +50 %, ×3.5) and `estimates` (5 × +SP); all
- * three maxed open `double`, a second ×2.
- */
 const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
   (ticket, tier) => {
     const name = capitalised(ticket);
@@ -841,7 +820,6 @@ export const SKILL_BY_ID: ReadonlyMap<string, SkillNode> = new Map(
   SKILL_NODES.map((node) => [node.id, node])
 );
 
-/** What approving ADR `index` costs: the node's own price, exactly as the tree shows it. */
 export function adrPrice(index: number): number {
   const node = SKILL_BY_ID.get(adrNodeId(index));
   const level = node?.levels[0];
@@ -850,7 +828,6 @@ export function adrPrice(index: number): number {
 
 export const SECRET_SKILL_ID = 'secret';
 
-/** Buying this closes the engagement — it is the run's last purchase. */
 export const FINAL_SKILL_ID = 'signoff';
 
 export const isSkillHeading = (id: string): boolean =>
@@ -881,7 +858,6 @@ const COLLAPSED: ReadonlyMap<string, string | null> = new Map(
 
 export const ADR_NODE_IDS: readonly string[] = ADR_NODES.map((node) => node.id);
 
-/** Each crew line's `Rattenpopulation`. */
 export const ROOM_NODE_BY_LINE = {
   junior: 'juniorRoom',
   senior: 'seniorRoom',
@@ -890,11 +866,6 @@ export const ROOM_NODE_BY_LINE = {
 
 export type CrewLine = keyof typeof ROOM_NODE_BY_LINE;
 
-export const CREW_LINES = Object.keys(ROOM_NODE_BY_LINE) as CrewLine[];
-
-export const OFFICE_HEADING_ID = 'office';
-
-/** The office plates; `kit` sits on the office track but is a rail line, not a plate. */
 export const OFFICE_NODE_IDS: readonly string[] = SKILL_NODES.filter(
   (node) => node.track === 'O' && node.heading !== true && node.id !== 'kit'
 ).map((node) => node.id);

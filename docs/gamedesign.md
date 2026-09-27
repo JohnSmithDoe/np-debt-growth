@@ -335,8 +335,8 @@ so every flash is a vote and every vote flashes.
 ### The ADR ladder
 
 `DEBT_TIERS` (`model/tier.model.ts`). Buying `adrN` raises `state.tier`, opening line N and its
-ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR modal's approve button
-(`unlockNextTier`) buys the same node; the rail has no ADR panel.
+ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR modal only shows the signed
+record; the rail has no ADR panel.
 
 | ADR | SP         | Unlocks    |
 | --- | ---------- | ---------- |

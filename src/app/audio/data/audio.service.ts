@@ -174,7 +174,6 @@ export class AudioService {
     music.volume = track.volume;
   }
 
-  // Autoplay policy: a play() outside a user gesture is refused, so try again on the next one.
   #retryMusicOnGesture(): void {
     const retry = (): void => {
       window.removeEventListener('pointerdown', retry);

@@ -3,7 +3,6 @@ export interface MomentSection {
   readonly body: string;
 }
 
-/** Every string is a catalogue key. */
 export interface MomentCopy {
   readonly heading: string;
   readonly subheading: string;

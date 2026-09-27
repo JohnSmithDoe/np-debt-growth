@@ -23,10 +23,6 @@ function run(store: GameStore, from: number, to: number): number {
   return to;
 }
 
-const notes = (store: GameStore, note: string): number =>
-  store.log().filter((line) => line.kind === 'note' && line.note === note)
-    .length;
-
 describe('invitations', () => {
   it('puts a card on the board, and only from tier 1', () => {
     const early = storeWith({ tier: 0 });
@@ -51,7 +47,7 @@ describe('invitations', () => {
     const after = store.snapshot();
     expect(after.budget).toBe(before.budget);
     expect(after.sprintCount).toBe(before.sprintCount);
-    expect(notes(store, 'hazard-declined')).toBe(1);
+    expect(invites(store)).toBe(0);
 
     run(store, INVITATION_EVERY_MS + 500, INVITATION_EVERY_MS + 20_000);
     expect(store.board.juniors.every((one) => one.phase !== 'meeting')).toBe(
@@ -99,7 +95,6 @@ describe('invitations', () => {
     });
     run(store, 0, INVITATION_EVERY_MS + 500);
     expect(invites(store)).toBe(0);
-    expect(notes(store, 'hazard-auto-declined')).toBe(1);
   });
 });
 
@@ -108,10 +103,10 @@ describe('the two cadences', () => {
     const store = storeWith({ tier: 3 });
     run(store, 0, INVITATION_EVERY_MS + 500);
     expect(invites(store)).toBe(1);
-    expect(notes(store, 'hazard-due')).toBe(0);
+    expect(store.hazardNotice()).toBeNull();
 
     run(store, INVITATION_EVERY_MS + 500, FIRST_FACT_MS + 500);
-    expect(notes(store, 'hazard-due')).toBe(1);
+    expect(store.hazardNotice()?.landed).toBe(false);
   });
 });
 
@@ -120,7 +115,6 @@ describe('facts', () => {
     const store = storeWith({ tier: 3, levels: { manager: 1 } });
     run(store, 0, FIRST_FACT_MS + 500);
     expect(invites(store)).toBe(0);
-    expect(notes(store, 'hazard-due')).toBe(1);
     expect(store.hazardNotice()?.landed).toBe(false);
   });
 
@@ -155,7 +149,6 @@ describe('facts', () => {
 
     run(store, at, at + FACT_COUNTDOWN_MS + 500);
 
-    expect(notes(store, 'hazard-groomed')).toBe(1);
     expect(cards.every((card) => card.spBonus > 0)).toBe(true);
     expect(store.snapshot().lifetimeBilled).toBe(before.lifetimeBilled);
   });

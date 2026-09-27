@@ -8,7 +8,6 @@ export type RoleId =
 export interface Approval {
   readonly by: SignatoryId;
   readonly role: RoleId;
-  /** ISO date, formatted in the reader's locale. */
   readonly date: string;
 }
 

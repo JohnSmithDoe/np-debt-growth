@@ -130,8 +130,6 @@ describe('a junior closing a ticket', () => {
       return elapsed;
     };
 
-    // The card goes the moment it is reached, and the close time is spent
-    // recovering afterwards rather than standing over it first.
     const first = until(1);
     expect(board.tickets.length).toBe(4);
     expect(board.juniors[0]!.phase).toBe('closing');
@@ -139,7 +137,6 @@ describe('a junior closing a ticket', () => {
       juniorCloseMs(state) - 2 * STEP_MS
     );
 
-    // The sustained pace is unchanged.
     const second = until(2) - first;
     expect(second).toBeGreaterThanOrEqual(juniorCloseMs(state));
   });

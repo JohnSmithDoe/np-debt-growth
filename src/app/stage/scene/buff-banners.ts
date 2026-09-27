@@ -10,7 +10,6 @@ import type { SceneDeps } from '../model/scene-deps.model';
 
 const IDS: readonly BuffNotice['id'][] = ['acceptance', 'escalation', 'hotfix'];
 
-/** One pulsing line per live buff, stacked upward from `bottom`. */
 export class BuffBanners {
   readonly #deps: SceneDeps;
   readonly #lines = new Map<BuffNotice['id'], Phaser.GameObjects.Text>();

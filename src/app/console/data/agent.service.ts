@@ -6,7 +6,6 @@ import type { Advice, Buy } from '../../game/util/advisor';
 import { advise } from '../../game/util/advisor';
 import { DEFAULT_POLICY } from '../../game/util/autoplay';
 
-/** Game time between re-advising while nothing is bought; the endgame call reads the budget. */
 const REFRESH_MS = 2_000;
 
 function sameRecord(

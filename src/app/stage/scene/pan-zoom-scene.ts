@@ -59,15 +59,6 @@ export abstract class PanZoomScene extends CbScene {
     return this.#zoom;
   }
 
-  protected resetZoom(): void {
-    if (this.#zoom === ZOOM.native) return;
-    const was = this.#legible();
-    this.#zoom = ZOOM.native;
-    this.cameras.main.setZoom(ZOOM.native * this.backing);
-    if (was !== this.#legible()) this.redraw();
-  }
-
-  /** Zooms to fit `rect` without dropping below legible labels, and centres it. */
   protected fitTo(rect: HitRect, margin: number): void {
     const camera = this.cameras.main;
     const fit =

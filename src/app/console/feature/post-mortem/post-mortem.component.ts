@@ -16,8 +16,6 @@ import {
 import { GameStore } from '../../../game/data/game.store';
 import { ACHIEVEMENTS } from '../../../game/model/award.model';
 import { tierNameKey } from '../../../game/model/tier.model';
-import { BackdropDirective } from '../../ui/backdrop/backdrop.directive';
-import { RetroService } from '../../data/retro.service';
 import {
   APPROVALS,
   CLIENT_NAME,
@@ -46,19 +44,16 @@ interface Authorisation {
   templateUrl: './post-mortem.component.html',
   styleUrl: './post-mortem.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BackdropDirective, TranslatePipe],
-  host: { '(document:keydown.escape)': 'leaveOnBackdrop()' },
+  imports: [TranslatePipe],
 })
 export class PostMortemComponent {
   #store = inject(GameStore);
   #translate = inject(TranslateService);
-  #retro = inject(RetroService);
   #finale = inject(FinaleService);
 
   readonly final = this.#store.ended;
   readonly shown = computed(
-    () =>
-      (this.final() || this.#retro.isOpen()) && this.#finale.act() === 'closed'
+    () => this.final() && this.#finale.act() === 'closed'
   );
 
   readonly client = CLIENT_NAME;
@@ -68,16 +63,8 @@ export class PostMortemComponent {
   readonly chartBox = `0 0 ${CHART_BOX.width} ${CHART_BOX.height}`;
   readonly chartHeight = CHART_BOX.height;
 
-  close(): void {
-    this.#retro.close();
-  }
-
   toFinale(): void {
     this.#finale.open();
-  }
-
-  leaveOnBackdrop(): void {
-    if (!this.final()) this.close();
   }
 
   readonly authorisations = computed<readonly Authorisation[]>(() => {

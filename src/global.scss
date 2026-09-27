@@ -1,3 +1,4 @@
+/* --np-cb-min-width must match minWidth in src-tauri/tauri.conf.json. */
 @font-face {
   font-family: 'Departure Mono';
   src: url('assets/fonts/DepartureMono-Regular.woff2') format('woff2');
@@ -27,7 +28,6 @@
 
   --np-cb-radius: 3px;
   --np-cb-rail: 23rem;
-  /** The narrowest window the layout is built for; tauri.conf.json matches. */
   --np-cb-min-width: 1280px;
   --np-cb-scrim: rgb(6 8 11 / 0.74);
   --np-cb-lift: 0 10px 30px rgb(0 0 0 / 0.5);
@@ -91,11 +91,6 @@ p {
   font-family: var(--np-cb-font-util);
   font-size: 0.62rem;
   color: var(--np-cb-ink-3);
-}
-
-.num {
-  font-family: var(--np-cb-font-util);
-  font-variant-numeric: tabular-nums;
 }
 
 .chip {
@@ -174,9 +169,6 @@ p {
   td.right {
     white-space: nowrap;
   }
-  .blocked {
-    color: var(--np-cb-ink-3);
-  }
 }
 
 .lines {
@@ -250,11 +242,6 @@ p {
 }
 
 .line:disabled .label {
-  color: var(--np-cb-ink-3);
-}
-
-.eta {
-  font-size: 0.62rem;
   color: var(--np-cb-ink-3);
 }
 

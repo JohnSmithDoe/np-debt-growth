@@ -12,7 +12,6 @@ interface Pace {
   readonly lane: number;
 }
 
-/** Stable per-walker pace and height, so a crowd does not march in step. */
 function paceOf(adr: number, index: number): Pace {
   const noise = Math.sin((adr * 37 + index * 11 + 1) * 12.9898) * 43758.5453;
   const at = noise - Math.floor(noise);
@@ -29,10 +28,6 @@ interface Walker {
   glow: Phaser.GameObjects.Image | null;
 }
 
-/**
- * The path above the board. Every line you buy puts another body on it, so
- * the lane is the receipt for the whole rail — crowd it and the board fills.
- */
 export class TierSpawners {
   readonly #scene: Phaser.Scene;
   readonly #depth: number;
@@ -43,7 +38,6 @@ export class TierSpawners {
   #left = 0;
   #right = 0;
   #top = 0;
-  /** The first sync restores a save; only walkers bought after it arrive. */
   #primed = false;
 
   constructor(scene: Phaser.Scene, depth: number) {
@@ -60,7 +54,6 @@ export class TierSpawners {
     }
   }
 
-  /** `counts` is the rail's ledger: one walker drawn per head bought, capped. */
   sync(counts: (adr: number) => number): void {
     for (const row of SPAWNERS) {
       const wanted = Math.min(counts(row.adr), LANE.perLine);
@@ -85,7 +78,6 @@ export class TierSpawners {
     }
   }
 
-  /** Where a card of this line falls from: the chest of a body that dropped it. */
   originOf(adr: number): Phaser.Math.Vector2 | null {
     const walkers = this.#lines.get(adr);
     if (!walkers || walkers.length === 0) return null;

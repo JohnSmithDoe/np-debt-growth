@@ -10,10 +10,6 @@ const run = promisify(execFile);
 const STAGING = new URL('../image-staging/', import.meta.url).pathname;
 const OUT = new URL('../src/assets/board/backdrop/', import.meta.url).pathname;
 
-/**
- * Board backdrops per tier, the un-pixelated takes as art-batch.mjs names them.
- * `office` pairs a tier with its title screen, as console/util/office-art.ts does.
- */
 const TIERS = [
   { office: 'title-elevator', tier: 'screen-promotion' },
   { office: 'title-3am', tier: 'tier1-legacy-framework' },
@@ -26,7 +22,6 @@ const TIERS = [
   { office: 'title-flood', tier: 'tier8-agent-swarm' },
 ];
 
-/** Other screens shipped the same way, beside the art they replace. */
 const SCREENS = [
   { take: 'title-tower', out: 'src/assets/art/office/tower.webp' },
   { take: 'screen-post-mortem', out: 'src/assets/art/screen/post-mortem.webp' },

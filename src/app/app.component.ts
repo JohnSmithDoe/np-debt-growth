@@ -37,7 +37,6 @@ import { StageModeService } from './stage/data/stage-mode.service';
 import { GameStore } from './game/data/game.store';
 import { epicKey } from './game/model/tier.model';
 
-/** Billing measured over this much game time for the €/s readout. */
 const RATE_WINDOW_MS = 10_000;
 
 @Component({
@@ -79,7 +78,6 @@ export class AppComponent {
   readonly finale = computed(() => this.#finale.act() !== 'closed');
 
   readonly onTree = computed(() => this.#stage.mode() === 'skills');
-  /** The tree opens with the SP unlock. */
   readonly treeOpen = computed(() => this.#store.levels().velocity > 0);
 
   toTree(): void {
@@ -114,12 +112,6 @@ export class AppComponent {
     const slots = this.sprintSlots();
     return slots <= 0 ? 0 : Math.min(100, (this.sprintCount() / slots) * 100);
   });
-  readonly sprintFull = computed(
-    () => this.sprintCount() >= this.sprintSlots()
-  );
-  readonly sprintOver = computed(() =>
-    Math.max(0, this.sprintCount() - this.sprintSlots())
-  );
 
   readonly epic = computed(() =>
     epicKey(this.#store.tier(), this.#store.inAcceptance())
@@ -138,8 +130,6 @@ export class AppComponent {
 
   readonly awardPaid = signal(false);
   #awarded = 0;
-
-  readonly ended = this.#store.ended;
 
   readonly muted = this.#audio.muted;
 

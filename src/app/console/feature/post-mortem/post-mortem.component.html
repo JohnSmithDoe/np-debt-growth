@@ -1,30 +1,12 @@
 @if (shown()) {
-  <div class="scrim" (cbBackdrop)="leaveOnBackdrop()">
+  <div class="scrim">
     <article class="doc">
       <header>
-        @if (final()) {
-          <span class="chip sev0">{{ 'postmortem.closed' | translate }}</span>
-          <h2>{{ 'postmortem.heading' | translate }}</h2>
-          <p class="muted small">
-            {{ 'postmortem.scope.final' | translate: { tier: tierName() } }}
-          </p>
-        } @else {
-          <span class="chip warn">{{
-            'postmortem.in-flight' | translate
-          }}</span>
-          <h2>{{ 'postmortem.interim' | translate }}</h2>
-          <p class="muted small">
-            {{ 'postmortem.scope.interim' | translate: { tier: tierName() } }}
-          </p>
-          <button
-            type="button"
-            class="btn small ghost dismiss"
-            [attr.aria-label]="'postmortem.dismiss' | translate"
-            (click)="close()"
-          >
-            ✕
-          </button>
-        }
+        <span class="chip sev0">{{ 'postmortem.closed' | translate }}</span>
+        <h2>{{ 'postmortem.heading' | translate }}</h2>
+        <p class="muted small">
+          {{ 'postmortem.scope.final' | translate: { tier: tierName() } }}
+        </p>
 
         <p class="distribution">
           {{ client }} · {{ engagement | translate }}<br />
@@ -134,13 +116,11 @@
         </ol>
       </section>
 
-      @if (final()) {
-        <footer class="closing">
-          <button type="button" class="btn primary" (click)="toFinale()">
-            {{ 'postmortem.finale' | translate }}
-          </button>
-        </footer>
-      }
+      <footer class="closing">
+        <button type="button" class="btn primary" (click)="toFinale()">
+          {{ 'postmortem.finale' | translate }}
+        </button>
+      </footer>
     </article>
   </div>
 }

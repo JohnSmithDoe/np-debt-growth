@@ -1,23 +1,21 @@
+/*
+ * bigFrom: taller views draw the crew at 1.5x, which lands on whole backing pixels at 2x DPR.
+ */
 export const FINALE_ART = {
   key: 'cb-finale-party',
   url: 'assets/art/screen/finale-party.webp',
   width: 1024,
   height: 512,
-  /** Where the table legs meet the carpet, in source pixels. */
   footY: 400,
-  /** The furnished span, in source pixels: the crew mingles around it. */
   left: 270,
   right: 770,
-  /** Just in front of the buffet and of the DJ desk. */
   buffet: { x: 360, y: 430 },
   decks: { x: 700, y: 400 },
-  /** Of the view's height, before the width caps it. */
   heightShare: 0.64,
   widthShare: 1.3,
 } as const;
 
 export const FINALE_CAST = {
-  /** A taller view draws the crew at 1.5×, whole backing pixels at 2× DPR. */
   bigFrom: 960,
   enterEveryMs: 110,
   runSpeed: 250,
@@ -31,7 +29,6 @@ export const FINALE_MOOD = {
   wanderRestMs: [1400, 4200],
   chatPoseMs: [900, 2600],
   danceEveryMs: [700, 1300],
-  /** Of juniors, in order: sit down on the carpet, dance. The rest wander. */
   sitShare: 0.25,
   danceShare: 0.15,
   cakeEveryMs: 11_000,
@@ -43,7 +40,6 @@ export const FINALE_PHOTO = {
   rowGap: 27,
   spacing: 34,
   widthShare: 0.94,
-  /** A straggler is walked in at most this late after the curtain. */
   settleMs: 7000,
   cheerEveryMs: 2800,
   cheerPoseShare: 0.3,

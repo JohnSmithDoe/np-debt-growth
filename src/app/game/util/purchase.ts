@@ -11,12 +11,6 @@ import type { TicketTypeId } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
 import * as economy from './economy';
 
-/**
- * Every purchase as a pure step: the state after it, or `null` if it cannot
- * be bought. The store and the simulator share these, so they cannot drift.
- */
-
-/** The first of `node.maxed` not yet fully bought, if any. */
 function unmaxed(state: Consultancy, id: string): readonly string[] {
   return (SKILL_BY_ID.get(id)?.maxed ?? []).filter(
     (need) =>
@@ -94,7 +88,6 @@ export function buySkill(state: Consultancy, id: string): Consultancy | null {
   };
 }
 
-/** Whether any tree node could be bought right now. */
 export function anySkillAffordable(state: Consultancy): boolean {
   return SKILL_NODES.some((node) => {
     if (!skillAvailable(state, node.id)) return false;
@@ -103,7 +96,6 @@ export function anySkillAffordable(state: Consultancy): boolean {
   });
 }
 
-/** The next ADR's tree node, or `null` past the last rung. */
 export function nextAdrNodeId(state: Consultancy): string | null {
   const next = tierAt(state.tier + 1);
   return next ? adrNodeId(next.index) : null;

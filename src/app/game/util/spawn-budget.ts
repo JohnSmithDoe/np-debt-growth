@@ -1,7 +1,6 @@
 export class SpawnBudget {
   readonly #credit = new Map<string, number>();
 
-  /** A key's first credit is a random phase, so equal rates don't spawn in step. */
   due(
     key: string,
     ratePerSec: number,

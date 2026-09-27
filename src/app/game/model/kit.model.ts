@@ -14,10 +14,6 @@ export interface KitItem {
 export const kitLabelKey = (id: string): string => `kit.${id}.label`;
 export const kitBlurbKey = (id: string): string => `kit.${id}.blurb`;
 
-/**
- * One row per kit item: its price and what fitting it does. The `kit` skill
- * node builds its levels from this, so the ladder cannot outrun the plan.
- */
 export const KIT_PLAN: readonly KitItem[] = [
   {
     id: 'monitor',

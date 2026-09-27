@@ -12,67 +12,6 @@
   max-height: 34vh;
 }
 
-.sign {
-  position: relative;
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-
-  .plate {
-    margin-bottom: 0;
-  }
-
-  &:hover:not(:disabled) .plate {
-    filter: brightness(1.15);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-  }
-}
-
-.seal {
-  position: absolute;
-  right: 0.5rem;
-  bottom: 0.5rem;
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  padding: 0.3rem 0.6rem;
-  background: rgb(6 8 11 / 0.82);
-  border: 1px solid var(--np-cb-money);
-  border-radius: 3px;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 0.9);
-}
-
-.seal .verb {
-  font-family: var(--np-cb-font-util);
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--np-cb-money);
-}
-
-.seal .cost {
-  font-family: var(--np-cb-font-util);
-  font-size: 0.9rem;
-  color: var(--np-cb-ink);
-}
-
-.sign:disabled .seal {
-  border-color: var(--np-cb-rule);
-
-  .verb,
-  .cost {
-    color: var(--np-cb-ink-3);
-  }
-}
-
 .poster {
   position: relative;
   margin-bottom: 0.9rem;

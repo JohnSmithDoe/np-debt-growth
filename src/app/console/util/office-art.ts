@@ -4,7 +4,6 @@ import { backdropUrl } from '../../@shared/util/backdrop-art';
 
 import { TITLE_ART_URL } from './title-art';
 
-/** A rung's title screen; the lift before the first ADR and past the last. */
 export const officeArtFor = (tier: number): string =>
   tier >= 1 && tier <= MAX_TIER ? backdropUrl(tier, 'office') : TITLE_ART_URL;
 

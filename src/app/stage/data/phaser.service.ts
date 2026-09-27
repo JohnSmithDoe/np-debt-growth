@@ -1,15 +1,15 @@
+/*
+ * Sized in backing pixels (whole DPR steps, capped at 2x) and shown at zoom 1/scale;
+ * scenes zoom back up and lay out in CSS px. Scale mode NONE restyles the canvas
+ * only on a zoom refresh, so setZoom must follow every resize.
+ */
 import { Injectable, signal } from '@angular/core';
 import * as Phaser from 'phaser';
 
-/** Backing pixels per CSS pixel: whole steps, so pixel art stays even; capped for fill cost. */
 function backingScale(): number {
   return Math.min(2, Math.max(1, Math.round(globalThis.devicePixelRatio || 1)));
 }
 
-/**
- * The game is sized in backing pixels and shown at CSS size (`zoom` 1/scale);
- * every scene's camera zooms back up, so scenes lay out in CSS pixels.
- */
 @Injectable({ providedIn: 'root' })
 export class PhaserService {
   #game?: Phaser.Game;
@@ -49,7 +49,6 @@ export class PhaserService {
     if (!game) return;
     const scale = backingScale();
     game.scale.resize(width * scale, height * scale);
-    // NONE mode restyles the canvas only on a zoom refresh.
     game.scale.setZoom(1 / scale);
   }
 

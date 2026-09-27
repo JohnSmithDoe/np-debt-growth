@@ -3,8 +3,7 @@ import type { TicketMix } from '../model/board.model';
 import { voteBeamY, voteCount } from '../model/board.model';
 import type { Award } from '../model/award.model';
 import { AWARDS } from '../model/award.model';
-import type { OfficePlate } from '../model/office.model';
-import { nextPlate, platesAt } from '../model/office.model';
+import { platesAt } from '../model/office.model';
 import { castPoolSize } from '../model/cast.model';
 import type { Weather } from '../model/hazard.model';
 import { CALM } from '../model/hazard.model';
@@ -81,14 +80,6 @@ export function officePlates(state: Consultancy): number {
   );
 }
 
-export function officeNext(state: Consultancy): OfficePlate | null {
-  return nextPlate(officePlates(state) - 1);
-}
-
-export function officeNextNodeId(state: Consultancy): string | null {
-  return OFFICE_NODE_IDS.find((id) => skillRank(state, id) === 0) ?? null;
-}
-
 export function kitNext(state: Consultancy): KitItem | null {
   return nextKitItem(state.levels.kit);
 }
@@ -158,7 +149,6 @@ function productOf(
   return foldRanks(state, 1, (total, effect) => total * (match(effect) ?? 1));
 }
 
-/** `null` means no skill effect tunes the field, so the base value stands. */
 type EffectKind = SkillEffect['kind'] | null;
 
 function multOf(state: Consultancy, kind: EffectKind): number {
@@ -191,10 +181,6 @@ function globalMultiplier(state: Consultancy): number {
   return multOf(state, 'global') * overtime;
 }
 
-/**
- * The sprint scope: the base plus every `capacity` rank, once per team
- * `cans` has put on it.
- */
 export function sprintSlots(
   state: Consultancy,
   weather: Weather = CALM
@@ -204,7 +190,6 @@ export function sprintSlots(
   return Math.max(1, Math.floor(slots * weather.slots)) * teams;
 }
 
-/** Room left in the sprint; none while the train is away. */
 export function sprintRoom(
   state: Consultancy,
   weather: Weather = CALM
@@ -213,7 +198,6 @@ export function sprintRoom(
   return Math.max(0, sprintSlots(state, weather) - state.sprintCount);
 }
 
-/** The ceremonies the train still runs, in order; the cut nodes skip them. */
 export function releasePhases(state: Consultancy): readonly ReleasePhase[] {
   const cut = foldRanks(state, new Set<ReleasePhaseId>(), (set, effect) =>
     effect.kind === 'cutCeremony' ? set.add(effect.phase) : set
@@ -223,12 +207,10 @@ export function releasePhases(state: Consultancy): readonly ReleasePhase[] {
   );
 }
 
-/** The truck, and the only forced wait in the game. */
 export function haulMs(state: Consultancy): number {
   return releasePhases(state).reduce((sum, phase) => sum + phase.ms, 0);
 }
 
-/** The ceremony a train with `leftMs` still to run is in. */
 export function phaseAt(
   phases: readonly ReleasePhase[],
   leftMs: number
@@ -241,21 +223,14 @@ export function phaseAt(
   return phases[phases.length - 1]?.id ?? 'ship';
 }
 
-/** Signed off, and not yet at the acceptance goal. */
 export function inAcceptance(state: Consultancy): boolean {
   return state.endedAt === 0 && skillRank(state, FINAL_SKILL_ID) > 0;
 }
 
-/** The acceptance push has billed its goal: the run is over. */
 export function accepted(state: Consultancy): boolean {
   return inAcceptance(state) && state.budget >= ACCEPTANCE.goal;
 }
 
-/**
- * The automation-exempt class. Golden work pays a fortune and the crew
- * refuses it, so the player's own sweep stays worth doing however much
- * automation is running — until `goldenCrew` sells the exemption back.
- */
 export function goldenChance(state: Consultancy): number {
   const ranks = sumOf(state, (e) => (e.kind === 'goldenChance' ? e.add : null));
   return Math.min(GOLDEN_CHANCE_CAP, ranks);
@@ -272,12 +247,11 @@ export function crewTakesGolden(state: Consultancy): boolean {
   return holds(state, 'goldenCrew');
 }
 
-/** Golden crew turn a share of their ordinary closes golden, not only take the player's. */
 export function crewGoldenConversion(state: Consultancy): number {
   return crewTakesGolden(state) ? GOLDEN_CREW_CONVERSION : 0;
 }
 
-export function seniorsPreferTop(state: Consultancy): boolean {
+function seniorsPreferTop(state: Consultancy): boolean {
   return holds(state, 'topOfBand');
 }
 
@@ -319,16 +293,14 @@ export function incomeLevel(state: Consultancy, id: TicketTypeId): number {
   return Math.min(INCOME_CAP, state.income[id] ?? 0);
 }
 
-/** What one rank of `id`'s income row adds to its value. */
 export function incomeStep(id: TicketTypeId): number {
   return INCOME_ROWS[id]?.add ?? INCOME_VALUE_ADD;
 }
 
-export function incomeBonus(state: Consultancy, id: TicketTypeId): number {
+function incomeBonus(state: Consultancy, id: TicketTypeId): number {
   return incomeStep(id) * incomeLevel(state, id);
 }
 
-/** An income line opens once its source is on the path, not before. */
 export function incomeUnlocked(state: Consultancy, id: TicketTypeId): boolean {
   const row = spawnerFor(id);
   return row !== undefined && spawnerCount(state, row.adr) > 0;
@@ -350,7 +322,6 @@ export function canBuyIncome(state: Consultancy, id: TicketTypeId): boolean {
   );
 }
 
-/** A line is open once the tree has unlocked it — the rail sells the rest. */
 export function lineUnlocked(state: Consultancy, line: PurchaseId): boolean {
   return state.levels[line] > 0 || LINE_PLAN[line].open === true;
 }
@@ -363,7 +334,6 @@ export function lineCost(state: Consultancy, line: PurchaseId): number {
   return Math.ceil(plan.cost * LINE_COST_STEP ** Math.max(0, held - 1));
 }
 
-/** The line's start cap plus every seat its room node has added — never a product. */
 export function lineCap(state: Consultancy, line: PurchaseId): number {
   return (
     LINE_PLAN[line].cap +
@@ -383,13 +353,11 @@ export function spawnerCount(state: Consultancy, adr: number): number {
   return state.spawners[String(adr)] ?? 0;
 }
 
-/** `1.15^level`, the same shape every line on the rail climbs. */
 export function spawnerCost(state: Consultancy, adr: number): number {
   const row = SPAWNER_BY_ADR.get(adr);
   if (!row) return Number.POSITIVE_INFINITY;
   const level = spawnerCount(state, adr);
   if (level >= SPAWNER_CAP) return Number.POSITIVE_INFINITY;
-  // The head ADR-0 ships with was free; it does not raise the next one's price.
   const paid = adr === 0 ? Math.max(0, level - SPAWNER_FREE_AT_ADR_0) : level;
   return Math.floor(row.cost * SPAWNER_COST_STEP ** paid);
 }
@@ -406,10 +374,6 @@ export function canBuySpawner(state: Consultancy, adr: number): boolean {
   );
 }
 
-/**
- * Supply is the crowd on the path: no spawners on a line, no arrivals from
- * it. This is where a euro buys a worse codebase.
- */
 function sourceMultiplier(state: Consultancy, type: TicketType): number {
   if (type.handOnly) return 1;
   const row = spawnerFor(type.id);
@@ -476,7 +440,6 @@ const paceOf = (
     ? effect.mult
     : null;
 
-/** A crew's pace multiplier for one field: its skills, then a senior seat's traits. */
 function paceMult(
   state: Consultancy,
   crew: CrewKind,
@@ -491,7 +454,6 @@ function paceMult(
   return total;
 }
 
-/** Carrying more per trip slows the close down. */
 function batchPenalty(state: Consultancy, crew: CrewKind): number {
   return productOf(state, (e) =>
     e.kind === 'batch' && e.crew === crew ? (e.closeMult ?? null) : null
@@ -532,7 +494,6 @@ export function crewWalkSpeed(
   return CREW_STATS[crew].walkSpeed * paceMult(state, crew, 'walk', hire);
 }
 
-/** Which claim heuristic a crew follows — policy per kind, not a tuning number. */
 export function crewPick(
   state: Consultancy,
   crew: CrewKind,
@@ -560,7 +521,7 @@ export function crewPace(
   };
 }
 
-export function claimsNearest(state: Consultancy): boolean {
+function claimsNearest(state: Consultancy): boolean {
   return holds(state, 'nearestClaim');
 }
 
@@ -616,7 +577,6 @@ function crewBand(state: Consultancy, crew: CrewKind): CrewBand {
   return { from: band.from, to: additive(state, 'juniorBand', band.to) };
 }
 
-/** Types no crew claims: left on the board, they close themselves when they would have gone stale. */
 export function autoClosed(state: Consultancy): ReadonlySet<TicketTypeId> {
   return foldRanks(state, new Set<TicketTypeId>(), (all, effect) => {
     if (effect.kind === 'autoClose') all.add(effect.target);
@@ -624,7 +584,7 @@ export function autoClosed(state: Consultancy): ReadonlySet<TicketTypeId> {
   });
 }
 
-export function womenAmong(count: number, every: number): number {
+function womenAmong(count: number, every: number): number {
   return Math.floor(count / every);
 }
 
@@ -641,7 +601,6 @@ function crewRate(count: number, every: number): number {
   return count - women + women * WOMAN_CLOSE_RATE;
 }
 
-/** Closes per second for one worker at the given pace. */
 function closesPerSec(rate: number, batch: number, closeMs: number): number {
   return (rate * batch * 1000) / closeMs;
 }
@@ -659,14 +618,6 @@ export function juniorCloseMs(state: Consultancy): number {
 
 export function juniorBatch(state: Consultancy): number {
   return crewBatch(state, 'juniors');
-}
-
-export function juniorSweepRadius(state: Consultancy): number {
-  return crewSweepRadius(state, 'juniors');
-}
-
-export function juniorWalkSpeed(state: Consultancy): number {
-  return crewWalkSpeed(state, 'juniors');
 }
 
 export function hireAt(
@@ -689,32 +640,15 @@ export function seniorCloseMs(state: Consultancy, hire?: SeniorHire): number {
   return crewCloseMs(state, 'seniors', hire);
 }
 
-export function seniorWalkSpeed(state: Consultancy, hire?: SeniorHire): number {
-  return crewWalkSpeed(state, 'seniors', hire);
-}
-
 export function seniorBatch(state: Consultancy): number {
   return crewBatch(state, 'seniors');
 }
 
-export function seniorSweepRadius(
-  state: Consultancy,
-  hire?: SeniorHire
-): number {
-  return crewSweepRadius(state, 'seniors', hire);
-}
-
-export function seniorPrefersTop(
-  state: Consultancy,
-  hire?: SeniorHire
-): boolean {
+function seniorPrefersTop(state: Consultancy, hire?: SeniorHire): boolean {
   return seniorsPreferTop(state) || hireHolds(hire, 'topOfBand');
 }
 
-export function seniorClaimsNearest(
-  state: Consultancy,
-  hire?: SeniorHire
-): boolean {
+function seniorClaimsNearest(state: Consultancy, hire?: SeniorHire): boolean {
   return claimsNearest(state) || hireHolds(hire, 'nearestClaim');
 }
 
@@ -766,11 +700,6 @@ export function managerCloseMs(state: Consultancy): number {
   return crewCloseMs(state, 'managers');
 }
 
-export function managerWalkSpeed(state: Consultancy): number {
-  return crewWalkSpeed(state, 'managers');
-}
-
-/** What a crew close inside a manager's reach bills, as a multiple. */
 export function managerAura(state: Consultancy): number {
   return additive(state, 'managerAura', MANAGER_AURA_BASE);
 }
@@ -813,7 +742,6 @@ export function closeValue(
   return state.escalated ? base * escalationMultiplier(state) : base;
 }
 
-/** What the tickets held in the sprint were worth; already paid at pickup. */
 export function sprintWorth(
   state: Consultancy,
   mix: TicketMix,
@@ -827,10 +755,6 @@ export function sprintWorth(
   return worth;
 }
 
-/**
- * SP a close pays at pickup, in whole points; zero until the `velocity` row
- * is bought. Counted per ticket, not per euro: value nodes never touch it.
- */
 export function pickupStoryPoints(
   state: Consultancy,
   id: TicketTypeId,
@@ -846,7 +770,6 @@ export function pickupStoryPoints(
   return (SP_PER_PICKUP + bonus) * crew;
 }
 
-/** The live pizza party, if any, as the crew rules take it. */
 export function pizzaRush(state: Consultancy): Rush | null {
   const party = state.pizza;
   if (!party || state.lastTick >= party.until) return null;
@@ -867,7 +790,6 @@ export function voteBonusPerCrossing(state: Consultancy): number {
   );
 }
 
-/** Whether coach `index`'s vote is live at `runMs`; the stage draws the same. */
 export function voteLive(
   state: Consultancy,
   index: number,
@@ -878,7 +800,6 @@ export function voteLive(
   return (runMs + offset) % VOTE_CYCLE_MS < VOTE_ON_MS;
 }
 
-/** Bit `i` set: beam `i` is live and above `landingY`, so the ticket falls through it. */
 export function voteMask(
   state: Consultancy,
   runMs: number,
@@ -894,7 +815,6 @@ export function voteMask(
   return mask;
 }
 
-/** SP a ticket landing at `landingY` earns for every live beam above it. */
 export function voteBonus(
   state: Consultancy,
   runMs: number,

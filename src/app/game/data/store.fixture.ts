@@ -10,7 +10,6 @@ export function storeWith(patch: ConsultancyPatch = {}): GameStore {
   return store;
 }
 
-/** Ranks of the junior room node — the only thing that adds junior seats. */
 export function rooms(ranks: number): Record<string, number> {
   const room = ROOM_NODE_BY_LINE.junior;
   const node = SKILL_BY_ID.get(room);
@@ -22,7 +21,6 @@ export function rooms(ranks: number): Record<string, number> {
   };
 }
 
-/** Walk the clock to `to` in the sub-ticks the real clock would use. */
 export function tick(store: GameStore, to: number, from = 0): void {
   for (let at = from + TICK_MS; at <= to; at += TICK_MS) store.advanceTo(at);
 }

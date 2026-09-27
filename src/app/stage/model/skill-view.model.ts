@@ -25,7 +25,6 @@ export interface SkillHeadingView {
 }
 
 export interface SkillView {
-  readonly storyPoints: number;
   readonly nodes: readonly SkillNodeView[];
   readonly headings: readonly SkillHeadingView[];
   readonly secret: { readonly label: string; readonly blurb: string } | null;

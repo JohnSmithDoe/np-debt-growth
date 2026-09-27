@@ -41,13 +41,6 @@ export interface CrewWork {
   readonly byWomen: number;
 }
 
-function bill(board: Board, card: Carried): TicketTypeId {
-  if (TICKET_TYPES[card.type].respawns && !card.reborn) {
-    board.pending.push({ type: card.type, leftMs: FLAKY_COMEBACK_MS });
-  }
-  return card.type;
-}
-
 export function stepBoard(
   board: Board,
   crews: readonly CrewRules[],
@@ -129,11 +122,6 @@ export function removeTicket(board: Board, ticket: BoardTicket): void {
   board.byId.delete(ticket.id);
 }
 
-/**
- * A full board makes room for new work by closing the card nearest its own
- * expiry, golden only once nothing else is left. Claimed and hand-only cards
- * are never pushed out.
- */
 function displaceOldest(board: Board): boolean {
   let oldest: BoardTicket | null = null;
   for (const ticket of board.tickets) {
@@ -152,17 +140,10 @@ function displacesBefore(a: BoardTicket, b: BoardTicket): boolean {
   return a.lifeLeftMs < b.lifeLeftMs;
 }
 
-/** 1 while the card lives, falling to 0 over its fade. */
 export function fadeOf(ticket: BoardTicket): number {
   return ticket.lifeLeftMs === 0 ? ticket.fadeLeftMs / WONT_FIX_FADE_MS : 1;
 }
 
-/**
- * Closes as "won't fix" whatever nobody reached in time, after a fade the
- * hand can still rescue it from. A claimed card holds its clock: someone is
- * on the way. Won't-fix never comes back. A type in `autoCloses` skips the
- * fade and leaves into `closing` instead, for the store to bill.
- */
 export function expireTickets(
   board: Board,
   dtMs: number,
@@ -272,10 +253,9 @@ function deliverClose(
   worker.carrying = [];
 
   for (const card of handing) {
-    const banked = bill(board, card);
-    if (banked === null) continue;
+    comeBack(board, card);
     closed.push({
-      type: banked,
+      type: card.type,
       titleKey: card.titleKey,
       golden: card.golden,
       spBonus: card.spBonus,
@@ -294,9 +274,10 @@ function pickUp(
   rules: CrewRules,
   pace: HirePace,
   worker: CrewMember,
-  target: BoardTicket
+  target: BoardTicket,
+  room: number
 ): void {
-  const taken = sweep(board, rules, pace, target, pace.batch);
+  const taken = sweep(board, rules, pace, target, room);
   worker.carrying = taken.map((ticket) => ({
     id: ticket.id,
     type: ticket.type,
@@ -351,8 +332,6 @@ export function work(
       continue;
     }
 
-    // Reaching the card files it there and then; the time is spent
-    // recovering afterwards, which reads as working rather than idling.
     if (worker.phase === 'toTicket') {
       const target = board.byId.get(worker.target);
       if (!target) {
@@ -360,11 +339,10 @@ export function work(
         continue;
       }
       if (!stepToward(worker, target, (pace.speed * dt) / 1000)) continue;
-      // The can is full: wait at the card rather than overfilling it.
       if (closed.length >= room) continue;
 
       const seat = rules.seatOf(index, pace);
-      pickUp(board, rules, pace, worker, target);
+      pickUp(board, rules, pace, worker, target, room - closed.length);
       const took = deliverClose(rules, worker, board, seat);
       closed.push(...took.closed);
       byWomen += took.byWomen;
@@ -381,10 +359,6 @@ export function work(
   return { closed, byWomen };
 }
 
-/**
- * A manager closes nothing: they walk to where the crew is working and stand
- * over it, and whatever the crew closes within their reach bills more.
- */
 function oversee(
   board: Board,
   rules: CrewRules,
@@ -413,7 +387,6 @@ function oversee(
   worker.leftMs = 0;
 }
 
-/** A card some closer is walking to, else any card on the board. */
 function watchSpot(board: Board, rand: () => number): number {
   const busy: number[] = [];
   for (const crew of [board.juniors, board.seniors]) {
@@ -428,7 +401,6 @@ function watchSpot(board: Board, rand: () => number): number {
   return any ? any.id : NO_TICKET;
 }
 
-/** Whether a manager stands within `radius` of (x, y). */
 export function overseen(
   board: Board,
   x: number,
@@ -478,15 +450,14 @@ function sweep(
   return [target, ...near.slice(0, limit - 1)];
 }
 
-export function comeBack(board: Board, ticket: BoardTicket): void {
+export function comeBack(
+  board: Board,
+  ticket: Pick<Carried, 'type' | 'reborn'>
+): void {
   if (!TICKET_TYPES[ticket.type].respawns || ticket.reborn) return;
   board.pending.push({ type: ticket.type, leftMs: FLAKY_COMEBACK_MS });
 }
 
-/**
- * Tickets whose hit box the ellipse of `radius` across and `radiusY` down
- * touches: the hand's sweep, which takes any card it grazes.
- */
 export function pickTouching(
   board: Board,
   x: number,
@@ -498,7 +469,7 @@ export function pickTouching(
   const rx = Math.max(radius, 1e-6);
   const ry = Math.max(radiusY, 1e-6);
   for (const ticket of board.tickets) {
-    const box = TICKET_TYPES[ticket.type].handOnly ? RARE_HIT : CARD_HIT;
+    const box = handOnly(ticket) ? RARE_HIT : CARD_HIT;
     const dx = Math.max(0, Math.abs(ticket.x - x) - box.halfWidth) / rx;
     const dy = Math.max(0, Math.abs(ticket.y - y) - box.halfHeight) / ry;
     if (dx * dx + dy * dy <= 1) found.push(ticket.id);
@@ -506,7 +477,6 @@ export function pickTouching(
   return found;
 }
 
-/** Tickets inside the ellipse of `radius` across and `radiusY` down. */
 export function pickWithin(
   board: Board,
   x: number,
@@ -594,7 +564,6 @@ function release(board: Board, crewId: number): void {
   if (worker) worker.leftMs = 0;
 }
 
-/** Work lands anywhere on the field; it only stacks once the field is crowded. */
 function claimCell(board: Board, rand: () => number): number {
   for (let sample = 0; sample < SCATTER_SAMPLES; sample++) {
     const col = Math.floor(rand() * HEAP_COLS);

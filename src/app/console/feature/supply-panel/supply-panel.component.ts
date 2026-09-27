@@ -1,3 +1,4 @@
+/* Translated labels resolve inside computeds: the catalogue loads lazily, so a field initialiser reads raw keys. */
 import {
   ChangeDetectionStrategy,
   Component,
@@ -35,12 +36,10 @@ const TABS = ['supply', 'income', 'crew'] as const;
 
 type Tab = (typeof TABS)[number];
 
-/** Holding a row keeps buying: a pause, then a repeat that speeds up. */
 const HOLD = { delayMs: 350, everyMs: 90, fastMs: 40, fastAfter: 10 } as const;
 
 const SP_UNLOCK: PurchaseId = 'velocity';
 
-/** Locked rows shown ahead as silhouettes; the rest are a count. */
 const TEASED = 2;
 
 interface Row {
@@ -48,9 +47,7 @@ interface Row {
   readonly name: string;
   readonly blurb: string;
   readonly locked: boolean;
-  /** Not buyable yet: drawn as a silhouette of what is coming. */
   readonly teaser?: boolean;
-  /** The opening buy, tinted until the first one lands. */
   readonly first?: boolean;
   readonly held: number;
   readonly cap: number;
@@ -93,7 +90,6 @@ export class SupplyPanelComponent {
   #icons = inject(BoardIcons);
 
   readonly tab = signal<Tab>('supply');
-  /** The last row bought, and a count so repeat buys restart the flash. */
   readonly flash = signal<{ key: string; beat: number } | null>(null);
 
   #holdTimer: ReturnType<typeof setTimeout> | undefined;
@@ -102,8 +98,6 @@ export class SupplyPanelComponent {
     inject(DestroyRef).onDestroy(() => this.release());
   }
 
-  // Resolved per render: the catalogue is lazily imported, so a field
-  // initialiser would read the keys back raw.
   readonly tabs = computed<
     readonly { id: Tab; label: string; buyable: boolean }[]
   >(() => {
@@ -147,7 +141,6 @@ export class SupplyPanelComponent {
       }));
   }
 
-  /** The SP unlock sits beside the first head until bought, then leaves the rail. */
   #unlockRow(): readonly Row[] {
     if (this.#store.levels()[SP_UNLOCK] > 0) return [];
     return [
@@ -200,7 +193,6 @@ export class SupplyPanelComponent {
     return Math.max(0, locked - TEASED);
   });
 
-  /** Rates: bill more for one kind of work, once its source is on the path. */
   readonly income = computed<readonly Row[]>(() => {
     this.#store.state();
     const teasers = SPAWNED_TICKET_IDS.filter(
@@ -256,8 +248,6 @@ export class SupplyPanelComponent {
 
   readonly crew = computed<readonly Row[]>(() => {
     this.#store.state();
-    // Locked lines stay on show — an empty tab reads as broken, not as
-    // "these open on the tree".
     return CREW_ROWS.map((line) => {
       const locked = !this.#store.lineUnlocked(line);
       const held = this.#store.levels()[line];
@@ -305,7 +295,6 @@ export class SupplyPanelComponent {
     this.tab.set(tab);
   }
 
-  /** Keyboard activation only; a pointer buys through `press`. */
   pick(event: MouseEvent, key: string): void {
     if (event.detail === 0) this.#buy(this.tab(), key);
   }

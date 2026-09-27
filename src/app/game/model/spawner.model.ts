@@ -1,11 +1,7 @@
+/* SPAWNER_COST_STEP is single precision: 500 × 1.15 floors to 574, not 575. */
 import type { TicketTypeId } from './ticket.model';
 import { tierBlurbKey, tierNameKey } from './tier.model';
 
-/**
- * The people on the path. One line per ADR: you buy developers who commit
- * worse code, and bill the client to clean up after them. A line's count
- * scales the arrival rate of the ticket it produces.
- */
 export interface Spawner {
   readonly adr: number;
   readonly produces: readonly TicketTypeId[];
@@ -15,16 +11,10 @@ export interface Spawner {
 
 export const SPAWNER_CAP = 50;
 
-/**
- * Each level costs this much more than the one before it. Single precision,
- * so 500 × 1.15 floors to 574, not 575.
- */
 export const SPAWNER_COST_STEP = Math.fround(1.15);
 
-/** ADR-0 arrives staffed, so the board is never empty on the first frame. */
 export const SPAWNER_FREE_AT_ADR_0 = 1;
 
-/** ADR 1-8 already name their own source in the tier copy; ADR-0 is new. */
 export const spawnerLabelKey = (adr: number): string =>
   adr === 0 ? 'spawner.0.label' : tierNameKey(adr);
 export const spawnerBlurbKey = (adr: number): string =>
@@ -82,7 +72,6 @@ export function spawnerFor(id: TicketTypeId): Spawner | undefined {
   return BY_TICKET.get(id);
 }
 
-/** Every ticket a line drops, in rung order — the income tab's rows. */
 export const SPAWNED_TICKET_IDS: readonly TicketTypeId[] = SPAWNERS.flatMap(
   (row) => row.produces
 );

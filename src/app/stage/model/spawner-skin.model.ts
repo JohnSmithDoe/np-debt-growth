@@ -1,4 +1,3 @@
-/** Indexed by ADR. A line with several skins walks them as one pack. */
 export const SPAWNER_CAST = [
   ['spawner-0'],
   ['spawner-1'],

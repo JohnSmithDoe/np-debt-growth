@@ -1,3 +1,6 @@
+/*
+ * The ghost train sheet engine faces left; the mirrored blit in #trainOf is deliberate.
+ */
 import * as Phaser from 'phaser';
 
 import { formatCompactMoney } from '../../@shared/util/format-quantity';
@@ -12,7 +15,6 @@ import {
 import type { SceneDeps } from '../model/scene-deps.model';
 
 const PIP_HEIGHT = 16;
-/** The bar sits high in the strip; the train runs on its own track below it. */
 const BAR_TOP = 5;
 const RAIL_Y = 45;
 const PORTAL_WIDTH = 8;
@@ -23,7 +25,6 @@ const STATUS_DOT = 3;
 const STATUS_TEXT_X = 12;
 const PENDING_WIDTH = 112;
 const MIN_BAR_WIDTH = 96;
-/** The sprint fills left to right in segments; fewer when the bar gets narrow. */
 const SEGMENT = { max: 10, min: 8, gap: 2 } as const;
 
 const PAD = 18;
@@ -49,7 +50,6 @@ export class SprintStrip {
   readonly #cooldown: Phaser.GameObjects.Graphics;
   readonly #statusLabel: Phaser.GameObjects.Text;
 
-  #width = 0;
   #top = 0;
   #barWidth = SPRINT_BAR_WIDTH;
   #statusX = 0;
@@ -81,20 +81,14 @@ export class SprintStrip {
     this.#statusLabel.setOrigin(0, 0.5);
   }
 
-  get dropX(): number {
-    return this.#width * 0.5;
-  }
-
   get dropY(): number {
     return this.#top + BAR_TOP + PIP_HEIGHT / 2;
   }
 
-  /** Where the sprint's cards land: the middle of the bar. */
   get barX(): number {
     return BAR_X + this.#barWidth / 2;
   }
 
-  /** The newest ticket in the sprint while the pointer is on the bar. */
   slotAt(px: number, py: number): number | null {
     if (py < this.#top || py > this.#top + SPRINT_STRIP_HEIGHT) return null;
     if (px < BAR_X || px > BAR_X + this.#barWidth) return null;
@@ -107,7 +101,6 @@ export class SprintStrip {
   }
 
   layout(width: number, height: number): void {
-    this.#width = width;
     this.#top = height - SPRINT_STRIP_HEIGHT;
 
     this.#band.setPosition(0, this.#top).setSize(width, SPRINT_STRIP_HEIGHT);
@@ -174,7 +167,6 @@ export class SprintStrip {
       .setDepth(depth + 1);
   }
 
-  /** The sprint filling, and below it the train carrying the last one. */
   #refreshSlots(): void {
     const haul = Math.max(1, this.#deps.haulMs());
     const filled = this.#deps.filled();
@@ -237,7 +229,6 @@ export class SprintStrip {
     }
   }
 
-  /** The release train: out of the left tunnel, one car per tier, into the right. */
   #drawTrain(x: number, rail: number, width: number, progress: number): void {
     const cars = this.#deps.tier() + 1;
     const pitch = GHOST_TRAIN.car.frame.width + GHOST_TRAIN.gap;
@@ -270,7 +261,6 @@ export class SprintStrip {
     this.#train?.setVisible(false);
   }
 
-  /** The whole train as one image, built once per car count, so no part can drift. */
   #trainOf(cars: number): Phaser.GameObjects.Image {
     const key = `${GHOST_TRAIN.loco.key}-${cars}`;
     if (!this.#scene.textures.exists(key)) this.#composeTrain(key, cars);
@@ -310,7 +300,6 @@ export class SprintStrip {
       );
     };
     for (let n = 0; n < cars; n++) blit(car, n * pitch);
-    // The sheet's engine faces left; this train runs to the right.
     ctx.save();
     ctx.translate(cars * pitch + loco.frame.width, 0);
     ctx.scale(-1, 1);
@@ -347,7 +336,6 @@ export class SprintStrip {
       .setColor(this.#remaining > 0 ? BOARD_TEXT.gold : BOARD_TEXT.body);
   }
 
-  /** Status dot, and while the train is out the time until it is back. */
   #drawCooldown(): void {
     const length = this.#deps.haulMs();
     const away = this.#remaining > 0;

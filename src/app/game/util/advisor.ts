@@ -1,3 +1,7 @@
+/*
+ * ADR_SLACK: 0 starves the crew gates, which pay back in euros; measured best
+ * at 0.3–0.5.
+ */
 import type { Consultancy } from '../model/consultancy.model';
 import {
   FINAL_SKILL_ID,
@@ -15,37 +19,22 @@ import * as purchase from './purchase';
 import type { Flow, SimPolicy } from './sim';
 import { flow } from './sim';
 
-/**
- * What to buy next, priced on the board-free sim.
- *
- *   score = (Δln €/s + Δln SP/s) / seconds of income the purchase costs
- *
- * Growth per second spent is what compounds, so it compares a cheap head with
- * a dear node fairly. A gate earns nothing alone, so it is scored together with
- * the best purchase it opens. SP buys that would hold up the next ADR too long
- * give way to it, and once `signoff` is on offer only time to it counts.
- */
-
 export type Buy =
   | { readonly kind: 'skill'; readonly id: string }
   | { readonly kind: 'line'; readonly line: PurchaseId }
   | { readonly kind: 'spawner'; readonly adr: number }
   | { readonly kind: 'income'; readonly id: TicketTypeId };
 
-export type Currency = 'eur' | 'sp';
+type Currency = 'eur' | 'sp';
 
 export interface Pick {
   readonly buy: Buy;
   readonly currency: Currency;
   readonly cost: number;
-  /** Seconds of income until it is affordable; 0 when it is. */
   readonly waitSec: number;
-  /** Income in the pick's currency, for re-timing the wait; 0 when none comes in. */
   readonly perSec: number;
   readonly score: number;
-  /** The purchase this one opens, when it was scored as a gate. */
   readonly then: Buy | null;
-  /** Nothing scores: the cheapest SP buy, because SP buys nothing else. */
   readonly spare?: true;
 }
 
@@ -54,10 +43,8 @@ export interface Advice {
   readonly sp: Pick | null;
 }
 
-/** Below this a score is rounding noise, not growth. */
 const SCORE_FLOOR = 1e-9;
 
-/** Keeps a rate that is still zero from making every first purchase infinite. */
 const RATE_FLOOR = 0.1;
 const UNLIMITED = 1e300;
 
@@ -87,7 +74,7 @@ export function apply(state: Consultancy, buy: Buy): Consultancy | null {
   }
 }
 
-export function costOf(
+function costOf(
   state: Consultancy,
   buy: Buy
 ): { currency: Currency; cost: number } {
@@ -106,7 +93,6 @@ export function costOf(
   }
 }
 
-/** Everything on offer, funds aside. */
 function offers(state: Consultancy): Buy[] {
   const rich = { ...state, budget: UNLIMITED, storyPoints: UNLIMITED };
   const out: Buy[] = [];
@@ -160,8 +146,7 @@ interface Candidate {
   readonly score: number;
 }
 
-/** Every offer worth anything, best first. */
-export function rank(state: Consultancy, policy: SimPolicy): Candidate[] {
+function rank(state: Consultancy, policy: SimPolicy): Candidate[] {
   const now = ratesOf(flow(state, policy));
   const spMatters = state.tier < MAX_TIER;
   const rich = { ...state, budget: UNLIMITED, storyPoints: UNLIMITED };
@@ -224,7 +209,6 @@ function goalOf(state: Consultancy, id: string): Goal {
   return { buy, ...costOf(state, buy) };
 }
 
-/** Seconds until `goal` is affordable if nothing else is bought, or after buying `buy` first. */
 function secondsTo(
   state: Consultancy,
   policy: SimPolicy,
@@ -253,17 +237,8 @@ function secondsTo(
   );
 }
 
-/**
- * How much later than saving an SP purchase may bring the next ADR. Zero starves
- * the crew gates, which pay back through euros; measured best at 0.3–0.5.
- */
 const ADR_SLACK = 0.5;
 
-/**
- * The goal itself, or what in its currency to buy on the way. With `slack` the
- * best-ranked buy that delays the goal by at most that share; without, the one
- * that reaches it soonest.
- */
 function towards(
   state: Consultancy,
   policy: SimPolicy,

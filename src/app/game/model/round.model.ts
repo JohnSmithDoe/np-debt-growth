@@ -4,17 +4,11 @@ export function releasePhaseKey(id: ReleasePhaseId, short = false): string {
   return `release.phase.${id}${short ? '.short' : ''}`;
 }
 
-/**
- * `hauling` means the release train is away; it blocks collection only — spawning, crew and the clock all keep
- * running through it.
- */
 export type RoundPhase = 'collecting' | 'hauling';
 
 export interface RoundOutcome {
   readonly seq: number;
   readonly billed: number;
-  readonly closed: number;
-  readonly closedByCrew: number;
   readonly filled: number;
   readonly capacity: number;
   readonly filledAtMs: number;
@@ -23,7 +17,6 @@ export interface RoundOutcome {
   readonly spVelocity: number;
 }
 
-/** A live buff, for the board's banner: what it multiplies, and for how long or how far. */
 export type BuffNotice =
   | {
       readonly id: 'escalation' | 'hotfix';

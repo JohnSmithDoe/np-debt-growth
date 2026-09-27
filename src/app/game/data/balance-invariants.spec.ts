@@ -14,11 +14,6 @@ import {
 } from '../model/balance/flow';
 import * as economy from '../util/economy';
 
-/**
- * Relationships the tuning tables have to keep, whatever the numbers become.
- * These are the guard rails for a balance pass: they say nothing about what a
- * knob should be, only that a change has not broken the shape of the ladder.
- */
 describe('the debt tier ladder', () => {
   it('asks more for every rung than the one below', () => {
     for (let n = 1; n < DEBT_TIERS.length; n += 1) {
@@ -83,7 +78,6 @@ describe('the crew table', () => {
     }
   });
 
-  /** The record is only a tuning surface if the accessors read it. */
   it('is what the game reads, not a decorative duplicate', () => {
     const fresh = consultancy();
     for (const kind of CREW_KINDS) {

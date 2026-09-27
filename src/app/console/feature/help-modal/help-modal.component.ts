@@ -44,7 +44,6 @@ export interface GuideRow {
   readonly params: Record<string, unknown>;
   readonly worth: string | null;
   readonly from: { readonly key: string; readonly params?: object } | null;
-  /** Not reached yet this run. */
   readonly ahead: boolean;
 }
 

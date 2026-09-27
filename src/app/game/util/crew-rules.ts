@@ -3,12 +3,7 @@ import type { Consultancy } from '../model/consultancy.model';
 import type { Weather } from '../model/hazard.model';
 import type { CrewMember } from '../model/board.model';
 import type { CrewKind } from '../model/crew.model';
-import type {
-  ClaimPick,
-  CrewRules,
-  CrewSeat,
-  HirePace,
-} from '../model/crew.model';
+import type { CrewRules, CrewSeat, HirePace } from '../model/crew.model';
 import {
   CREW_KINDS,
   CREW_STATS,
@@ -56,7 +51,7 @@ function rulesFor(
     seatOf: (index, pace) => seatOf(state, kind, index, pace, womanEvery),
     claims: economy.crewClaims(state, kind),
     golden: economy.crewTakesGolden(state),
-    paces: stats.perSeat ? seatPaces(state, kind, weather) : null,
+    paces: stats.perSeat ? seatPaces(state, kind) : null,
     interrupted: stats.interruptible && weather.meeting,
     rush: economy.pizzaRush(state),
   };
@@ -80,11 +75,7 @@ function seatOf(
   return { ...seat, poolSeat: economy.seniorPoolSeat(state, index) };
 }
 
-function seatPaces(
-  state: Consultancy,
-  kind: CrewKind,
-  weather: Weather
-): readonly HirePace[] {
+function seatPaces(state: Consultancy, kind: CrewKind): readonly HirePace[] {
   const paces: HirePace[] = [];
   const seats = economy.crewSize(state, kind);
   for (let seat = 0; seat < seats; seat += 1) {
@@ -92,5 +83,3 @@ function seatPaces(
   }
   return paces;
 }
-
-export type { ClaimPick, CrewRules, CrewSeat, HirePace };

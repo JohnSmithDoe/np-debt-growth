@@ -1,6 +1,5 @@
 import type { TicketTypeId } from './ticket.model';
 
-/** How many titles each pool holds; the catalogues carry the words. */
 export const TICKET_TITLE_COUNTS: Readonly<Record<TicketTypeId, number>> = {
   lint: 20,
   bug: 20,
@@ -23,11 +22,11 @@ export const TICKET_TITLE_COUNTS: Readonly<Record<TicketTypeId, number>> = {
 export const ticketTitleKey = (id: TicketTypeId, index: number): string =>
   `ticket.title.${id}.${index}`;
 
-export function pickTicketTitle(
-  id: TicketTypeId,
-  roll: number = Math.random()
-): string {
+export function pickTicketTitle(id: TicketTypeId): string {
   const count = TICKET_TITLE_COUNTS[id];
-  const index = Math.min(count - 1, Math.max(0, Math.floor(roll * count)));
+  const index = Math.min(
+    count - 1,
+    Math.max(0, Math.floor(Math.random() * count))
+  );
   return ticketTitleKey(id, index);
 }

@@ -1,10 +1,6 @@
 import type { CrewKind, CrewMode } from '../crew.model';
 import type { PurchaseId } from './progression';
 
-/**
- * Claim priority: earlier kinds pick tickets off the board first. Reordering
- * this retunes who gets the dearest work, so it is a balance knob in itself.
- */
 export const CREW_KINDS = [
   'seniors',
   'juniors',
@@ -26,11 +22,8 @@ export interface CrewStats {
   readonly band: CrewBand;
   readonly mode: CrewMode;
   readonly levelKey: PurchaseId;
-  /** Meetings pull this crew off the board. */
   readonly interruptible: boolean;
-  /** Junior-only: standup aura scales with headcount. */
   readonly aura: boolean;
-  /** Seniors carry per-seat traits, so each seat gets its own pace. */
   readonly perSeat: boolean;
 }
 
@@ -81,5 +74,4 @@ export const CREW_STATS = {
 
 export const WOMAN_CLOSE_RATE = 2;
 
-/** Seats a room node's rank adds to its line's cap. */
 export const ROOM_SEATS = 5;

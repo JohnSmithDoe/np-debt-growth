@@ -17,7 +17,6 @@ import { SPAWNERS } from '../model/spawner.model';
 import { HAZARDS_ENABLED } from '../model/hazard.model';
 import { TRAIT_IDS } from '../model/senior.model';
 
-/** Design bound: no single trait may make a senior worth more than this many. */
 const TRAIT_D21_CEILING = 1.25;
 import { HAUL_MS } from '../model/balance/round';
 import { pickTouching } from '../util/board';
@@ -28,11 +27,9 @@ import { DEFAULT_POLICY, advisedSpend, autoplay } from '../util/autoplay';
 const CREW_EURO_FLOOR = 0.15;
 const CREW_EURO_CAP = 0.95;
 
-/** Re-measure when the weather comes back: it staffs offshore crew. */
 const CREW_EURO_WINDOW_FLOOR = HAZARDS_ENABLED ? 0.05 : 0.04;
 const CREW_CLOSE_WINDOW_FLOOR = 0.05;
 const WINDOW_MS = 2 * 60_000;
-/** One junior is not a crew: the close share is judged once the line has had this long to staff. */
 const CREW_RAMP_MS = 3 * 60_000;
 
 const CLICKS_PER_SEC = Number(
@@ -41,9 +38,7 @@ const CLICKS_PER_SEC = Number(
 const SAVE_FOR_ADR_SEC = Number(
   process.env['CB_SAVE'] ?? DEFAULT_POLICY.saveForAdrSec
 );
-/** Gold is worth twice all ordinary work, so watching for it should show. */
 const ATTENTION_MARGIN = 1.5;
-/** Long enough for an unwatched floor to fill a lane or two on its own. */
 const IDLE_CYCLE_MS = 10 * 60_000;
 const MAX_SESSION_MS = Number(process.env['CB_MAXMS'] ?? 4 * 60 * 60 * 1000);
 
@@ -57,7 +52,6 @@ function everySkill(): Record<string, number> {
 }
 
 const MILESTONES = [
-  // The first new spawner (750) comes before the juniors (~1 200).
   ['tier 1', (s: Consultancy) => s.tier >= 1],
   ['first junior', (s: Consultancy) => s.levels.junior >= 1],
   ['tier 2', (s: Consultancy) => s.tier >= 2],
@@ -68,7 +62,6 @@ const MILESTONES = [
   ['tier 7', (s: Consultancy) => s.tier >= 7],
   ['tier 8', (s: Consultancy) => s.tier >= 8],
   ['signed off', (s: Consultancy) => (s.skills[FINAL_SKILL_ID] ?? 0) > 0],
-  // Sign-off starts the acceptance push; the run ends when it bills its goal.
   ['accepted', (s: Consultancy) => s.endedAt > 0],
 ] as const;
 
@@ -141,7 +134,6 @@ const SESSION_POLICY = {
   saveForAdrSec: SAVE_FOR_ADR_SEC,
 };
 
-/** Paced as the Synergy Analyser plays it. */
 const run = autoplay(
   freshConsultancy(0, SAVE_VERSION),
   [...MILESTONES, ...UNORDERED_MILESTONES],
@@ -150,7 +142,6 @@ const run = autoplay(
   advisedSpend
 );
 
-/** Buys everything it can reach, cheapest first: proves the tree is reachable. */
 const cheapest = autoplay(
   freshConsultancy(0, SAVE_VERSION),
   [...MILESTONES, ...UNORDERED_MILESTONES],
@@ -171,8 +162,6 @@ describe('the crew earns its keep, and never all of it', () => {
     );
   });
 
-  // Until the crew take gold, the hand's gold outweighs everything they bill;
-  // what they carry then is the closes, not the euros.
   it('carries the closes before it is cleared for gold', () => {
     const firstJunior = run.reached.get('first junior')!;
     const cleared = run.reached.get('golden crew')!;
@@ -302,7 +291,6 @@ describe('the regime migration (C5)', () => {
 });
 
 describe('supply is priced against the bucket (D25)', () => {
-  // The opening never meets the cap: you don't know there is one.
   it('opens with a lane far wider than the path can fill', () => {
     const start = freshConsultancy(0, SAVE_VERSION);
     expect(economy.ceilingPerSec(start)).toBeGreaterThan(
@@ -374,7 +362,6 @@ describe("an unattended run keeps cycling (C1's successor)", () => {
       if (clicks <= 0) continue;
       credit -= clicks;
       for (let click = 0; click < clicks; click += 1) {
-        // Scan for gold first: it is the work the crew refuse.
         const aim =
           store.board.tickets.find((ticket) => ticket.golden) ??
           store.board.tickets[0];
@@ -392,8 +379,6 @@ describe("an unattended run keeps cycling (C1's successor)", () => {
     return store.budget();
   };
 
-  // Before the crew are cleared for gold, the hand is what collects it. After,
-  // the hand only hurries things along, so no margin is owed.
   const beforeGoldenCrew = (): Record<string, number> => ({
     ...everySkill(),
     goldenCrew: 0,
@@ -444,8 +429,6 @@ describe('the session arc', () => {
   it('finishes inside a sitting, not a coffee break', () => {
     const at = run.reached.get('accepted');
     expect(at, 'the run never finished acceptance').toBeDefined();
-    // Targets 30 min. Wide enough that ordinary tuning
-    // does not trip it, tight enough to catch the curve collapsing.
     expect(at! / 60_000).toBeGreaterThan(25);
     expect(at! / 60_000).toBeLessThan(45);
   });

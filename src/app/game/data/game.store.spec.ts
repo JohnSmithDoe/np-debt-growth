@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { NEVER_EXPIRES } from '../model/board.model';
 import { resumed } from '../model/consultancy.model';
-import {
-  FEED_LINES_PER_SEC,
-  MAX_CATCHUP_MS,
-  TICK_MS,
-} from '../model/game.consts';
+import { MAX_CATCHUP_MS, TICK_MS } from '../model/game.consts';
 import {
   ROOM_NODE_BY_LINE,
   SECRET_SKILL_ID,
@@ -108,7 +104,6 @@ describe('the sprint (C4, D20, D23)', () => {
 
   it('leaves the backlog on the board across a haul — debt accumulates', () => {
     const store = storeWith();
-    // Expiry is its own rule; this pins only that a haul does not wipe.
     for (const ticket of [
       addTicket(store.board, 'lint'),
       addTicket(store.board, 'lint'),
@@ -375,87 +370,6 @@ describe('rooms cap each crew line', () => {
     for (const line of ['velocity', 'kit'] as const) {
       expect(store.lineCap(line)).toBe(LINE_PLAN[line].cap);
     }
-  });
-});
-
-describe('the feed', () => {
-  it('names the crew member who closed it', () => {
-    const store = storeWith({ levels: { junior: 1 }, skills: rooms(1) });
-    for (let n = 0; n < 5; n++) addTicket(store.board, 'lint');
-
-    for (let ms = 100; ms <= 60_000; ms += 100) {
-      store.advanceTo(ms);
-      store.startRound(ms);
-    }
-    const closes = store.log().filter((line) => line.kind === 'close');
-    expect(closes.length).toBeGreaterThan(0);
-    expect(closes[0]).toMatchObject({ close: { by: 'juniors' } });
-  });
-
-  it('samples the crew rather than logging all of it', () => {
-    const store = storeWith({
-      tier: 1,
-      skills: { ...AUTOMATED, capacity: 5 },
-      levels: { junior: 200 },
-    });
-
-    for (let ms = 100; ms <= 20_000; ms += 100) {
-      for (let n = 0; n < 20; n++) addTicket(store.board, 'lint');
-      store.advanceTo(ms);
-      store.startRound(ms);
-    }
-
-    const seconds = 10;
-    const before = store.lifetimeClosed();
-    const lines = store.log().length;
-    for (let ms = 20_100; ms <= 20_000 + seconds * 1000; ms += 100) {
-      for (let n = 0; n < 20; n++) addTicket(store.board, 'lint');
-      store.advanceTo(ms);
-      store.startRound(ms);
-    }
-
-    const closed = store.lifetimeClosed() - before;
-    const written = store.log().length - lines;
-    expect(written).toBeLessThanOrEqual(
-      Math.ceil(FEED_LINES_PER_SEC * seconds) + 1
-    );
-    expect(closed).toBeGreaterThan(written * 3);
-  });
-
-  it('never drops the click you made', () => {
-    const store = storeWith({
-      tier: 1,
-      skills: { ...AUTOMATED, capacity: 5 },
-      levels: { junior: 200 },
-    });
-    for (let ms = 100; ms <= 20_000; ms += 100) store.advanceTo(ms);
-
-    const lines = store.log().length;
-    expect(click(store, 'incident')).toBe(true);
-    const newest = store.log()[0];
-    expect(store.log().length).toBe(lines + 1);
-    expect(newest).toMatchObject({ kind: 'close', close: { by: 'you' } });
-  });
-
-  it('says nothing about a restored save', () => {
-    const store = storeWith({
-      tier: 8,
-      levels: { junior: 200 },
-      skills: rooms(8),
-    });
-
-    store.advanceTo(200);
-    expect(store.log().filter((line) => line.kind === 'note')).toEqual([]);
-  });
-
-  it('empties on reset', () => {
-    const store = storeWith({ levels: { junior: 1 }, skills: rooms(1) });
-    for (let n = 0; n < 5; n++) addTicket(store.board, 'lint');
-    for (let ms = 100; ms <= 60_000; ms += 100) store.advanceTo(ms);
-    expect(store.log().length).toBeGreaterThan(0);
-
-    store.reset(0);
-    expect(store.log()).toEqual([]);
   });
 });
 

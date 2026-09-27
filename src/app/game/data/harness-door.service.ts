@@ -18,9 +18,7 @@ export interface HarnessDoors {
   buySkill(id: string): boolean;
   buyLine(line: PurchaseId): boolean;
   buySpawner(adr: number): boolean;
-  /** Drops one card on the board; `NO_TICKET` when there is no room. */
   place(type: TicketTypeId, golden?: boolean): number;
-  /** Opens the curtain call; `true` skips the roll to the thank-you. */
   finale(curtain?: boolean): void;
 }
 

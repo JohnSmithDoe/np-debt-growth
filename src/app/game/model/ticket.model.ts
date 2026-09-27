@@ -35,10 +35,7 @@ export interface TicketType {
   readonly effect: TicketEffect;
   readonly scalesWithTier: boolean;
   readonly colour: number;
-  /** Held back until this run time, then the first one is placed exactly then. */
   readonly revealAtMs?: number;
-  /** Held back until this ADR is approved. */
-  readonly revealAtTier?: number;
 }
 
 export const ticketLabelKey = (id: string): string => `ticket.type.${id}`;

@@ -77,7 +77,6 @@ for (const [width, height] of SIZES) {
 
   await fits('Board');
 
-  // The shop grew a third tab; each has to fit on its own.
   for (const tab of ['Rates', 'Crew']) {
     await page
       .locator('cb-supply-panel .tabs button', { hasText: tab })

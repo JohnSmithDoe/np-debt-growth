@@ -10,10 +10,6 @@ import { TIER_BACKDROP } from '../model/board.consts';
 const keyOf = (tier: number, kind: BackdropKind): string =>
   `cb-backdrop-${tier}-${kind}`;
 
-/**
- * The rung's art behind the board, dimmed so the cards stay the subject: its
- * title screen first, then its ADR plate (the empty office at tier 0) and back.
- */
 export class TierBackdrop {
   readonly #scene: Phaser.Scene;
   readonly #front: Phaser.GameObjects.Image;

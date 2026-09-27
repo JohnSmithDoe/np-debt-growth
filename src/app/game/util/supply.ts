@@ -22,9 +22,10 @@ export function spawnInto(
   const to = from + seconds * 1000;
   const interest = economy.debtInterest(state);
   const golden = economy.goldenChance(state);
+  const perVote = economy.voteBonusPerCrossing(state);
 
   for (const id of TICKET_TYPE_IDS) {
-    if (heldBack(id, from, state.tier)) continue;
+    if (heldBack(id, from)) continue;
     const storm = id === 'incident' ? weather.incidentRate : 1;
     const drought = TICKET_TYPES[id].handOnly ? 1 : weather.supply;
     const rate = economy.spawnRate(state, id) * storm * drought;
@@ -41,8 +42,7 @@ export function spawnInto(
           from + n * VOTE_SPREAD_MS,
           ticket.y
         );
-        ticket.spBonus =
-          voteCount(ticket.voteMask) * economy.voteBonusPerCrossing(state);
+        ticket.spBonus = voteCount(ticket.voteMask) * perVote;
       }
     }
   }

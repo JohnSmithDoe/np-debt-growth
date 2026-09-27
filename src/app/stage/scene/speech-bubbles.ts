@@ -11,7 +11,6 @@ interface Bubble {
   leftMs: number;
 }
 
-/** Now and then, a crew member reads the ticket they just picked up. */
 export class SpeechBubbles {
   readonly #bubbles: Bubble[] = [];
   readonly #text: (key: string) => string;
@@ -80,7 +79,7 @@ export class SpeechBubbles {
       const { min, max } = SPEECH_BUBBLE.gapMs;
       this.#nextInMs = min + Math.random() * (max - min);
     }
-    this.#heard = [];
+    this.#heard.length = 0;
 
     for (const bubble of this.#bubbles) this.#follow(bubble, stepMs);
   }

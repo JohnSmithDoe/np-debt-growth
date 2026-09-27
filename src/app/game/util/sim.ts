@@ -1,3 +1,7 @@
+/*
+ * Not modelled: quarter bills, pizza, prod incidents, weather; each moves a
+ * real board's euros by 10 % at most.
+ */
 import type { Consultancy } from '../model/consultancy.model';
 import type { CrewKind } from '../model/crew.model';
 import type { TicketTypeId } from '../model/ticket.model';
@@ -24,23 +28,7 @@ import { HOTFIX_MS, HOTFIX_MULTIPLIER } from '../model/balance/weather';
 import * as economy from './economy';
 import { heldBack } from './first-act';
 
-/**
- * The economy without a board: what a state earns per second, as arithmetic.
- *
- *   reached   = min(supply, what the hand, the crew and auto-close reach)
- *   collected = reached / (1 + reached / what the lanes take)
- *   €/s       = Σ collected × ticketValue (× goldenMultiplier on gold) × buffs
- *   SP/s      = Σ collected × pickupStoryPoints + expected planning-poker votes
- *
- * Managers close nothing; the crew closes inside their reach bill × the aura.
- *
- * Escalation and hotfix count as the share of time their window is open.
- * Not counted: quarter bills, pizza, prod incidents, weather. Each moves a
- * real board's euros by 10 % at most.
- */
-
 export interface SimPolicy {
-  /** Sweeps the player makes a second; each takes everything in the radius. */
   readonly clicksPerSec: number;
 }
 
@@ -52,14 +40,12 @@ export interface Flow {
   readonly crewPerSec: number;
   readonly handEuroPerSec: number;
   readonly crewEuroPerSec: number;
-  /** Arrivals nobody reached, closed as won't fix. */
   readonly wontFixPerSec: number;
 }
 
 interface Stream {
   readonly type: TicketTypeId;
   readonly golden: boolean;
-  /** Comebacks of a closed `respawns` card: plain, unvoted, never back again. */
   readonly reborn: boolean;
   readonly worth: number;
   left: number;
@@ -70,14 +56,10 @@ interface Stream {
 
 const BOARD_AREA = LOGICAL_BOARD.width * LOGICAL_BOARD.height;
 const DENSITY_PASSES = 8;
-/** How much denser the crew's work is under a manager than across the floor. */
 const OVERSEER_FOCUS = 1;
-/** Cards past this stack in the overflow rows above the field, out of the sweep. */
 const FIELD_CELLS = HEAP_COLS * HEAP_FIELD_ROWS;
-/** Where new work scatters, below the vote beams; landings past it stack above them. */
 const SPAWN_CELLS = HEAP_COLS * HEAP_SPAWN_ROWS;
 
-/** Closer kinds in claim order; managers oversee rather than close. */
 const CLOSERS: readonly CrewKind[] = ['seniors', 'juniors'];
 
 function streams(state: Consultancy): Stream[] {
@@ -88,7 +70,7 @@ function streams(state: Consultancy): Stream[] {
 
   for (const id of TICKET_TYPE_IDS) {
     if (TICKET_TYPES[id].effect !== 'value') continue;
-    if (heldBack(id, state.runMs, state.tier)) continue;
+    if (heldBack(id, state.runMs)) continue;
     const rate = economy.spawnRate(state, id);
     if (rate <= 0) continue;
     const dearer = interest > 0 ? economy.interestTarget(state, id) : null;
@@ -130,7 +112,6 @@ function streams(state: Consultancy): Stream[] {
   return out.sort((a, b) => b.worth - a.worth);
 }
 
-/** Mean distance between two random points on the board, sampled once. */
 const MEAN_WALK = ((): number => {
   const cols = 30;
   const rows = 14;
@@ -152,10 +133,6 @@ const MEAN_WALK = ((): number => {
 
 const reachMemo = new Map<number, number>();
 
-/**
- * Mean count of other field cells within `radius` of a card. Cards sit on the
- * heap grid, so a radius narrower than a column reaches only its own column.
- */
 function cellsInReach(radius: number): number {
   const known = reachMemo.get(radius);
   if (known !== undefined) return known;
@@ -184,10 +161,6 @@ function cellsInReach(radius: number): number {
 
 const touchMemo = new Map<number, number>();
 
-/**
- * Mean count of other field cells whose card box a ring of `radius` centred
- * on a card touches: the hand's box-overlap sweep.
- */
 function cellsTouched(radius: number): number {
   const known = touchMemo.get(radius);
   if (known !== undefined) return known;
@@ -215,20 +188,12 @@ function cellsTouched(radius: number): number {
   return mean;
 }
 
-/** Cells the cards cover: the spawn area until it fills, then upward over the field. */
 function spreadOver(density: number): number {
   return Math.min(FIELD_CELLS, Math.max(SPAWN_CELLS, density));
 }
 
-/** How many cards a claim samples before picking one (`board.ts`). */
 const CLAIM_SAMPLES = 4;
 
-/**
- * Closes a second one crew kind manages. A worker files on arrival and then
- * recovers for its close time, so the walk to the next card is added to every
- * cycle. Claims sample a few cards: `nearest` walks to the closest of them,
- * every other pick walks a random distance.
- */
 function crewCapacity(
   state: Consultancy,
   crew: CrewKind,
@@ -258,10 +223,6 @@ function crewCapacity(
   return (ceiling * filled * closeMs) / (closeMs + walkMs);
 }
 
-/**
- * Share of crew closes a manager stands over. Managers walk to where a closer
- * is headed, so their reach covers more of the work than of the floor.
- */
 function overseenShare(state: Consultancy): number {
   const managers = economy.crewSize(state, 'managers');
   if (managers === 0) return 0;
@@ -272,7 +233,6 @@ function overseenShare(state: Consultancy): number {
   );
 }
 
-/** Takes up to `amount` from `pool` in proportion to what each stream has left. */
 function takeMixed(
   pool: readonly Stream[],
   amount: number,
@@ -308,8 +268,6 @@ function collect(
     takeMixed(pool, crewCapacity(state, crew, density, share), 'crew');
   }
 
-  // Each sweep is aimed at the best card on the field and takes whatever else
-  // lies in the radius with it.
   let aimed = policy.clicksPerSec;
   for (const s of all) {
     if (aimed <= 0) break;
@@ -325,8 +283,6 @@ function collect(
     (spreadOver(density) - 1);
   takeMixed(all, policy.clicksPerSec * others, 'hand');
 
-  // Whatever of an auto-closed type the hand leaves closes itself, if it lives
-  // that long.
   const auto = economy.autoClosed(state);
   for (const s of all) {
     if (!auto.has(s.type)) continue;
@@ -338,15 +294,9 @@ function collect(
 
 interface Occupancy {
   readonly density: number;
-  /** Share of unclaimed plain cards that reach the end of their life. */
   readonly reach: number;
 }
 
-/**
- * Card-seconds on the board: a collected card is there half its life, the rest
- * all of it, won't-fix a fade longer. Past the cap, the fades are pushed out
- * first, then the plain cards nearest expiry; golden ones last.
- */
 function occupancy(
   all: readonly Stream[],
   arrivals: readonly number[],
@@ -369,20 +319,15 @@ function occupancy(
   };
 }
 
-/**
- * Each close of `id` re-arms a window of `windowMs`; with arrivals at random,
- * the share of time it is open.
- */
 function windowOpen(
   state: Consultancy,
   id: TicketTypeId,
   windowMs: number
 ): number {
-  if (heldBack(id, state.runMs, state.tier)) return 0;
+  if (heldBack(id, state.runMs)) return 0;
   return 1 - Math.exp((-economy.spawnRate(state, id) * windowMs) / 1000);
 }
 
-/** Expected multiplier escalation and hotfix put on every close. */
 function buffs(state: Consultancy): number {
   const escalated = windowOpen(
     state,
@@ -396,7 +341,6 @@ function buffs(state: Consultancy): number {
   );
 }
 
-/** What each stream's first-time cards had closed comes back as its comeback stream. */
 function comebacks(all: readonly Stream[], arrivals: number[]): void {
   all.forEach((s, at) => {
     if (!s.reborn) return;
@@ -414,9 +358,6 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
   const lifeMs = ticketLifeMs(state.tier);
   const lifeSec = lifeMs / 1000;
 
-  // Cards on the field depend on how fast they are collected, and collection
-  // on how many there are: settle it by iterating. A full board pushes its
-  // oldest card out for each arrival, so it holds at the cap.
   let board: Occupancy = {
     density: Math.min(
       BOARD_CAPACITY,
@@ -441,9 +382,6 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
   );
   const density = board.density;
 
-  // Lanes are dealt round-robin, so they fill together and ship together, and
-  // nothing is collected while every train is away: a cycle takes slots/rate
-  // to fill plus the haul.
   const collected = all.reduce((sum, s) => sum + s.hand + s.crew + s.auto, 0);
   const lanes = economy.ceilingPerSec(state);
   const scale = lanes > 0 ? 1 / (1 + collected / lanes) : 0;

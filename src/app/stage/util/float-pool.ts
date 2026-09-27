@@ -1,9 +1,5 @@
 import * as Phaser from 'phaser';
 
-/**
- * Recycled payout labels. At `cap` live the oldest is taken back mid-flight,
- * so a sweep across a full board never allocates past it.
- */
 export class FloatPool {
   readonly #idle: Phaser.GameObjects.Text[] = [];
   readonly #live: Phaser.GameObjects.Text[] = [];

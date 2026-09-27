@@ -1,3 +1,7 @@
+/*
+ * Rare-card labels are split by hand: Phaser maxWidth squeezes an unbreakable word,
+ * and past the card it bleeds into the neighbouring atlas frame.
+ */
 import * as Phaser from 'phaser';
 
 import type { TicketType, TicketTypeId } from '../../game/model/ticket.model';
@@ -48,19 +52,16 @@ export function cardFrame(id: TicketTypeId): string {
   return `card-${id}`;
 }
 
-/** Golden work gets its own card so it reads across a crowded board. */
 export function goldFrame(id: TicketTypeId): string {
   return `gold-${id}`;
 }
 
 export const GOLD_INK = 0xf2c14e;
 
-/** Work a planning-poker vote re-estimated: its SP bonus, made visible. */
 export function voteFrame(id: TicketTypeId): string {
   return `vote-${id}`;
 }
 
-/** The vote border alone, laid over a falling card while it fades in. */
 export const VOTE_RING_FRAME = 'vote-ring';
 
 export function buildBoardAtlas(
@@ -134,7 +135,6 @@ export type CardMark = 'golden' | 'voted';
 
 const MARK_SAMPLE: TicketTypeId = 'bug';
 
-/** Every card, a golden and a re-estimated sample, and each crew line's face, as data URLs. */
 export function boardIconUrls(scene: Phaser.Scene): {
   tickets: Map<TicketTypeId, string>;
   marks: Map<CardMark, string>;
@@ -235,13 +235,11 @@ function drawRareCard(
   ctx.fillStyle = colour;
   ctx.font = '700 10px monospace';
   const [first, second] = splitLabel(text(ticketLabelKey(type.id)));
-  // maxWidth squeezes an unbreakable word; past the card it bleeds into the next frame.
   const room = RARE_CARD_WIDTH - 16;
   ctx.fillText(first, x + 8, y + 32, room);
   ctx.fillText(second, x + 8, y + 45, room);
 }
 
-/** Breaks at the space or hyphen that leaves the longer line shortest. */
 export function splitLabel(label: string): [string, string] {
   const upper = label.toUpperCase();
   let best: [string, string] = [upper, ''];

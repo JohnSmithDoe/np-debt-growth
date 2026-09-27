@@ -9,10 +9,7 @@ import {
   signal,
 } from '@angular/core';
 
-import {
-  formatLongDate,
-  formatWhole,
-} from '../../../@shared/util/format-quantity';
+import { formatLongDate } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import type { DebtTier } from '../../../game/model/tier.model';
 import {
@@ -28,12 +25,10 @@ import {
   roleKey,
   signatoryKey,
 } from '../../model/client.model';
-import { AdrUiService } from '../../data/adr-ui.service';
 import { BackdropDirective } from '../../ui/backdrop/backdrop.directive';
 import { PanelComponent } from '../../ui/panel/panel.component';
 import { backdropUrl } from '../../../@shared/util/backdrop-art';
 import { officeArtFor } from '../../util/office-art';
-import { adrPrice } from '../../../game/model/skill.model';
 
 interface AdrData {
   readonly tier: DebtTier;
@@ -47,9 +42,6 @@ interface AdrData {
     | undefined;
   readonly art: string;
   readonly office: string;
-  readonly signed: boolean;
-  readonly cost: string;
-  readonly affordable: boolean;
 }
 
 const LEAVE_MS = 420;
@@ -67,7 +59,6 @@ export class AdrModalComponent {
   readonly client = CLIENT_NAME;
   readonly leaveMs = `${LEAVE_MS}ms`;
   #store = inject(GameStore);
-  #ui = inject(AdrUiService);
   #lastSeenTier = this.#store.tier();
   #shownTier = signal<number | null>(null);
   #leaveTimer?: ReturnType<typeof setTimeout>;
@@ -85,15 +76,13 @@ export class AdrModalComponent {
 
   readonly record = computed<AdrData | null>(() => {
     const shown = this.#shownTier();
-    if (shown !== null) return this.#read(shown, true);
-    if (!this.#ui.isOpen()) return null;
-    return this.#read(this.#store.tier() + 1, false);
+    return shown === null ? null : this.#read(shown);
   });
 
-  #read(tier: number, signed: boolean): AdrData | null {
+  #read(tier: number): AdrData | null {
     const debtTier = tierAt(tier);
     if (!debtTier) return null;
-    const approval = signed ? approvalAt(tier) : undefined;
+    const approval = approvalAt(tier);
     return {
       tier: debtTier,
       epic: epicNameKey(tier),
@@ -108,24 +97,15 @@ export class AdrModalComponent {
       },
       art: backdropUrl(tier, 'tier'),
       office: officeArtFor(tier),
-      signed,
-      cost: `${formatWhole(adrPrice(tier))} SP`,
-      affordable: this.#store.state().storyPoints >= adrPrice(tier),
     };
   }
 
-  approve(): void {
-    this.#store.unlockNextTier();
-    this.#ui.close();
-  }
-
   back(): void {
-    if (this.leaving()) return;
+    if (!this.record() || this.leaving()) return;
     this.leaving.set(true);
     this.#leaveTimer = setTimeout(() => {
       this.leaving.set(false);
       this.#shownTier.set(null);
-      this.#ui.close();
     }, LEAVE_MS);
   }
 }

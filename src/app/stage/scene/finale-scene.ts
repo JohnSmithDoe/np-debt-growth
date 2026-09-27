@@ -42,7 +42,6 @@ interface Actor {
   speed: number;
   running: boolean;
   arrive: (() => void) | null;
-  /** Game time of the next thing it does on its own. */
   nextAt: number;
   busy: boolean;
   sitting: boolean;
@@ -53,7 +52,6 @@ interface Layout {
   readonly height: number;
   readonly unit: number;
   readonly art: { readonly x: number; readonly y: number; readonly s: number };
-  /** Photo rows, front first. */
   readonly rows: readonly number[];
 }
 
@@ -66,7 +64,6 @@ const roleOf = (skin: LpcSkin): Role =>
         ? 'senior'
         : 'junior';
 
-/** Deterministic per index, so a replay stages the same party. */
 function seeded(index: number): number {
   const noise = Math.sin(index * 78.233 + 12.9898) * 43758.5453;
   return noise - Math.floor(noise);
@@ -254,7 +251,6 @@ export class FinaleScene extends CbScene {
     }
   }
 
-  /** Where each mood gathers during the roll. */
   #spotFor(actor: Actor, pick: number): Point {
     const layout = this.#layout!;
     const unit = layout.unit;
@@ -285,7 +281,6 @@ export class FinaleScene extends CbScene {
     }
   }
 
-  /** In front of the party, or beside it, never through the table. */
   #floorSpot(pick: number): Point {
     const layout = this.#layout!;
     const left = this.#toScreen(FINALE_ART.left, 0).x;
@@ -379,7 +374,6 @@ export class FinaleScene extends CbScene {
     }
   }
 
-  /** Arrived at the party: start doing what this one came to do. */
   #settle(actor: Actor): void {
     const sprite = actor.sprite.face('down');
     const now = this.#elapsed;
@@ -427,7 +421,6 @@ export class FinaleScene extends CbScene {
     }
   }
 
-  /** Every so often one of them has had too much cake. */
   #cake(now: number): void {
     this.#nextCake = now + FINALE_MOOD.cakeEveryMs;
     const idle = this.#actors.filter(
@@ -452,7 +445,6 @@ export class FinaleScene extends CbScene {
     });
   }
 
-  /** Back row sponsors and managers, then seniors, then juniors, the front row sat. */
   #toPhoto(): void {
     const layout = this.#layout!;
     const by = (roles: readonly Role[]): Actor[] =>
@@ -558,7 +550,6 @@ export class FinaleScene extends CbScene {
     texture.refresh();
   }
 
-  /** The disco ball's spots, sweeping the floor on slow Lissajous paths. */
   #swing(now: number): void {
     const layout = this.#layout!;
     const top = layout.rows[3]! - 120 * layout.unit;

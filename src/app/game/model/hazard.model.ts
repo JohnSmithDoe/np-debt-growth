@@ -78,7 +78,6 @@ export const HAZARDS: readonly Hazard[] = [
     durationMs: 15_000,
     weather: { incidentRate: 20 },
   },
-  /** Lands by re-estimating every card on the board; the window is for sweeping it. */
   { id: 'grooming', kind: 'fact', fromTier: 3, durationMs: 8_000 },
   {
     id: 'page',
@@ -87,7 +86,6 @@ export const HAZARDS: readonly Hazard[] = [
     durationMs: 12_000,
     weather: { incidentRate: 10, meeting: true },
   },
-  /** No new work, and every train comes home as it lands: a quiet board to clear. */
   {
     id: 'migration',
     kind: 'fact',

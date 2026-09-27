@@ -1,3 +1,6 @@
+/*
+ * BAND_ROOM fits the longest heading name (25 glyphs of 14 px); raise it if one grows.
+ */
 import type { SkillNode } from '../../game/model/skill.model';
 import {
   FINAL_SKILL_ID,
@@ -11,21 +14,14 @@ import type { HitRect } from '../model/hit-rect.model';
 import { hits } from '../model/hit-rect.model';
 
 export const SQUARE = 64;
-/** One leaf's share of a tree's breadth: a square and the gap beside it. */
 const LANE = SQUARE + 30;
-/** One step outwards; the gap between layers carries the wire elbows. */
 const LAYER = SQUARE + 92;
 const MARGIN = SQUARE;
-/** The last purchase ends the run, so it is drawn bigger than the rest. */
 const FINAL_SIDE = SQUARE * 2;
-/** How far past the last rung's branches the final sits on the spine. */
 const FINAL_RUN = LAYER * 3;
-/** A heading's name at band scale: the longest catalogue entry, 25 glyphs of 14 px. */
 const BAND_ROOM = 360;
 const BAND_HIGH = 24;
-/** Band text is drawn from its top edge. */
 const BAND_TEXT_TOP = 8;
-/** Clear space a heading's name keeps from squares and wires. */
 const BAND_CLEAR = 10;
 
 interface Vec {
@@ -90,7 +86,6 @@ function kidsOf(id: string): readonly string[] {
   return CHILDREN.get(id) ?? [];
 }
 
-/** A rung of the ADR ladder: it runs the spine instead of branching off it. */
 const isRung = (id: string): boolean =>
   BY_NODE.get(id)?.levels.some((level) =>
     level.effects.some((effect) => effect.kind === 'adr')
@@ -102,7 +97,6 @@ const branches = (id: string): readonly string[] =>
 const sideOf = (id: string): number =>
   id === FINAL_SKILL_ID ? FINAL_SIDE : SQUARE;
 
-/** A subtree's breadth in lanes: one per leaf. */
 function breadth(id: string): number {
   const kids = branches(id);
   return kids.length === 0
@@ -113,7 +107,6 @@ function breadth(id: string): number {
 const forestBreadth = (ids: readonly string[]): number =>
   ids.reduce((sum, id) => sum + breadth(id), 0);
 
-/** Where a forest grows from, which way it grows, and which way it spreads. */
 interface Frame {
   readonly origin: Vec;
   readonly along: Vec;
@@ -133,10 +126,8 @@ const WEST: Omit<Frame, 'origin'> = {
   across: { x: 0, y: 1 },
 };
 
-/** Squares whose parent sits a layer above or below them, not beside. */
 const STACKED = new Set<string>();
 
-/** A tidy tree: a layer per depth, a lane per leaf, each parent over its children. */
 function plantForest(
   ids: readonly string[],
   frame: Frame,
@@ -168,7 +159,6 @@ function plantForest(
   }
 }
 
-/** Splits a rung's branches over its two sides, keeping their order, evening the breadth. */
 function sides(ids: readonly string[]): [string[], string[]] {
   const up: string[] = [];
   const down: string[] = [];
@@ -185,11 +175,6 @@ function ladderFrom(first: string | undefined): readonly string[] {
   return out;
 }
 
-/**
- * The root in the middle, one arm per compass point. The ADR ladder is a
- * spine running east, each rung's branches hanging north and south off it;
- * the widest other arm grows west, the two narrower ones north and south.
- */
 function seed(): Map<string, Vec> {
   const out = new Map<string, Vec>([[SKILL_ROOT_ID, { x: 0, y: 0 }]]);
   const arms = kidsOf(SKILL_ROOT_ID);
@@ -243,7 +228,6 @@ function seed(): Map<string, Vec> {
   return out;
 }
 
-/** A wire bent once each way, turning halfway along the axis it grows on. */
 function elbow(from: Vec, to: Vec, stacked: boolean): readonly Vec[] {
   if (from.x === to.x || from.y === to.y) return [from, to];
   if (stacked) {
@@ -254,7 +238,6 @@ function elbow(from: Vec, to: Vec, stacked: boolean): readonly Vec[] {
   return [from, { x: mid, y: from.y }, { x: mid, y: to.y }, to];
 }
 
-/** The arms a heading names: its own children, headings collapsed away. */
 const HEADING_ARMS: ReadonlyMap<string, readonly string[]> = new Map(
   SKILL_NODES.filter((node) => node.heading === true).flatMap((node) => {
     const arms = SKILL_NODES.filter(
@@ -287,13 +270,8 @@ const boxAround = (centre: Vec, hw: number, hh: number): Box => ({
   bottom: centre.y + hh,
 });
 
-/** Clear spots within this many steps beat a spot on a wire; past it, the name sits on one. */
 const BAND_NEAR = 3;
 
-/**
- * A heading's name beside its arms: the nearest spot clear of squares,
- * wires and other names, or failing that of squares and names alone.
- */
 function bandCentres(
   centres: ReadonlyMap<string, Vec>,
   wires: readonly (readonly Vec[])[]
@@ -465,7 +443,6 @@ export function squareAt(x: number, y: number): SkillSquare | null {
 
 export type SquareState = 'owned' | 'open' | 'box';
 
-/** `ready` holds back a square whose parent is owned but whose other terms are not met. */
 export function revealSquares(
   rankOf: (nodeId: string) => number,
   ready: (nodeId: string) => boolean = () => true

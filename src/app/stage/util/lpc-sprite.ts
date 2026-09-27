@@ -1,3 +1,6 @@
+/*
+ * The finale atlas is ~51 MiB of VRAM and only the curtain call reads it; release it after.
+ */
 import * as Phaser from 'phaser';
 
 import type {
@@ -62,7 +65,6 @@ export function registerCrewAnimations(scene: Phaser.Scene): void {
   }
 }
 
-/** Poses (`sit`, `emote`) are held, not played; `run` and `spellcast` loop. */
 const FINALE_PLAY: Partial<
   Record<FinaleMove, { readonly rate: number; readonly repeat: number }>
 > = {
@@ -106,7 +108,6 @@ export function registerFinaleAnimations(scene: Phaser.Scene): void {
   }
 }
 
-/** The finale atlas is 51 MiB of VRAM and only the curtain call reads it. */
 export function releaseFinaleAtlas(scene: Phaser.Scene): void {
   for (const skin of LPC_SKINS) {
     for (const move of FINALE_MOVE_ORDER) {
@@ -148,10 +149,6 @@ export class LpcSprite extends Phaser.GameObjects.Sprite {
     return this.#skin;
   }
 
-  get facing(): LpcDirection {
-    return this.#facing;
-  }
-
   perform(block: LpcBlock): this {
     if (block === this.#block && this.#facing === this.#started) return this;
     this.#block = block;
@@ -175,13 +172,11 @@ export class LpcSprite extends Phaser.GameObjects.Sprite {
     return this.play(animationKey(this.#skin, animation), true);
   }
 
-  /** A finale move; the next `perform` starts afresh whatever it was. */
   playFinale(move: FinaleMove, restart = false): this {
     this.#block = undefined;
     return this.play(finaleAnimationKey(this.#skin, move), !restart);
   }
 
-  /** Holds one frame of a finale move still. */
   holdFinale(move: FinaleMove, frame: number): this {
     this.#block = undefined;
     this.stop();

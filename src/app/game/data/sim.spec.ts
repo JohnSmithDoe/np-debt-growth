@@ -14,10 +14,8 @@ import * as economy from '../util/economy';
 import { flow } from '../util/sim';
 
 const SPAN_MS = 5 * 60_000;
-/** The sim is a model, not a replay: it has to land within this factor of the board. */
 const TOLERANCE = 1.5;
 
-/** One board is a draw; golden cards swing a seed by a third either way. */
 const SEEDS = [11, 23, 57, 91] as const;
 
 const seeded = (start: number = SEEDS[0]): GameStore => {
@@ -29,7 +27,6 @@ const seeded = (start: number = SEEDS[0]): GameStore => {
   return store;
 };
 
-/** Sweeps the sim's hand makes in 100 ms, each aimed at the best card. */
 function sweep(store: GameStore, credit: number): number {
   const state = store.snapshot();
   const worth = (id: TicketTypeId): number =>
@@ -52,7 +49,6 @@ function sweep(store: GameStore, credit: number): number {
   return left;
 }
 
-/** Plays `state` on a real board for `SPAN_MS` per seed, sweeping like the sim's hand. */
 function onTheBoard(state: Consultancy): { euro: number; sp: number } {
   let euro = 0;
   let sp = 0;
@@ -128,10 +124,8 @@ function buy(store: GameStore, pick: Buy): boolean {
 }
 
 const RUN_LIMIT_MS = 60 * 60_000;
-/** Per-tier agreement compounds over a run; the finish line is held tighter. */
 const RUN_TOLERANCE = 1.1;
 
-/** A whole run on a real board, spending as `advisedSpend` does; ms to acceptance. */
 function acceptedOnTheBoard(): number {
   const store = seeded();
   store.hydrate({ ...freshConsultancy(0, SAVE_VERSION), lastTick: 0 });

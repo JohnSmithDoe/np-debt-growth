@@ -1,3 +1,7 @@
+/*
+ * freshConsultancy ships the skill root bought on purpose: the whole tree,
+ * ADR ladder included, hangs off it, so an unbought root strands the run.
+ */
 import type { RoundOutcome, RoundPhase } from './round.model';
 import { SPAWNER_FREE_AT_ADR_0 } from './spawner.model';
 import type { SeniorHire } from './senior.model';
@@ -5,7 +9,6 @@ import { SKILL_ROOT_ID } from './skill.model';
 import type { PurchaseId } from './balance/progression';
 import { PURCHASE_IDS } from './balance/progression';
 
-/** Where the last voucher was swept, in board units, and when the pizza runs out. */
 export interface PizzaParty {
   readonly x: number;
   readonly y: number;
@@ -40,7 +43,6 @@ export interface Consultancy {
 
   readonly achievements: readonly string[];
   readonly endedAt: number;
-  /** Budget granted from outside the billing system (debug doors). */
   readonly assisted: boolean;
 
   readonly lifetimeClosed: number;
@@ -50,11 +52,9 @@ export interface Consultancy {
   readonly lifetimeClosedByWomen: number;
   readonly lifetimeCrewBilled: number;
   readonly lifetimeWorkBilled: number;
-  /** Auto-closed cards that found no lane and went to prod as a P0. */
   readonly lifetimeProdIncidents: number;
 }
 
-/** Time away is not played: the run picks up where it was left. */
 export function resumed(state: Consultancy, now: number): Consultancy {
   return {
     ...state,
@@ -65,6 +65,7 @@ export function resumed(state: Consultancy, now: number): Consultancy {
     sprintCount: 0,
     escalated: false,
     escalationFiresAt: 0,
+    hotfixUntil: 0,
     pizza: null,
   };
 }
@@ -85,8 +86,6 @@ export function freshConsultancy(now: number, version: number): Consultancy {
       PurchaseId,
       number
     >,
-    // The root is free and the whole tree hangs off it — including the ADR
-    // ladder the rail's own button buys. Leaving it unclicked strands the run.
     skills: { [SKILL_ROOT_ID]: 1 },
     spawners: { 0: SPAWNER_FREE_AT_ADR_0 },
     income: {},

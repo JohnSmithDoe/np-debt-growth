@@ -1,24 +1,8 @@
 #!/usr/bin/env node
 /**
- * catalog.mjs — query `catalog.json`, and check a hash before spending a render.
- *
- * The catalog is ~110 KB. Reading it into a conversation costs more than the
- * render it informs, so nothing here prints the file: every question about the
- * vocabulary is a command, and the answers are short.
- *
- * `check` is why this exists. The generator's answer to an invalid colour, an
- * unknown item or a body type an item ships no art for is to drop the layer —
- * silently. A character with no body renders as cleanly as one with. This
- * resolves a hash under the same rules the generator uses (`resolveHashParam`
- * in sources/state/resolve-hash-param.ts) and names what would have vanished.
- *
- * Usage:
- *   node catalog.mjs types [substring]
- *   node catalog.mjs items <type> [substring] [--body <sex>] [--colours]
- *   node catalog.mjs colours <material> [version]
- *   node catalog.mjs check "sex=male&body=Body_Color_light&…"
- *   node catalog.mjs check --preset <name>
- *   node catalog.mjs presets
+ * Queries catalog.json; `check` resolves a hash like the generator and names layers that would silently drop.
+ * Usage: node catalog.mjs types [substr] | items <type> [substr] [--body <sex>] [--colours]
+ *        | colours <material> [version] | check "<hash>" | check --preset <name> | presets
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -40,17 +24,6 @@ const positional = argv.slice(1).filter((a, i) => !a.startsWith('--') && !VALUED
 
 const setOf = (id) => (id === undefined ? [] : (catalog.sets[id] ?? []));
 const coloursOf = (item) => setOf(item.variants ?? item.colours);
-/**
- * An LPC layer usually offers a choice of licence and the consumer elects one;
- * the sheet is flattened, so the whole sheet is bound by the strictest layer.
- * Two questions matter, and both are per body type — the muscular and pregnant
- * bases are CC-BY-SA/GPL where every other base also offers OGA-BY.
- *
- * `attributionOnly`: OGA-BY 3.0 or CC0 is available, so the art carries no
- * copyleft of its own. `copyleftOnly` layers still ship fine in this repo (it
- * is AGPL-3.0, and GPL-3.0 art combines into that) — they just take the sheet
- * with them. A layer offering CC-BY-SA and nothing else cannot come along.
- */
 const licencesOf = (item, sex) => setOf(item.licencesByBody?.[sex] ?? item.licences);
 const attributionOnly = (item, sex) => licencesOf(item, sex).some((l) => l.startsWith('OGA-BY') || l.startsWith('CC0'));
 const incompatible = (item, sex) => {
@@ -58,7 +31,6 @@ const incompatible = (item, sex) => {
     return licences.length > 0 && !licences.some((l) => l.startsWith('OGA-BY') || l.startsWith('CC0') || l.startsWith('GPL'));
 };
 const token = (name) => name.replaceAll(' ', '_');
-/** The generator compares colours with spaces, underscores and case folded together. */
 const fold = (value) => {
     try {
         return decodeURIComponent(value).replaceAll(' ', '_').toLowerCase();
@@ -67,12 +39,6 @@ const fold = (value) => {
     }
 };
 
-/**
- * The generator's resolver, not an approximation of it: split on `_` and walk
- * the split point left to right, taking the FIRST name that matches — with a
- * colour it accepts, or with nothing after it at all. Longest-match would
- * disagree wherever one item's name is a prefix of another's.
- */
 function resolve(type, value, selected = null) {
     const items = catalog.types[type]?.items;
     if (!items) return { reason: `no type "${type}" — try: catalog.mjs types` };
@@ -88,10 +54,6 @@ function resolve(type, value, selected = null) {
             const colour = piped || wanted;
             if (colour && colours.some((c) => fold(c) === fold(colour))) return { item, colour };
             if (wanted === '') return { item, colour: null };
-            // The name is right and the colour is not, which is a different fix
-            // from a misspelled name — and usually a missing palette-version prefix.
-            // Keep the LONGEST name that matched: `Long_messy_x` also matches
-            // `Long`, and blaming `Long` sends the reader to the wrong item.
             if (!colourMiss || item.name.length > colourMiss.item.name.length) {
               colourMiss = { item, colour, colours };
             }
@@ -105,9 +67,6 @@ function resolve(type, value, selected = null) {
         };
     }
 
-    // Nothing matched by name — the generator then reads the key as a sub-channel
-    // of an item selected elsewhere (a head's `eyes=Eye_Color_blue`). The channel
-    // paints nothing on its own, so what matters is whether an owner is present.
     const tail = value.split('_').pop() ?? '';
     const owners = [];
     for (const [ownerType, group] of Object.entries(catalog.types)) {
@@ -124,8 +83,6 @@ function resolve(type, value, selected = null) {
     if (owners.length)
         return { channel: true, orphan: true, note: `no item in this hash owns a "${type}" channel — nothing renders it (owners include ${owners.slice(0, 3).map((o) => o.label).join(', ')})` };
 
-    // A name that exists under a different key is the commonest miss — `vest` is
-    // its own type, not a `clothes` item — so point at the key rather than the name.
     for (const [otherType, group] of Object.entries(catalog.types)) {
         if (otherType === type) continue;
         for (let i = parts.length; i >= 1; i--) {
@@ -182,8 +139,6 @@ function check(hash) {
             problems.push(`${key}=${value}: ${detail}`);
             continue;
         }
-        // A colour the item does not know is not an error the generator reports —
-        // it falls back to the name-only match and quietly renders the default.
         const colours = coloursOf(r.item);
         const asked = value.slice(token(r.item.name).length).replace(/^_/, '');
         if (asked && !r.colour) {
@@ -206,7 +161,6 @@ function check(hash) {
                 console.log(`        · ${channel.key}=${token(channel.label)}_<colour> sets its ${channel.label} (${setOf(channel.colours).slice(0, 6).join(', ')}, …)`);
     }
 
-    // Two valid layers in two skin tones is the mismatch no render reports.
     if (skin.body && skin.head && skin.body !== skin.head)
         console.log(`  WARN  skin differs: body=${skin.body} head=${skin.head}`);
 

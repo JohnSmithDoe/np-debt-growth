@@ -30,9 +30,7 @@ const BANDS: Readonly<Record<AwardWeight, AwardBand>> = {
   large: { ms: 4600, pieces: 14 },
 };
 
-/** Cards on screen at once; the rest wait behind a count. */
 const STACK = 3;
-/** Share of its time a card keeps while others are waiting. */
 const HURRY = 0.55;
 
 function continues(

@@ -9,7 +9,6 @@ export interface TickerItem {
   readonly titleKey: string;
 }
 
-/** A shuffled slice of every title pool, no title twice. */
 export function backlogTicker(
   length: number,
   roll: () => number = Math.random

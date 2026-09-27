@@ -43,10 +43,6 @@ function bakeTile(scene: Phaser.Scene): void {
   texture.refresh();
 }
 
-/**
- * The flowers. Scatter that is drawn and never in the board model, so no
- * amount of sweeping can pick it up — the floor reads as a place, not a heap.
- */
 function bakeScatter(scene: Phaser.Scene): void {
   if (scene.textures.exists(SCATTER_KEY)) scene.textures.remove(SCATTER_KEY);
 

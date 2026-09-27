@@ -17,7 +17,6 @@ import { GameStore } from '../../../game/data/game.store';
 import { SaveService } from '../../../game/data/save.service';
 import { CAST } from '../../../game/model/cast.model';
 import { DEBT_TIERS, tierNameKey } from '../../../game/model/tier.model';
-import { RetroService } from '../../data/retro.service';
 import {
   APPROVALS,
   CLIENT_NAME,
@@ -56,7 +55,6 @@ export class FinaleComponent {
   #store = inject(GameStore);
   #clock = inject(GameClock);
   #save = inject(SaveService);
-  #retro = inject(RetroService);
   #translate = inject(TranslateService);
 
   readonly act = this.#finale.act;
@@ -112,7 +110,6 @@ export class FinaleComponent {
   newEngagement(): void {
     this.#store.reset(this.#clock.now());
     this.#save.wipe();
-    this.#retro.close();
     this.#finale.close();
   }
 }

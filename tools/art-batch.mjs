@@ -109,7 +109,6 @@ const ORDER = [
   ['icons', 'skill-adr7', EMBLEM_SIZE, 2, EMBLEM('A bold thick circular arrow loop with one segment of the ring broken away, leaving a gap.')],
   ['icons', 'skill-adr3', EMBLEM_SIZE, 2, EMBLEM('Two thick blunt arrows pointing straight at each other and meeting head-on in the middle.')],
   ['icons', 'skill-adr5', EMBLEM_SIZE, 2, EMBLEM('One bold chunky lightning bolt.')],
-  ['icons', 'skill-spawnEscalation', EMBLEM_SIZE, 2, EMBLEM('A chunky dome-shaped emergency siren lamp with three thick beams radiating from each side.')],
   ['icons', 'skill-line-estimates', EMBLEM_SIZE, 2, EMBLEM('A thick chunky hourglass with a heavy frame top and bottom.')],
   ['icons', 'skill-spare-document-plus', EMBLEM_SIZE, 2, EMBLEM('A thick document sheet with a big folded-over corner and one bold fat plus sign in its middle.')],
 
@@ -126,7 +125,6 @@ const ORDER = [
   ['icons', 'skill-seniorSpeed', EMBLEM_SIZE, 2, EMBLEM('A thick chunky coffee mug seen straight on with a wide handle and three curls of steam above it.')],
   ['icons', 'skill-seniorReach', EMBLEM_SIZE, 2, EMBLEM('One chunky broom with a thick handle and a wide fat brush head, seen from the side.')],
   ['icons', 'skill-assurance', EMBLEM_SIZE, 2, EMBLEM('A thick stack of paper sheets with one enormous bold checkmark laid across the whole stack.')],
-  ['icons', 'skill-valueIncident', EMBLEM_SIZE, 2, EMBLEM('One chunky military steel helmet seen from the side.')],
   ['icons', 'skill-timesheets', EMBLEM_SIZE, 2, EMBLEM('A thick clipboard with a heavy clip at the top and three bold ruled lines on it.')],
   ['icons', 'skill-spare-compass', EMBLEM_SIZE, 2, EMBLEM('A bold round compass with a thick diamond-shaped needle pointing across it.')],
   ['icons', 'skill-senior', EMBLEM_SIZE, 2, EMBLEM('One thick classical stone column with a wide heavy capital on top and a wide base.')],

@@ -52,8 +52,6 @@ export class TicketHeap {
   readonly #free: number[] = [];
   readonly #slotOf = new Map<number, number>();
   readonly #drawn = new Map<number, BoardTicket>();
-  readonly #drawnAs = new Map<number, TicketTypeId>();
-  /** Still in the air: the flyer draws them until `reveal`. */
   readonly #airborne = new Set<number>();
   readonly #rareSlot = new Map<number, number>();
 
@@ -104,13 +102,8 @@ export class TicketHeap {
     }
   }
 
-  /** Cards of these types ramp their tint over the life they have left. */
   autoCloses(types: ReadonlySet<TicketTypeId>): void {
     this.#autoClosed = types;
-  }
-
-  get count(): number {
-    return this.#drawn.size;
   }
 
   layout(scaleX: number, scaleY: number, offX: number, offY: number): void {
@@ -121,7 +114,6 @@ export class TicketHeap {
     for (const ticket of this.#drawn.values()) this.#draw(ticket);
   }
 
-  /** Repaints every card, for when the game changed them in place. */
   redraw(): void {
     for (const ticket of this.#drawn.values()) this.#draw(ticket);
   }
@@ -156,13 +148,6 @@ export class TicketHeap {
       if (ticket.lifeLeftMs === 0 && this.#drawn.has(ticket.id)) {
         this.#draw(ticket);
         continue;
-      }
-      if (this.#drawnAs.get(ticket.id) !== ticket.type) {
-        this.#drawnAs.set(ticket.id, ticket.type);
-        if (this.#drawn.has(ticket.id)) {
-          this.#draw(ticket);
-          continue;
-        }
       }
       if (this.#drawn.has(ticket.id)) continue;
       const slot = this.#free.pop();
@@ -205,7 +190,6 @@ export class TicketHeap {
     if (ticket) this.#draw(ticket);
   }
 
-  /** The can was full: these hop where they lie and stay on the board. */
   bounce(ids: readonly number[]): void {
     for (const id of ids) {
       if (this.#drawn.has(id)) this.#bouncing.set(id, 0);
@@ -214,7 +198,7 @@ export class TicketHeap {
 
   update(deltaMs: number): void {
     if (this.#bouncing.size === 0) return;
-    for (const [id, at] of [...this.#bouncing]) {
+    for (const [id, at] of this.#bouncing) {
       const next = at + deltaMs;
       if (next >= REFUSAL_BOUNCE.ms) this.#bouncing.delete(id);
       else this.#bouncing.set(id, next);
@@ -227,12 +211,6 @@ export class TicketHeap {
     const at = this.#bouncing.get(id);
     if (at === undefined) return 0;
     return Math.sin((at / REFUSAL_BOUNCE.ms) * Math.PI) * REFUSAL_BOUNCE.lift;
-  }
-
-  positionOf(id: number): { x: number; y: number } | null {
-    const ticket = this.#drawn.get(id);
-    if (!ticket) return null;
-    return { x: this.px(ticket.x), y: this.py(ticket.y) };
   }
 
   titleOf(id: number): string | null {
@@ -267,7 +245,6 @@ export class TicketHeap {
     this.#free.push(slot);
     this.#slotOf.delete(id);
     this.#drawn.delete(id);
-    this.#drawnAs.delete(id);
   }
 
   #draw(ticket: BoardTicket): void {
@@ -311,7 +288,6 @@ export class TicketHeap {
     if (ticket.golden) this.#glowUnder(ticket.id, x, y, fade);
   }
 
-  /** Runs on the GPU from this edit: no per-frame cost. */
   #tintRamp(ticket: BoardTicket): void {
     const member = this.#member;
     if (!this.#autoClosed.has(ticket.type) || ticket.lifeLeftMs <= 0) {

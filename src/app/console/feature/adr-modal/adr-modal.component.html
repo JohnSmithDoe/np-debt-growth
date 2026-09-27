@@ -1,7 +1,6 @@
 @if (record(); as adr) {
   <div
     class="scrim chapter"
-    [class.offer]="!adr.signed"
     [class.leaving]="leaving()"
     [style.--leave]="leaveMs"
     (cbBackdrop)="back()"
@@ -19,38 +18,17 @@
       }}"
       [subheading]="'adr.subheading' | translate"
     >
-      @if (adr.signed) {
-        <button
-          panel-meta
-          type="button"
-          class="btn primary small"
-          (click)="back()"
-        >
-          {{ 'adr.acknowledge' | translate }}
-        </button>
-      } @else {
-        <span panel-meta class="chip warn">{{
-          'adr.refinement' | translate
-        }}</span>
-      }
+      <button
+        panel-meta
+        type="button"
+        class="btn primary small"
+        (click)="back()"
+      >
+        {{ 'adr.acknowledge' | translate }}
+      </button>
 
       <div class="poster">
-        @if (adr.signed) {
-          <img class="plate" [src]="adr.art" alt="" aria-hidden="true" />
-        } @else {
-          <button
-            type="button"
-            class="sign"
-            [disabled]="!adr.affordable"
-            (click)="approve()"
-          >
-            <img class="plate" [src]="adr.art" alt="" aria-hidden="true" />
-            <span class="seal">
-              <span class="verb">{{ 'adr.approve' | translate }}</span>
-              <span class="cost">{{ adr.cost }}</span>
-            </span>
-          </button>
-        }
+        <img class="plate" [src]="adr.art" alt="" aria-hidden="true" />
         <p class="epic">
           <span class="kicker">{{ 'adr.epic' | translate }}</span>
           <span class="title">{{ adr.epic | translate }}</span>
@@ -79,14 +57,6 @@
         <dt>{{ 'adr.comments' | translate }}</dt>
         <dd>—</dd>
       </dl>
-
-      @if (!adr.signed) {
-        <div class="doc-actions">
-          <button type="button" class="btn ghost" (click)="back()">
-            {{ 'adr.not-yet' | translate }}
-          </button>
-        </div>
-      }
     </cb-panel>
   </div>
 }

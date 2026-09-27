@@ -1,3 +1,6 @@
+/*
+ * #ringScale is sqrt(scaleX * scaleY) so round shapes keep the sim area.
+ */
 import * as Phaser from 'phaser';
 
 import {
@@ -150,7 +153,6 @@ export class BoardScene extends CbScene {
 
   #scaleX = 1;
   #scaleY = 1;
-  /** Board units to screen px for anything drawn round: √(x·y), so area matches the sim. */
   #ringScale = 1;
   #offX = 0;
   #offY = 0;
@@ -200,7 +202,6 @@ export class BoardScene extends CbScene {
     this.#placeRing(pointer.worldX, pointer.worldY);
     this.#sweepAt = { x: pointer.worldX, y: pointer.worldY };
   };
-  /** Where the pointer last was; the sweep runs once a frame from here. */
   #sweepAt: { x: number; y: number } | null = null;
   #refusedUntil = 0;
   #onPointerOut = (): void => {
@@ -472,7 +473,6 @@ export class BoardScene extends CbScene {
     );
   }
 
-  /** Each manager's reach on the floor: crew closes inside it bill the aura. */
   #drawAuras(board: Board): void {
     const ring = this.#auras;
     if (!ring) return;
@@ -535,7 +535,6 @@ export class BoardScene extends CbScene {
     );
   }
 
-  /** A crew pickup is carried off by hand; it reaches the sprint on delivery. */
   #carried(id: number): boolean {
     const board = this.deps.board();
     for (const crew of [board.juniors, board.seniors, board.managers]) {
@@ -657,11 +656,6 @@ export class BoardScene extends CbScene {
     this.#sweep(px, py);
   }
 
-  /**
-   * The verb: everything under the ring is taken as the pointer passes. A
-   * falling card is taken where it is drawn, not where it will land. A full
-   * can takes nothing, which is what the refusal tint says.
-   */
   #sweep(px: number, py: number): void {
     const parts = this.#parts;
     if (!parts) return;
@@ -746,7 +740,6 @@ export class BoardScene extends CbScene {
     return this.deps.text(titleKey);
   }
 
-  /** The sprint's float stays up while income keeps landing; only its sum changes. */
   #bill(parts: BoardParts): void {
     const payout = this.deps.takePayouts();
     if (payout <= 0) return;

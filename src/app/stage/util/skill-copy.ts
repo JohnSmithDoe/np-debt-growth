@@ -199,10 +199,6 @@ export function skillEffectText(
 
 export type SkillBadge = '+' | '%';
 
-/**
- * Additive or multiplicative, at a glance, on every node, so a shopper can
- * tell a flat bump from a compounding one.
- */
 export function skillBadge(node: SkillNode, level: number): SkillBadge | null {
   const effects = node.levels[level - 1]?.effects ?? [];
   let badge: SkillBadge | null = null;
