@@ -228,6 +228,10 @@
   font-size: 0.75em;
   font-variant-numeric: tabular-nums;
   color: var(--np-cb-ink-3);
+
+  &.ok {
+    color: var(--np-cb-good);
+  }
 }
 
 .held {

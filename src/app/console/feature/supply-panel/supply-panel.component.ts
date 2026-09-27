@@ -99,6 +99,11 @@ const samePriced = (a: Consultancy, b: Consultancy): boolean =>
   sameRecord(a.spawners, b.spawners) &&
   sameRecord(a.income, b.income);
 
+interface Eta {
+  readonly text: string;
+  readonly ok: boolean;
+}
+
 type Affordable = Readonly<Record<Tab, ReadonlySet<string>>>;
 
 const sameSet = (a: ReadonlySet<string>, b: ReadonlySet<string>): boolean =>
@@ -343,19 +348,22 @@ export class SupplyPanelComponent {
     maxedLast(this.#tabRows(this.tab()))
   );
 
-  readonly etas = computed<ReadonlyMap<string, string>>(() => {
+  readonly etas = computed<ReadonlyMap<string, Eta>>(() => {
     const budget = this.#store.budget();
     const rate = this.#rate();
-    const etas = new Map<string, string>();
-    if (rate <= 0) return etas;
+    const etas = new Map<string, Eta>();
     for (const row of this.rows()) {
-      if (row.price === null || budget >= row.price) continue;
-      etas.set(
-        row.key,
-        this.#say('rail.eta', {
-          time: formatDuration((row.price - budget) / rate),
-        })
-      );
+      if (row.price === null) continue;
+      if (budget >= row.price) {
+        etas.set(row.key, { text: this.#say('rail.affordable'), ok: true });
+      } else if (rate > 0) {
+        etas.set(row.key, {
+          text: this.#say('rail.eta', {
+            time: formatDuration((row.price - budget) / rate),
+          }),
+          ok: false,
+        });
+      }
     }
     return etas;
   });

@@ -70,7 +70,7 @@
             </span>
             <span class="blurb">{{ row.blurb }}</span>
             @if (etas().get(row.key); as eta) {
-              <span class="eta">{{ eta }}</span>
+              <span class="eta" [class.ok]="eta.ok">{{ eta.text }}</span>
             }
             @if (!row.teaser) {
               <span class="held">{{ row.held }}/{{ row.cap }}</span>

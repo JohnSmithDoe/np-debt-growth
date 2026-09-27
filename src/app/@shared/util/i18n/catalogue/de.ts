@@ -605,6 +605,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.managerRoom5.1.label': 'Kundenlounge',
   'skill.managerRoom.blurb':
     'Fünf Account-Manager-Plätze mehr, und ein Sofa für den Kunden.',
+  'rail.affordable': 'bezahlbar',
   'rail.eta': 'bezahlbar in {{time}}',
   'rail.more.adr': 'Danach {{count}} weitere.',
   'rail.more.rate': 'Danach {{count}} weitere.',

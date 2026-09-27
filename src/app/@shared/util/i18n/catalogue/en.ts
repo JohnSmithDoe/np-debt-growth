@@ -589,6 +589,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.managerRoom5.1.label': 'Client Lounge',
   'skill.managerRoom.blurb':
     'Five more account manager seats, and a sofa for the client.',
+  'rail.affordable': 'affordable',
   'rail.eta': 'affordable in {{time}}',
   'rail.more.adr': '{{count}} more after that.',
   'rail.more.rate': '{{count}} more after that.',
