@@ -13,6 +13,7 @@ import { BoardIcons } from '../../../@shared/data/board-icons.service';
 import { formatCompactMoney } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import type { PurchaseId } from '../../../game/model/balance/progression';
+import type { Consultancy } from '../../../game/model/consultancy.model';
 import {
   INCOME_CAP,
   PURCHASE_IDS,
@@ -30,7 +31,9 @@ import {
   spawnerBlurbKey,
   spawnerLabelKey,
 } from '../../../game/model/spawner.model';
+import * as economy from '../../../game/util/economy';
 import { PanelComponent } from '../../ui/panel/panel.component';
+import { sameRecord } from '../../util/same-record';
 
 const TABS = ['supply', 'income', 'crew'] as const;
 
@@ -53,7 +56,7 @@ interface Row {
   readonly cap: number;
   readonly cost: string;
   readonly maxed: boolean;
-  readonly affordable: boolean;
+  readonly price: number | null;
   readonly icon?: {
     readonly url: string;
     readonly kind: 'card' | 'crew' | 'art';
@@ -77,6 +80,21 @@ const CREW_ROWS: readonly PurchaseId[] = [
 
 const percent = (mult: number): string => `+${Math.round((mult - 1) * 100)}%`;
 
+const samePriced = (a: Consultancy, b: Consultancy): boolean =>
+  a.tier === b.tier &&
+  sameRecord(a.levels, b.levels) &&
+  sameRecord(a.skills, b.skills) &&
+  sameRecord(a.spawners, b.spawners) &&
+  sameRecord(a.income, b.income);
+
+type Affordable = Readonly<Record<Tab, ReadonlySet<string>>>;
+
+const sameSet = (a: ReadonlySet<string>, b: ReadonlySet<string>): boolean =>
+  a.size === b.size && [...a].every((key) => b.has(key));
+
+const sameAffordable = (a: Affordable, b: Affordable): boolean =>
+  TABS.every((tab) => sameSet(a[tab], b[tab]));
+
 @Component({
   selector: 'cb-supply-panel',
   templateUrl: './supply-panel.component.html',
@@ -94,6 +112,10 @@ export class SupplyPanelComponent {
 
   #holdTimer: ReturnType<typeof setTimeout> | undefined;
 
+  readonly #priced = computed(() => this.#store.state(), {
+    equal: samePriced,
+  });
+
   constructor() {
     inject(DestroyRef).onDestroy(() => this.release());
   }
@@ -101,30 +123,47 @@ export class SupplyPanelComponent {
   readonly tabs = computed<
     readonly { id: Tab; label: string; buyable: boolean }[]
   >(() => {
-    this.#store.state();
-    const rows: Record<Tab, readonly Row[]> = {
-      supply: this.supply(),
-      income: this.income(),
-      crew: this.crew(),
-    };
+    this.#catalogue();
+    const affordable = this.#affordable();
     return TABS.map((id) => ({
       id,
       label: this.#say(`rail.tab.${id}`),
-      buyable: rows[id].some((row) => row.affordable),
+      buyable: affordable[id].size > 0,
     }));
   });
 
+  readonly #affordable = computed<Affordable>(
+    () => {
+      const budget = this.#store.budget();
+      const keys = (rows: readonly Row[]): ReadonlySet<string> =>
+        new Set(
+          rows
+            .filter((row) => row.price !== null && budget >= row.price)
+            .map((row) => row.key)
+        );
+      return {
+        supply: keys(this.supply()),
+        income: keys(this.income()),
+        crew: keys(this.crew()),
+      };
+    },
+    { equal: sameAffordable }
+  );
+
+  readonly affordable = computed(() => this.#affordable()[this.tab()]);
+
   readonly supply = computed<readonly Row[]>(() => {
-    this.#store.state();
+    this.#catalogue();
+    const state = this.#priced();
     return [
-      ...this.#unlockRow(),
-      ...this.#spawnerRows(),
-      ...this.#spawnerTeasers(),
+      ...this.#unlockRow(state),
+      ...this.#spawnerRows(state),
+      ...this.#spawnerTeasers(state),
     ];
   });
 
-  #spawnerTeasers(): readonly Row[] {
-    return SPAWNERS.filter((row) => !this.#store.spawnerUnlocked(row.adr))
+  #spawnerTeasers(state: Consultancy): readonly Row[] {
+    return SPAWNERS.filter((row) => !economy.spawnerUnlocked(state, row.adr))
       .slice(0, TEASED)
       .map((row) => ({
         key: `teaser:${row.adr}`,
@@ -136,13 +175,14 @@ export class SupplyPanelComponent {
         cap: SPAWNER_CAP,
         cost: `ADR-${row.adr}`,
         maxed: false,
-        affordable: false,
+        price: null,
         icon: this.#walkerOf(row.adr),
       }));
   }
 
-  #unlockRow(): readonly Row[] {
-    if (this.#store.levels()[SP_UNLOCK] > 0) return [];
+  #unlockRow(state: Consultancy): readonly Row[] {
+    if (state.levels[SP_UNLOCK] > 0) return [];
+    const price = economy.lineCost(state, SP_UNLOCK);
     return [
       {
         key: SP_UNLOCK,
@@ -154,49 +194,49 @@ export class SupplyPanelComponent {
         locked: false,
         held: 0,
         cap: 1,
-        cost: formatCompactMoney(this.#store.lineCost(SP_UNLOCK)),
+        cost: formatCompactMoney(price),
         maxed: false,
-        affordable: this.#store.canBuyLine(SP_UNLOCK),
+        price: this.#linePrice(state, SP_UNLOCK, price),
       },
     ];
   }
 
-  #spawnerRows(): readonly Row[] {
-    return SPAWNERS.filter((row) => this.#store.spawnerUnlocked(row.adr)).map(
-      (row) => {
-        const held = this.#store.spawnerCount(row.adr);
-        const maxed = held >= SPAWNER_CAP;
-        return {
-          key: String(row.adr),
-          name: this.#say(spawnerLabelKey(row.adr)),
-          blurb: this.#say(spawnerBlurbKey(row.adr)),
-          locked: false,
-          held,
-          cap: SPAWNER_CAP,
-          cost: maxed
-            ? this.#say('rail.maxed')
-            : formatCompactMoney(this.#store.spawnerCost(row.adr)),
-          maxed,
-          affordable: this.#store.canBuySpawner(row.adr),
-          first: row.adr === 0 && held <= SPAWNER_FREE_AT_ADR_0,
-          icon: this.#walkerOf(row.adr),
-        };
-      }
-    );
+  #spawnerRows(state: Consultancy): readonly Row[] {
+    return SPAWNERS.filter((row) =>
+      economy.spawnerUnlocked(state, row.adr)
+    ).map((row) => {
+      const held = economy.spawnerCount(state, row.adr);
+      const maxed = held >= SPAWNER_CAP;
+      const price = economy.spawnerCost(state, row.adr);
+      return {
+        key: String(row.adr),
+        name: this.#say(spawnerLabelKey(row.adr)),
+        blurb: this.#say(spawnerBlurbKey(row.adr)),
+        locked: false,
+        held,
+        cap: SPAWNER_CAP,
+        cost: maxed ? this.#say('rail.maxed') : formatCompactMoney(price),
+        maxed,
+        price: maxed ? null : price,
+        first: row.adr === 0 && held <= SPAWNER_FREE_AT_ADR_0,
+        icon: this.#walkerOf(row.adr),
+      };
+    });
   }
 
   readonly locked = computed(() => {
-    this.#store.state();
+    const state = this.#priced();
     const locked = SPAWNERS.filter(
-      (row) => !this.#store.spawnerUnlocked(row.adr)
+      (row) => !economy.spawnerUnlocked(state, row.adr)
     ).length;
     return Math.max(0, locked - TEASED);
   });
 
   readonly income = computed<readonly Row[]>(() => {
-    this.#store.state();
+    this.#catalogue();
+    const state = this.#priced();
     const teasers = SPAWNED_TICKET_IDS.filter(
-      (id) => !this.#store.incomeUnlocked(id)
+      (id) => !economy.incomeUnlocked(state, id)
     )
       .slice(0, TEASED)
       .map((id): Row => ({
@@ -209,18 +249,19 @@ export class SupplyPanelComponent {
         cap: INCOME_CAP,
         cost: '—',
         maxed: false,
-        affordable: false,
+        price: null,
         icon: this.#cardOf(id),
       }));
-    return [...this.#rateRows(), ...teasers];
+    return [...this.#rateRows(state), ...teasers];
   });
 
-  #rateRows(): readonly Row[] {
+  #rateRows(state: Consultancy): readonly Row[] {
     return SPAWNED_TICKET_IDS.filter((id) =>
-      this.#store.incomeUnlocked(id)
+      economy.incomeUnlocked(state, id)
     ).map((id) => {
-      const held = this.#store.incomeLevel(id);
+      const held = economy.incomeLevel(state, id);
       const maxed = held >= INCOME_CAP;
+      const price = economy.incomeCost(state, id);
       return {
         key: id,
         name: this.#say(ticketLabelKey(id)),
@@ -228,37 +269,37 @@ export class SupplyPanelComponent {
         locked: false,
         held,
         cap: INCOME_CAP,
-        cost: maxed
-          ? this.#say('rail.maxed')
-          : formatCompactMoney(this.#store.incomeCost(id)),
+        cost: maxed ? this.#say('rail.maxed') : formatCompactMoney(price),
         maxed,
-        affordable: this.#store.canBuyIncome(id),
+        price: maxed ? null : price,
         icon: this.#cardOf(id),
       };
     });
   }
 
   readonly rateLocked = computed(() => {
-    this.#store.state();
+    const state = this.#priced();
     const locked = SPAWNED_TICKET_IDS.filter(
-      (id) => !this.#store.incomeUnlocked(id)
+      (id) => !economy.incomeUnlocked(state, id)
     ).length;
     return Math.max(0, locked - TEASED);
   });
 
   readonly crew = computed<readonly Row[]>(() => {
-    this.#store.state();
+    this.#catalogue();
+    const state = this.#priced();
     return CREW_ROWS.map((line) => {
-      const locked = !this.#store.lineUnlocked(line);
-      const held = this.#store.levels()[line];
-      const cap = this.#store.lineCap(line);
+      const locked = !economy.lineUnlocked(state, line);
+      const held = state.levels[line];
+      const cap = economy.lineCap(state, line);
       const maxed = held >= cap;
+      const price = economy.lineCost(state, line);
       return {
         key: line,
         name: this.#say(`purchase.${line}.label`),
         blurb:
           line === 'kit'
-            ? this.#kitBlurb()
+            ? this.#kitBlurb(state)
             : this.#say(`purchase.${line}.effect`, LINE_EFFECT_PARAMS[line]),
         locked,
         held,
@@ -267,9 +308,9 @@ export class SupplyPanelComponent {
           ? this.#say('rail.on-tree')
           : maxed
             ? this.#say('rail.maxed')
-            : formatCompactMoney(this.#store.lineCost(line)),
+            : formatCompactMoney(price),
         maxed,
-        affordable: this.#store.canBuyLine(line),
+        price: this.#linePrice(state, line, price),
         icon:
           this.#icon('art', LINE_ART[line]) ??
           this.#icon(
@@ -345,15 +386,26 @@ export class SupplyPanelComponent {
     }
   }
 
+  #linePrice(
+    state: Consultancy,
+    line: PurchaseId,
+    price: number
+  ): number | null {
+    return economy.lineUnlocked(state, line) &&
+      state.levels[line] < economy.lineCap(state, line)
+      ? price
+      : null;
+  }
+
   #rateBlurb(id: TicketTypeId): string {
     return this.#say('rail.income.effect', {
-      pct: formatCompactMoney(this.#store.incomeStep(id)),
+      pct: formatCompactMoney(economy.incomeStep(id)),
       ticket: this.#say(ticketLabelKey(id)),
     });
   }
 
-  #kitBlurb(): string {
-    const item = this.#store.kitNext();
+  #kitBlurb(state: Consultancy): string {
+    const item = economy.kitNext(state);
     if (item === null) return this.#say('purchase.kit.done');
     return this.#say('purchase.kit.next', {
       item: this.#say(kitLabelKey(item.id)),
@@ -392,6 +444,11 @@ export class SupplyPanelComponent {
     url: string | undefined
   ): Row['icon'] | undefined {
     return url === undefined ? undefined : { url, kind };
+  }
+
+  #catalogue(): void {
+    this.#text.currentLang();
+    this.#text.isLoading();
   }
 
   #say(key: string, params?: Record<string, string | number>): string {

@@ -79,11 +79,8 @@ describe('the crew table', () => {
   });
 
   it('is what the game reads, not a decorative duplicate', () => {
-    const fresh = consultancy();
     for (const kind of CREW_KINDS) {
-      expect(economy.crewWomanEvery(fresh, kind)).toBe(
-        CREW_STATS[kind].womanEvery
-      );
+      expect(economy.crewWomanEvery(kind)).toBe(CREW_STATS[kind].womanEvery);
     }
   });
 

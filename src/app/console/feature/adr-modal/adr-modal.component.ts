@@ -4,7 +4,6 @@ import {
   Component,
   computed,
   DestroyRef,
-  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -29,6 +28,7 @@ import { BackdropDirective } from '../../ui/backdrop/backdrop.directive';
 import { PanelComponent } from '../../ui/panel/panel.component';
 import { backdropUrl } from '../../../@shared/util/backdrop-art';
 import { officeArtFor } from '../../util/office-art';
+import { onRise } from '../../util/on-rise';
 
 interface AdrData {
   readonly tier: DebtTier;
@@ -59,7 +59,6 @@ export class AdrModalComponent {
   readonly client = CLIENT_NAME;
   readonly leaveMs = `${LEAVE_MS}ms`;
   #store = inject(GameStore);
-  #lastSeenTier = this.#store.tier();
   #shownTier = signal<number | null>(null);
   #leaveTimer?: ReturnType<typeof setTimeout>;
 
@@ -67,11 +66,7 @@ export class AdrModalComponent {
 
   constructor() {
     inject(DestroyRef).onDestroy(() => clearTimeout(this.#leaveTimer));
-    effect(() => {
-      const tier = this.#store.tier();
-      if (tier > this.#lastSeenTier) this.#shownTier.set(tier);
-      this.#lastSeenTier = tier;
-    });
+    onRise(this.#store.tier, (tier) => this.#shownTier.set(tier));
   }
 
   readonly record = computed<AdrData | null>(() => {

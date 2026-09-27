@@ -49,9 +49,10 @@ function sweep(store: GameStore, credit: number): number {
   return left;
 }
 
-function onTheBoard(state: Consultancy): { euro: number; sp: number } {
+function onTheBoard(state: Consultancy): { euro: number; sp: number; closed: number } {
   let euro = 0;
   let sp = 0;
+  let closed = 0;
   for (const seed of SEEDS) {
     const store = seeded(seed);
     store.hydrate({ ...state, lastTick: 0, runMs: state.runMs });
@@ -63,12 +64,13 @@ function onTheBoard(state: Consultancy): { euro: number; sp: number } {
     const end = store.snapshot();
     euro += end.lifetimeBilled - state.lifetimeBilled;
     sp += end.storyPoints - state.storyPoints;
+    closed += end.lifetimeClosed - state.lifetimeClosed;
   }
   const seconds = (SPAN_MS / 1000) * SEEDS.length;
-  return { euro: euro / seconds, sp: sp / seconds };
+  return { euro: euro / seconds, sp: sp / seconds, closed: closed / seconds };
 }
 
-const LABELS = ['tier 1', 'tier 3', 'tier 6'] as const;
+const LABELS = ['tier 1', 'tier 3', 'tier 4', 'tier 5', 'tier 6', 'tier 7'] as const;
 
 const stops = ((): ReadonlyMap<string, Consultancy> => {
   const found = new Map<string, Consultancy>();
@@ -99,6 +101,7 @@ describe('the sim agrees with the board', () => {
         process.stdout.write(
           `\n${label}: €/s sim ${model.euroPerSec.toExponential(2)} board ${board.euro.toExponential(2)}` +
             ` · SP/s sim ${model.spPerSec.toFixed(1)} board ${board.sp.toFixed(1)}` +
+            ` · closes sim ${(model.handPerSec + model.crewPerSec).toFixed(1)} board ${board.closed.toFixed(1)} wontfix ${model.wontFixPerSec.toFixed(1)}` +
             ` · hand ${model.handPerSec.toFixed(2)} crew ${model.crewPerSec.toFixed(2)} supply ${model.supplyPerSec.toFixed(2)}\n`
         );
       }

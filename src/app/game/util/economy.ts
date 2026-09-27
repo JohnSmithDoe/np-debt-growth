@@ -142,38 +142,97 @@ function foldRanks<T>(
   return total;
 }
 
+interface Folded {
+  readonly values: Map<string, number>;
+  readonly flags: Map<SkillEffect['kind'], boolean>;
+  readonly claims: Map<CrewKind, (type: TicketTypeId) => boolean>;
+  readonly paces: Map<CrewKind, HirePace>;
+  readonly hirePaces: WeakMap<SeniorHire, Map<CrewKind, HirePace>>;
+  autoClosed?: ReadonlySet<TicketTypeId>;
+  phases?: readonly ReleasePhase[];
+}
+
+const FOLDED = new WeakMap<object, WeakMap<object, Folded>>();
+
+function folded(state: Consultancy): Folded {
+  let byLevels = FOLDED.get(state.skills);
+  if (!byLevels) {
+    byLevels = new WeakMap();
+    FOLDED.set(state.skills, byLevels);
+  }
+  let table = byLevels.get(state.levels);
+  if (!table) {
+    table = {
+      values: new Map(),
+      flags: new Map(),
+      claims: new Map(),
+      paces: new Map(),
+      hirePaces: new WeakMap(),
+    };
+    byLevels.set(state.levels, table);
+  }
+  return table;
+}
+
+function memo(state: Consultancy, key: string, compute: () => number): number {
+  const values = folded(state).values;
+  const hit = values.get(key);
+  if (hit !== undefined) return hit;
+  const value = compute();
+  values.set(key, value);
+  return value;
+}
+
 function productOf(
   state: Consultancy,
+  key: string,
   match: (effect: SkillEffect) => number | null
 ): number {
-  return foldRanks(state, 1, (total, effect) => total * (match(effect) ?? 1));
+  return memo(state, key, () =>
+    foldRanks(state, 1, (total, effect) => total * (match(effect) ?? 1))
+  );
 }
 
 type EffectKind = SkillEffect['kind'] | null;
 
 function multOf(state: Consultancy, kind: EffectKind): number {
   if (kind === null) return 1;
-  return productOf(state, (e) =>
+  return productOf(state, `mult:${kind}`, (e) =>
     e.kind === kind && 'mult' in e ? e.mult : null
   );
 }
 
 function sumOf(
   state: Consultancy,
+  key: string,
   match: (effect: SkillEffect) => number | null
 ): number {
-  return foldRanks(state, 0, (total, effect) => total + (match(effect) ?? 0));
+  return memo(state, key, () =>
+    foldRanks(state, 0, (total, effect) => total + (match(effect) ?? 0))
+  );
 }
 
 function additive(state: Consultancy, kind: EffectKind, base: number): number {
   if (kind === null) return base;
   return (
-    base + sumOf(state, (e) => (e.kind === kind && 'add' in e ? e.add : null))
+    base +
+    sumOf(state, `add:${kind}`, (e) =>
+      e.kind === kind && 'add' in e ? e.add : null
+    )
   );
 }
 
 function holds(state: Consultancy, kind: SkillEffect['kind']): boolean {
-  return foldRanks(state, false, (on, effect) => on || effect.kind === kind);
+  const flags = folded(state).flags;
+  const hit = flags.get(kind);
+  if (hit !== undefined) return hit;
+  const on = foldRanks(
+    state,
+    false,
+    (held, effect) => held || effect.kind === kind
+  );
+  flags.set(kind, on);
+  return on;
 }
 
 function globalMultiplier(state: Consultancy): number {
@@ -186,7 +245,8 @@ export function sprintSlots(
   weather: Weather = CALM
 ): number {
   const slots = additive(state, 'slots', SPRINT_SLOTS_BASE);
-  const teams = 1 + sumOf(state, (e) => (e.kind === 'cans' ? e.add : null));
+  const teams =
+    1 + sumOf(state, 'cans', (e) => (e.kind === 'cans' ? e.add : null));
   return Math.max(1, Math.floor(slots * weather.slots)) * teams;
 }
 
@@ -199,16 +259,21 @@ export function sprintRoom(
 }
 
 export function releasePhases(state: Consultancy): readonly ReleasePhase[] {
+  const table = folded(state);
+  if (table.phases) return table.phases;
   const cut = foldRanks(state, new Set<ReleasePhaseId>(), (set, effect) =>
     effect.kind === 'cutCeremony' ? set.add(effect.phase) : set
   );
-  return RELEASE_PHASES.filter(
+  table.phases = RELEASE_PHASES.filter(
     (phase) => phase.id === 'ship' || !cut.has(phase.id)
   );
+  return table.phases;
 }
 
 export function haulMs(state: Consultancy): number {
-  return releasePhases(state).reduce((sum, phase) => sum + phase.ms, 0);
+  return memo(state, 'haul', () =>
+    releasePhases(state).reduce((sum, phase) => sum + phase.ms, 0)
+  );
 }
 
 export function phaseAt(
@@ -232,14 +297,18 @@ export function accepted(state: Consultancy): boolean {
 }
 
 export function goldenChance(state: Consultancy): number {
-  const ranks = sumOf(state, (e) => (e.kind === 'goldenChance' ? e.add : null));
+  const ranks = sumOf(state, 'goldenChance', (e) =>
+    e.kind === 'goldenChance' ? e.add : null
+  );
   return Math.min(GOLDEN_CHANCE_CAP, ranks);
 }
 
 export function goldenMultiplier(state: Consultancy): number {
   return (
     GOLDEN_VALUE_BASE +
-    sumOf(state, (e) => (e.kind === 'goldenValue' ? e.add : null))
+    sumOf(state, 'goldenValue', (e) =>
+      e.kind === 'goldenValue' ? e.add : null
+    )
   );
 }
 
@@ -276,7 +345,7 @@ export function ticketValue(
   now = 0
 ): number {
   const type = TICKET_TYPES[id];
-  const fromSkills = productOf(state, (e) =>
+  const fromSkills = productOf(state, `value:${id}`, (e) =>
     e.kind === 'ticketValue' && e.target === id ? e.mult : null
   );
   const tierScale = type.scalesWithTier ? Math.max(1, state.tier) : 1;
@@ -337,7 +406,9 @@ export function lineCost(state: Consultancy, line: PurchaseId): number {
 export function lineCap(state: Consultancy, line: PurchaseId): number {
   return (
     LINE_PLAN[line].cap +
-    sumOf(state, (e) => (e.kind === 'room' && e.line === line ? e.add : null))
+    sumOf(state, `room:${line}`, (e) =>
+      e.kind === 'room' && e.line === line ? e.add : null
+    )
   );
 }
 
@@ -384,7 +455,7 @@ function sourceMultiplier(state: Consultancy, type: TicketType): number {
 export function spawnRate(state: Consultancy, id: TicketTypeId): number {
   const type = TICKET_TYPES[id];
   if (type.effect === 'crewRush' && !holds(state, 'pizza')) return 0;
-  const fromSkills = productOf(state, (e) =>
+  const fromSkills = productOf(state, `spawn:${id}`, (e) =>
     e.kind === 'spawnRate' &&
     (e.target === id || (e.target === undefined && !type.handOnly))
       ? e.mult
@@ -416,6 +487,10 @@ export function juniorSpawnRate(state: Consultancy): number {
 type Aura = Extract<SkillEffect, { kind: 'standupAura' }>;
 
 function auraMultiplier(state: Consultancy): number {
+  return memo(state, 'aura', () => foldAura(state));
+}
+
+function foldAura(state: Consultancy): number {
   const juniors = state.levels.junior;
   const ranks = new Map<Aura, number>();
   for (const effect of ranked(state)) {
@@ -446,7 +521,9 @@ function paceMult(
   field: PaceField,
   hire?: SeniorHire
 ): number {
-  let total = productOf(state, (e) => paceOf(e, crew, field));
+  let total = productOf(state, `pace:${crew}:${field}`, (e) =>
+    paceOf(e, crew, field)
+  );
   for (const trait of hire?.traits ?? []) {
     for (const effect of TRAITS[trait])
       total *= paceOf(effect, crew, field) ?? 1;
@@ -455,7 +532,7 @@ function paceMult(
 }
 
 function batchPenalty(state: Consultancy, crew: CrewKind): number {
-  return productOf(state, (e) =>
+  return productOf(state, `batchClose:${crew}`, (e) =>
     e.kind === 'batch' && e.crew === crew ? (e.closeMult ?? null) : null
   );
 }
@@ -472,7 +549,7 @@ export function crewCloseMs(
 }
 
 export function crewBatch(state: Consultancy, crew: CrewKind): number {
-  const added = sumOf(state, (e) =>
+  const added = sumOf(state, `batchAdd:${crew}`, (e) =>
     e.kind === 'batch' && e.crew === crew ? e.add : null
   );
   return Math.floor(CREW_STATS[crew].batchBase + added);
@@ -512,6 +589,24 @@ export function crewPace(
   crew: CrewKind,
   hire?: SeniorHire
 ): HirePace {
+  const table = folded(state);
+  let paces = table.paces;
+  if (hire) {
+    paces = table.hirePaces.get(hire) ?? new Map();
+    table.hirePaces.set(hire, paces);
+  }
+  const hit = paces.get(crew);
+  if (hit) return hit;
+  const pace = foldPace(state, crew, hire);
+  paces.set(crew, pace);
+  return pace;
+}
+
+function foldPace(
+  state: Consultancy,
+  crew: CrewKind,
+  hire?: SeniorHire
+): HirePace {
   return {
     closeMs: crewCloseMs(state, crew, hire),
     speed: crewWalkSpeed(state, crew, hire),
@@ -534,11 +629,23 @@ export function hirePoolSeat(index: number, every: number): number {
   return hireIsWoman(index, every) ? women - 1 : index - women;
 }
 
-export function crewWomanEvery(state: Consultancy, crew: CrewKind): number {
+export function crewWomanEvery(crew: CrewKind): number {
   return CREW_STATS[crew].womanEvery;
 }
 
 export function crewClaims(
+  state: Consultancy,
+  crew: CrewKind
+): (type: TicketTypeId) => boolean {
+  const table = folded(state);
+  const hit = table.claims.get(crew);
+  if (hit) return hit;
+  const claims = foldClaims(state, crew);
+  table.claims.set(crew, claims);
+  return claims;
+}
+
+function foldClaims(
   state: Consultancy,
   crew: CrewKind
 ): (type: TicketTypeId) => boolean {
@@ -578,10 +685,16 @@ function crewBand(state: Consultancy, crew: CrewKind): CrewBand {
 }
 
 export function autoClosed(state: Consultancy): ReadonlySet<TicketTypeId> {
-  return foldRanks(state, new Set<TicketTypeId>(), (all, effect) => {
-    if (effect.kind === 'autoClose') all.add(effect.target);
-    return all;
-  });
+  const table = folded(state);
+  table.autoClosed ??= foldRanks(
+    state,
+    new Set<TicketTypeId>(),
+    (all, effect) => {
+      if (effect.kind === 'autoClose') all.add(effect.target);
+      return all;
+    }
+  );
+  return table.autoClosed;
 }
 
 function womenAmong(count: number, every: number): number {
@@ -591,7 +704,7 @@ function womenAmong(count: number, every: number): number {
 export function crewWomen(state: Consultancy): number {
   return CREW_KINDS.reduce(
     (total, crew) =>
-      total + womenAmong(crewSize(state, crew), crewWomanEvery(state, crew)),
+      total + womenAmong(crewSize(state, crew), crewWomanEvery(crew)),
     0
   );
 }
@@ -608,7 +721,7 @@ function closesPerSec(rate: number, batch: number, closeMs: number): number {
 export function juniorCeilingPerSec(state: Consultancy): number {
   const juniors = state.levels.junior;
   if (juniors === 0) return 0;
-  const rate = crewRate(juniors, crewWomanEvery(state, 'juniors'));
+  const rate = crewRate(juniors, crewWomanEvery('juniors'));
   return closesPerSec(rate, crewBatch(state, 'juniors'), juniorCloseMs(state));
 }
 
@@ -656,7 +769,7 @@ export function seniorCeilingPerSec(state: Consultancy): number {
   const seniors = state.levels.senior;
   if (seniors === 0) return 0;
 
-  const every = crewWomanEvery(state, 'seniors');
+  const every = crewWomanEvery('seniors');
   let total = 0;
   for (let seat = 0; seat < seniors; seat += 1) {
     const hire = hireAt(state, seat);
@@ -675,7 +788,7 @@ export function traitFactor(state: Consultancy, trait: TraitId): number {
 export function seniorPoolSeat(state: Consultancy, seat: number): number {
   const hire = hireAt(state, seat);
   if (hire) return hire.poolSeat;
-  return hirePoolSeat(seat, crewWomanEvery(state, 'seniors'));
+  return hirePoolSeat(seat, crewWomanEvery('seniors'));
 }
 
 function openSeat(state: Consultancy): number {
@@ -684,7 +797,7 @@ function openSeat(state: Consultancy): number {
 
 export function nextSeniorHire(state: Consultancy): SeniorHire {
   const seat = openSeat(state);
-  const every = crewWomanEvery(state, 'seniors');
+  const every = crewWomanEvery('seniors');
   const woman = hireIsWoman(seat, every);
   const taken = state.roster
     .filter((_, at) => hireIsWoman(at, every) === woman)
@@ -709,7 +822,7 @@ export function managerReach(state: Consultancy): number {
 }
 
 export function debtInterest(state: Consultancy): number {
-  const gap = productOf(state, (e) =>
+  const gap = productOf(state, 'debtInterest', (e) =>
     e.kind === 'debtInterest' ? 1 - e.approach : null
   );
   return approachCap(DEBT_INTEREST_CAP, gap);
@@ -729,7 +842,10 @@ export function escalationMultiplier(state: Consultancy): number {
 export function escalationHoldMs(state: Consultancy): number {
   return (
     ESCALATION_HOLD_MS +
-    1000 * sumOf(state, (e) => (e.kind === 'escalationHold' ? e.seconds : null))
+    1000 *
+      sumOf(state, 'escalationHold', (e) =>
+        e.kind === 'escalationHold' ? e.seconds : null
+      )
   );
 }
 
@@ -761,7 +877,7 @@ export function pickupStoryPoints(
   byCrew: boolean
 ): number {
   if (!pickupsPaySp(state)) return 0;
-  const bonus = sumOf(state, (e) =>
+  const bonus = sumOf(state, `sp:${id}`, (e) =>
     e.kind === 'spPerClose' && (e.target === undefined || e.target === id)
       ? e.add
       : null
@@ -781,12 +897,13 @@ export function pickupsPaySp(state: Consultancy): boolean {
 }
 
 export function coachCount(state: Consultancy): number {
-  return sumOf(state, (e) => (e.kind === 'coach' ? e.add : null));
+  return sumOf(state, 'coach', (e) => (e.kind === 'coach' ? e.add : null));
 }
 
 export function voteBonusPerCrossing(state: Consultancy): number {
   return (
-    VOTE_BONUS_BASE + sumOf(state, (e) => (e.kind === 'deck' ? e.add : null))
+    VOTE_BONUS_BASE +
+    sumOf(state, 'deck', (e) => (e.kind === 'deck' ? e.add : null))
   );
 }
 
@@ -795,7 +912,10 @@ export function voteLive(
   index: number,
   runMs: number
 ): boolean {
-  const count = Math.max(1, coachCount(state));
+  return liveAt(Math.max(1, coachCount(state)), index, runMs);
+}
+
+function liveAt(count: number, index: number, runMs: number): boolean {
   const offset = (index * VOTE_CYCLE_MS) / count;
   return (runMs + offset) % VOTE_CYCLE_MS < VOTE_ON_MS;
 }
@@ -805,10 +925,12 @@ export function voteMask(
   runMs: number,
   landingY: number
 ): number {
-  const coaches = Math.min(coachCount(state), 31);
+  const count = coachCount(state);
+  const coaches = Math.min(count, 31);
+  const spread = Math.max(1, count);
   let mask = 0;
   for (let index = 0; index < coaches; index += 1) {
-    if (landingY > voteBeamY(index) && voteLive(state, index, runMs)) {
+    if (landingY > voteBeamY(index) && liveAt(spread, index, runMs)) {
       mask |= 1 << index;
     }
   }

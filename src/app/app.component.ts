@@ -30,6 +30,7 @@ import { HelpModalComponent } from './console/feature/help-modal/help-modal.comp
 import { SettingsModalComponent } from './console/feature/settings-modal/settings-modal.component';
 import { TitleScreenComponent } from './console/feature/title-screen/title-screen.component';
 import { SettingsUiService } from './console/data/settings-ui.service';
+import { onRise } from './console/util/on-rise';
 import { CLIENT_NAME, ENGAGEMENT_KEY } from './console/model/client.model';
 import { FinaleService } from './@shared/data/finale.service';
 import { AudioService } from './audio/data/audio.service';
@@ -129,7 +130,6 @@ export class AppComponent {
   );
 
   readonly awardPaid = signal(false);
-  #awarded = 0;
 
   readonly muted = this.#audio.muted;
 
@@ -142,11 +142,7 @@ export class AppComponent {
   }
 
   constructor() {
-    effect(() => {
-      const awarded = this.#store.awardCount();
-      if (awarded > this.#awarded) this.awardPaid.set(true);
-      this.#awarded = awarded;
-    });
+    onRise(this.#store.awardCount, () => this.awardPaid.set(true), 0);
     effect(() => this.#sampleRate(this.#store.state()));
   }
 

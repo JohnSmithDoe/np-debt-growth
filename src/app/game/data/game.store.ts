@@ -79,6 +79,25 @@ import { SpawnBudget } from '../util/spawn-budget';
 
 const crewed = (by: CloseAuthor): boolean => by !== 'you' && by !== 'auto';
 
+const roomIn = (state: Consultancy, slots: number): number =>
+  state.phase === 'hauling' ? 0 : Math.max(0, slots - state.sprintCount);
+
+const NO_HARVEST: Harvest = {
+  taken: [],
+  refused: [],
+  value: 0,
+  sp: 0,
+  big: false,
+  headline: null,
+};
+
+const NO_WORK: CrewWork = { closed: [], byWomen: 0 };
+
+const samePhases = (
+  a: readonly ReleasePhase[],
+  b: readonly ReleasePhase[]
+): boolean => a.length === b.length && a.every((phase, at) => phase === b[at]);
+
 type Buffs = Pick<
   Consultancy,
   'escalated' | 'escalationFiresAt' | 'hotfixUntil' | 'pizza'
@@ -126,6 +145,26 @@ interface LiveHazard {
 }
 
 type HazardKindOf = Hazard['kind'];
+
+const hazardsOf = (kind: HazardKindOf): readonly Hazard[] =>
+  HAZARDS_ENABLED ? HAZARDS.filter((row) => row.kind === kind) : [];
+
+const ELIGIBLE: Record<
+  HazardKindOf,
+  { readonly all: readonly Hazard[]; tier: number; rows: readonly Hazard[] }
+> = {
+  invitation: { all: hazardsOf('invitation'), tier: -1, rows: [] },
+  fact: { all: hazardsOf('fact'), tier: -1, rows: [] },
+};
+
+function eligibleHazards(kind: HazardKindOf, tier: number): readonly Hazard[] {
+  const memo = ELIGIBLE[kind];
+  if (memo.tier !== tier) {
+    memo.tier = tier;
+    memo.rows = memo.all.filter((row) => tier >= row.fromTier);
+  }
+  return memo.rows;
+}
 
 interface Cadence {
   readonly every: number;
@@ -215,7 +254,6 @@ export class GameStore {
   #mix = computed(() => ticketMix(this.#sprint()));
   #closeFloats: CloseFloat[] = [];
   #wontFix: number[] = [];
-  #wontFixStep = 0;
   #prodIncidents = 0;
   readonly #prodLive = new Set<number>();
   #billed = 0;
@@ -232,9 +270,7 @@ export class GameStore {
   #nextSampleAt = 0;
   #sampleEvery = BURNDOWN_SAMPLE_MS;
 
-  #filledAt = -1;
   #cycleBilled = 0;
-  #roundSp = { velocity: 0 };
   #outcome = signal<RoundOutcome | null>(null);
   #previous = signal<RoundOutcome | null>(null);
 
@@ -261,7 +297,7 @@ export class GameStore {
   readonly crewWomen = computed(() => economy.crewWomen(this.#state()));
 
   womanEvery(crew: CrewKind): number {
-    return economy.crewWomanEvery(this.#state(), crew);
+    return economy.crewWomanEvery(crew);
   }
   readonly clickRadius = computed(() => economy.clickRadius(this.#state()));
 
@@ -315,81 +351,70 @@ export class GameStore {
   advanceTo(now: number): void {
     const state = this.#state();
     const elapsed = now - state.lastTick;
-    if (elapsed <= 0 || state.endedAt > 0) {
-      this.#state.set({ ...state, lastTick: now });
-      return;
+    if (elapsed > 0 && state.endedAt === 0) {
+      let at = now - Math.min(elapsed, MAX_CATCHUP_MS);
+      while (at < now && this.#state().endedAt === 0) {
+        const to = Math.min(at + TICK_MS, now);
+        this.#advance((to - at) / 1000, to);
+        at = to;
+      }
     }
-
-    let at = now - Math.min(elapsed, MAX_CATCHUP_MS);
-    while (at < now && this.#state().endedAt === 0) {
-      const to = Math.min(at + TICK_MS, now);
-      this.#advance((to - at) / 1000, to);
-      at = to;
-    }
-    this.#state.set({ ...this.#state(), lastTick: now });
+    const done = this.#state();
+    if (done.lastTick !== now) this.#state.set({ ...done, lastTick: now });
   }
 
   rebase(now: number): void {
     this.#state.set({ ...this.#state(), lastTick: now });
   }
 
+  readonly #releasePhases = computed(
+    () => economy.releasePhases(this.#state()),
+    { equal: samePhases }
+  );
+  readonly #haulMs = computed(() =>
+    this.#releasePhases().reduce((sum, phase) => sum + phase.ms, 0)
+  );
+
   haulMs(): number {
-    return economy.haulMs(this.#state());
+    return this.#haulMs();
   }
 
   releasePhases(): readonly ReleasePhase[] {
-    return economy.releasePhases(this.#state());
+    return this.#releasePhases();
   }
 
   roundLeftMs(): number {
     return this.#state().haulLeftMs;
   }
 
-  #trainLeaves(now: number, cap: number): void {
-    const state = this.#state();
+  #trainLeaves(state: Consultancy): RoundOutcome {
     const outcome: RoundOutcome = {
       seq: state.roundSeq,
       billed: this.#cycleBilled,
-      filled: cap,
-      capacity: cap,
-      filledAtMs: this.#filledAt,
-      unbilled: this.#board.tickets.length,
       durationMs: state.roundMs,
-      spVelocity: this.#roundSp.velocity,
     };
 
-    this.#state.set({ ...this.#state(), lastOutcome: outcome, lastTick: now });
     const finished = this.#outcome();
     if (finished) this.#previous.set(finished);
     this.#outcome.set(outcome);
-  }
-
-  #nextSprint(): void {
-    const state = this.#state();
-    this.#sprint.set([]);
-    this.#filledAt = -1;
-    this.#roundSp = { velocity: 0 };
-    this.#cycleBilled = 0;
-    this.#state.set({
-      ...state,
-      roundMs: 0,
-      roundSeq: state.roundSeq + 1,
-      lifetimeRounds: state.lifetimeRounds + 1,
-    });
+    return outcome;
   }
 
   endRoundNow(now: number): void {
-    if (this.#state().phase !== 'collecting') return;
-    this.#sendTrain(now);
+    const state = this.#state();
+    if (state.phase !== 'collecting') return;
+    const cap = economy.sprintSlots(state, this.#sky());
+    this.#state.set({ ...this.#sendTrain(state, cap), lastTick: now });
   }
 
   startRound(now: number): boolean {
-    if (this.#state().phase !== 'hauling') return false;
-    this.#trainBack(now);
+    const state = this.#state();
+    if (state.phase !== 'hauling') return false;
+    this.#state.set({ ...this.#trainBack(state), lastTick: now });
     return true;
   }
 
-  #stepBoard(state: Consultancy, dtMs: number): CrewWork {
+  #stepBoard(state: Consultancy, dtMs: number, slots: number): CrewWork {
     const weather = this.#sky();
     spawnInto(
       this.#board,
@@ -399,25 +424,25 @@ export class GameStore {
       this.#rand,
       weather
     );
+    const room = roomIn(state, slots);
     const crews =
-      economy.sprintRoom(state, weather) <= 0
-        ? { closed: [], byWomen: 0 }
+      room <= 0
+        ? NO_WORK
         : stepBoard(
             this.#board,
             crewRules(this.#board, state, weather),
             dtMs,
             this.#rand,
-            economy.sprintRoom(state, weather)
+            room
           );
     const closing = this.#expire(state, dtMs);
-    return this.#autoClose(state, weather, crews, closing);
+    return this.#autoClose(crews, closing, room);
   }
 
   #expire(state: Consultancy, dtMs: number): readonly BoardTicket[] {
     const gone: BoardTicket[] = [];
     const closing: BoardTicket[] = [];
     expireTickets(this.#board, dtMs, gone, economy.autoClosed(state), closing);
-    this.#wontFixStep = gone.length;
     this.#fade(gone);
     return closing;
   }
@@ -430,16 +455,12 @@ export class GameStore {
   }
 
   #autoClose(
-    state: Consultancy,
-    weather: Weather,
     crews: CrewWork,
-    closing: readonly BoardTicket[]
+    closing: readonly BoardTicket[],
+    sprintRoom: number
   ): CrewWork {
     if (closing.length === 0) return crews;
-    const room = Math.max(
-      0,
-      economy.sprintRoom(state, weather) - crews.closed.length
-    );
+    const room = Math.max(0, sprintRoom - crews.closed.length);
     const shipped: Close[] = closing.slice(0, room).map((ticket) => ({
       type: ticket.type,
       titleKey: ticket.titleKey,
@@ -454,29 +475,24 @@ export class GameStore {
     const toProd = closing.slice(room);
     if (toProd.length > 0) {
       this.#fade(toProd);
-      this.#wontFixStep += this.#toProd(toProd.length);
+      this.#toProd(toProd.length);
     }
-    return { closed: [...crews.closed, ...shipped], byWomen: crews.byWomen };
+    return { closed: crews.closed.concat(shipped), byWomen: crews.byWomen };
   }
 
-  #toProd(count: number): number {
+  #toProd(count: number): void {
     for (const id of this.#prodLive) {
       if (!this.#board.byId.has(id)) this.#prodLive.delete(id);
     }
-    let stale = 0;
     for (let n = 0; n < count; n += 1) {
       const card =
         this.#prodLive.size < PROD_INCIDENT_LIVE_CAP
           ? addTicket(this.#board, 'incident', this.#rand)
           : null;
-      if (!card) {
-        stale += 1;
-        continue;
-      }
+      if (!card) continue;
       this.#prodLive.add(card.id);
       this.#prodIncidents += 1;
     }
-    return stale;
   }
 
   #takeProdIncidents(): number {
@@ -494,75 +510,68 @@ export class GameStore {
   #advance(seconds: number, now: number): void {
     const state = this.#state();
     const dtMs = seconds * 1000;
+    const runMs = state.runMs + dtMs;
     this.#board.lifeMs = ticketLifeMs(state.tier);
-    const work = this.#stepBoard(state, dtMs);
-    const banked = this.#bank(state, work, now);
+    const slots = economy.sprintSlots(state, this.#sky());
+    const work = this.#stepBoard(state, dtMs, slots);
+    const banked = this.#bank(state, work, now, slots);
 
     this.#state.set({
       ...banked.next,
-      lifetimeWontFix: banked.next.lifetimeWontFix + this.#wontFixStep,
       lifetimeProdIncidents:
         banked.next.lifetimeProdIncidents + this.#takeProdIncidents(),
       lastTick: now,
-      runMs: state.runMs + dtMs,
+      runMs,
       roundMs: state.roundMs + dtMs,
     });
-    this.#stepWeather(state.runMs + dtMs, now);
-    this.#sampleBurndown(this.#state().runMs);
+    this.#stepWeather(runMs, now);
+    this.#sampleBurndown(runMs);
 
-    const armed = this.#state().escalationFiresAt;
-    if (armed > 0 && now >= armed) {
-      this.#state.set({
-        ...this.#state(),
-        escalated: false,
-        escalationFiresAt: 0,
-      });
-    }
-
-    this.#grantAwards();
-
-    this.#stepTrain(dtMs, now);
-    if (economy.accepted(this.#state())) {
-      this.#state.set({ ...this.#state(), endedAt: now });
-    }
+    const stepped = this.#state();
+    const settled = this.#settle(stepped, dtMs, now);
+    if (settled !== stepped) this.#state.set(settled);
   }
 
-  #stepTrain(dtMs: number, now: number): void {
-    const state = this.#state();
+  #settle(state: Consultancy, dtMs: number, now: number): Consultancy {
+    let next = state;
+    if (next.escalationFiresAt > 0 && now >= next.escalationFiresAt) {
+      next = { ...next, escalated: false, escalationFiresAt: 0 };
+    }
+    next = this.#grantAwards(next);
+    next = this.#stepTrain(next, dtMs);
+    return economy.accepted(next) ? { ...next, endedAt: now } : next;
+  }
+
+  #stepTrain(state: Consultancy, dtMs: number): Consultancy {
     if (state.phase === 'hauling') {
       const left = state.haulLeftMs - dtMs;
-      if (left > 0) {
-        this.#state.set({ ...state, haulLeftMs: left, lastTick: now });
-      } else {
-        this.#trainBack(now);
-      }
-      return;
+      return left > 0 ? { ...state, haulLeftMs: left } : this.#trainBack(state);
     }
-    if (state.sprintCount >= economy.sprintSlots(state, this.#sky())) {
-      this.#sendTrain(now);
-    }
+    const slots = economy.sprintSlots(state, this.#sky());
+    return state.sprintCount >= slots ? this.#sendTrain(state, slots) : state;
   }
 
-  #sendTrain(now: number): void {
-    this.#trainLeaves(now, economy.sprintSlots(this.#state(), this.#sky()));
-    const state = this.#state();
-    this.#state.set({
+  #sendTrain(state: Consultancy, cap: number): Consultancy {
+    return {
       ...state,
+      lastOutcome: this.#trainLeaves(state),
       phase: 'hauling',
       haulLeftMs: economy.haulMs(state),
-      lastTick: now,
-    });
+    };
   }
 
-  #trainBack(now: number): void {
-    this.#nextSprint();
-    this.#state.set({
-      ...this.#state(),
+  #trainBack(state: Consultancy): Consultancy {
+    this.#sprint.set([]);
+    this.#cycleBilled = 0;
+    return {
+      ...state,
+      roundMs: 0,
+      roundSeq: state.roundSeq + 1,
+      lifetimeRounds: state.lifetimeRounds + 1,
       phase: 'collecting',
       haulLeftMs: 0,
       sprintCount: 0,
-      lastTick: now,
-    });
+    };
   }
 
   #sampleBurndown(runMs: number): void {
@@ -614,9 +623,7 @@ export class GameStore {
 
   #placeDue(kind: HazardKindOf, runMs: number, state: Consultancy): void {
     const cadence = this.#cadence[kind];
-    const eligible = HAZARDS_ENABLED
-      ? HAZARDS.filter((row) => row.kind === kind && state.tier >= row.fromTier)
-      : [];
+    const eligible = eligibleHazards(kind, state.tier);
 
     if (eligible.length === 0) {
       cadence.due = armed(cadence, runMs);
@@ -748,22 +755,20 @@ export class GameStore {
     };
   }
 
-  #grantAwards(): void {
-    const state = this.#state();
+  #grantAwards(state: Consultancy): Consultancy {
     const due = economy.pendingAwards(state);
-    if (due.length === 0) return;
+    if (due.length === 0) return state;
 
-    this.#state.set({
-      ...state,
-      achievements: [...state.achievements, ...due.map((award) => award.id)],
-    });
-    this.#awarded.update((ids) => [...ids, ...due.map((award) => award.id)]);
+    const ids = due.map((award) => award.id);
+    this.#awarded.update((held) => [...held, ...ids]);
+    return { ...state, achievements: [...state.achievements, ...ids] };
   }
 
   #bank(
     state: Consultancy,
     work: CrewWork,
-    now: number
+    now: number,
+    slots: number
   ): {
     next: Consultancy;
     value: number;
@@ -779,27 +784,17 @@ export class GameStore {
     const banked = this.#bankWork(state, closed, now);
     const buffs = armBuffs(state, closed, now);
 
-    const placed = Math.min(
-      banked.took.length,
-      economy.sprintRoom(state, this.#sky())
-    );
+    const placed = Math.min(banked.took.length, roomIn(state, slots));
     if (placed > 0) {
       const slots = banked.took.slice(0, placed);
       this.#sprint.update((held) => [...held, ...slots]);
     }
     const count = state.sprintCount + placed;
-    if (
-      this.#filledAt < 0 &&
-      count >= economy.sprintSlots(state, this.#sky())
-    ) {
-      this.#filledAt = state.roundMs;
-    }
 
     const payout = banked.value;
     const velocitySp = banked.sp;
     for (const worth of banked.worths) this.#bill(worth);
     this.#cycleBilled += payout;
-    this.#roundSp.velocity += velocitySp;
 
     return {
       next: {
@@ -811,8 +806,6 @@ export class GameStore {
         lifetimeClosed: state.lifetimeClosed + closed.length,
         lifetimeClosedByWomen: state.lifetimeClosedByWomen + byWomen,
         lifetimeBilled: state.lifetimeBilled + payout,
-        lifetimeCrewBilled: state.lifetimeCrewBilled + banked.crew,
-        lifetimeWorkBilled: state.lifetimeWorkBilled + banked.value,
       },
       value: banked.value,
       sp: velocitySp,
@@ -827,7 +820,6 @@ export class GameStore {
     now: number
   ): {
     value: number;
-    crew: number;
     sp: number;
     big: boolean;
     headline: string | null;
@@ -835,7 +827,6 @@ export class GameStore {
     worths: number[];
   } {
     let value = 0;
-    let crew = 0;
     let sp = 0;
     let big = false;
     let headline: string | null = null;
@@ -848,9 +839,10 @@ export class GameStore {
     const reach = economy.managerReach(state);
     for (const { type, titleKey, by, x, y, golden, spBonus } of closed) {
       if (TICKET_TYPES[type].effect !== 'value') continue;
+      const byCrew = crewed(by);
       const gilded =
-        golden || (crewed(by) && conversion > 0 && this.#rand() < conversion);
-      const watched = crewed(by) && overseen(this.#board, x, y, reach);
+        golden || (byCrew && conversion > 0 && this.#rand() < conversion);
+      const watched = byCrew && overseen(this.#board, x, y, reach);
       const worth =
         economy.closeValue(state, type, now) *
         (gilded ? goldenMult : 1) *
@@ -860,16 +852,15 @@ export class GameStore {
       if (loud) headline ??= titleKey;
       value += worth;
       sp +=
-        economy.pickupStoryPoints(state, type, crewed(by)) +
+        economy.pickupStoryPoints(state, type, byCrew) +
         (economy.pickupsPaySp(state) ? spBonus : 0);
       took.push({ type, titleKey });
       worths.push(worth);
       if (by !== 'you') {
-        crew += worth;
         this.#addCloseFloat(x, y, worth, loud ? titleKey : null);
       }
     }
-    return { value, crew, sp, big, headline, took, worths };
+    return { value, sp, big, headline, took, worths };
   }
 
   #billWholeBoard(now: number): number {
@@ -938,23 +929,14 @@ export class GameStore {
   harvest(ids: readonly number[]): Harvest {
     const state = this.#state();
     const now = state.lastTick;
-    if (state.endedAt > 0) {
-      return {
-        taken: [],
-        refused: [],
-        value: 0,
-        sp: 0,
-        big: false,
-        headline: null,
-      };
-    }
+    if (state.endedAt > 0) return NO_HARVEST;
     const { allowed, refused } = this.#withinCan(state, ids);
     const reached = reachedBy(this.#board, allowed);
     const { taken, closed } = reached;
 
     this.#probeClick(now, ids.length, taken.length, state);
     if (taken.length === 0) {
-      return { taken, refused, value: 0, sp: 0, big: false, headline: null };
+      return { ...NO_HARVEST, taken, refused };
     }
 
     for (const ticket of reached.tickets) {
@@ -967,7 +949,8 @@ export class GameStore {
     const { next, value, sp, big, headline } = this.#bank(
       state,
       { closed, byWomen: 0 },
-      now
+      now,
+      economy.sprintSlots(state, this.#sky())
     );
     this.#state.set(next);
     if (reached.quarterEnd) this.#billWholeBoard(now);
@@ -1174,7 +1157,6 @@ export class GameStore {
     this.#billed = 0;
     this.#awarded.set([]);
     this.#sprint.set([]);
-    this.#filledAt = -1;
     this.#outcome.set(null);
     this.#previous.set(null);
     this.#closeFloats = [];

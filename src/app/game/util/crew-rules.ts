@@ -24,26 +24,53 @@ function fungibleSeat(
   };
 }
 
+type StandingRules = Omit<CrewRules, 'kind' | 'crew' | 'interrupted' | 'rush'>;
+
+const STANDING = new WeakMap<
+  object,
+  WeakMap<object, WeakMap<object, readonly StandingRules[]>>
+>();
+
+function standing(state: Consultancy): readonly StandingRules[] {
+  let byLevels = STANDING.get(state.skills);
+  if (!byLevels) {
+    byLevels = new WeakMap();
+    STANDING.set(state.skills, byLevels);
+  }
+  let byRoster = byLevels.get(state.levels);
+  if (!byRoster) {
+    byRoster = new WeakMap();
+    byLevels.set(state.levels, byRoster);
+  }
+  let rules = byRoster.get(state.roster);
+  if (!rules) {
+    rules = CREW_KINDS.map((kind) => standingFor(kind, state));
+    byRoster.set(state.roster, rules);
+  }
+  return rules;
+}
+
 export function crewRules(
   board: Board,
   state: Consultancy,
   weather: Weather
 ): readonly CrewRules[] {
-  return CREW_KINDS.map((kind) => rulesFor(kind, board, state, weather));
-}
-
-function rulesFor(
-  kind: CrewKind,
-  board: Board,
-  state: Consultancy,
-  weather: Weather
-): CrewRules {
-  const stats = CREW_STATS[kind];
-  const womanEvery = economy.crewWomanEvery(state, kind);
-
-  return {
+  const rules = standing(state);
+  const rush = economy.pizzaRush(state);
+  return CREW_KINDS.map((kind, at) => ({
     kind,
     crew: crewOf(board, kind),
+    ...rules[at]!,
+    interrupted: CREW_STATS[kind].interruptible && weather.meeting,
+    rush,
+  }));
+}
+
+function standingFor(kind: CrewKind, state: Consultancy): StandingRules {
+  const stats = CREW_STATS[kind];
+  const womanEvery = economy.crewWomanEvery(kind);
+
+  return {
     size: economy.crewSize(state, kind),
     homeY: stats.homeY,
     mode: stats.mode,
@@ -52,8 +79,6 @@ function rulesFor(
     claims: economy.crewClaims(state, kind),
     golden: economy.crewTakesGolden(state),
     paces: stats.perSeat ? seatPaces(state, kind) : null,
-    interrupted: stats.interruptible && weather.meeting,
-    rush: economy.pizzaRush(state),
   };
 }
 

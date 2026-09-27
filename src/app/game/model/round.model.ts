@@ -9,12 +9,7 @@ export type RoundPhase = 'collecting' | 'hauling';
 export interface RoundOutcome {
   readonly seq: number;
   readonly billed: number;
-  readonly filled: number;
-  readonly capacity: number;
-  readonly filledAtMs: number;
-  readonly unbilled: number;
   readonly durationMs: number;
-  readonly spVelocity: number;
 }
 
 export type BuffNotice =

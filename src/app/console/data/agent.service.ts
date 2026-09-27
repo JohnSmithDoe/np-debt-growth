@@ -5,19 +5,9 @@ import type { Consultancy } from '../../game/model/consultancy.model';
 import type { Advice, Buy } from '../../game/util/advisor';
 import { advise } from '../../game/util/advisor';
 import { DEFAULT_POLICY } from '../../game/util/autoplay';
+import { sameRecord } from '../util/same-record';
 
 const REFRESH_MS = 2_000;
-
-function sameRecord(
-  a: Readonly<Record<string, number>>,
-  b: Readonly<Record<string, number>>
-): boolean {
-  if (a === b) return true;
-  const keys = Object.keys(a);
-  return (
-    keys.length === Object.keys(b).length && keys.every((k) => a[k] === b[k])
-  );
-}
 
 function samePurchases(a: Consultancy, b: Consultancy): boolean {
   return (

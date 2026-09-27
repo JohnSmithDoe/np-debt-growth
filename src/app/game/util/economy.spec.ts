@@ -352,7 +352,7 @@ describe('walking a gendered pool', () => {
 
   it('draws every woman in the pool rather than one of them', () => {
     for (const crew of crews) {
-      const every = crewWomanEvery(consultancy(), crew);
+      const every = crewWomanEvery(crew);
       const size = castPoolSize(crew, true);
       const drawn = new Set<string>();
       for (let seat = 0; seat < every * size; seat += 1) {

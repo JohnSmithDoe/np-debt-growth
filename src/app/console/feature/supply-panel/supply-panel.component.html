@@ -38,7 +38,7 @@
             [class.maxed]="row.maxed || row.locked"
             [class.teaser]="row.teaser"
             [class.first]="row.first"
-            [class.affordable]="row.affordable"
+            [class.affordable]="affordable().has(row.key)"
             [class.bought-a]="
               flash()?.key === row.key && flash()!.beat % 2 === 0
             "
@@ -46,7 +46,7 @@
               flash()?.key === row.key && flash()!.beat % 2 === 1
             "
             [class.iconed]="row.icon"
-            [disabled]="!row.affordable"
+            [disabled]="!affordable().has(row.key)"
             (click)="pick($event, row.key)"
             (pointerdown)="press($event, row.key)"
             (pointerup)="release()"

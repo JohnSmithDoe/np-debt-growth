@@ -41,8 +41,8 @@ Sheriff (`sheriff.config.ts`) turns the layering into a build error:
 - **`game`** — the entire simulation. State, clock, economy, balance. Knows nothing about Angular
   templates or Phaser. Depends on nothing but `@shared`.
 - **`stage`** — Phaser. A view and an input surface: no state, no clock.
-- **`console`** — the DOM chrome around the canvas (panels, modals, feed, credits).
-- **`audio`** — effects synthesised at run time; music is two CC0 `.ogg` tracks in `assets/audio/`.
+- **`console`** — the DOM chrome around the canvas (panels, modals, credits).
+- **`audio`** — effects synthesised at run time; music is three CC0 `.ogg` tracks in `assets/audio/`.
 
 Types within a domain: `feature` → `ui`/`data`/`util`/`model`, `data` → `scene`/`util`/`model`,
 `util` → `model`. `model` may only reach sibling `model`. `game` cannot see `stage` or `console`.
@@ -120,8 +120,7 @@ so a restored save does not tick behind the splash. Save is `localStorage`, vers
 One thing in the restore looks like a bug and is not:
 
 - **`freshConsultancy` ships `root` bought.** The tree costs story points and the ADR ladder lives
-  on it, so a run with an unbought root is stranded — including the ADR modal's own approve button,
-  which routes through `buySkill`. The `velocity` row is `open` on the rail for the same reason:
+  on it, so a run with an unbought root is stranded. The `velocity` row is `open` on the rail for the same reason:
   it is the SP source, so it cannot sit behind an SP node. The run opens with one developer and
   nothing else.
 

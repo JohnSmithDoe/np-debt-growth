@@ -46,12 +46,9 @@ export interface Consultancy {
   readonly assisted: boolean;
 
   readonly lifetimeClosed: number;
-  readonly lifetimeWontFix: number;
   readonly lifetimeBilled: number;
   readonly lifetimeRounds: number;
   readonly lifetimeClosedByWomen: number;
-  readonly lifetimeCrewBilled: number;
-  readonly lifetimeWorkBilled: number;
   readonly lifetimeProdIncidents: number;
 }
 
@@ -100,12 +97,9 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     endedAt: 0,
     assisted: false,
     lifetimeClosed: 0,
-    lifetimeWontFix: 0,
     lifetimeBilled: 0,
     lifetimeRounds: 0,
     lifetimeClosedByWomen: 0,
-    lifetimeCrewBilled: 0,
-    lifetimeWorkBilled: 0,
     lifetimeProdIncidents: 0,
   };
 }

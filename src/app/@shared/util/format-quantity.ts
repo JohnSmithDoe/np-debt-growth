@@ -42,18 +42,29 @@ const TIERS_BY_LANGUAGE: Readonly<Record<Language, readonly Tier[]>> = {
 
 let activeLanguage: Language = bootLanguage();
 
+let compactCache: readonly Tier[] | null = null;
+let wholeFormat: Intl.NumberFormat | null = null;
+const decimalFormats = new Map<number, Intl.NumberFormat>();
+
 export function setFormatLanguage(language: Language): void {
   activeLanguage = language;
+  compactCache = null;
+  wholeFormat = null;
+  decimalFormats.clear();
 }
 
 const tiers = (): readonly Tier[] => TIERS_BY_LANGUAGE[activeLanguage];
 
-const compactTiers = (): readonly Tier[] => [
-  ...tiers(),
-  { exponent: 3, name: 'thousand', symbol: 'k' },
-];
+const compactTiers = (): readonly Tier[] =>
+  (compactCache ??= [
+    ...tiers(),
+    { exponent: 3, name: 'thousand', symbol: 'k' },
+  ]);
 
 const localeTag = (): string => LOCALE_BY_LANGUAGE[activeLanguage];
+
+const whole = (value: number): string =>
+  (wholeFormat ??= new Intl.NumberFormat(localeTag())).format(value);
 
 const NAMED_FROM = 1e6;
 const BEYOND_NAMES = 1e39;
@@ -62,7 +73,7 @@ export function formatQuantity(value: number): string {
   if (!Number.isFinite(value)) return '—';
   if (value < 0) return `-${formatQuantity(-value)}`;
   if (value < 1000) return decimal(value, 1);
-  if (value < NAMED_FROM) return Math.floor(value).toLocaleString(localeTag());
+  if (value < NAMED_FROM) return whole(Math.floor(value));
   if (value >= BEYOND_NAMES) return value.toExponential(2);
 
   const scaled = scale(value, tiers());
@@ -74,7 +85,7 @@ export function formatQuantity(value: number): string {
 export function formatWhole(value: number): string {
   if (!Number.isFinite(value)) return '—';
   if (Math.abs(value) < NAMED_FROM) {
-    return Math.round(value).toLocaleString(localeTag());
+    return whole(Math.round(value));
   }
   return formatQuantity(value);
 }
@@ -180,10 +191,15 @@ function roundToThreeSigFigs(mantissa: number): number {
 }
 
 function decimal(value: number, places: number): string {
-  return value.toLocaleString(localeTag(), {
-    minimumFractionDigits: places,
-    maximumFractionDigits: places,
-  });
+  let format = decimalFormats.get(places);
+  if (!format) {
+    format = new Intl.NumberFormat(localeTag(), {
+      minimumFractionDigits: places,
+      maximumFractionDigits: places,
+    });
+    decimalFormats.set(places, format);
+  }
+  return format.format(value);
 }
 
 function withThreeSigFigs(mantissa: number): string {

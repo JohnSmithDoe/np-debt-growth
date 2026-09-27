@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -12,6 +11,7 @@ import { GameStore } from '../../../game/data/game.store';
 import { SECRET_SKILL_ID } from '../../../game/model/skill.model';
 import { BackdropDirective } from '../../ui/backdrop/backdrop.directive';
 import { PanelComponent } from '../../ui/panel/panel.component';
+import { onRise } from '../../util/on-rise';
 import type { MomentCopy, MomentId } from './moment-copy';
 import { MOMENT_COPY } from './moment-copy';
 
@@ -30,7 +30,6 @@ export class MomentModalComponent {
     () => (this.#store.skills()[SECRET_SKILL_ID] ?? 0) > 0
   );
 
-  #seenSecret = this.#secretFound();
   #showing = signal<MomentId | null>(null);
 
   readonly moment = computed<MomentCopy | null>(() => {
@@ -39,11 +38,10 @@ export class MomentModalComponent {
   });
 
   constructor() {
-    effect(() => {
-      const found = this.#secretFound();
-      if (found && !this.#seenSecret) this.#showing.set('secret');
-      this.#seenSecret = found;
-    });
+    onRise(
+      () => Number(this.#secretFound()),
+      () => this.#showing.set('secret')
+    );
   }
 
   dismiss(): void {

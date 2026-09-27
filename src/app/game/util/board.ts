@@ -432,22 +432,26 @@ function sweep(
   const limit = Math.min(pace.batch, room);
   if (limit <= 1) return [target];
 
-  const near = pickWithin(board, target.x, target.y, pace.sweep)
-    .map((id) => board.byId.get(id))
-    .filter(
-      (ticket): ticket is BoardTicket =>
-        ticket !== undefined &&
-        ticket !== target &&
-        ticket.lifeLeftMs !== 0 &&
-        takes(rules, ticket)
+  const near: { ticket: BoardTicket; away: number }[] = [];
+  for (const id of pickWithin(board, target.x, target.y, pace.sweep)) {
+    const ticket = board.byId.get(id);
+    if (
+      ticket === undefined ||
+      ticket === target ||
+      ticket.lifeLeftMs === 0 ||
+      !takes(rules, ticket)
     )
-    .sort(
-      (a, b) =>
-        Math.hypot(a.x - target.x, a.y - target.y) -
-        Math.hypot(b.x - target.x, b.y - target.y)
-    );
+      continue;
+    near.push({
+      ticket,
+      away: Math.hypot(ticket.x - target.x, ticket.y - target.y),
+    });
+  }
+  near.sort((a, b) => a.away - b.away);
 
-  return [target, ...near.slice(0, limit - 1)];
+  const taken = [target];
+  for (const { ticket } of near.slice(0, limit - 1)) taken.push(ticket);
+  return taken;
 }
 
 export function comeBack(

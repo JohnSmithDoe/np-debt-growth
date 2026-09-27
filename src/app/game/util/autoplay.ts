@@ -109,8 +109,6 @@ function earn(
     storyPoints: state.storyPoints + f.spPerSec * seconds,
     achievements: [...state.achievements, ...awards.map((award) => award.id)],
     lifetimeBilled: state.lifetimeBilled + euros,
-    lifetimeWorkBilled: state.lifetimeWorkBilled + euros,
-    lifetimeCrewBilled: state.lifetimeCrewBilled + f.crewEuroPerSec * seconds,
     lifetimeClosed:
       state.lifetimeClosed + (f.handPerSec + f.crewPerSec) * seconds,
     runMs: state.runMs + seconds * 1000,

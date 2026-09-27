@@ -49,9 +49,7 @@ export class AgentComponent {
 
   readonly shown = computed(
     () =>
-      this.#settings.showAgent() &&
-      this.#door.opened() &&
-      this.#store.state().endedAt === 0
+      this.#settings.showAgent() && this.#door.opened() && !this.#store.ended()
   );
 
   readonly headline = computed(() =>
