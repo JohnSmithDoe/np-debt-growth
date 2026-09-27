@@ -30,6 +30,14 @@
             type="button"
             class="line"
             [class.maxed]="row.maxed || row.locked"
+            [class.teaser]="row.teaser"
+            [class.affordable]="row.affordable"
+            [class.bought-a]="
+              flash()?.key === row.key && flash()!.beat % 2 === 0
+            "
+            [class.bought-b]="
+              flash()?.key === row.key && flash()!.beat % 2 === 1
+            "
             [class.iconed]="row.icon"
             [disabled]="!row.affordable"
             (click)="pick($event, row.key)"
@@ -53,17 +61,23 @@
               }}</span>
             </span>
             <span class="blurb">{{ row.blurb }}</span>
-            <span class="held">{{ row.held }}/{{ row.cap }}</span>
+            @if (!row.teaser) {
+              <span class="held">{{ row.held }}/{{ row.cap }}</span>
+            }
           </button>
         </li>
       }
     </ul>
 
     @if (tab() === 'supply' && locked() > 0) {
-      <p class="locked">{{ locked() }} more behind the next ADR.</p>
+      <p class="locked more">
+        {{ 'rail.more.adr' | translate: { count: locked() } }}
+      </p>
     }
     @if (tab() === 'income' && rateLocked() > 0) {
-      <p class="locked">{{ rateLocked() }} more open with their source.</p>
+      <p class="locked more">
+        {{ 'rail.more.rate' | translate: { count: rateLocked() } }}
+      </p>
     }
   </div>
 </cb-panel>

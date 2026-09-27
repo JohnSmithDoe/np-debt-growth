@@ -6,7 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { BoardIcons } from '../../../@shared/data/board-icons.service';
 import { formatCompactMoney } from '../../../@shared/util/format-quantity';
@@ -37,14 +37,18 @@ const MAXED = 'MAX';
 /** Holding a row keeps buying: a pause, then a repeat that speeds up. */
 const HOLD = { delayMs: 350, everyMs: 90, fastMs: 40, fastAfter: 10 } as const;
 
-/** One shop row, whatever tab it sits in. */
 const SP_UNLOCK: PurchaseId = 'velocity';
+
+/** Locked rows shown ahead as silhouettes; the rest are a count. */
+const TEASED = 2;
 
 interface Row {
   readonly key: string;
   readonly name: string;
   readonly blurb: string;
   readonly locked: boolean;
+  /** Not buyable yet: drawn as a silhouette of what is coming. */
+  readonly teaser?: boolean;
   readonly held: number;
   readonly cap: number;
   readonly cost: string;
@@ -64,7 +68,7 @@ const LINE_CREW: Partial<Record<PurchaseId, string>> = {
   templateUrl: './supply-panel.component.html',
   styleUrl: './supply-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PanelComponent],
+  imports: [PanelComponent, TranslatePipe],
 })
 export class SupplyPanelComponent {
   #store = inject(GameStore);
@@ -72,6 +76,8 @@ export class SupplyPanelComponent {
   #icons = inject(BoardIcons);
 
   readonly tab = signal<Tab>('supply');
+  /** The last row bought, and a count so repeat buys restart the flash. */
+  readonly flash = signal<{ key: string; beat: number } | null>(null);
 
   #holdTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -99,8 +105,30 @@ export class SupplyPanelComponent {
 
   readonly supply = computed<readonly Row[]>(() => {
     this.#store.state();
-    return [...this.#unlockRow(), ...this.#spawnerRows()];
+    return [
+      ...this.#unlockRow(),
+      ...this.#spawnerRows(),
+      ...this.#spawnerTeasers(),
+    ];
   });
+
+  #spawnerTeasers(): readonly Row[] {
+    return SPAWNERS.filter((row) => !this.#store.spawnerUnlocked(row.adr))
+      .slice(0, TEASED)
+      .map((row) => ({
+        key: `teaser:${row.adr}`,
+        name: this.#say(spawnerLabelKey(row.adr)),
+        blurb: this.#say('rail.teaser.adr', { adr: row.adr }),
+        locked: true,
+        teaser: true,
+        held: 0,
+        cap: SPAWNER_CAP,
+        cost: `ADR-${row.adr}`,
+        maxed: false,
+        affordable: false,
+        icon: this.#cardOf(row.produces[0]),
+      }));
+  }
 
   /** The SP unlock sits beside the first head until bought, then leaves the rail. */
   #unlockRow(): readonly Row[] {
@@ -140,6 +168,7 @@ export class SupplyPanelComponent {
             : formatCompactMoney(this.#store.spawnerCost(row.adr)),
           maxed,
           affordable: this.#store.canBuySpawner(row.adr),
+          icon: this.#cardOf(row.produces[0]),
         };
       }
     );
@@ -147,13 +176,36 @@ export class SupplyPanelComponent {
 
   readonly locked = computed(() => {
     this.#store.state();
-    return SPAWNERS.filter((row) => !this.#store.spawnerUnlocked(row.adr))
-      .length;
+    const locked = SPAWNERS.filter(
+      (row) => !this.#store.spawnerUnlocked(row.adr)
+    ).length;
+    return Math.max(0, locked - TEASED);
   });
 
   /** Rates: bill more for one kind of work, once its source is on the path. */
   readonly income = computed<readonly Row[]>(() => {
     this.#store.state();
+    const teasers = SPAWNED_TICKET_IDS.filter(
+      (id) => !this.#store.incomeUnlocked(id)
+    )
+      .slice(0, TEASED)
+      .map((id): Row => ({
+        key: `teaser:${id}`,
+        name: this.#say(ticketLabelKey(id)),
+        blurb: this.#say('rail.income.locked'),
+        locked: true,
+        teaser: true,
+        held: 0,
+        cap: INCOME_CAP,
+        cost: '—',
+        maxed: false,
+        affordable: false,
+        icon: this.#cardOf(id),
+      }));
+    return [...this.#rateRows(), ...teasers];
+  });
+
+  #rateRows(): readonly Row[] {
     return SPAWNED_TICKET_IDS.filter((id) =>
       this.#store.incomeUnlocked(id)
     ).map((id) => {
@@ -169,15 +221,17 @@ export class SupplyPanelComponent {
         cost: maxed ? MAXED : formatCompactMoney(this.#store.incomeCost(id)),
         maxed,
         affordable: this.#store.canBuyIncome(id),
-        icon: this.#icon('card', this.#icons.icons().tickets.get(id)),
+        icon: this.#cardOf(id),
       };
     });
-  });
+  }
 
   readonly rateLocked = computed(() => {
     this.#store.state();
-    return SPAWNED_TICKET_IDS.filter((id) => !this.#store.incomeUnlocked(id))
-      .length;
+    const locked = SPAWNED_TICKET_IDS.filter(
+      (id) => !this.#store.incomeUnlocked(id)
+    ).length;
+    return Math.max(0, locked - TEASED);
   });
 
   readonly crew = computed<readonly Row[]>(() => {
@@ -254,6 +308,17 @@ export class SupplyPanelComponent {
   }
 
   #buy(tab: Tab, key: string): boolean {
+    const bought = this.#purchase(tab, key);
+    if (bought) {
+      this.flash.update((last) => ({
+        key,
+        beat: last?.key === key ? last.beat + 1 : 0,
+      }));
+    }
+    return bought;
+  }
+
+  #purchase(tab: Tab, key: string): boolean {
     switch (tab) {
       case 'supply':
         return key === SP_UNLOCK
@@ -271,6 +336,12 @@ export class SupplyPanelComponent {
       pct: formatCompactMoney(this.#store.incomeStep(id)),
       ticket: this.#say(ticketLabelKey(id)),
     });
+  }
+
+  #cardOf(id: TicketTypeId | undefined): Row['icon'] | undefined {
+    return id === undefined
+      ? undefined
+      : this.#icon('card', this.#icons.icons().tickets.get(id));
   }
 
   #icon(

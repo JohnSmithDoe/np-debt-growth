@@ -42,7 +42,7 @@
 }
 
 .lines {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -69,6 +69,10 @@
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
+  transition:
+    border-color 120ms ease-out,
+    box-shadow 160ms ease-out,
+    transform 120ms ease-out;
 
   &.iconed {
     grid-template-columns: auto 1fr auto;
@@ -93,6 +97,72 @@
 
   &:not(:disabled):hover {
     border-color: var(--np-cb-gold, #d8a53a);
+  }
+
+  &.affordable:hover {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--np-cb-money) 40%, transparent),
+      0 0 14px -2px color-mix(in srgb, var(--np-cb-money) 55%, transparent);
+    transform: translateY(-1px);
+  }
+
+  &.bought-a {
+    animation: bought-a 420ms ease-out;
+  }
+
+  &.bought-b {
+    animation: bought-b 420ms ease-out;
+  }
+
+  &.teaser {
+    border-style: dashed;
+    background: transparent;
+    opacity: 0.5;
+
+    .icon {
+      filter: grayscale(1) brightness(0.55);
+    }
+
+    .name {
+      color: var(--np-cb-ink-2);
+    }
+
+    .cost {
+      color: var(--np-cb-ink-3);
+    }
+  }
+}
+
+@keyframes bought-a {
+  from {
+    background: color-mix(
+      in srgb,
+      var(--np-cb-money) 28%,
+      var(--np-cb-panel, #131922)
+    );
+    box-shadow: 0 0 18px -2px var(--np-cb-money);
+  }
+}
+
+@keyframes bought-b {
+  from {
+    background: color-mix(
+      in srgb,
+      var(--np-cb-money) 28%,
+      var(--np-cb-panel, #131922)
+    );
+    box-shadow: 0 0 18px -2px var(--np-cb-money);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line.bought-a,
+  .line.bought-b {
+    animation: none;
+  }
+
+  .line.affordable:hover {
+    transform: none;
   }
 }
 
@@ -149,4 +219,14 @@
   margin: 8px 0 0;
   font-size: 0.82em;
   opacity: 0.6;
+
+  &.more {
+    margin-top: 6px;
+    padding-inline: 10px;
+    font-family: var(--np-cb-font-util);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--np-cb-ink-3);
+    opacity: 1;
+  }
 }
