@@ -9,11 +9,7 @@ import type { HazardId } from '../../game/model/hazard.model';
 import { traitLabelKey } from '../../game/model/senior.model';
 import type { TicketEffect } from '../../game/model/ticket.model';
 import { TICKET_TYPES } from '../../game/model/ticket.model';
-import {
-  ESCALATION_HOLD_MS,
-  HOTFIX_MS,
-  HOTFIX_MULTIPLIER,
-} from '../../game/model/balance/weather';
+import { HOTFIX_MS, HOTFIX_MULTIPLIER } from '../../game/model/balance/weather';
 import { PIZZA_MS, PIZZA_RUSH } from '../../game/model/balance/flow';
 
 export interface CloseRow {
@@ -102,7 +98,7 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
             kind: 'alert',
             seq: line.seq,
             mark: '⚠',
-            text: `Escalation bills in ${ESCALATION_HOLD_MS / 1000}s`,
+            text: `Escalation live for ${line.count}s`,
           };
         case 'hazard-due':
           return {

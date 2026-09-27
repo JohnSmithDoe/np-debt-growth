@@ -1,6 +1,6 @@
 import type { Consultancy } from '../model/consultancy.model';
 import type { HireNote, NoteId } from '../model/feed.model';
-import { crewWomanEvery, hireIsWoman } from './economy';
+import { crewWomanEvery, escalationHoldMs, hireIsWoman } from './economy';
 
 export interface Note {
   readonly note: NoteId;
@@ -38,7 +38,10 @@ export function newNotes(
   }
 
   if (before.escalationFiresAt === 0 && after.escalationFiresAt > 0) {
-    notes.push({ note: 'escalation-armed', count: 0 });
+    notes.push({
+      note: 'escalation-armed',
+      count: escalationHoldMs(after) / 1000,
+    });
   }
 
   return notes;

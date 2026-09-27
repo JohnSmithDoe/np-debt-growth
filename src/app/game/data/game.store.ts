@@ -61,7 +61,6 @@ import {
   TIER_BURST,
 } from '../model/balance/flow';
 import {
-  ESCALATION_HOLD_MS,
   FACT_COUNTDOWN_MS,
   FACT_EVERY_MS,
   FACT_OFFSET_MS,
@@ -107,7 +106,7 @@ function armBuffs(state: Consultancy, closed: Closed, now: number): Buffs {
         buffs = {
           ...buffs,
           escalated: true,
-          escalationFiresAt: now + ESCALATION_HOLD_MS,
+          escalationFiresAt: now + economy.escalationHoldMs(state),
         };
         break;
       case 'hotfixBuff':

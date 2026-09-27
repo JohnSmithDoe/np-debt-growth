@@ -6,6 +6,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.debtInterest': '{{pct}} chance a spawn arrives a rung up',
   'skill.effect.clickRadius': '{{pct}} mouse radius',
   'skill.effect.escalation': '{{pct}} Escalation payout',
+  'skill.effect.escalationHold': 'Escalations last {{seconds}}s longer',
   'skill.effect.global': '{{pct}} on everything billed',
   'skill.effect.nearestClaim': 'Claims the nearest ticket, not just any one',
   'skill.effect.juniorBand': 'Juniors reach {{count}} rung higher',
@@ -125,7 +126,7 @@ export const EN: Readonly<Record<string, string>> = {
     'A second screen, so the lint warnings can be read without scrolling.',
   'kit.monitor.label': 'Second Monitors',
   'kit.observability.blurb':
-    'You can finally see the incident. It bills the same, but sooner.',
+    'You finally see it coming. The escalation runs longer before anyone steps in.',
   'kit.observability.label': 'Observability Vendor',
   'kit.standing-desk.blurb':
     'Nobody raises them. The invoice does not know that.',

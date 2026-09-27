@@ -77,6 +77,8 @@ const CREW_ROWS: readonly PurchaseId[] = [
   ...PURCHASE_IDS.filter((line) => line !== 'kit' && line !== SP_UNLOCK),
 ];
 
+const percent = (mult: number): string => `+${Math.round((mult - 1) * 100)}%`;
+
 @Component({
   selector: 'cb-supply-panel',
   templateUrl: './supply-panel.component.html',
@@ -367,16 +369,18 @@ export class SupplyPanelComponent {
   }
 
   #kitEffect(effect: KitEffect): string {
-    const pct = `+${Math.round((effect.mult - 1) * 100)}%`;
     switch (effect.kind) {
       case 'ticketValue':
         return this.#say('skill.effect.ticketValue', {
-          pct,
+          pct: percent(effect.mult),
           ticket: this.#say(ticketLabelKey(effect.target)),
         });
       case 'global':
-      case 'escalation':
-        return this.#say(`skill.effect.${effect.kind}`, { pct });
+        return this.#say('skill.effect.global', { pct: percent(effect.mult) });
+      case 'escalationHold':
+        return this.#say('skill.effect.escalationHold', {
+          seconds: effect.seconds,
+        });
     }
   }
 

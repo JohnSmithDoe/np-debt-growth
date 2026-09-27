@@ -72,6 +72,7 @@ import {
   SPRINT_SLOTS_BASE,
 } from '../model/balance/round';
 import {
+  ESCALATION_HOLD_MS,
   ESCALATION_MULTIPLIER,
   HOTFIX_MULTIPLIER,
 } from '../model/balance/weather';
@@ -838,6 +839,13 @@ export function relabelTarget(
 
 export function escalationMultiplier(state: Consultancy): number {
   return ESCALATION_MULTIPLIER * multOf(state, 'escalation');
+}
+
+export function escalationHoldMs(state: Consultancy): number {
+  return (
+    ESCALATION_HOLD_MS +
+    1000 * sumOf(state, (e) => (e.kind === 'escalationHold' ? e.seconds : null))
+  );
 }
 
 export function closeValue(

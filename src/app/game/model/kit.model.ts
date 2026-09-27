@@ -2,7 +2,7 @@ import type { SkillEffect } from './skill.model';
 
 export type KitEffect = Extract<
   SkillEffect,
-  { kind: 'ticketValue' | 'global' | 'escalation' }
+  { kind: 'ticketValue' | 'global' | 'escalationHold' }
 >;
 
 export interface KitItem {
@@ -47,7 +47,7 @@ export const KIT_PLAN: readonly KitItem[] = [
   {
     id: 'observability',
     cost: 1_900_000,
-    effect: { kind: 'escalation', mult: 1.25 },
+    effect: { kind: 'escalationHold', seconds: 4 },
   },
 ];
 

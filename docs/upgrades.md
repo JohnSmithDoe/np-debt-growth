@@ -171,7 +171,7 @@ fits the first; the row names the next one:
 | Keyboard      | 45 000    | bug ×1.6         |
 | IDE Licence   | 160 000   | legacy ×1.6      |
 | CI Tier       | 550 000   | flaky ×1.7       |
-| Observability | 1 900 000 | escalation ×1.25 |
+| Observability | 1 900 000 | escalation +4 s  |
 
 ---
 
@@ -184,7 +184,6 @@ Where two purchases do the same thing, or a name is used twice.
 | Junior band +1, twice | `juniorReach` rank 2 and `stretch`        |
 | Junior walk           | `juniorSpeed` and `o3`                    |
 | Senior sweep          | `seniorReach` and `o5`                    |
-| Escalation ×1.25      | `o7` and the Observability kit item       |
 | No effect             | `o1`, `o4`                                |
 | "Human in the Loop"   | `assurance` and `doubleSwarm`             |
 | "Bullpen"             | `juniorRoom` and "Bullpen Extension" `o1` |

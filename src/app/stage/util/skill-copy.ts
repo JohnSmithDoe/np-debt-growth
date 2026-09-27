@@ -127,6 +127,11 @@ function describe(effect: SkillEffect): EffectText {
         key: 'skill.effect.ticketValue',
         params: { pct: percent(effect.mult), ticket: effect.target },
       };
+    case 'escalationHold':
+      return {
+        key: 'skill.effect.escalationHold',
+        params: { seconds: effect.seconds },
+      };
     case 'escalation':
       return { key: 'skill.effect.escalation', params: pct(effect.mult) };
     case 'spawnRate':

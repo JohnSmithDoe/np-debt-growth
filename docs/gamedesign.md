@@ -152,14 +152,14 @@ No purchase makes these arrive faster (`economy.spec.ts`), but the run does: eac
 adds `HAND_ONLY_RATE_PER_TIER` +50 % to their rate (×5 at ADR-8), so the hand's targets grow
 with the run. They never expire and are never displaced.
 
-| Type         | Rate/s | Effect                                                                   |
-| ------------ | ------ | ------------------------------------------------------------------------ |
-| `incident`   | 0.008  | 150 € × tier (`scalesWithTier`). First one placed at 75 s (`revealAtMs`) |
-| `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 6 s   |
-| `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                     |
-| `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2)            |
-| `pizza`      | —      | The pizza-party voucher (§5), from the `pizza` node                      |
-| `invite`     | —      | Hazard invitation (§8): sweep it to decline the meeting                  |
+| Type         | Rate/s | Effect                                                                                          |
+| ------------ | ------ | ----------------------------------------------------------------------------------------------- |
+| `incident`   | 0.008  | 150 € × tier (`scalesWithTier`). First one placed at 75 s (`revealAtMs`)                        |
+| `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 6 s, +4 s with Observability |
+| `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                                            |
+| `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2)                                   |
+| `pizza`      | —      | The pizza-party voucher (§5), from the `pizza` node                                             |
+| `invite`     | —      | Hazard invitation (§8): sweep it to decline the meeting                                         |
 
 The opening's reveal order is ticket data: a row's `revealAtMs` / `revealAtTier` holds it back,
 and `util/first-act.ts` places the first card on its beat.

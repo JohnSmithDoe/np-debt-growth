@@ -66,6 +66,7 @@ export type SkillEffect =
       readonly mult: number;
     }
   | { readonly kind: 'escalation'; readonly mult: number }
+  | { readonly kind: 'escalationHold'; readonly seconds: number }
   | {
       readonly kind: 'spawnRate';
       readonly target?: TicketTypeId;

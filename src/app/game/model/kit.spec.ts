@@ -27,7 +27,7 @@ describe('the desk kit', () => {
 
   it('moves value and never throughput', () => {
     for (const item of KIT_PLAN) {
-      expect(['ticketValue', 'global', 'escalation']).toContain(
+      expect(['ticketValue', 'global', 'escalationHold']).toContain(
         item.effect.kind
       );
     }

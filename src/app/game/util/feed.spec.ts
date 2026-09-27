@@ -27,7 +27,7 @@ describe('the news an award cannot carry', () => {
     const idle = fresh();
     const armed = { ...idle, escalationFiresAt: 1000 };
     expect(newNotes(idle, armed)).toEqual([
-      { note: 'escalation-armed', count: 0 },
+      { note: 'escalation-armed', count: 6 },
     ]);
     expect(newNotes(armed, { ...armed, escalationFiresAt: 2000 })).toEqual([]);
   });

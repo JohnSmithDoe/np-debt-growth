@@ -6,6 +6,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.debtInterest': '{{pct}} Chance auf eine Stufe höher',
   'skill.effect.clickRadius': '{{pct}} Maus-Radius',
   'skill.effect.escalation': '{{pct}} Eskalations-Auszahlung',
+  'skill.effect.escalationHold': 'Eskalationen laufen {{seconds}}s länger',
   'skill.effect.global': '{{pct}} auf alles Abgerechnete',
   'skill.effect.nearestClaim':
     'Nimmt das nächstgelegene Ticket, nicht irgendeins',
@@ -126,7 +127,7 @@ export const DE: Readonly<Record<string, string>> = {
     'Ein zweiter Bildschirm, damit man die Lint-Warnungen ohne Scrollen liest.',
   'kit.monitor.label': 'Zweitmonitore',
   'kit.observability.blurb':
-    'Der Incident ist endlich sichtbar. Er kostet gleich viel, nur früher.',
+    'Endlich sieht man es kommen. Die Eskalation läuft länger, bevor jemand eingreift.',
   'kit.observability.label': 'Observability-Anbieter',
   'kit.standing-desk.blurb':
     'Hochgefahren hat ihn noch keiner. Die Rechnung weiß davon nichts.',
