@@ -11,6 +11,14 @@ export class SettingsService {
     () => this.#settings().showClickRadius ?? SETTINGS_DEFAULTS.showClickRadius
   );
 
+  readonly showAgent = computed(
+    () => this.#settings().showAgent ?? SETTINGS_DEFAULTS.showAgent
+  );
+
+  setShowAgent(value: boolean): void {
+    this.#write({ ...this.#settings(), showAgent: value });
+  }
+
   setShowClickRadius(value: boolean): void {
     this.#write({ ...this.#settings(), showClickRadius: value });
   }

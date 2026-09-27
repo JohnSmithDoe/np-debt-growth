@@ -1,0 +1,49 @@
+@if (shown()) {
+  <aside class="agent" [class.open]="open()">
+    @if (open()) {
+      <div class="bubble" role="status">
+        <p class="name">{{ 'agent.name' | translate }}</p>
+        <p class="headline">{{ headline() }}</p>
+        <ul class="tips">
+          @for (row of rows(); track row.id) {
+            <li>
+              <button
+                type="button"
+                class="tip"
+                [class.ok]="row.affordable"
+                [class.sp]="row.currency === 'sp'"
+                [disabled]="!row.affordable"
+                (click)="buy(row)"
+              >
+                <span class="title">{{ row.title }}</span>
+                <span class="detail">{{ row.detail }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+    <button
+      type="button"
+      class="clip"
+      [attr.aria-expanded]="open()"
+      [attr.aria-label]="'agent.name' | translate"
+      (click)="toggle()"
+    >
+      <svg viewBox="0 0 48 88" aria-hidden="true" focusable="false">
+        <path
+          class="wire"
+          d="M17 70V20a9 9 0 0 1 18 0v48a15 15 0 0 1-30 0V26"
+        />
+        <path class="wire inner" d="M11 26v42a9 9 0 0 0 18 0V22" />
+        <g class="eyes">
+          <ellipse cx="16" cy="36" rx="6" ry="7" class="white" />
+          <ellipse cx="32" cy="36" rx="6" ry="7" class="white" />
+          <circle cx="17.5" cy="37" r="2.6" class="pupil" />
+          <circle cx="33.5" cy="37" r="2.6" class="pupil" />
+          <path class="brow" d="M10 26.5l10 2.5M28 29l10-2.5" />
+        </g>
+      </svg>
+    </button>
+  </aside>
+}

@@ -36,6 +36,7 @@ export class SettingsModalComponent {
 
   readonly shown = this.#ui.isOpen;
   readonly showClickRadius = this.#settings.showClickRadius;
+  readonly showAgent = this.#settings.showAgent;
   readonly canFullscreen = this.#screen.available;
   readonly fullscreen = this.#screen.on;
   readonly languages = LANGUAGES;
@@ -47,6 +48,10 @@ export class SettingsModalComponent {
 
   setShowClickRadius(value: boolean): void {
     this.#settings.setShowClickRadius(value);
+  }
+
+  setShowAgent(value: boolean): void {
+    this.#settings.setShowAgent(value);
   }
 
   toggleMuted(): void {

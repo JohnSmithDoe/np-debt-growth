@@ -29,6 +29,27 @@
           <button
             type="button"
             class="line"
+            [attr.aria-pressed]="showAgent()"
+            (click)="setShowAgent(!showAgent())"
+          >
+            <span class="what">
+              <span class="label">{{
+                'settings.agent.label' | translate
+              }}</span>
+              <span class="muted small">{{
+                'settings.agent.blurb' | translate
+              }}</span>
+            </span>
+            <span class="state">{{
+              (showAgent() ? 'settings.on' : 'settings.off') | translate
+            }}</span>
+          </button>
+        </li>
+
+        <li>
+          <button
+            type="button"
+            class="line"
             [attr.aria-pressed]="!muted()"
             (click)="toggleMuted()"
           >

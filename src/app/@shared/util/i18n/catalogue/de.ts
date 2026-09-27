@@ -155,6 +155,24 @@ export const DE: Readonly<Record<string, string>> = {
   'kit.standing-desk.label': 'Steharbeitsplätze',
   'language.de': 'Deutsch',
   'language.en': 'English',
+  'settings.agent.label': 'Synergie-Analyser (KI-gestützt)',
+  'settings.agent.blurb':
+    'Eine Büroklammer, die die Tabelle gelesen hat, sagt dir, was du als Nächstes kaufst.',
+  'agent.goal.bill':
+    'Sieht so aus, als wolltest du einem Kunden etwas in Rechnung stellen. Brauchst du Hilfe?',
+  'agent.goal.adr':
+    'Sieht so aus, als wolltest du ein ADR genehmigen. Brauchst du Hilfe?',
+  'agent.goal.signoff':
+    'Sieht so aus, als wolltest du die Abnahme holen. Brauchst du Hilfe?',
+  'agent.name': 'Synergie-Analyser (KI-gestützt)',
+  'agent.buy.title': '{{name}} kaufen',
+  'agent.buy.detail': '{{cost}}. Gerade das meiste Wachstum für den Preis.',
+  'agent.buy.opens': '{{cost}}. Öffnet {{then}}, und dort liegt das Wachstum.',
+  'agent.save.idle': 'Noch {{short}}, und noch verdient nichts daran.',
+  'agent.save.title': 'Auf {{name}} sparen',
+  'agent.save.detail':
+    'Noch {{short}}, etwa {{time}}. Alles andere zuerst ist langsamer.',
+  'agent.income': 'Rate: {{ticket}}',
   'settings.close': 'Zurück an die Arbeit',
   'settings.fullscreen.blurb':
     'Füllt den Bildschirm. Den Platz bekommt das Board.',

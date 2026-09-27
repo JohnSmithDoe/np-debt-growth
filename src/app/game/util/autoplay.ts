@@ -8,6 +8,7 @@ import {
 import type { PurchaseId } from '../model/balance/progression';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPAWNED_TICKET_IDS, SPAWNERS } from '../model/spawner.model';
+import { advise, apply } from './advisor';
 import * as economy from './economy';
 import * as purchase from './purchase';
 import type { SimPolicy } from './sim';
@@ -58,11 +59,17 @@ export type Milestone = readonly [string, (state: Consultancy) => boolean];
 const STEP_MS = 1_000;
 const SAMPLE_EVERY_MS = 30_000;
 
+export type Spender = (
+  state: Consultancy,
+  policy: AutoplayPolicy
+) => Consultancy;
+
 export function autoplay(
   start: Consultancy,
   milestones: readonly Milestone[],
   limitMs: number,
-  policy: AutoplayPolicy = DEFAULT_POLICY
+  policy: AutoplayPolicy = DEFAULT_POLICY,
+  spender: Spender = spend
 ): Run {
   let state = start;
   const reached = new Map<string, number>();
@@ -81,7 +88,7 @@ export function autoplay(
       };
     });
     if (at - spentAt >= policy.spendEveryMs) {
-      state = spend(state, policy);
+      state = spender(state, policy);
       spentAt = at;
     }
     for (const [label, holds] of milestones) {
@@ -168,6 +175,24 @@ export function spend(state: Consultancy, policy: AutoplayPolicy): Consultancy {
       })
     )
   );
+  return next;
+}
+
+const ADVISED_BUYS_PER_SPEND = 200;
+
+/** Buys whatever the advisor names while it is affordable, and saves otherwise. */
+export function advisedSpend(
+  state: Consultancy,
+  policy: AutoplayPolicy
+): Consultancy {
+  let next = state;
+  for (let n = 0; n < ADVISED_BUYS_PER_SPEND; n += 1) {
+    const advice = advise(next, policy);
+    const due = [advice.sp, advice.eur].find((pick) => pick?.waitSec === 0);
+    const bought = due ? apply(next, due.buy) : null;
+    if (!bought) return next;
+    next = bought;
+  }
   return next;
 }
 

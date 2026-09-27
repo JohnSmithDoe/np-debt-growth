@@ -1,0 +1,126 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+
+import { SettingsService } from '../../../@shared/data/settings.service';
+import {
+  formatDuration,
+  formatMoney,
+  formatPointsExact,
+} from '../../../@shared/util/format-quantity';
+import { GameStore } from '../../../game/data/game.store';
+import type { Pick } from '../../../game/util/advisor';
+import { buyKey } from '../../../game/util/advisor';
+import { AgentService } from '../../data/agent.service';
+import { DoorService } from '../../data/door.service';
+import type { Phrase } from '../../util/agent-copy';
+import { buyName, goalKey } from '../../util/agent-copy';
+
+interface TipRow {
+  readonly id: string;
+  readonly currency: 'eur' | 'sp';
+  readonly title: string;
+  readonly detail: string;
+  readonly affordable: boolean;
+  readonly pick: Pick;
+}
+
+@Component({
+  selector: 'cb-agent',
+  templateUrl: './agent.component.html',
+  styleUrl: './agent.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslatePipe],
+})
+export class AgentComponent {
+  #agent = inject(AgentService);
+  #store = inject(GameStore);
+  #translate = inject(TranslateService);
+  #door = inject(DoorService);
+  #settings = inject(SettingsService);
+
+  /** The advice the player waved away; the bubble returns when it changes. */
+  readonly #dismissed = signal<string | null>(null);
+
+  readonly shown = computed(
+    () =>
+      this.#settings.showAgent() &&
+      this.#door.opened() &&
+      this.#store.state().endedAt === 0
+  );
+
+  readonly #key = computed(() => {
+    const { eur, sp } = this.#agent.advice();
+    return [sp, eur].map((p) => (p ? buyKey(p.buy) : '-')).join('|');
+  });
+
+  readonly open = computed(() => this.#dismissed() !== this.#key());
+
+  readonly headline = computed(() =>
+    this.#translate.instant(goalKey(this.#agent.advice()))
+  );
+
+  readonly rows = computed<readonly TipRow[]>(() => {
+    const state = this.#store.state();
+    const { eur, sp } = this.#agent.advice();
+    return [sp, eur]
+      .filter((pick): pick is Pick => pick !== null)
+      .map((pick) => {
+        const held = pick.currency === 'eur' ? state.budget : state.storyPoints;
+        const short = Math.max(0, pick.cost - held);
+        const affordable = short === 0;
+        const name = this.#say(buyName(state, pick.buy));
+        const cost = this.#amount(pick.currency, pick.cost);
+        const then = pick.then ? this.#say(buyName(state, pick.then)) : null;
+        return {
+          id: buyKey(pick.buy),
+          currency: pick.currency,
+          affordable,
+          pick,
+          title: this.#translate.instant(
+            affordable ? 'agent.buy.title' : 'agent.save.title',
+            { name }
+          ),
+          detail: affordable
+            ? this.#translate.instant(
+                then ? 'agent.buy.opens' : 'agent.buy.detail',
+                { cost, then }
+              )
+            : this.#translate.instant(
+                pick.perSec > 0 ? 'agent.save.detail' : 'agent.save.idle',
+                {
+                  short: this.#amount(pick.currency, short),
+                  time: formatDuration(short / pick.perSec),
+                }
+              ),
+        };
+      });
+  });
+
+  toggle(): void {
+    this.#dismissed.set(this.open() ? this.#key() : null);
+  }
+
+  buy(row: TipRow): void {
+    if (row.affordable) this.#agent.buy(row.pick.buy);
+  }
+
+  #amount(currency: 'eur' | 'sp', value: number): string {
+    return currency === 'eur'
+      ? formatMoney(Math.ceil(value))
+      : `${formatPointsExact(Math.ceil(value))} SP`;
+  }
+
+  #say(phrase: Phrase): string {
+    const params: Record<string, string> = {};
+    for (const [name, key] of Object.entries(phrase.params ?? {})) {
+      params[name] = this.#translate.instant(key);
+    }
+    return this.#translate.instant(phrase.key, params);
+  }
+}

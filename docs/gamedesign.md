@@ -379,6 +379,13 @@ field, and the sim counts that.
 `saveForAdrSec`, off by default and `CB_SAVE` in the balance spec, holds SP for a near ADR) through
 `purchase.ts`. A four-hour cap runs in about two seconds.
 
+`util/advisor.ts` is the Synergy Analyser (AI Powered): it ranks every offer by (Δln €/s + Δln SP/s) over the seconds
+of income it costs, scores a gate together with the best purchase it opens, and once `signoff` is
+on offer buys only what shortens the time to it. An SP buy gives way to the next ADR when it
+would delay the ADR by more than `ADR_SLACK` (half). `autoplay.advisedSpend` plays a run on it, and
+`data/advisor.spec.ts` fails unless that run signs off sooner than cheapest-first. The console's
+paperclip (`console/feature/agent/`, on by default, switchable in settings) shows its € and SP picks.
+
 ---
 
 ## 10. Where the knobs live, and how they are guarded
@@ -422,6 +429,9 @@ ADR-1 5.2    first junior 7.1    ADR-2 11.0   ADR-3 16.0   ADR-4 19.6
 ADR-5 22.2   ADR-6 26.5          ADR-7 30.4   ADR-8 34.9   signed off 42.4   tree bought out
 golden crew 33.9 · crew: 4–66 % of closes, 3–8 % of euros before golden crew, ~16 % after
 ```
+
+The advisor on the same sim, 1 sweep/s: ADR-2 4.5 · ADR-3 6.9 · ADR-8 21.9 · signed off 31.8, tree
+not bought out.
 
 ### Load-bearing, do not undo
 

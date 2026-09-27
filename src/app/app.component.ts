@@ -17,6 +17,7 @@ import {
   formatQuantity,
 } from './@shared/util/format-quantity';
 import { BacklogTickerComponent } from './console/ui/backlog-ticker/backlog-ticker.component';
+import { AgentComponent } from './console/feature/agent/agent.component';
 import { AdrModalComponent } from './console/feature/adr-modal/adr-modal.component';
 import { AwardBannerComponent } from './console/feature/award-banner/award-banner.component';
 import { MomentModalComponent } from './console/feature/moment-modal/moment-modal.component';
@@ -57,6 +58,7 @@ const STEP_MODE: Partial<Record<NoticeTarget, StageMode>> = {
     SupplyPanelComponent,
     DebugBarComponent,
     AdrModalComponent,
+    AgentComponent,
     AwardBannerComponent,
     MomentModalComponent,
     TitleScreenComponent,
