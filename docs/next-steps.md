@@ -19,7 +19,75 @@ What is open, ranked. The design as it stands is `gamedesign.md`. Checked agains
 
 ---
 
-## 1. Hold the 30-minute run
+## 1. Playtest feedback, 27 Sep 2026
+
+Found while playing. Not started.
+
+### Layout
+
+- **The masthead wraps its buttons on narrow screens.** "Open the tree" breaks onto two lines
+  and the button grows to fill the masthead's height. "Back to the floor" does the same. Stop
+  the label wrapping (or shorten it) so the button keeps one row.
+- **The collecting / train box on the sprint bar reads oddly.** Redesign it.
+- **ADR modal:** move the acknowledge button into the header, where "approved" sits now.
+
+### Board signals
+
+- **Hotfix window and enterprise escalation get a pulsing message on the board** while they
+  are active. Take their text off the sprint bar.
+
+### Rail
+
+- **Icons on the rail rows**, reusing the board's graphics: ticket cards in front of the value
+  (rate) rows, a crew member in front of each crew hire.
+- **Affordability badges on the tabs** (Debt, Rates, Crew, and the skill-tree button) whenever
+  something there can be bought.
+
+### Balance
+
+- **Planning-poker beams open too early.** The whole board can be turned purple (every card
+  re-estimated) soon after ADR-2. A purple board should be a late-game sight: reprice or regate
+  `coaches` / `deck`, or cap how many beams are live early.
+- **`estimatesLint` pulls SP too far ahead of euros.** It helps the tree along, but the SP it
+  pays early is out of step with the euros coming in at that point.
+- **Bugs from tier 0.** `bug` is held back until ADR-1 (`revealAtTier: 1`, `ticket.model.ts`),
+  but `valueBug` (Bug Bounty) hangs off `valueLint` and can be bought at tier 0, doubling a
+  ticket that isn't on the board yet. Proposal: drop the reveal gate and let bugs arrive from
+  tier 0 at a lower rate than lint. They already share the ADR-0 line. Changing the reveal
+  changes the opening, so the sim and the balance spec need re-running afterwards.
+- **Start with a smaller mouse radius**, about 5 px.
+
+### Achievements
+
+- **Achievements pay no bonus.** All 31 awards in `model/award.model.ts` carry an `sp` bonus
+  (1 … 200 000), and it neither matches what the award is for nor fits the progress at the point
+  it lands. Remove the bonus. It touches:
+  - the `sp` field and every row in `AWARDS`;
+  - the payout: `GameStore` sums it into `storyPoints` (`game.store.ts`, `pendingAwards` →
+    `lump`), the autoplayer does the same in `earn` (`util/autoplay.ts`), and
+    `economy.grantedStoryPoints` exists only to count it;
+  - the copy: `+N SP` on `award-banner` and the SP column of `achievements-panel`;
+  - `award-banner`'s `bandFor(award.sp)`, which sizes the celebration (small / medium / large) by
+    the bonus and needs another measure, e.g. milestone vs achievement;
+  - `gamedesign.md` §3, which lists awards as the only other SP source.
+
+  The late awards pay 120 000–200 000 SP, so removing them slows the SP side of the run. Re-run
+  the balance spec and `data/advisor.spec.ts` afterwards.
+
+### Tree copy
+
+- **Nodes with no effect say "Opens the programme"** (`skill.effect.none`). `o1` Bullpen
+  Extension and `o4` Server Room are pure floor plates; they only exist to open their
+  children. Say that in the copy (e.g. "Opens the next room"), or give them a small effect so
+  they aren't dead purchases.
+- **Triage Policy leaves lint with nobody but the hand.** `triagePolicy` rank 1 removes lint
+  from the juniors' claims (`economy.crewClaims` → `triageSkips`). No other crew kind takes
+  tier 0, so from then on lint is collected by the hand or expires as "won't fix". That's by
+  design (juniors stop filling the sprint with 1 € cards), but the effect text ("Juniors leave
+  lint alone") doesn't say what happens to the lint. Make the consequence visible. Rank 2
+  (seniors leave bugs) still does nothing, because seniors never take tier 0.
+
+## 2. Hold the 30-minute run
 
 The target is a 30-minute run, half the reference's full game (57–70). The autoplayer signs off
 at 31.1 min; ADR-1 at 5.2, ADR-2 at 11.6, ADR-3 at 16.5. Cards live 3.5 s (reference ~15 s),
@@ -35,7 +103,7 @@ ends when the tree is bought out, so run length tracks total tree cost ÷ SP inc
 - The crew's close share before golden crew is 4–10 % early (floor 5 %): sparse cards fill
   their batches thinly.
 
-## 2. Copy and art
+## 3. Copy and art
 
 - The per-line `income<T>` / `double<T>` labels and the `spawn<T>` rank 2–5 labels are
   placeholders ("Lint Warning Uplift II", "Skip the Review III"). Write real names, both
@@ -44,7 +112,7 @@ ends when the tree is bought out, so run length tracks total tree cost ÷ SP inc
   lane actors (`stage/util/board-atlas.ts`). Pipeline: `tools/art-batch.mjs` →
   `pixelate.mjs` / `icon-knockout.mjs`.
 
-## 3. Measure the stage
+## 4. Measure the stage
 
 No profile exists. The board now sits at 600 cards for most of the run (displacement keeps it
 full), so the heap leads matter again:
@@ -62,7 +130,7 @@ full), so the heap leads matter again:
 
 Capture: reach ADR-5+ with a full board, 20 s of Chrome DevTools → Performance while sweeping.
 
-## 4. Render the canvas at device pixel ratio
+## 5. Render the canvas at device pixel ratio
 
 All Phaser text is soft on a HiDPI screen; the DOM text beside it is sharp. `phaser.service.ts`
 sizes the canvas in CSS pixels (`Scale.RESIZE`, `parent.clientWidth`), so on a DPR-2 display the
@@ -72,16 +140,16 @@ for anti-aliased glyphs. The payout floats show it worst.
 The fix is a backing store of `clientWidth × devicePixelRatio` shown at CSS size, then every scene
 scaling its literal pixel sizes by the same factor — font sizes (`'11px'`, `CLOSE_FLOAT`,
 `BIG_FLOAT`), `HOVER_*`, rise distances, the board fit. Fill cost goes ×4 at DPR 2, so do it after
-§3 has a profile, and measure both.
+§4 has a profile, and measure both.
 
-## 5. Unstash the weather
+## 6. Unstash the weather
 
 This is more than flipping `HAZARDS_ENABLED`: `meeting` was tuned against a 10 s round;
 `CREW_EURO_WINDOW_FLOOR` needs re-measuring; `grooming` is a no-op; `migration`'s `supply: 0`
 has no counterplay; the two 120 s cadences coincide by accident. Offshore contractors, which
 only weather ever staffed, were removed with `3524a98`; the `offshore` hazard went with them.
 
-## 6. Needs a design call
+## 7. Needs a design call
 
 - **The hidden node.** The reference hides a "Wow you found me!" node at the zoomed-out corner of
   its tree. Ours: _the undocumented endpoint_.
