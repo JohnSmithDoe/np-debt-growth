@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { HAND_ONLY_RATE_PER_TIER } from '../model/balance/flow';
 import type { Consultancy } from '../model/consultancy.model';
-import { consultancy } from '../model/consultancy.fixture';
+import { consultancy, ranksOf } from '../model/consultancy.fixture';
 import { castPoolSize, crewName } from '../model/cast.model';
 import { SKILL_BY_ID } from '../model/skill.model';
 import { TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
@@ -129,7 +129,10 @@ describe('hand-only rares are weather, not a source (D5)', () => {
 
   it('still answers to the skill that exists to move them', () => {
     const base = consultancy({ tier: 1 });
-    const skilled = consultancy({ tier: 1, skills: { spawnIncident: 2 } });
+    const skilled = consultancy({
+      tier: 1,
+      skills: { spawnIncident: 1, spawnIncident7: 1 },
+    });
     expect(spawnRate(skilled, 'escalation')).toBeGreaterThan(
       spawnRate(base, 'escalation')
     );
@@ -428,19 +431,19 @@ describe('the can has two axes (parity #13, #14)', () => {
   it('adds seats by the rank', () => {
     const none = lineCap(consultancy(), 'junior');
     expect(none).toBe(10);
-    const at = (juniorRoom: number): number =>
-      lineCap(consultancy({ skills: { juniorRoom } }), 'junior');
+    const at = (ranks: number): number =>
+      lineCap(consultancy({ skills: ranksOf('juniorRoom', ranks) }), 'junior');
     expect(at(1) - none).toBe(ROOM_SEATS);
     expect(at(3)).toBe(25);
   });
 
   it('gives seniors 10 → 25 and managers 5 → 10', () => {
-    expect(lineCap(consultancy({ skills: { seniorRoom: 3 } }), 'senior')).toBe(
-      25
-    );
+    expect(
+      lineCap(consultancy({ skills: ranksOf('seniorRoom', 3) }), 'senior')
+    ).toBe(25);
     expect(lineCap(consultancy(), 'manager')).toBe(5);
     expect(
-      lineCap(consultancy({ skills: { managerRoom: 1 } }), 'manager')
+      lineCap(consultancy({ skills: ranksOf('managerRoom', 1) }), 'manager')
     ).toBe(10);
   });
 });

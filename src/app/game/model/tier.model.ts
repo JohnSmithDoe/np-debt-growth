@@ -29,9 +29,9 @@ export const DEBT_TIERS: readonly DebtTier[] = [
   { index: 3, spCost: 80_000, ticket: 'conflict' },
   { index: 4, spCost: 200_000, ticket: 'slop' },
   { index: 5, spCost: 500_000, ticket: 'rockstar' },
-  { index: 6, spCost: 2_000_000, ticket: 'zombie' },
-  { index: 7, spCost: 8_000_000, ticket: 'rewrite' },
-  { index: 8, spCost: 15_000_000, ticket: 'swarm' },
+  { index: 6, spCost: 1_500_000, ticket: 'zombie' },
+  { index: 7, spCost: 5_000_000, ticket: 'rewrite' },
+  { index: 8, spCost: 10_000_000, ticket: 'swarm' },
 ];
 
 export const MAX_TIER = DEBT_TIERS.length;

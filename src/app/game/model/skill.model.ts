@@ -1,5 +1,6 @@
 import type { TicketTypeId } from './ticket.model';
 import type { PurchaseId } from './balance/progression';
+import { LINE_PRICE_BY_TIER } from './balance/progression';
 import type { CrewKind } from './crew.model';
 import {
   DEBT_INTEREST_PER_RANK,
@@ -109,10 +110,14 @@ export interface SkillLock {
 export const skillLabelKey = (id: string, level = 1): string =>
   `skill.${id}.${level}.label`;
 
-const TIERED_NODE = /^(capacity|cans)\d+$/;
+const TIERED_NODE =
+  /^(capacity|cans|juniorRoom|seniorRoom|managerRoom|goldenValue|debtInterest)\d+$/;
+
+export const skillFamily = (id: string): string =>
+  TIERED_NODE.exec(id)?.[1] ?? id;
 
 export const skillBlurbKey = (id: string): string =>
-  `skill.${TIERED_NODE.exec(id)?.[1] ?? id}.blurb`;
+  `skill.${skillFamily(id)}.blurb`;
 
 const ADR_NODES: readonly SkillNode[] = DEBT_TIERS.map((tier) => ({
   id: adrNodeId(tier.index),
@@ -139,7 +144,8 @@ const LINE_DOUBLE_COST = [
   25, 1500, 3000, 6000, 11_000, 20_000, 35_000, 70_000, 140_000,
 ];
 
-const perTier = (base: number, tier: number): number => base * 2 ** tier;
+const perTier = (base: number, tier: number): number =>
+  base * LINE_PRICE_BY_TIER[tier]!;
 
 const lineEstimate = (tier: number): number =>
   tier === 0 ? 75 : 400 * 2 ** (tier - 1);
@@ -258,9 +264,9 @@ const SPRINT_RUNGS: readonly SprintRung[] = [
   { capacity: [8000], cans: [25_000], cut: ['smoke', 4000] },
   { capacity: [12_000], cans: [48_000], cut: ['freeze', 7000] },
   { capacity: [30_000], cans: [140_000] },
-  { capacity: [150_000], cans: [900_000] },
-  { capacity: [400_000], cans: [2_500_000] },
-  { capacity: [480_000], cans: [3_750_000] },
+  { capacity: [1_000_000], cans: [3_000_000] },
+  { capacity: [2_000_000], cans: [6_000_000] },
+  { capacity: [3_000_000], cans: [9_000_000] },
 ];
 
 const SPRINT_NODES: readonly SkillNode[] = SPRINT_RUNGS.flatMap(
@@ -309,6 +315,57 @@ const SPRINT_NODES: readonly SkillNode[] = SPRINT_RUNGS.flatMap(
   }
 );
 
+const seats = (line: CrewLine): SkillEffect => ({
+  kind: 'room',
+  line,
+  add: ROOM_SEATS,
+});
+
+const rung = (
+  family: string,
+  track: SkillTrack,
+  tier: number,
+  opener: string,
+  cost: number,
+  effects: readonly SkillEffect[]
+): SkillNode => ({
+  id: `${family}${tier}`,
+  track,
+  requires: adrNodeId(tier),
+  maxed: [opener],
+  levels: [{ cost, effects }],
+});
+
+const goldenRate: SkillEffect = {
+  kind: 'goldenValue',
+  add: GOLDEN_VALUE_PER_RANK,
+};
+const interest: SkillEffect = {
+  kind: 'debtInterest',
+  approach: DEBT_INTEREST_PER_RANK,
+};
+
+const RUNG_NODES: readonly SkillNode[] = [
+  rung('juniorRoom', 'B', 2, 'junior', 20_000, [seats('junior')]),
+  rung('juniorRoom', 'B', 3, 'junior', 60_000, [seats('junior')]),
+  rung('juniorRoom', 'B', 4, 'junior', 180_000, [seats('junior')]),
+  rung('seniorRoom', 'E', 3, 'senior', 100_000, [seats('senior')]),
+  rung('seniorRoom', 'E', 4, 'senior', 300_000, [seats('senior')]),
+  rung('seniorRoom', 'E', 5, 'senior', 900_000, [seats('senior')]),
+  rung('managerRoom', 'H', 5, 'manager', 600_000, [seats('manager')]),
+  rung('goldenValue', 'A', 3, 'goldenValue', 40_000, [goldenRate]),
+  rung('goldenValue', 'A', 5, 'goldenValue', 1_000_000, [goldenRate]),
+  rung('goldenValue', 'A', 7, 'goldenValue', 8_000_000, [goldenRate]),
+  rung('debtInterest', 'D', 6, 'debtInterest', 4_000_000, [interest]),
+  rung('debtInterest', 'D', 7, 'debtInterest', 8_000_000, [interest]),
+  rung('spawnIncident', 'D', 7, 'spawnIncident', 8_000_000, [
+    { kind: 'spawnRate', target: 'escalation', mult: 1.5 },
+  ]),
+  rung('spawnIncident', 'D', 8, 'spawnIncident', 12_000_000, [
+    { kind: 'ticketValue', target: 'incident', mult: 2 },
+  ]),
+];
+
 export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'root',
@@ -349,6 +406,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     ],
   },
   ...SPRINT_NODES,
+  ...RUNG_NODES,
   {
     id: 'lineOfSight',
     track: 'A',
@@ -361,15 +419,6 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'B',
     requires: 'crew',
     levels: [{ cost: 1200, effects: [{ kind: 'line', line: 'junior' }] }],
-  },
-  {
-    id: 'juniorRoom',
-    track: 'B',
-    requires: 'juniorSpeed',
-    levels: [20_000, 60_000, 180_000].map((cost) => ({
-      cost,
-      effects: [{ kind: 'room' as const, line: 'junior', add: ROOM_SEATS }],
-    })),
   },
   {
     id: 'juniorSpeed',
@@ -452,16 +501,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'senior',
     track: 'E',
     requires: 'seniors',
-    levels: [{ cost: 240_000, effects: [{ kind: 'line', line: 'senior' }] }],
-  },
-  {
-    id: 'seniorRoom',
-    track: 'E',
-    requires: 'seniorSpeed',
-    levels: [100_000, 300_000, 900_000].map((cost) => ({
-      cost,
-      effects: [{ kind: 'room' as const, line: 'senior', add: ROOM_SEATS }],
-    })),
+    levels: [{ cost: 60_000, effects: [{ kind: 'line', line: 'senior' }] }],
   },
   {
     id: 'seniorSpeed',
@@ -569,36 +609,12 @@ export const SKILL_NODES: readonly SkillNode[] = [
       { cost: 360_000, effects: [{ kind: 'managerAura', add: 0.5 }] },
     ],
   },
-  {
-    id: 'managerRoom',
-    track: 'H',
-    requires: 'managerSpeed',
-    levels: [
-      {
-        cost: 600_000,
-        effects: [{ kind: 'room', line: 'manager', add: ROOM_SEATS }],
-      },
-    ],
-  },
 
   {
     id: 'debtInterest',
     track: 'D',
     requires: 'debt',
-    levels: [
-      {
-        cost: 24_000,
-        effects: [{ kind: 'debtInterest', approach: DEBT_INTEREST_PER_RANK }],
-      },
-      {
-        cost: 76_000,
-        effects: [{ kind: 'debtInterest', approach: DEBT_INTEREST_PER_RANK }],
-      },
-      {
-        cost: 224_000,
-        effects: [{ kind: 'debtInterest', approach: DEBT_INTEREST_PER_RANK }],
-      },
-    ],
+    levels: [{ cost: 24_000, effects: [interest] }],
   },
   {
     id: 'triagePolicy',
@@ -623,14 +639,6 @@ export const SKILL_NODES: readonly SkillNode[] = [
       {
         cost: 255_000,
         effects: [{ kind: 'spawnRate', target: 'incident', mult: 1.4 }],
-      },
-      {
-        cost: 420_000,
-        effects: [{ kind: 'spawnRate', target: 'escalation', mult: 1.5 }],
-      },
-      {
-        cost: 600_000,
-        effects: [{ kind: 'ticketValue', target: 'incident', mult: 2 }],
       },
     ],
   },
@@ -773,24 +781,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'goldenValue',
     track: 'A',
     requires: 'golden',
-    levels: [
-      {
-        cost: 6000,
-        effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
-      },
-      {
-        cost: 27_000,
-        effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
-      },
-      {
-        cost: 114_000,
-        effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
-      },
-      {
-        cost: 480_000,
-        effects: [{ kind: 'goldenValue', add: GOLDEN_VALUE_PER_RANK }],
-      },
-    ],
+    levels: [{ cost: 6000, effects: [goldenRate] }],
   },
   {
     id: 'goldenCrew',
@@ -858,13 +849,12 @@ const COLLAPSED: ReadonlyMap<string, string | null> = new Map(
 
 export const ADR_NODE_IDS: readonly string[] = ADR_NODES.map((node) => node.id);
 
-export const ROOM_NODE_BY_LINE = {
-  junior: 'juniorRoom',
-  senior: 'seniorRoom',
-  manager: 'managerRoom',
-} as const satisfies Partial<Record<PurchaseId, string>>;
+export type CrewLine = Extract<PurchaseId, 'junior' | 'senior' | 'manager'>;
 
-export type CrewLine = keyof typeof ROOM_NODE_BY_LINE;
+export const skillFamilyIds = (family: string): readonly string[] =>
+  SKILL_NODES.filter((node) => skillFamily(node.id) === family).map(
+    (node) => node.id
+  );
 
 export const OFFICE_NODE_IDS: readonly string[] = SKILL_NODES.filter(
   (node) => node.track === 'O' && node.heading !== true && node.id !== 'kit'

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { consultancy } from '../model/consultancy.fixture';
+import { consultancy, ranksOf } from '../model/consultancy.fixture';
 import { emptyBoard } from '../model/board.model';
 import { addTicket, work } from './board';
 import { crewRules } from './crew-rules';
@@ -21,9 +21,9 @@ describe('golden work (the automation-exempt class)', () => {
   });
 
   it('climbs additively, 100× to 300× over the ladder', () => {
-    const at = (goldenValue: number): number =>
+    const at = (ranks: number): number =>
       economy.goldenMultiplier(
-        consultancy({ skills: { golden: 1, goldenValue } })
+        consultancy({ skills: { golden: 1, ...ranksOf('goldenValue', ranks) } })
       );
     expect(at(0)).toBe(100);
     expect(at(1)).toBe(150);

@@ -56,7 +56,6 @@ const LINE_NODE = /^(value|spawn|income|estimates|double)[A-Z]/;
 const ROOM_ICON = 'headcount';
 const ROOM_NODE = /^(junior|senior|manager)Room$/;
 
-const TIERED_NODE = /^(capacity|cans)\d+$/;
 const CUT_NODE = /^cut[A-Z]/;
 const CUT_ICON = 'duration';
 
@@ -64,9 +63,9 @@ const OWN = new Set(OWN_ICONS);
 
 export function skillIconOf(nodeId: string): string | null {
   if (OWN.has(nodeId)) return nodeId;
-  if (ROOM_NODE.test(nodeId)) return ROOM_ICON;
-  const family = TIERED_NODE.exec(nodeId)?.[1];
-  if (family !== undefined) return family;
+  const family = nodeId.replace(/\d+$/, '');
+  if (OWN.has(family)) return family;
+  if (ROOM_NODE.test(family)) return ROOM_ICON;
   if (CUT_NODE.test(nodeId)) return CUT_ICON;
   const kind = LINE_NODE.exec(nodeId)?.[1];
   return kind === undefined ? null : `line-${kind}`;

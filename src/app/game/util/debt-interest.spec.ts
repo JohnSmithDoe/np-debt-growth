@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Consultancy } from '../model/consultancy.model';
 import { freshConsultancy } from '../model/consultancy.model';
+import { ranksOf } from '../model/consultancy.fixture';
 import { SAVE_VERSION } from '../model/game.consts';
 import { MAX_TIER } from '../model/tier.model';
 import { TICKET_TYPES } from '../model/ticket.model';
@@ -17,7 +18,7 @@ const state = (patch: Partial<Consultancy>): Consultancy => ({
 });
 
 const withRanks = (ranks: number): Consultancy =>
-  state({ skills: { root: 1, supply: 1, debtInterest: ranks } });
+  state({ skills: { root: 1, supply: 1, ...ranksOf('debtInterest', ranks) } });
 
 describe('the interest', () => {
   it('is nothing at all until the node is bought', () => {

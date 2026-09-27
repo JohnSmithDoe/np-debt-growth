@@ -49,7 +49,11 @@ function sweep(store: GameStore, credit: number): number {
   return left;
 }
 
-function onTheBoard(state: Consultancy): { euro: number; sp: number; closed: number } {
+function onTheBoard(state: Consultancy): {
+  euro: number;
+  sp: number;
+  closed: number;
+} {
   let euro = 0;
   let sp = 0;
   let closed = 0;
@@ -70,7 +74,14 @@ function onTheBoard(state: Consultancy): { euro: number; sp: number; closed: num
   return { euro: euro / seconds, sp: sp / seconds, closed: closed / seconds };
 }
 
-const LABELS = ['tier 1', 'tier 3', 'tier 4', 'tier 5', 'tier 6', 'tier 7'] as const;
+const LABELS = [
+  'tier 1',
+  'tier 3',
+  'tier 4',
+  'tier 5',
+  'tier 6',
+  'tier 7',
+] as const;
 
 const stops = ((): ReadonlyMap<string, Consultancy> => {
   const found = new Map<string, Consultancy>();

@@ -49,7 +49,7 @@ export const HAND_ONLY_RATE_PER_TIER = 0.5;
 
 export const PROD_INCIDENT_LIVE_CAP = 3;
 
-/** Tier 1's; each tier above doubles it, as `perTier` doubles its prices. */
+/** Tier 1's; each tier above doubles it. */
 export const ESTIMATE_SP_PER_RANK = 20;
 export const ESTIMATE_SP_TIER_GROWTH = 2;
 export const ESTIMATE_SP_PER_RANK_OPENING = 4;

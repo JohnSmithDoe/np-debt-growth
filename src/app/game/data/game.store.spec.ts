@@ -4,7 +4,6 @@ import { NEVER_EXPIRES } from '../model/board.model';
 import { resumed } from '../model/consultancy.model';
 import { MAX_CATCHUP_MS, TICK_MS } from '../model/game.consts';
 import {
-  ROOM_NODE_BY_LINE,
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_ROOT_ID,
@@ -18,6 +17,7 @@ import { addTicket } from '../util/board';
 import { sprintSlots } from '../util/economy';
 import { GameStore } from './game.store';
 import { rooms, storeWith, tick } from './store.fixture';
+import { ranksOf } from '../model/consultancy.fixture';
 
 const A_WHILE_MS = 10_000;
 
@@ -356,7 +356,7 @@ describe('rooms cap each crew line', () => {
   it('adds seats a rank at a time, to its own line only', () => {
     const store = storeWith({
       budget: 1_000_000,
-      skills: { root: 1, crew: 1, junior: 1, [ROOM_NODE_BY_LINE.junior]: 1 },
+      skills: { root: 1, crew: 1, junior: 1, juniorRoom2: 1 },
       levels: { junior: LINE_PLAN.junior.cap, senior: LINE_PLAN.senior.cap },
     });
     expect(store.lineCap('junior')).toBe(LINE_PLAN.junior.cap + ROOM_SEATS);
@@ -366,7 +366,9 @@ describe('rooms cap each crew line', () => {
   });
 
   it('leaves every line that seats nobody alone', () => {
-    const store = storeWith({ skills: { juniorRoom: 3, seniorRoom: 3 } });
+    const store = storeWith({
+      skills: { ...ranksOf('juniorRoom', 3), ...ranksOf('seniorRoom', 3) },
+    });
     for (const line of ['velocity', 'kit'] as const) {
       expect(store.lineCap(line)).toBe(LINE_PLAN[line].cap);
     }

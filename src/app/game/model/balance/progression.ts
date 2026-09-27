@@ -48,6 +48,10 @@ export type PurchaseId = (typeof PURCHASE_IDS)[number];
 
 export const LINE_COST_STEP = 1.15;
 
+export const LINE_PRICE_BY_TIER: readonly number[] = [
+  1, 2, 4, 8, 16, 32, 128, 256, 512,
+];
+
 export const LINE_PLAN: Readonly<
   Record<
     PurchaseId,
