@@ -54,7 +54,7 @@ export abstract class CbScene extends Phaser.Scene {
     y: number,
     label: string,
     style: { colour?: string; size?: string; rise?: number } = {}
-  ): void {
+  ): Phaser.GameObjects.Text {
     const floats = this.floats;
     const text = floats.take(
       x,
@@ -72,6 +72,7 @@ export abstract class CbScene extends Phaser.Scene {
       ease: 'Sine.easeOut',
       onComplete: () => floats.give(text),
     });
+    return text;
   }
 
   protected floatBig(

@@ -16,9 +16,6 @@ export interface HazardNotice {
   readonly msLeft: number;
 }
 
-/** A masthead counter a payout flies to. */
-export type PayoutTarget = 'money' | 'points';
-
 export interface SceneDeps {
   text(key: string, params?: Record<string, string | number>): string;
   board(): Board;
@@ -55,8 +52,6 @@ export interface SceneDeps {
   takeCloseFloats(): readonly CloseFloat[];
   takeWontFix(): readonly number[];
   unlockSecret(): void;
-  /** The counter's centre in canvas pixels; null when it is not on screen. */
-  payoutTarget(kind: PayoutTarget): { x: number; y: number } | null;
   /** Hands the board's card and crew frames to the DOM rail. */
   publishIcons(icons: {
     readonly tickets: ReadonlyMap<TicketTypeId, string>;

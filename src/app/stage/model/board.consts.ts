@@ -140,30 +140,8 @@ export const HOVER_OFFSET = { x: 14, y: 10, edge: 4 } as const;
 export const CLOSE_FLOAT = { size: '13px', rise: 30 } as const;
 export const FLOAT_MS = 750;
 
-/** The sprint strip's payout floats sum a lane's income over this long. */
-export const BILL_GROUP_MS = 300;
-
 /** Live payout labels at most; past `small` the oldest is recycled. */
 export const FLOAT_CAP = { small: 48, big: 4 } as const;
-
-/** The hand's running total: merged while sweeps land within `windowMs`. */
-export const COMBO = {
-  windowMs: 320,
-  cap: 8,
-  lift: 16,
-  rise: 36,
-  pointsGap: 20,
-  moneySize: '18px',
-  pointsSize: '14px',
-  growPerDouble: 0.14,
-  maxGrow: 0.8,
-  pop: 1.22,
-  popMs: 140,
-  holdMs: 220,
-  flyMs: 620,
-  landScale: 0.55,
-  landAlpha: 0.35,
-} as const;
 
 /** Payouts with golden or incident work in them, sized to be read. */
 export const BIG_FLOAT = {

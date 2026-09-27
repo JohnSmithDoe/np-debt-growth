@@ -1,6 +1,9 @@
 import * as Phaser from 'phaser';
 
-import { formatMoney } from '../../@shared/util/format-quantity';
+import {
+  formatCompactWhole,
+  formatMoney,
+} from '../../@shared/util/format-quantity';
 import type {
   Board,
   BoardTicket,
@@ -28,7 +31,6 @@ import {
   BIG_FLOAT_CAPTION,
   BUFF_BANNER,
   CLOSE_FLOAT,
-  BILL_GROUP_MS,
   CLOSE_FLOATS_PER_FRAME,
   DROP_HOP,
   DROP_MS,
@@ -62,7 +64,6 @@ import { SpeechBubbles } from './speech-bubbles';
 import { BuffBanners } from './buff-banners';
 import { CbScene } from './cb-scene';
 import { GroundLayer } from './ground-layer';
-import { PayoutCombo } from './payout-combo';
 import { TierBackdrop } from './tier-backdrop';
 import { SprintStrip } from './sprint-strip';
 import { TierSpawners } from './tier-spawners';
@@ -71,7 +72,6 @@ import { VoteBeams } from './vote-beams';
 interface BoardParts {
   readonly ground: GroundLayer;
   readonly backdrop: TierBackdrop;
-  readonly combo: PayoutCombo;
   readonly heap: TicketHeap;
   readonly flyers: FlyerPool;
   readonly crew: CrewLayer;
@@ -91,7 +91,6 @@ const DEPTH = {
   spawner: 22,
   ring: 24,
   bubble: 26,
-  combo: 52,
   strip: 30,
   hover: 60,
 } as const;
@@ -192,8 +191,8 @@ export class BoardScene extends CbScene {
   #onBoard = false;
 
   #banner?: Phaser.GameObjects.Text;
-  #groomed = false;
   #warning = '';
+  #groomed = false;
 
   #slotFrom = 0;
   #seenSlots = 0;
@@ -215,8 +214,10 @@ export class BoardScene extends CbScene {
     this.deps.takeWontFix();
   };
   #wontFix = new Set<number>();
-  /** Lane income held back so the strip floats one sum per window. */
-  readonly #billing = new Map<number, { value: number; since: number }>();
+  readonly #billing = new Map<
+    number,
+    { text: Phaser.GameObjects.Text; value: number; label: string }
+  >();
   #onPointerMove = (pointer: Phaser.Input.Pointer): void => {
     this.#readBoard(pointer.worldX, pointer.worldY);
     this.#placeRing(pointer.worldX, pointer.worldY);
@@ -253,9 +254,6 @@ export class BoardScene extends CbScene {
     const parts: BoardParts = {
       ground: new GroundLayer(this, DEPTH.floor - 1),
       backdrop: new TierBackdrop(this, DEPTH.floor - 0.5),
-      combo: new PayoutCombo(this, DEPTH.combo, (kind) =>
-        this.deps.payoutTarget(kind)
-      ),
       heap: new TicketHeap(this, (key) => this.deps.text(key)),
       flyers: new FlyerPool(this, DEPTH.flyer),
       crew: new CrewLayer(this, DEPTH.crew, 'juniors', 0),
@@ -334,7 +332,6 @@ export class BoardScene extends CbScene {
 
     parts.ground.tier(this.deps.tier());
     parts.backdrop.tier(this.deps.tier());
-    parts.combo.update(this.time.now);
     parts.spawners.sync((adr) => this.deps.spawnerCount(adr));
     this.#openSlots();
     this.#wontFix = new Set(this.deps.takeWontFix());
@@ -499,12 +496,12 @@ export class BoardScene extends CbScene {
     }
     parts.heap.preTint(this.#preTints);
   }
-    const groomed = notice?.id === 'grooming' && notice.landed;
-    if (groomed && !this.#groomed) parts.heap.redraw();
-    this.#groomed = groomed;
 
   #weather(parts: BoardParts): void {
     const notice = this.deps.hazardNotice();
+    const groomed = notice?.id === 'grooming' && notice.landed;
+    if (groomed && !this.#groomed) parts.heap.redraw();
+    this.#groomed = groomed;
     const banner = this.#banner;
     if (!banner) return;
     if (!notice) {
@@ -718,8 +715,14 @@ export class BoardScene extends CbScene {
         `+${formatMoney(value)}`,
         this.#caption(headline)
       );
+    } else if (value > 0)
+      this.floatPayout(px, py - 14, `+${formatMoney(value)}`);
+    if (sp > 0) {
+      this.floatPayout(px, py + 8, `+${formatCompactWhole(sp)} SP`, {
+        colour: BOARD_TEXT.points,
+        size: '14px',
+      });
     }
-    parts.combo.add(px, py, big ? 0 : value, sp, taken.length, this.time.now);
   }
 
   #flashRing(px: number, py: number): void {
@@ -768,21 +771,23 @@ export class BoardScene extends CbScene {
     return this.deps.text(titleKey);
   }
 
+  /** A lane's float stays up while income keeps landing; only its sum changes. */
   #bill(parts: BoardParts): void {
-    const now = this.time.now;
     for (const [lane, payout] of this.deps.takePayouts()) {
-      const due = this.#billing.get(lane);
-      if (due) due.value += payout;
-      else this.#billing.set(lane, { value: payout, since: now });
-    }
-    for (const [lane, due] of this.#billing) {
-      if (now - due.since < BILL_GROUP_MS) continue;
-      this.#billing.delete(lane);
-      this.floatPayout(
+      const live = this.#billing.get(lane);
+      if (live && live.text.visible && live.text.text === live.label) {
+        live.value += payout;
+        live.label = `+${formatMoney(live.value)}`;
+        live.text.setText(live.label);
+        continue;
+      }
+      const label = `+${formatMoney(payout)}`;
+      const text = this.floatPayout(
         lane === NO_LANE ? parts.strip.dropX : parts.strip.laneX(lane),
         parts.strip.dropY,
-        `+${formatMoney(due.value)}`
+        label
       );
+      this.#billing.set(lane, { text, value: payout, label });
     }
   }
 
@@ -875,6 +880,6 @@ export class BoardScene extends CbScene {
     parts.heap.destroy();
     parts.ground.destroy();
     parts.backdrop.destroy();
-    parts.combo.destroy();
+    this.#billing.clear();
   }
 }

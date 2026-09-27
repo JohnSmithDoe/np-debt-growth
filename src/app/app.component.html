@@ -8,7 +8,6 @@
       <dt>{{ 'hud.budget' | translate }}</dt>
       <dd
         class="money"
-        data-payout-target="money"
         [title]="exactMoney()"
         [cbRolling]="budget()"
         [rollingFormat]="money"
@@ -23,7 +22,6 @@
       <dt>{{ 'hud.points' | translate }}</dt>
       <dd
         class="points"
-        data-payout-target="points"
         [class.paid]="awardPaid()"
         [title]="exactPoints()"
         (animationend)="awardPaid.set(false)"
