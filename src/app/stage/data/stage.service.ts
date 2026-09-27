@@ -16,7 +16,7 @@ import {
 } from '../../game/model/skill.model';
 import * as economy from '../../game/util/economy';
 import { MODE_FADE_MS } from '../model/board.consts';
-import type { SceneDeps } from '../model/scene-deps.model';
+import type { PayoutTarget, SceneDeps } from '../model/scene-deps.model';
 import type { SkillNodeView, SkillView } from '../model/skill-view.model';
 import { skillEffectText } from '../util/skill-copy';
 import type { StageMode } from '../model/stage-mode.model';
@@ -231,14 +231,27 @@ export class StageService {
       roundLeftMs: () => store.roundLeftMs(),
       haulMs: () => store.haulMs(),
       buffNotices: () => store.buffNotices(),
+      autoClosed: () => store.autoClosed(),
       womanEvery: (crew) => store.womanEvery(crew),
       takePayouts: () => store.takePayouts(),
       takeCloseFloats: () => store.takeCloseFloats(),
       takeWontFix: () => store.takeWontFix(),
       unlockSecret: () => void store.unlockSecret(),
+      payoutTarget: (kind) => this.#payoutTarget(kind),
       publishIcons: (icons) => this.#icons.publish(icons),
       skillView: () => this.#skillView(),
       buySkill: (id: string) => store.buySkill(id),
+    };
+  }
+
+  #payoutTarget(kind: PayoutTarget): { x: number; y: number } | null {
+    const counter = document.querySelector(`[data-payout-target="${kind}"]`);
+    if (!counter || !this.#phaser.initialized()) return null;
+    const box = counter.getBoundingClientRect();
+    const canvas = this.#phaser.game.canvas.getBoundingClientRect();
+    return {
+      x: box.left + box.width / 2 - canvas.left,
+      y: box.top + box.height / 2 - canvas.top,
     };
   }
 

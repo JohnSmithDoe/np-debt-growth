@@ -7,7 +7,7 @@ import { SAVE_VERSION } from '../model/game.consts';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import { DEFAULT_POLICY, autoplay } from '../util/autoplay';
-import { pickWithin } from '../util/board';
+import { pickTouching } from '../util/board';
 import * as economy from '../util/economy';
 import { flow } from '../util/sim';
 
@@ -46,7 +46,7 @@ function onTheBoard(state: Consultancy): { euro: number; sp: number } {
       }
       if (!aim) break;
       store.harvest(
-        pickWithin(
+        pickTouching(
           store.board,
           aim.x,
           aim.y,

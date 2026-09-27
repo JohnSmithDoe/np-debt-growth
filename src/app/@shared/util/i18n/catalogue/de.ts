@@ -23,8 +23,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.spawnRate.ticket': '{{pct}} Spawnrate von {{ticket}}',
   'skill.effect.standupAura': '{{each}} Junior-Tempo je Junior, bis {{cap}}',
   'skill.effect.ticketValue': '{{pct}} Wert von {{ticket}}',
-  'skill.effect.triagePolicy.juniors': 'Juniors lassen {{ticket}} liegen',
-  'skill.effect.triagePolicy.seniors': 'Seniors lassen {{ticket}} liegen',
+  'skill.effect.autoClose': 'Liegengebliebene {{ticket}} schließen sich selbst',
   'skill.lock.blocked': 'Blockiert durch {{by}}',
   'skill.lock.underfunded': 'Budget reicht nicht',
   'skill.lock.unknown': 'Unbekannt',
@@ -361,7 +360,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.triagePolicy.1.label': 'Triage-Richtlinie',
   'skill.triagePolicy.2.label': 'Scope Freeze',
   'skill.triagePolicy.blurb':
-    'Ein Team nimmt einen Typ nicht mehr — und füllt den Sprint nicht mehr damit.',
+    'Die Crew nimmt den Typ nicht mehr. Eine liegengebliebene Karte schließt sich selbst, statt zu veralten, und wird ausgeliefert. Sind alle Züge unterwegs, bleibt ihr nur der Weg nach Prod.',
   'skill.valueBug.1.label': 'Bug Bounty',
   'skill.valueBug.blurb': 'Bugs rechnen doppelt ab.',
   'skill.valueConflict.1.label': 'Konflikt-Boost',

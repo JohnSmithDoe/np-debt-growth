@@ -106,9 +106,9 @@ function describe(effect: SkillEffect): EffectText {
         key: 'skill.effect.juniorBand',
         params: { count: effect.add },
       };
-    case 'triagePolicy':
+    case 'autoClose':
       return {
-        key: `skill.effect.triagePolicy.${effect.crew}`,
+        key: 'skill.effect.autoClose',
         params: { ticket: effect.target },
       };
     case 'nearestClaim':

@@ -4,6 +4,7 @@ import type { CrewKind } from './crew.model';
 import {
   DEBT_INTEREST_PER_RANK,
   ESTIMATE_SP_PER_RANK,
+  ESTIMATE_SP_PER_RANK_OPENING,
   GOLDEN_VALUE_PER_RANK,
   VOTE_BONUS_PER_RANK,
 } from './balance/flow';
@@ -45,11 +46,7 @@ export type SkillEffect =
       readonly closeMult?: number;
     }
   | { readonly kind: 'juniorBand'; readonly add: number }
-  | {
-      readonly kind: 'triagePolicy';
-      readonly crew: CrewKind;
-      readonly target: TicketTypeId;
-    }
+  | { readonly kind: 'autoClose'; readonly target: TicketTypeId }
   | { readonly kind: 'nearestClaim' }
   | {
       readonly kind: 'spPerClose';
@@ -237,7 +234,10 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
           effects: [
             {
               kind: 'spPerClose' as const,
-              add: ESTIMATE_SP_PER_RANK,
+              add:
+                tier === 0
+                  ? ESTIMATE_SP_PER_RANK_OPENING
+                  : ESTIMATE_SP_PER_RANK,
               target: ticket,
             },
           ],
@@ -586,11 +586,11 @@ export const SKILL_NODES: readonly SkillNode[] = [
     levels: [
       {
         cost: 500,
-        effects: [{ kind: 'triagePolicy', crew: 'juniors', target: 'lint' }],
+        effects: [{ kind: 'autoClose', target: 'lint' }],
       },
       {
         cost: 1600,
-        effects: [{ kind: 'triagePolicy', crew: 'seniors', target: 'bug' }],
+        effects: [{ kind: 'autoClose', target: 'bug' }],
       },
     ],
   },

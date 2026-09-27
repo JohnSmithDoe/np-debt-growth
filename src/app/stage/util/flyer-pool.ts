@@ -120,12 +120,13 @@ export class FlyerPool {
   }
 
   /** Tickets still in the air whose card is within `radius` of the pointer. */
+  /** Falling cards the ring touches, by their drawn box. */
   fallingWithin(x: number, y: number, radius: number, into: number[]): void {
     for (const [ticket, slot] of this.#falling) {
       const image = this.#images[slot];
       if (!image || (this.#hold[slot] ?? 0) > 0) continue;
-      const dx = image.x - x;
-      const dy = image.y - y;
+      const dx = Math.max(0, Math.abs(image.x - x) - image.displayWidth / 2);
+      const dy = Math.max(0, Math.abs(image.y - y) - image.displayHeight / 2);
       if (dx * dx + dy * dy <= radius * radius) into.push(ticket);
     }
   }

@@ -5,6 +5,7 @@ import type { TicketTypeId } from '../../game/model/ticket.model';
 import { TICKET_TYPES } from '../../game/model/ticket.model';
 import { fadeOf } from '../../game/util/board';
 import {
+  AUTO_CLOSE_RAMP,
   BOARD_TEXT,
   CLAIM_SLOTS,
   GOLD_GLOW,
@@ -72,6 +73,8 @@ export class TicketHeap {
   readonly #rareGlows: Phaser.GameObjects.Image[] = [];
   readonly #rareFree: number[] = [];
 
+  #autoClosed: ReadonlySet<TicketTypeId> = new Set();
+
   #scaleX = 1;
   #scaleY = 1;
   #offX = 0;
@@ -110,6 +113,11 @@ export class TicketHeap {
       this.#rareTitles.push(this.#buildRareTitle());
       this.#rareFree.push(slot);
     }
+  }
+
+  /** Cards of these types ramp their tint over the life they have left. */
+  autoCloses(types: ReadonlySet<TicketTypeId>): void {
+    this.#autoClosed = types;
   }
 
   get count(): number {
@@ -356,8 +364,29 @@ export class TicketHeap {
     this.#member.scaleX = 1;
     this.#member.scaleY = 1;
     this.#member.alpha = fade;
+    this.#tintRamp(ticket);
     this.#layer.editMember(slot, this.#member);
     if (ticket.golden) this.#glowUnder(ticket.id, x, y, fade);
+  }
+
+  /** Runs on the GPU from this edit: no per-frame cost. */
+  #tintRamp(ticket: BoardTicket): void {
+    const member = this.#member;
+    if (!this.#autoClosed.has(ticket.type) || ticket.lifeLeftMs <= 0) {
+      member.tintBlend = 0;
+      return;
+    }
+    member.tintTopLeft = AUTO_CLOSE_RAMP.ink;
+    member.tintTopRight = AUTO_CLOSE_RAMP.ink;
+    member.tintBottomLeft = AUTO_CLOSE_RAMP.ink;
+    member.tintBottomRight = AUTO_CLOSE_RAMP.ink;
+    member.tintBlend = {
+      base: 0,
+      amplitude: AUTO_CLOSE_RAMP.peak,
+      duration: ticket.lifeLeftMs,
+      ease: 'Linear',
+      loop: false,
+    };
   }
 
   #glowUnder(id: number, x: number, y: number, fade: number): void {

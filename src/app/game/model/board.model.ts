@@ -56,7 +56,7 @@ export interface CrewMember {
 
 export const NO_SEAT = -1;
 
-export type CloseAuthor = 'you' | CrewKind;
+export type CloseAuthor = 'you' | 'auto' | CrewKind;
 
 export interface Close {
   readonly type: TicketTypeId;

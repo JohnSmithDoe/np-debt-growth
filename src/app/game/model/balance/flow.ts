@@ -2,7 +2,7 @@ import { LOGICAL_BOARD } from '../geometry';
 
 export const SPAWN_BURST_CAP = 12;
 
-const CLICK_RADIUS_SHARE = 0.034;
+const CLICK_RADIUS_SHARE = 0.006;
 const CLICK_RADIUS_MAX_SHARE = 0.2;
 export const CLICK_RADIUS_BASE = LOGICAL_BOARD.width * CLICK_RADIUS_SHARE;
 export const CLICK_RADIUS_MAX = LOGICAL_BOARD.width * CLICK_RADIUS_MAX_SHARE;
@@ -56,4 +56,9 @@ export const GOLDEN_VALUE_PER_RANK = 50;
 export const GOLDEN_CREW_CONVERSION = 0.05;
 
 /** SP a ticket pays at pickup per `estimates<T>` rank on its line. */
+/** Auto-closed work with no lane goes to prod as a P0; this many at once, the rest go stale. */
+export const PROD_INCIDENT_LIVE_CAP = 3;
+
 export const ESTIMATE_SP_PER_RANK = 20;
+/** Lint and bugs: auto-close bills every card of them, so their estimates pay less. */
+export const ESTIMATE_SP_PER_RANK_OPENING = 4;

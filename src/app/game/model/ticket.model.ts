@@ -67,7 +67,6 @@ export const TICKET_TYPES: Readonly<Record<TicketTypeId, TicketType>> = {
     effect: 'value',
     scalesWithTier: false,
     colour: 0xe05252,
-    revealAtTier: 1,
   },
   legacy: {
     id: 'legacy',

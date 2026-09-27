@@ -6,12 +6,15 @@
   <dl class="readout">
     <div>
       <dt>Budget</dt>
-      <dd class="money" [title]="exactMoney()">{{ money(budget()) }}</dd>
+      <dd class="money" data-payout-target="money" [title]="exactMoney()">
+        {{ money(budget()) }}
+      </dd>
     </div>
     <div>
       <dt>Story Points</dt>
       <dd
         class="points"
+        data-payout-target="points"
         [class.paid]="awardPaid()"
         [title]="exactPoints()"
         (animationend)="awardPaid.set(false)"

@@ -1,9 +1,6 @@
 import * as Phaser from 'phaser';
 
-import {
-  formatCompactWhole,
-  formatMoney,
-} from '../../@shared/util/format-quantity';
+import { formatMoney } from '../../@shared/util/format-quantity';
 import type {
   Board,
   BoardTicket,
@@ -11,7 +8,7 @@ import type {
   SprintSlot,
 } from '../../game/model/board.model';
 import { NO_LANE } from '../../game/model/board.model';
-import { pickWithin } from '../../game/util/board';
+import { pickTouching, pickWithin } from '../../game/util/board';
 import { WONT_FIX_FADE_MS } from '../../game/model/balance/flow';
 import { hazardLabelKey } from '../../game/model/hazard.model';
 import type { CrewKind } from '../../game/model/crew.model';
@@ -32,6 +29,7 @@ import {
   BUFF_BANNER,
   CLOSE_FLOAT,
   CLOSE_FLOATS_PER_FRAME,
+  COMBO,
   DROP_HOP,
   DROP_MS,
   HARVEST_HOP,
@@ -64,6 +62,7 @@ import { SpeechBubbles } from './speech-bubbles';
 import { BuffBanners } from './buff-banners';
 import { CbScene } from './cb-scene';
 import { GroundLayer } from './ground-layer';
+import { PayoutCombo } from './payout-combo';
 import { TierBackdrop } from './tier-backdrop';
 import { SprintStrip } from './sprint-strip';
 import { TierSpawners } from './tier-spawners';
@@ -72,6 +71,7 @@ import { VoteBeams } from './vote-beams';
 interface BoardParts {
   readonly ground: GroundLayer;
   readonly backdrop: TierBackdrop;
+  readonly combo: PayoutCombo;
   readonly heap: TicketHeap;
   readonly flyers: FlyerPool;
   readonly crew: CrewLayer;
@@ -91,6 +91,7 @@ const DEPTH = {
   spawner: 22,
   ring: 24,
   bubble: 26,
+  combo: 52,
   strip: 30,
   hover: 60,
 } as const;
@@ -213,6 +214,7 @@ export class BoardScene extends CbScene {
     this.deps.takeWontFix();
   };
   #wontFix = new Set<number>();
+  readonly #laneCombos = new Map<number, PayoutCombo>();
   #onPointerMove = (pointer: Phaser.Input.Pointer): void => {
     this.#readBoard(pointer.worldX, pointer.worldY);
     this.#placeRing(pointer.worldX, pointer.worldY);
@@ -249,6 +251,9 @@ export class BoardScene extends CbScene {
     const parts: BoardParts = {
       ground: new GroundLayer(this, DEPTH.floor - 1),
       backdrop: new TierBackdrop(this, DEPTH.floor - 0.5),
+      combo: new PayoutCombo(this, DEPTH.combo, (kind) =>
+        this.deps.payoutTarget(kind)
+      ),
       heap: new TicketHeap(this, (key) => this.deps.text(key)),
       flyers: new FlyerPool(this, DEPTH.flyer),
       crew: new CrewLayer(this, DEPTH.crew, 'juniors', 0),
@@ -327,6 +332,7 @@ export class BoardScene extends CbScene {
 
     parts.ground.tier(this.deps.tier());
     parts.backdrop.tier(this.deps.tier());
+    parts.combo.update(this.time.now);
     parts.spawners.sync((adr) => this.deps.spawnerCount(adr));
     this.#openSlots();
     this.#wontFix = new Set(this.deps.takeWontFix());
@@ -336,6 +342,7 @@ export class BoardScene extends CbScene {
       (id, type, x, y, voted, alpha) =>
         this.#leave(parts, id, type, x, y, voted, alpha)
     );
+    parts.heap.autoCloses(this.deps.autoClosed());
     this.#preTint(parts, board);
     parts.crew.sync(board, board.juniors, this.deps.womanEvery('juniors'));
     parts.managers.sync(
@@ -683,7 +690,7 @@ export class BoardScene extends CbScene {
     if (!parts) return;
     const { flyers } = parts;
     const ring = this.deps.radius() * this.#ringScale;
-    const ids = pickWithin(
+    const ids = pickTouching(
       this.deps.board(),
       (px - this.#offX) / this.#scaleX,
       (py - this.#offY) / this.#scaleY,
@@ -706,14 +713,8 @@ export class BoardScene extends CbScene {
         `+${formatMoney(value)}`,
         this.#caption(headline)
       );
-    } else if (value > 0)
-      this.floatPayout(px, py - 14, `+${formatMoney(value)}`);
-    if (sp > 0) {
-      this.floatPayout(px, py + 8, `+${formatCompactWhole(sp)} SP`, {
-        colour: BOARD_TEXT.points,
-        size: '14px',
-      });
     }
+    parts.combo.add(px, py, big ? 0 : value, sp, taken.length, this.time.now);
   }
 
   #flashRing(px: number, py: number): void {
@@ -763,13 +764,23 @@ export class BoardScene extends CbScene {
   }
 
   #bill(parts: BoardParts): void {
+    const now = this.time.now;
     for (const [lane, payout] of this.deps.takePayouts()) {
-      this.floatPayout(
+      let combo = this.#laneCombos.get(lane);
+      if (!combo) {
+        combo = new PayoutCombo(this, DEPTH.combo, () => null);
+        this.#laneCombos.set(lane, combo);
+      }
+      combo.add(
         lane === NO_LANE ? parts.strip.dropX : parts.strip.laneX(lane),
-        parts.strip.dropY,
-        `+${formatMoney(payout)}`
+        parts.strip.dropY + COMBO.lift,
+        payout,
+        0,
+        0,
+        now
       );
     }
+    for (const combo of this.#laneCombos.values()) combo.update(now);
   }
 
   #buildSecret(): void {
@@ -861,5 +872,8 @@ export class BoardScene extends CbScene {
     parts.heap.destroy();
     parts.ground.destroy();
     parts.backdrop.destroy();
+    parts.combo.destroy();
+    for (const combo of this.#laneCombos.values()) combo.destroy();
+    this.#laneCombos.clear();
   }
 }

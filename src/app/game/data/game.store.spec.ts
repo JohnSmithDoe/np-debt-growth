@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { NEVER_EXPIRES } from '../model/board.model';
 import { resumed } from '../model/consultancy.model';
-import { FEED_LINES_PER_SEC, MAX_CATCHUP_MS } from '../model/game.consts';
+import {
+  FEED_LINES_PER_SEC,
+  MAX_CATCHUP_MS,
+  TICK_MS,
+} from '../model/game.consts';
 import {
   ROOM_NODE_BY_LINE,
   SECRET_SKILL_ID,
@@ -13,10 +17,11 @@ import {
 import { adrNodeId, DEBT_TIERS, tierAt } from '../model/tier.model';
 import { ROOM_SEATS } from '../model/balance/crew';
 import { LINE_PLAN } from '../model/balance/progression';
+import { PROD_INCIDENT_LIVE_CAP, TICKET_LIFE_MS } from '../model/balance/flow';
 import { addTicket } from '../util/board';
 import { sprintSlots } from '../util/economy';
 import { GameStore } from './game.store';
-import { rooms, storeWith } from './store.fixture';
+import { rooms, storeWith, tick } from './store.fixture';
 
 const A_WHILE_MS = 10_000;
 
@@ -576,5 +581,43 @@ describe('big payouts', () => {
     const incident = addTicket(store.board, 'incident');
     expect(incident).not.toBeNull();
     expect(store.harvest([incident!.id]).big).toBe(true);
+  });
+});
+
+describe('Triage Policy auto-closes what nobody claims', () => {
+  const triaged = (): GameStore =>
+    storeWith({ skills: { root: 1, triagePolicy: 1 }, spawners: {} });
+
+  it('ships a lint card that runs out its life, and bills it', () => {
+    const store = triaged();
+    addTicket(store.board, 'lint');
+    tick(store, TICKET_LIFE_MS + TICK_MS);
+
+    expect(store.board.tickets.length).toBe(0);
+    expect(store.sprintCount()).toBe(1);
+    expect(store.budget()).toBeGreaterThan(0);
+  });
+
+  it('leaves a type it does not name to go stale', () => {
+    const store = triaged();
+    addTicket(store.board, 'bug');
+    tick(store, TICKET_LIFE_MS + TICK_MS);
+
+    expect(store.sprintCount()).toBe(0);
+    expect(store.budget()).toBe(0);
+  });
+
+  it('sends lane-less work to prod as a P0, a few at a time', () => {
+    const store = triaged();
+    store.endRoundNow(0);
+    expect(store.hauling()).toBe(true);
+    for (let n = 0; n < PROD_INCIDENT_LIVE_CAP + 2; n += 1) {
+      addTicket(store.board, 'lint');
+    }
+    tick(store, TICKET_LIFE_MS + TICK_MS);
+
+    const p0s = store.board.tickets.filter((t) => t.type === 'incident');
+    expect(p0s.length).toBe(PROD_INCIDENT_LIVE_CAP);
+    expect(store.snapshot().lifetimeProdIncidents).toBe(PROD_INCIDENT_LIVE_CAP);
   });
 });

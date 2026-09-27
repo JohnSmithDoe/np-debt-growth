@@ -20,7 +20,12 @@ import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import type { CrewRules, CrewSeat, HirePace, Rush } from '../model/crew.model';
 import { FLAKY_COMEBACK_MS } from '../model/ticket.model';
-import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
+import {
+  BOARD_CAPACITY,
+  CARD_HIT,
+  LOGICAL_BOARD,
+  RARE_HIT,
+} from '../model/geometry';
 import {
   GOLDEN_LIFE_MS,
   TICKET_LIFE_MS,
@@ -31,6 +36,7 @@ const OUT_OF_POOL = -1;
 const COLUMN_SAMPLES = 4;
 const SCATTER_SAMPLES = 8;
 const CLAIM_SAMPLES = 4;
+const NO_TYPES: ReadonlySet<TicketTypeId> = new Set();
 
 export type Closed = readonly Close[];
 
@@ -194,12 +200,15 @@ export function fadeOf(ticket: BoardTicket): number {
 /**
  * Closes as "won't fix" whatever nobody reached in time, after a fade the
  * hand can still rescue it from. A claimed card holds its clock: someone is
- * on the way. Won't-fix never comes back.
+ * on the way. Won't-fix never comes back. A type in `autoCloses` skips the
+ * fade and leaves into `closing` instead, for the store to bill.
  */
 export function expireTickets(
   board: Board,
   dtMs: number,
-  into: BoardTicket[]
+  into: BoardTicket[],
+  autoCloses: ReadonlySet<TicketTypeId> = NO_TYPES,
+  closing: BoardTicket[] = []
 ): void {
   into.push(...board.displaced);
   board.displaced.length = 0;
@@ -210,6 +219,11 @@ export function expireTickets(
     if (ticket.lifeLeftMs > 0) {
       ticket.lifeLeftMs = Math.max(0, ticket.lifeLeftMs - dtMs);
       if (ticket.lifeLeftMs > 0) continue;
+      if (autoCloses.has(ticket.type)) {
+        closing.push(ticket);
+        removeTicket(board, ticket);
+        continue;
+      }
       leavePool(board, ticket);
       continue;
     }
@@ -443,6 +457,29 @@ function sweep(
 export function comeBack(board: Board, ticket: BoardTicket): void {
   if (!TICKET_TYPES[ticket.type].respawns || ticket.reborn) return;
   board.pending.push({ type: ticket.type, leftMs: FLAKY_COMEBACK_MS });
+}
+
+/**
+ * Tickets whose hit box the ellipse of `radius` across and `radiusY` down
+ * touches: the hand's sweep, which takes any card it grazes.
+ */
+export function pickTouching(
+  board: Board,
+  x: number,
+  y: number,
+  radius: number,
+  radiusY = radius
+): number[] {
+  const found: number[] = [];
+  const rx = Math.max(radius, 1e-6);
+  const ry = Math.max(radiusY, 1e-6);
+  for (const ticket of board.tickets) {
+    const box = TICKET_TYPES[ticket.type].handOnly ? RARE_HIT : CARD_HIT;
+    const dx = Math.max(0, Math.abs(ticket.x - x) - box.halfWidth) / rx;
+    const dy = Math.max(0, Math.abs(ticket.y - y) - box.halfHeight) / ry;
+    if (dx * dx + dy * dy <= 1) found.push(ticket.id);
+  }
+  return found;
 }
 
 /** Tickets inside the ellipse of `radius` across and `radiusY` down. */

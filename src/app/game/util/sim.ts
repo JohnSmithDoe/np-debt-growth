@@ -7,7 +7,12 @@ import {
   HEAP_FIELD_ROWS,
   HEAP_SPAWN_ROWS,
 } from '../model/board.model';
-import { BOARD_CAPACITY, LOGICAL_BOARD, TICKET_SLOT } from '../model/geometry';
+import {
+  BOARD_CAPACITY,
+  CARD_HIT,
+  LOGICAL_BOARD,
+  TICKET_SLOT,
+} from '../model/geometry';
 import {
   TICKET_LIFE_MS,
   VOTE_CYCLE_MS,
@@ -19,7 +24,7 @@ import { heldBack } from './first-act';
 /**
  * The economy without a board: what a state earns per second, as arithmetic.
  *
- *   collected = min(supply, what the hand and the crew reach, what the lanes take)
+ *   collected = min(supply, what the hand, the crew and auto-close reach, what the lanes take)
  *   €/s       = Σ collected × ticketValue (× goldenMultiplier on gold)
  *   SP/s      = Σ collected × pickupStoryPoints + expected planning-poker votes
  *
@@ -51,6 +56,7 @@ interface Stream {
   left: number;
   hand: number;
   crew: number;
+  auto: number;
 }
 
 const BOARD_AREA = LOGICAL_BOARD.width * LOGICAL_BOARD.height;
@@ -90,6 +96,7 @@ function streams(state: Consultancy): Stream[] {
       left: rate * (1 - gold),
       hand: 0,
       crew: 0,
+      auto: 0,
     });
     if (gold > 0) {
       out.push({
@@ -99,6 +106,7 @@ function streams(state: Consultancy): Stream[] {
         left: rate * gold,
         hand: 0,
         crew: 0,
+        auto: 0,
       });
     }
   }
@@ -154,6 +162,39 @@ function cellsInReach(radius: number): number {
   }
   const mean = sum / FIELD_CELLS;
   reachMemo.set(radius, mean);
+  return mean;
+}
+
+const touchMemo = new Map<number, number>();
+
+/**
+ * Mean count of other field cells whose card box a ring of `radius` centred
+ * on a card touches: the hand's box-overlap sweep.
+ */
+function cellsTouched(radius: number): number {
+  const known = touchMemo.get(radius);
+  if (known !== undefined) return known;
+  const { width, height } = TICKET_SLOT;
+  const cols = Math.ceil((radius + CARD_HIT.halfWidth) / width);
+  const rows = Math.ceil((radius + CARD_HIT.halfHeight) / height);
+  let sum = 0;
+  for (let col = 0; col < HEAP_COLS; col += 1) {
+    for (let row = 0; row < HEAP_FIELD_ROWS; row += 1) {
+      for (let dc = -cols; dc <= cols; dc += 1) {
+        const c = col + dc;
+        if (c < 0 || c >= HEAP_COLS) continue;
+        for (let dr = -rows; dr <= rows; dr += 1) {
+          const r = row + dr;
+          if ((dc === 0 && dr === 0) || r < 0 || r >= HEAP_FIELD_ROWS) continue;
+          const dx = Math.max(0, Math.abs(dc * width) - CARD_HIT.halfWidth);
+          const dy = Math.max(0, Math.abs(dr * height) - CARD_HIT.halfHeight);
+          if (dx * dx + dy * dy <= radius * radius) sum += 1;
+        }
+      }
+    }
+  }
+  const mean = sum / FIELD_CELLS;
+  touchMemo.set(radius, mean);
   return mean;
 }
 
@@ -248,9 +289,17 @@ function collect(
   const radius = economy.clickRadius(state);
   const onField = Math.min(density, FIELD_CELLS);
   const others =
-    (Math.max(0, onField - 1) * cellsInReach(radius)) /
+    (Math.max(0, onField - 1) * cellsTouched(radius)) /
     (spreadOver(density) - 1);
   takeMixed(all, policy.clicksPerSec * others, 'hand');
+
+  // Whatever of an auto-closed type the hand leaves closes itself.
+  const auto = economy.autoClosed(state);
+  for (const s of all) {
+    if (!auto.has(s.type)) continue;
+    s.auto += s.left;
+    s.left = 0;
+  }
 }
 
 export function flow(state: Consultancy, policy: SimPolicy): Flow {
@@ -268,16 +317,17 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
       s.left = arrivals[at]!;
       s.hand = 0;
       s.crew = 0;
+      s.auto = 0;
     });
     collect(state, policy, all, density);
-    const taken = all.reduce((sum, s) => sum + s.hand + s.crew, 0);
+    const taken = all.reduce((sum, s) => sum + s.hand + s.crew + s.auto, 0);
     density = Math.min(
       BOARD_CAPACITY,
       Math.max(0, supplyPerSec - taken / 2) * lifeSec
     );
   }
 
-  const collected = all.reduce((sum, s) => sum + s.hand + s.crew, 0);
+  const collected = all.reduce((sum, s) => sum + s.hand + s.crew + s.auto, 0);
   const lanes = economy.ceilingPerSec(state);
   const scale = collected > lanes ? lanes / collected : 1;
 
@@ -300,17 +350,18 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
   for (const s of all) {
     const byHand = s.hand * scale;
     const byCrew = s.crew * scale;
+    const byAuto = s.auto * scale;
     const crewWorth = s.golden
       ? s.worth
       : s.worth * (1 - conversion) + s.worth * goldMult * conversion;
     handEuro += byHand * s.worth;
-    crewEuro += byCrew * crewWorth;
+    crewEuro += byCrew * crewWorth + byAuto * s.worth;
     hand += byHand;
-    crew += byCrew;
+    crew += byCrew + byAuto;
     sp +=
-      byHand * economy.pickupStoryPoints(state, s.type, false) +
+      (byHand + byAuto) * economy.pickupStoryPoints(state, s.type, false) +
       byCrew * economy.pickupStoryPoints(state, s.type, true) +
-      (s.golden ? 0 : (byHand + byCrew) * votes);
+      (s.golden ? 0 : (byHand + byCrew + byAuto) * votes);
   }
 
   return {

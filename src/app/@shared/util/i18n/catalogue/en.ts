@@ -22,8 +22,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.spawnRate.ticket': '{{pct}} {{ticket}} spawn rate',
   'skill.effect.standupAura': '{{each}} junior speed per junior, to {{cap}}',
   'skill.effect.ticketValue': '{{pct}} {{ticket}} value',
-  'skill.effect.triagePolicy.juniors': 'Juniors leave {{ticket}} alone',
-  'skill.effect.triagePolicy.seniors': 'Seniors leave {{ticket}} alone',
+  'skill.effect.autoClose': 'Unclaimed {{ticket}} closes itself',
   'skill.lock.blocked': 'Blocked by {{by}}',
   'skill.lock.underfunded': 'Underfunded',
   'skill.lock.unknown': 'Unknown',
@@ -349,7 +348,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.triagePolicy.1.label': 'Triage Policy',
   'skill.triagePolicy.2.label': 'Scope Freeze',
   'skill.triagePolicy.blurb':
-    'A crew stops claiming one type, and stops filling the sprint with it.',
+    'No crew claims the type any more. A card left on the board closes itself instead of going stale, and ships. With every train away it has nowhere to go but prod.',
   'skill.valueBug.1.label': 'Bug Bounty',
   'skill.valueBug.blurb': 'Bugs bill double.',
   'skill.valueConflict.1.label': 'Conflict Boost',

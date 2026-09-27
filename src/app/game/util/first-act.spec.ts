@@ -4,7 +4,6 @@ import { TICKET_TYPES } from '../model/ticket.model';
 import { heldBack, scriptedSpawns } from './first-act';
 
 const FIRST_INCIDENT_AT_MS = TICKET_TYPES.incident.revealAtMs!;
-const BUG_REVEAL_TIER = TICKET_TYPES.bug.revealAtTier!;
 
 describe('the first act', () => {
   it('places the first P0 exactly once, however the span is walked', () => {
@@ -26,9 +25,8 @@ describe('the first act', () => {
     expect(heldBack('incident', FIRST_INCIDENT_AT_MS, 0)).toBe(false);
   });
 
-  it('keeps Bug Report off the board until ADR-1, however long the run', () => {
-    expect(heldBack('bug', 60 * 60_000, 0)).toBe(true);
-    expect(heldBack('bug', 0, BUG_REVEAL_TIER)).toBe(false);
+  it('lets bugs share the opening with lint', () => {
+    expect(heldBack('bug', 0, 0)).toBe(false);
     expect(heldBack('lint', 0, 0)).toBe(false);
   });
 

@@ -62,8 +62,8 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
         kind: 'close',
         seq: line.seq,
         who:
-          line.close.by === 'you'
-            ? 'you'
+          line.close.by === 'you' || line.close.by === 'auto'
+            ? line.close.by
             : crewName(line.close.by, line.close.poolSeat, line.close.woman),
         key: `${type.prefix}-${1000 + (line.seq % 8999)}`,
         titleKey: line.titleKey,

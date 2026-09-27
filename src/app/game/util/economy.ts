@@ -596,7 +596,7 @@ export function crewClaims(
   state: Consultancy,
   crew: CrewKind
 ): (type: TicketTypeId) => boolean {
-  const skipped = triageSkips(state, crew);
+  const skipped = autoClosed(state);
   const band = crewBand(state, crew);
   return (type) => {
     const ticket = TICKET_TYPES[type];
@@ -631,14 +631,10 @@ function crewBand(state: Consultancy, crew: CrewKind): CrewBand {
   return { from: band.from, to: additive(state, 'juniorBand', band.to) };
 }
 
-function triageSkips(
-  state: Consultancy,
-  crew: CrewKind
-): ReadonlySet<TicketTypeId> {
+/** Types no crew claims: left on the board, they close themselves when they would have gone stale. */
+export function autoClosed(state: Consultancy): ReadonlySet<TicketTypeId> {
   return foldRanks(state, new Set<TicketTypeId>(), (all, effect) => {
-    if (effect.kind === 'triagePolicy' && effect.crew === crew) {
-      all.add(effect.target);
-    }
+    if (effect.kind === 'autoClose') all.add(effect.target);
     return all;
   });
 }

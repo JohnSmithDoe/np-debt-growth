@@ -127,6 +127,15 @@ export const AWARDS: readonly Award[] = [
     when: (s) => s.lifetimeBilled >= 1_000,
   },
   {
+    id: 'a-works-on-my-machine',
+    kind: 'achievement',
+    label: 'Works on my machine',
+    blurb:
+      'An auto-closed ticket found every train away and shipped straight to prod.',
+    weight: 'medium',
+    when: (s) => s.lifetimeProdIncidents >= 1,
+  },
+  {
     id: 'a-500',
     kind: 'achievement',
     label: 'Five hundred',

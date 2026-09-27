@@ -4,6 +4,7 @@ import type {
   Board,
   BoardTicket,
   Close,
+  CloseAuthor,
   CloseFloat,
   Harvest,
   SprintSlot,
@@ -53,7 +54,11 @@ import { tierAt } from '../model/tier.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
-import { PIZZA_MS, TIER_BURST } from '../model/balance/flow';
+import {
+  PIZZA_MS,
+  PROD_INCIDENT_LIVE_CAP,
+  TIER_BURST,
+} from '../model/balance/flow';
 import {
   ESCALATION_HOLD_MS,
   FACT_COUNTDOWN_MS,
@@ -77,6 +82,9 @@ import { newNotes } from '../util/feed';
 import * as economy from '../util/economy';
 import * as purchase from '../util/purchase';
 import { SpawnBudget } from '../util/spawn-budget';
+
+/** A crew hand closed it: crew-only multipliers apply. */
+const crewed = (by: CloseAuthor): boolean => by !== 'you' && by !== 'auto';
 
 type Buffs = Pick<
   Consultancy,
@@ -212,6 +220,8 @@ export class GameStore {
   #closeFloats: CloseFloat[] = [];
   #wontFix: number[] = [];
   #wontFixStep = 0;
+  #prodIncidents = 0;
+  readonly #prodLive = new Set<number>();
   #seq = 0;
   #roundFrom = signal(0);
   #roundSlots = signal<readonly SprintSlot[]>([]);
@@ -506,18 +516,85 @@ export class GameStore {
             this.#rand,
             economy.sprintRoom(state, weather)
           );
-    this.#expire(dtMs);
-    return crews;
+    const closing = this.#expire(state, dtMs);
+    return this.#autoClose(state, weather, crews, closing);
   }
 
-  #expire(dtMs: number): void {
+  #expire(state: Consultancy, dtMs: number): readonly BoardTicket[] {
     const gone: BoardTicket[] = [];
-    expireTickets(this.#board, dtMs, gone);
+    const closing: BoardTicket[] = [];
+    expireTickets(this.#board, dtMs, gone, economy.autoClosed(state), closing);
     this.#wontFixStep = gone.length;
+    this.#fade(gone);
+    return closing;
+  }
+
+  #fade(gone: readonly BoardTicket[]): void {
     for (const ticket of gone) {
       if (this.#wontFix.length >= WONT_FIX_BUFFER) break;
       this.#wontFix.push(ticket.id);
     }
+  }
+
+  /**
+   * Auto-closed work ships with the crew's, as far as the lanes have room;
+   * what finds no lane goes straight to prod and comes back as a P0.
+   */
+  #autoClose(
+    state: Consultancy,
+    weather: Weather,
+    crews: CrewWork,
+    closing: readonly BoardTicket[]
+  ): CrewWork {
+    if (closing.length === 0) return crews;
+    const room = Math.max(
+      0,
+      economy.sprintRoom(state, weather) - crews.closed.length
+    );
+    const shipped: Close[] = closing.slice(0, room).map((ticket) => ({
+      type: ticket.type,
+      titleKey: ticket.titleKey,
+      golden: ticket.golden,
+      spBonus: ticket.spBonus,
+      by: 'auto',
+      poolSeat: 0,
+      woman: false,
+      x: ticket.x,
+      y: ticket.y,
+    }));
+    const toProd = closing.slice(room);
+    if (toProd.length > 0) {
+      this.#fade(toProd);
+      this.#wontFixStep += this.#toProd(toProd.length);
+    }
+    return { closed: [...crews.closed, ...shipped], byWomen: crews.byWomen };
+  }
+
+  /** Up to the live cap, each becomes a P0; returns how many went stale instead. */
+  #toProd(count: number): number {
+    for (const id of this.#prodLive) {
+      if (!this.#board.byId.has(id)) this.#prodLive.delete(id);
+    }
+    let stale = 0;
+    for (let n = 0; n < count; n += 1) {
+      const card =
+        this.#prodLive.size < PROD_INCIDENT_LIVE_CAP
+          ? addTicket(this.#board, 'incident', this.#rand)
+          : null;
+      if (!card) {
+        stale += 1;
+        continue;
+      }
+      this.#prodLive.add(card.id);
+      this.#prodIncidents += 1;
+    }
+    return stale;
+  }
+
+  #takeProdIncidents(): number {
+    const count = this.#prodIncidents;
+    this.#prodIncidents = 0;
+    return count;
   }
 
   /** Ids closed as won't fix since the last call; the stage fades them. */
@@ -536,6 +613,8 @@ export class GameStore {
     this.#state.set({
       ...banked.next,
       lifetimeWontFix: banked.next.lifetimeWontFix + this.#wontFixStep,
+      lifetimeProdIncidents:
+        banked.next.lifetimeProdIncidents + this.#takeProdIncidents(),
       lastTick: now,
       runMs: state.runMs + dtMs,
       roundMs: state.roundMs + dtMs,
@@ -918,7 +997,7 @@ export class GameStore {
     for (const { type, titleKey, by, x, y, golden, spBonus } of closed) {
       if (TICKET_TYPES[type].effect !== 'value') continue;
       const gilded =
-        golden || (by !== 'you' && conversion > 0 && this.#rand() < conversion);
+        golden || (crewed(by) && conversion > 0 && this.#rand() < conversion);
       const worth =
         economy.closeValue(state, type, now) * (gilded ? goldenMult : 1);
       const loud = gilded || type === 'incident';
@@ -926,7 +1005,7 @@ export class GameStore {
       if (loud) headline ??= titleKey;
       value += worth;
       sp +=
-        economy.pickupStoryPoints(state, type, by !== 'you') +
+        economy.pickupStoryPoints(state, type, crewed(by)) +
         (economy.pickupsPaySp(state) ? spBonus : 0);
       took.push({ type, titleKey });
       worths.push(worth);
@@ -1195,6 +1274,8 @@ export class GameStore {
   skillAvailable(id: string): boolean {
     return purchase.skillAvailable(this.#state(), id);
   }
+
+  readonly autoClosed = computed(() => economy.autoClosed(this.#state()));
 
   readonly skillAffordable = computed(() =>
     purchase.anySkillAffordable(this.#state())

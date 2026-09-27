@@ -25,7 +25,7 @@ import {
 import { GOLDEN_CREW_CONVERSION } from '../model/balance/flow';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPRINT_SLOTS_BASE } from '../model/balance/round';
-import { BOARD_CAPACITY, LOGICAL_BOARD } from '../model/geometry';
+import { BOARD_CAPACITY, CARD_HIT, LOGICAL_BOARD } from '../model/geometry';
 
 const WALK_MS = (LOGICAL_BOARD.width / CREW_STATS.juniors.walkSpeed) * 1000 * 2;
 const SENIOR_WALK_MS =
@@ -37,6 +37,8 @@ import {
   addTicket,
   expireTickets,
   fadeOf,
+  pickTouching,
+  pickWithin,
   removeTicket,
   workCrews as stepCrews,
 } from './board';
@@ -775,5 +777,38 @@ describe('the board prices nothing (S8)', () => {
     const source = await readFile(BOARD_SOURCE, 'utf8');
     expect(source).not.toMatch(/from '\.\/(economy|crew-rules|supply)'/);
     expect(source).not.toMatch(/consultancy\.model/);
+  });
+});
+
+describe('the hand takes what the ring touches', () => {
+  it('takes a card whose box the ring grazes, centre outside it', () => {
+    const board = emptyBoard();
+    const card = addTicket(board, 'lint')!;
+    const x = card.x + CARD_HIT.halfWidth + 3;
+
+    expect(pickWithin(board, x, card.y, 5)).toEqual([]);
+    expect(pickTouching(board, x, card.y, 5)).toEqual([card.id]);
+  });
+
+  it('misses a card the ring does not reach', () => {
+    const board = emptyBoard();
+    const card = addTicket(board, 'lint')!;
+    const x = card.x + CARD_HIT.halfWidth + 6;
+
+    expect(pickTouching(board, x, card.y, 5)).toEqual([]);
+  });
+});
+
+describe('an auto-closed type', () => {
+  it('leaves the board for the store to bill instead of fading', () => {
+    const board = emptyBoard();
+    const card = addTicket(board, 'lint')!;
+    const gone: BoardTicket[] = [];
+    const closing: BoardTicket[] = [];
+
+    expireTickets(board, TICKET_LIFE_MS, gone, new Set(['lint']), closing);
+    expect(closing).toEqual([card]);
+    expect(gone).toEqual([]);
+    expect(board.byId.has(card.id)).toBe(false);
   });
 });

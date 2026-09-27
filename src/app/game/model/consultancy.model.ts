@@ -50,6 +50,8 @@ export interface Consultancy {
   readonly lifetimeClosedByWomen: number;
   readonly lifetimeCrewBilled: number;
   readonly lifetimeWorkBilled: number;
+  /** Auto-closed cards that found no lane and went to prod as a P0. */
+  readonly lifetimeProdIncidents: number;
 }
 
 /** Time away is not played: the run picks up where it was left. */
@@ -108,5 +110,6 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     lifetimeClosedByWomen: 0,
     lifetimeCrewBilled: 0,
     lifetimeWorkBilled: 0,
+    lifetimeProdIncidents: 0,
   };
 }

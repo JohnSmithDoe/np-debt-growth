@@ -4,17 +4,35 @@ import {
   BIG_FLOAT,
   BIG_FLOAT_CAPTION,
   BOARD_TEXT,
+  FLOAT_CAP,
   FLOAT_MS,
   MAX_FRAME_MS,
 } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
+import { FloatPool } from '../util/float-pool';
 
 export abstract class CbScene extends Phaser.Scene {
+  #floats?: FloatPool;
+  #bigLive = 0;
+
   protected constructor(
     key: string,
     protected readonly deps: SceneDeps
   ) {
     super(key);
+  }
+
+  protected get floats(): FloatPool {
+    if (!this.#floats) {
+      const pool = new FloatPool(this, 50, FLOAT_CAP.small);
+      this.#floats = pool;
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+        pool.destroy();
+        this.#floats = undefined;
+        this.#bigLive = 0;
+      });
+    }
+    return this.#floats;
   }
 
   protected cappedDelta(delta: number): number {
@@ -37,14 +55,14 @@ export abstract class CbScene extends Phaser.Scene {
     label: string,
     style: { colour?: string; size?: string; rise?: number } = {}
   ): void {
-    const text = this.add
-      .text(x, y, label, {
-        fontFamily: 'monospace',
-        fontSize: style.size ?? '18px',
-        color: style.colour ?? BOARD_TEXT.gold,
-      })
-      .setOrigin(0.5)
-      .setDepth(50);
+    const floats = this.floats;
+    const text = floats.take(
+      x,
+      y,
+      label,
+      style.size ?? '18px',
+      style.colour ?? BOARD_TEXT.gold
+    );
 
     this.tweens.add({
       targets: text,
@@ -52,7 +70,7 @@ export abstract class CbScene extends Phaser.Scene {
       alpha: 0,
       duration: FLOAT_MS,
       ease: 'Sine.easeOut',
-      onComplete: () => text.destroy(),
+      onComplete: () => floats.give(text),
     });
   }
 
@@ -62,6 +80,8 @@ export abstract class CbScene extends Phaser.Scene {
     label: string,
     caption?: string
   ): void {
+    if (this.#bigLive >= FLOAT_CAP.big) return;
+    this.#bigLive += 1;
     const text = this.add
       .text(x, y, label, {
         fontFamily: 'monospace',
@@ -81,6 +101,7 @@ export abstract class CbScene extends Phaser.Scene {
       duration: BIG_FLOAT.ms,
       ease: 'Sine.easeOut',
       onComplete: () => {
+        this.#bigLive -= 1;
         for (const target of targets) target.destroy();
       },
     });

@@ -20,7 +20,7 @@ import { TRAIT_IDS } from '../model/senior.model';
 /** Design bound: no single trait may make a senior worth more than this many. */
 const TRAIT_D21_CEILING = 1.25;
 import { HAUL_MIN_MS, HAUL_MS } from '../model/balance/round';
-import { pickWithin } from '../util/board';
+import { pickTouching } from '../util/board';
 import * as economy from '../util/economy';
 import type { LedgerMark } from '../util/autoplay';
 import { DEFAULT_POLICY, advisedSpend, autoplay } from '../util/autoplay';
@@ -378,7 +378,7 @@ describe("an unattended run keeps cycling (C1's successor)", () => {
           store.board.tickets.find((ticket) => ticket.golden) ??
           store.board.tickets[0];
         if (!aim) break;
-        const ids = pickWithin(
+        const ids = pickTouching(
           store.board,
           aim.x,
           aim.y,

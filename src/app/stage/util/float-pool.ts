@@ -1,0 +1,61 @@
+import * as Phaser from 'phaser';
+
+/**
+ * Recycled payout labels. At `cap` live the oldest is taken back mid-flight,
+ * so a sweep across a full board never allocates past it.
+ */
+export class FloatPool {
+  readonly #idle: Phaser.GameObjects.Text[] = [];
+  readonly #live: Phaser.GameObjects.Text[] = [];
+
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly depth: number,
+    private readonly cap: number
+  ) {}
+
+  take(
+    x: number,
+    y: number,
+    label: string,
+    size: string,
+    colour: string
+  ): Phaser.GameObjects.Text {
+    const text =
+      this.#live.length >= this.cap
+        ? this.#recycle()
+        : (this.#idle.pop() ??
+          this.scene.add.text(0, 0, '', { fontFamily: 'monospace' }));
+    this.#live.push(text);
+    return text
+      .setText(label)
+      .setFontSize(size)
+      .setColor(colour)
+      .setPosition(x, y)
+      .setOrigin(0.5)
+      .setScale(1)
+      .setAlpha(1)
+      .setDepth(this.depth)
+      .setVisible(true);
+  }
+
+  give(text: Phaser.GameObjects.Text): void {
+    const at = this.#live.indexOf(text);
+    if (at < 0) return;
+    this.#live.splice(at, 1);
+    this.scene.tweens.killTweensOf(text);
+    this.#idle.push(text.setVisible(false));
+  }
+
+  destroy(): void {
+    for (const text of [...this.#idle, ...this.#live]) text.destroy();
+    this.#idle.length = 0;
+    this.#live.length = 0;
+  }
+
+  #recycle(): Phaser.GameObjects.Text {
+    const oldest = this.#live.shift()!;
+    this.scene.tweens.killTweensOf(oldest);
+    return oldest;
+  }
+}
