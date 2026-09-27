@@ -1,6 +1,6 @@
 <div #track class="track">
   @for (line of lines(); track line.id) {
-    <span class="item">
+    <span class="item" [style.padding-left.px]="line.gap">
       <span class="key" [style.color]="line.colour">{{ line.key }}</span>
       {{ line.titleKey | translate }}
     </span>

@@ -2,7 +2,6 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
-  computed,
   DestroyRef,
   ElementRef,
   inject,
@@ -14,9 +13,9 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import type { SprintSlot } from '../../../game/model/board.model';
 import {
-  nextTickerItem,
+  nextBacklogItem,
+  nextClosedItem,
   TickerItem,
-  tickerTypes,
 } from '../../util/backlog-ticker';
 
 const PX_PER_SEC = 48;
@@ -24,6 +23,7 @@ const MAX_STEP_MS = 100;
 
 interface Line extends TickerItem {
   readonly id: number;
+  readonly gap: number;
 }
 
 @Component({
@@ -39,20 +39,19 @@ interface Line extends TickerItem {
   },
 })
 export class BacklogTickerComponent {
-  /** Omitted: every tier's titles. */
-  readonly tier = input<number>();
-  readonly closes = input<readonly SprintSlot[]>([]);
+  /** Omitted: the whole backlog, as on the title screen. */
+  readonly closes = input<readonly SprintSlot[]>();
 
   readonly lines = signal<readonly Line[]>([]);
   held = false;
 
-  readonly #types = computed(() => tickerTypes(this.tier()));
   readonly #host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   protected readonly track =
     viewChild.required<ElementRef<HTMLElement>>('track');
   readonly #still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   #nextId = 0;
   #offset = 0;
+  #seen = 0;
   #frame = 0;
   #last = 0;
 
@@ -70,22 +69,33 @@ export class BacklogTickerComponent {
     const dt = Math.min(MAX_STEP_MS, now - this.#last);
     this.#last = now;
     if (track.children.length === lines.length) {
-      if (!this.held && !this.#still) this.#offset += (PX_PER_SEC * dt) / 1000;
+      if (lines.length === 0) this.#offset = 0;
+      else if (!this.held && !this.#still)
+        this.#offset += (PX_PER_SEC * dt) / 1000;
       const first = track.firstElementChild as HTMLElement | null;
+      const room = this.#host.clientWidth - (track.scrollWidth - this.#offset);
       if (first && this.#offset >= first.offsetWidth) {
         this.#offset -= first.offsetWidth;
         this.lines.set(lines.slice(1));
-      } else if (track.scrollWidth - this.#offset < this.#host.clientWidth) {
-        this.#append(lines);
+      } else if (room > 0) {
+        this.#append(lines, room);
       }
       track.style.transform = `translateX(${-this.#offset}px)`;
     }
     this.#frame = requestAnimationFrame(this.#step);
   };
 
-  #append(lines: readonly Line[]): void {
+  #append(lines: readonly Line[], room: number): void {
     const onTrack = new Set(lines.map((line) => line.titleKey));
-    const item = nextTickerItem(this.closes(), this.#types(), onTrack);
-    if (item) this.lines.set([...lines, { ...item, id: this.#nextId++ }]);
+    const closes = this.closes();
+    if (!closes) return this.#push(lines, nextBacklogItem(onTrack), 0);
+    if (closes.length < this.#seen) this.#seen = 0;
+    const item = nextClosedItem(closes.slice(this.#seen), onTrack);
+    if (item) this.#seen = closes.length;
+    this.#push(lines, item, this.#still ? 0 : room);
+  }
+
+  #push(lines: readonly Line[], item: TickerItem | null, gap: number): void {
+    if (item) this.lines.set([...lines, { ...item, id: this.#nextId++, gap }]);
   }
 }

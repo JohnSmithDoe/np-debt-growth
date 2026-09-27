@@ -16,41 +16,44 @@ export interface TickerItem {
   readonly colour: string;
 }
 
-export const TICKER_TIER_SPAN = 2;
 const TIER_WEIGHT = 2;
 const CLOSES_SCANNED = 200;
 
-export function tickerTypes(tier: number | undefined): TicketTypeId[] {
-  if (tier === undefined) return [...TICKET_TYPE_IDS];
-  return TICKET_TYPE_IDS.filter((id) => {
-    const type = TICKET_TYPES[id];
-    return (
-      !type.handOnly && type.tier <= tier && type.tier > tier - TICKER_TIER_SPAN
-    );
-  });
-}
-
-/**
- * A type weighted by tier, then its newest recent close not on the track,
- * else one of its titles not on the track.
- */
-export function nextTickerItem(
+/** The newest of `closes` not on the track, its type weighted by tier. */
+export function nextClosedItem(
   closes: readonly SprintSlot[],
-  types: readonly TicketTypeId[],
   onTrack: ReadonlySet<string>,
   roll: () => number = Math.random
 ): TickerItem | null {
-  const pick =
-    fromCloses(closes, onTrack, roll) ?? drawTitle(types, onTrack, roll);
-  if (!pick) return null;
+  const pick = newestOfType(closes, onTrack, roll);
+  return pick ? item(pick, roll) : null;
+}
+
+/** Any type's title not on the track. */
+export function nextBacklogItem(
+  onTrack: ReadonlySet<string>,
+  roll: () => number = Math.random
+): TickerItem | null {
+  const pool = TICKET_TYPE_IDS.flatMap((type) =>
+    Array.from({ length: TICKET_TITLE_COUNTS[type] }, (_, at) => ({
+      type,
+      titleKey: ticketTitleKey(type, at),
+    }))
+  ).filter((slot) => !onTrack.has(slot.titleKey));
+  const pick = pool[Math.floor(roll() * pool.length)];
+  return pick ? item(pick, roll) : null;
+}
+
+function item(slot: SprintSlot, roll: () => number): TickerItem {
+  const type = TICKET_TYPES[slot.type];
   return {
-    key: `${TICKET_TYPES[pick.type].prefix}-${1000 + Math.floor(roll() * 8999)}`,
-    titleKey: pick.titleKey,
-    colour: cssHex(TICKET_TYPES[pick.type].colour),
+    key: `${type.prefix}-${1000 + Math.floor(roll() * 8999)}`,
+    titleKey: slot.titleKey,
+    colour: cssHex(type.colour),
   };
 }
 
-function fromCloses(
+function newestOfType(
   closes: readonly SprintSlot[],
   onTrack: ReadonlySet<string>,
   roll: () => number
@@ -64,24 +67,6 @@ function fromCloses(
   }
   const type = weighted([...newest.keys()], roll);
   return type && newest.get(type);
-}
-
-function drawTitle(
-  types: readonly TicketTypeId[],
-  onTrack: ReadonlySet<string>,
-  roll: () => number
-): SprintSlot | undefined {
-  const free = (type: TicketTypeId): string[] =>
-    Array.from({ length: TICKET_TITLE_COUNTS[type] }, (_, at) =>
-      ticketTitleKey(type, at)
-    ).filter((key) => !onTrack.has(key));
-  const type = weighted(
-    types.filter((id) => free(id).length > 0),
-    roll
-  );
-  if (!type) return undefined;
-  const keys = free(type);
-  return { type, titleKey: keys[Math.floor(roll() * keys.length)] as string };
 }
 
 function weighted(
