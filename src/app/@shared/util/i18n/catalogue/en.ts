@@ -168,6 +168,11 @@ export const EN: Readonly<Record<string, string>> = {
   'agent.save.detail':
     '{{short}} to go, about {{time}}. Buying anything else first is slower.',
   'agent.income': '{{ticket}} rate',
+  'agent.auto.label': 'Auto-buy',
+  'agent.auto.blurb': 'Buys every suggestion the moment it is affordable.',
+  'agent.warn.body':
+    "It looks like you're trying to stop thinking. I tell you what to buy next, and my auto-buy buys it the moment you can afford it. That is cheating, and it takes all the fun out of the game.",
+  'agent.warn.ok': 'Understood',
   'settings.close': 'Back to work',
   'settings.fullscreen.blurb':
     'Fills the screen. The board takes the extra room.',

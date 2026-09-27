@@ -3,29 +3,48 @@
     @if (open()) {
       <div class="bubble" role="status">
         <p class="name">{{ 'agent.name' | translate }}</p>
-        <p class="headline">{{ headline() }}</p>
-        <ul class="tips">
-          @for (row of rows(); track row.id) {
-            <li>
-              <button
-                type="button"
-                class="tip"
-                [class.ok]="row.affordable"
-                [class.sp]="row.currency === 'sp'"
-                [disabled]="!row.affordable"
-                (click)="buy(row)"
-              >
-                <span class="title">{{ row.title }}</span>
-                <span class="detail">{{ row.detail }}</span>
-              </button>
-            </li>
-          }
-        </ul>
+        @if (warned()) {
+          <p class="headline">{{ headline() }}</p>
+          <ul class="tips">
+            @for (row of rows(); track row.id) {
+              <li>
+                <button
+                  type="button"
+                  class="tip"
+                  [class.ok]="row.affordable"
+                  [class.sp]="row.currency === 'sp'"
+                  [disabled]="!row.affordable"
+                  (click)="buy(row)"
+                >
+                  <span class="title">{{ row.title }}</span>
+                  <span class="detail">{{ row.detail }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+          <button
+            type="button"
+            class="auto"
+            role="switch"
+            [attr.aria-checked]="auto()"
+            [title]="'agent.auto.blurb' | translate"
+            (click)="toggleAuto()"
+          >
+            <span class="knob" aria-hidden="true"></span>
+            {{ 'agent.auto.label' | translate }}
+          </button>
+        } @else {
+          <p class="headline">{{ 'agent.warn.body' | translate }}</p>
+          <button type="button" class="ack" (click)="acknowledge()">
+            {{ 'agent.warn.ok' | translate }}
+          </button>
+        }
       </div>
     }
     <button
       type="button"
       class="clip"
+      [class.auto]="auto()"
       [attr.aria-expanded]="open()"
       [attr.aria-label]="'agent.name' | translate"
       (click)="toggle()"

@@ -466,7 +466,9 @@ of income it costs, scores a gate together with the best purchase it opens, and 
 on offer buys only what shortens the time to it. An SP buy gives way to the next ADR when it
 would delay the ADR by more than `ADR_SLACK` (half). `autoplay.advisedSpend` plays a run on it, and
 `data/advisor.spec.ts` fails unless that run signs off sooner than cheapest-first. The console's
-paperclip (`console/feature/agent/`, on by default, switchable in settings) shows its € and SP picks.
+paperclip (`console/feature/agent/`, on by default, switchable in settings) shows its € and SP picks,
+behind a once-only warning that it is cheating. Its auto-buy switch (`AgentService.auto`, off by default,
+kept in settings) buys each pick the moment it is affordable.
 
 ---
 

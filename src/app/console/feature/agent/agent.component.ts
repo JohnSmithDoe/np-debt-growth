@@ -16,7 +16,7 @@ import {
 import { GameStore } from '../../../game/data/game.store';
 import type { Pick } from '../../../game/util/advisor';
 import { buyKey } from '../../../game/util/advisor';
-import { AgentService } from '../../data/agent.service';
+import { affordable, AgentService } from '../../data/agent.service';
 import { DoorService } from '../../data/door.service';
 import type { Phrase } from '../../util/agent-copy';
 import { buyName, goalKey } from '../../util/agent-copy';
@@ -47,6 +47,9 @@ export class AgentComponent {
   readonly #open = signal(false);
   readonly open = this.#open.asReadonly();
 
+  readonly warned = this.#settings.agentWarned;
+  readonly auto = this.#agent.auto;
+
   readonly shown = computed(
     () =>
       this.#settings.showAgent() && this.#door.opened() && !this.#store.ended()
@@ -64,20 +67,20 @@ export class AgentComponent {
       .map((pick) => {
         const held = pick.currency === 'eur' ? state.budget : state.storyPoints;
         const short = Math.max(0, pick.cost - held);
-        const affordable = short === 0;
+        const ok = affordable(state, pick);
         const name = this.#say(buyName(state, pick.buy));
         const cost = this.#amount(pick.currency, pick.cost);
         const then = pick.then ? this.#say(buyName(state, pick.then)) : null;
         return {
           id: buyKey(pick.buy),
           currency: pick.currency,
-          affordable,
+          affordable: ok,
           pick,
           title: this.#translate.instant(
-            affordable ? 'agent.buy.title' : 'agent.save.title',
+            ok ? 'agent.buy.title' : 'agent.save.title',
             { name }
           ),
-          detail: affordable
+          detail: ok
             ? this.#translate.instant(
                 pick.spare
                   ? 'agent.buy.spare'
@@ -99,6 +102,14 @@ export class AgentComponent {
 
   toggle(): void {
     this.#open.update((open) => !open);
+  }
+
+  acknowledge(): void {
+    this.#settings.setAgentWarned();
+  }
+
+  toggleAuto(): void {
+    this.#settings.setAgentAuto(!this.auto());
   }
 
   buy(row: TipRow): void {

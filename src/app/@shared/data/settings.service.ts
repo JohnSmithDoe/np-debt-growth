@@ -15,6 +15,14 @@ export class SettingsService {
     () => this.#settings().showAgent ?? SETTINGS_DEFAULTS.showAgent
   );
 
+  readonly agentAuto = computed(
+    () => this.#settings().agentAuto ?? SETTINGS_DEFAULTS.agentAuto
+  );
+
+  readonly agentWarned = computed(
+    () => this.#settings().agentWarned ?? SETTINGS_DEFAULTS.agentWarned
+  );
+
   readonly railTab = computed(
     () => this.#settings().railTab ?? SETTINGS_DEFAULTS.railTab
   );
@@ -25,6 +33,14 @@ export class SettingsService {
 
   setShowAgent(value: boolean): void {
     this.#write({ ...this.#settings(), showAgent: value });
+  }
+
+  setAgentAuto(value: boolean): void {
+    this.#write({ ...this.#settings(), agentAuto: value });
+  }
+
+  setAgentWarned(): void {
+    this.#write({ ...this.#settings(), agentWarned: true });
   }
 
   setShowClickRadius(value: boolean): void {

@@ -168,6 +168,11 @@ export const DE: Readonly<Record<string, string>> = {
   'agent.save.detail':
     'Noch {{short}}, etwa {{time}}. Alles andere zuerst ist langsamer.',
   'agent.income': 'Rate: {{ticket}}',
+  'agent.auto.label': 'Autokauf',
+  'agent.auto.blurb': 'Kauft jeden Vorschlag, sobald er bezahlbar ist.',
+  'agent.warn.body':
+    'Sieht so aus, als wolltest du aufhören nachzudenken. Ich sage dir, was du als Nächstes kaufst, und mein Autokauf kauft es, sobald du es dir leisten kannst. Das ist Schummeln, und es nimmt dem Spiel jeden Spaß.',
+  'agent.warn.ok': 'Verstanden',
   'settings.close': 'Zurück an die Arbeit',
   'settings.fullscreen.blurb':
     'Füllt den Bildschirm. Den Platz bekommt das Board.',
