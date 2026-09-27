@@ -9,8 +9,8 @@ const opt = (name, fallback) =>
 const URL = opt('url', 'http://localhost:4200');
 
 const SIZES = [
-  [1008, 640],
   [1280, 800],
+  [1440, 900],
   [1920, 1080],
 ];
 
@@ -52,7 +52,10 @@ for (const [width, height] of SIZES) {
     await page.waitForTimeout(1200);
   }
 
-  await page.evaluate(() => window.debtGrowth.grant(1_000_000, 1_000));
+  await page.evaluate(() => {
+    window.debtGrowth.grant(1_000_000, 1_000);
+    window.debtGrowth.buyLine('velocity');
+  });
   await page.waitForTimeout(300);
 
   const overflow = async () =>

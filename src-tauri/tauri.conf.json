@@ -14,10 +14,10 @@
       {
         "label": "main",
         "title": "Debt Growth",
-        "width": 1280,
-        "height": 800,
-        "minWidth": 1008,
-        "minHeight": 640
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1280,
+        "minHeight": 800
       }
     ],
     "security": {
