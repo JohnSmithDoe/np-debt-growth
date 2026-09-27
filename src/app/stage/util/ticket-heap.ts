@@ -7,7 +7,6 @@ import { fadeOf } from '../../game/util/board';
 import {
   AUTO_CLOSE_RAMP,
   BOARD_TEXT,
-  CLAIM_SLOTS,
   GOLD_GLOW,
   GOLD_GLOW_CAPACITY,
   HEAP_CAPACITY,
@@ -22,17 +21,12 @@ import {
   ATLAS_KEY,
   cardFrame,
   goldFrame,
-  claimFrame,
   GLOW_FRAME,
   GOLD_INK,
-  paintClaimCard,
   voteFrame,
 } from './board-atlas';
 
 export const NONE = -1;
-
-/** Above any 24-bit colour, so a voted claim paint never matches a plain one. */
-const VOTED_PAINT = 0x1000000;
 
 function voted(ticket: BoardTicket): boolean {
   return ticket.spBonus > 0;
@@ -64,9 +58,6 @@ export class TicketHeap {
   readonly #rareSlot = new Map<number, number>();
 
   readonly #bouncing = new Map<number, number>();
-  readonly #claimSlot = new Map<number, number>();
-  readonly #claimFree: number[] = [];
-  readonly #claimPainted = new Map<number, number>();
   readonly #atlas: Phaser.Textures.CanvasTexture;
 
   readonly #rareCards: Phaser.GameObjects.Image[] = [];
@@ -91,10 +82,6 @@ export class TicketHeap {
     this.#layer = scene.add
       .spriteGPULayer(this.#atlas, HEAP_CAPACITY)
       .setDepth(DEPTH.layer);
-    for (let slot = CLAIM_SLOTS - 1; slot >= 0; slot--) {
-      this.#claimFree.push(slot);
-    }
-
     for (let i = HEAP_CAPACITY - 1; i >= 0; i--) {
       this.#layer.addMember(this.#hiddenMember());
       this.#free.push(i);
@@ -212,53 +199,6 @@ export class TicketHeap {
     }
   }
 
-  preTint(tints: ReadonlyMap<number, number>): void {
-    for (const [id, slot] of this.#claimSlot) {
-      if (tints.has(id)) continue;
-      this.#releaseClaim(id, slot);
-    }
-
-    let repainted = false;
-    for (const [id, colour] of tints) {
-      const ticket = this.#drawn.get(id);
-      if (!ticket || TICKET_TYPES[ticket.type].handOnly) continue;
-
-      let slot = this.#claimSlot.get(id);
-      const fresh = slot === undefined;
-      if (slot === undefined) {
-        slot = this.#claimFree.pop();
-        if (slot === undefined) continue;
-        this.#claimSlot.set(id, slot);
-      }
-
-      const paint = voted(ticket) ? colour | VOTED_PAINT : colour;
-      if (this.#claimPainted.get(slot) !== paint) {
-        this.#claimPainted.set(slot, paint);
-        paintClaimCard(
-          this.#atlas,
-          slot,
-          TICKET_TYPES[ticket.type].prefix,
-          colour,
-          voted(ticket)
-        );
-        repainted = true;
-      } else if (!fresh) {
-        continue;
-      }
-      this.#draw(ticket);
-    }
-
-    if (repainted) this.#atlas.refresh();
-  }
-
-  #releaseClaim(id: number, slot: number): void {
-    this.#claimSlot.delete(id);
-    this.#claimPainted.delete(slot);
-    this.#claimFree.push(slot);
-    const ticket = this.#drawn.get(id);
-    if (ticket) this.#draw(ticket);
-  }
-
   reveal(id: number): void {
     this.#airborne.delete(id);
     const ticket = this.#drawn.get(id);
@@ -312,12 +252,6 @@ export class TicketHeap {
     this.#airborne.delete(id);
     const slot = this.#slotOf.get(id);
     if (slot === undefined) return;
-    const claim = this.#claimSlot.get(id);
-    if (claim !== undefined) {
-      this.#claimSlot.delete(id);
-      this.#claimPainted.delete(claim);
-      this.#claimFree.push(claim);
-    }
     this.#bouncing.delete(id);
     this.#dropGlow(id);
     const rare = this.#rareSlot.get(id);
@@ -361,15 +295,11 @@ export class TicketHeap {
       }
     }
 
-    const claim = this.#claimSlot.get(ticket.id);
-    this.#member.frame =
-      claim !== undefined
-        ? claimFrame(claim)
-        : ticket.golden
-          ? goldFrame(ticket.type)
-          : voted(ticket)
-            ? voteFrame(ticket.type)
-            : cardFrame(ticket.type);
+    this.#member.frame = ticket.golden
+      ? goldFrame(ticket.type)
+      : voted(ticket)
+        ? voteFrame(ticket.type)
+        : cardFrame(ticket.type);
     this.#member.x = x;
     this.#member.y = y;
     this.#member.rotation = ((ticket.id % 13) - 6) * 0.01;

@@ -15,7 +15,6 @@ import {
   crewSkin,
   CARD_HEIGHT,
   CARD_WIDTH,
-  CLAIM_SLOTS,
   RARE_CARD_HEIGHT,
   RARE_CARD_WIDTH,
 } from '../model/board.consts';
@@ -47,10 +46,6 @@ export const GLOW_FRAME = 'glow';
 
 export function cardFrame(id: TicketTypeId): string {
   return `card-${id}`;
-}
-
-export function claimFrame(slot: number): string {
-  return `claim-${slot}`;
 }
 
 /** Golden work gets its own card so it reads across a crowded board. */
@@ -109,11 +104,6 @@ export function buildBoardAtlas(
   const ring = shelf.place(CARD_WIDTH, CARD_HEIGHT);
   drawVoteRing(ctx, ring.x, ring.y);
   texture.add(VOTE_RING_FRAME, 0, ring.x, ring.y, CARD_WIDTH, CARD_HEIGHT);
-
-  for (let slot = 0; slot < CLAIM_SLOTS; slot++) {
-    const at = shelf.place(CARD_WIDTH, CARD_HEIGHT);
-    texture.add(claimFrame(slot), 0, at.x, at.y, CARD_WIDTH, CARD_HEIGHT);
-  }
 
   for (const id of TICKET_TYPE_IDS) {
     const type = TICKET_TYPES[id];
@@ -176,20 +166,6 @@ export function boardIconUrls(scene: Phaser.Scene): {
     }
   }
   return { tickets, marks, crew, spawners };
-}
-
-export function paintClaimCard(
-  texture: Phaser.Textures.CanvasTexture,
-  slot: number,
-  prefix: string,
-  colour: number,
-  voted: boolean
-): void {
-  const frame = texture.get(claimFrame(slot));
-  const ctx = texture.context;
-  ctx.clearRect(frame.cutX, frame.cutY, CARD_WIDTH, CARD_HEIGHT);
-  drawCard(ctx, frame.cutX, frame.cutY, prefix, hex(colour));
-  if (voted) drawVoteRing(ctx, frame.cutX, frame.cutY);
 }
 
 function hex(colour: number): string {
