@@ -20,6 +20,9 @@ import {
   registerFinaleAnimations,
   releaseFinaleAtlas,
 } from '../util/lpc-sprite';
+import { hash01 } from '../util/hash01';
+import type { GlowStop } from '../util/radial-glow';
+import { paintRadialGlow } from '../util/radial-glow';
 import { CbScene } from './cb-scene';
 
 type Role = 'junior' | 'senior' | 'manager' | 'spawner';
@@ -65,9 +68,14 @@ const roleOf = (skin: LpcSkin): Role =>
         : 'junior';
 
 function seeded(index: number): number {
-  const noise = Math.sin(index * 78.233 + 12.9898) * 43758.5453;
-  return noise - Math.floor(noise);
+  return hash01(index * 78.233 + 12.9898);
 }
+
+const LIGHT_GLOW: readonly GlowStop[] = [
+  [0, 1],
+  [0.5, 0.45],
+  [1, 0],
+];
 
 const between = ([low, high]: readonly [number, number], at: number): number =>
   low + (high - low) * at;
@@ -533,20 +541,7 @@ export class FinaleScene extends CbScene {
     const texture = this.textures.createCanvas(FINALE_LIGHTS.key, size, size);
     const ctx = texture?.getContext();
     if (!texture || !ctx) return;
-    const radius = size / 2;
-    const gradient = ctx.createRadialGradient(
-      radius,
-      radius,
-      0,
-      radius,
-      radius,
-      radius
-    );
-    gradient.addColorStop(0, 'rgba(255,255,255,1)');
-    gradient.addColorStop(0.5, 'rgba(255,255,255,0.45)');
-    gradient.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, size, size);
+    paintRadialGlow(ctx, 0, 0, size, LIGHT_GLOW);
     texture.refresh();
   }
 

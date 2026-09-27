@@ -38,6 +38,18 @@ function sinkOf(fade: number): number {
 
 const DEPTH = { goldGlow: 9, layer: 10, glow: 11, rare: 12 } as const;
 
+type MemberAnimation = Phaser.Types.GameObjects.SpriteGPULayer.MemberAnimation;
+
+function glowPulse(base: number, amplitude: number): MemberAnimation {
+  return {
+    ease: 'Sine.easeInOut',
+    duration: GOLD_GLOW.ms,
+    delay: 0,
+    base,
+    amplitude,
+  };
+}
+
 export class TicketHeap {
   readonly #scene: Phaser.Scene;
   readonly #layer: Phaser.GameObjects.SpriteGPULayer;
@@ -46,6 +58,16 @@ export class TicketHeap {
   readonly #goldGlows: Phaser.GameObjects.SpriteGPULayer;
   readonly #glowMember: Partial<Phaser.Types.GameObjects.SpriteGPULayer.Member> =
     {};
+  readonly #glowScaleX = glowPulse(GOLD_GLOW.scaleX, GOLD_GLOW.swell);
+  readonly #glowScaleY = glowPulse(GOLD_GLOW.scaleY, GOLD_GLOW.swell);
+  readonly #glowAlpha = glowPulse(0, 0);
+  readonly #autoCloseRamp: MemberAnimation = {
+    base: 0,
+    amplitude: AUTO_CLOSE_RAMP.peak,
+    duration: 0,
+    ease: 'Linear',
+    loop: false,
+  };
   readonly #glowFree: number[] = [];
   readonly #glowSlot = new Map<number, number>();
 
@@ -169,7 +191,8 @@ export class TicketHeap {
       }
     }
 
-    for (const [id, ticket] of this.#drawn) {
+    for (const ticket of this.#drawn.values()) {
+      const id = ticket.id;
       if (board.byId.has(id)) continue;
       const fade = Math.max(0, fadeOf(ticket));
       onGone(
@@ -198,8 +221,8 @@ export class TicketHeap {
 
   update(deltaMs: number): void {
     if (this.#bouncing.size === 0) return;
-    for (const [id, at] of this.#bouncing) {
-      const next = at + deltaMs;
+    for (const id of this.#bouncing.keys()) {
+      const next = this.#bouncing.get(id)! + deltaMs;
       if (next >= REFUSAL_BOUNCE.ms) this.#bouncing.delete(id);
       else this.#bouncing.set(id, next);
       const ticket = this.#drawn.get(id);
@@ -298,44 +321,28 @@ export class TicketHeap {
     member.tintTopRight = AUTO_CLOSE_RAMP.ink;
     member.tintBottomLeft = AUTO_CLOSE_RAMP.ink;
     member.tintBottomRight = AUTO_CLOSE_RAMP.ink;
-    member.tintBlend = {
-      base: 0,
-      amplitude: AUTO_CLOSE_RAMP.peak,
-      duration: ticket.lifeLeftMs,
-      ease: 'Linear',
-      loop: false,
-    };
+    this.#autoCloseRamp.duration = ticket.lifeLeftMs;
+    member.tintBlend = this.#autoCloseRamp;
   }
 
   #glowUnder(id: number, x: number, y: number, fade: number): void {
     const slot = this.#glowSlot.get(id) ?? this.#glowFree.pop();
     if (slot === undefined) return;
     this.#glowSlot.set(id, slot);
-    const pulse = {
-      ease: 'Sine.easeInOut',
-      duration: GOLD_GLOW.ms,
-      delay: (id % 7) * 100,
-    };
+    const delay = (id % 7) * 100;
+    this.#glowScaleX.delay = delay;
+    this.#glowScaleY.delay = delay;
+    this.#glowAlpha.delay = delay;
+    this.#glowAlpha.base = GOLD_GLOW.alpha * fade;
+    this.#glowAlpha.amplitude = GOLD_GLOW.flare * fade;
     const glow = this.#glowMember;
     glow.frame = GLOW_FRAME;
     glow.x = x;
     glow.y = y;
     glow.rotation = 0;
-    glow.scaleX = {
-      ...pulse,
-      base: GOLD_GLOW.scaleX,
-      amplitude: GOLD_GLOW.swell,
-    };
-    glow.scaleY = {
-      ...pulse,
-      base: GOLD_GLOW.scaleY,
-      amplitude: GOLD_GLOW.swell,
-    };
-    glow.alpha = {
-      ...pulse,
-      base: GOLD_GLOW.alpha * fade,
-      amplitude: GOLD_GLOW.flare * fade,
-    };
+    glow.scaleX = this.#glowScaleX;
+    glow.scaleY = this.#glowScaleY;
+    glow.alpha = this.#glowAlpha;
     glow.tintTopLeft = GOLD_INK;
     glow.tintTopRight = GOLD_INK;
     glow.tintBottomLeft = GOLD_INK;

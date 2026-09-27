@@ -191,7 +191,29 @@ export class BoardScene extends CbScene {
     this.deps.takeCloseFloats();
     this.deps.takeWontFix();
   };
-  #wontFix = new Set<number>();
+  readonly #wontFix = new Set<number>();
+  readonly #carrying = new Set<number>();
+  #carryingFresh = false;
+  #spawnerCount = (adr: number): number => this.deps.spawnerCount(adr);
+  #seniorSeat = (seat: number): number => this.deps.seniorPoolSeat(seat);
+  #onLand = (
+    id: number,
+    type: TicketTypeId,
+    x: number,
+    y: number,
+    voteMask: number
+  ): boolean =>
+    this.#parts ? this.#land(this.#parts, id, type, x, y, voteMask) : false;
+  #onGone = (
+    id: number,
+    type: TicketTypeId,
+    x: number,
+    y: number,
+    voted: boolean,
+    alpha: number
+  ): void => {
+    if (this.#parts) this.#leave(this.#parts, id, type, x, y, voted, alpha);
+  };
   #billing: {
     text: Phaser.GameObjects.Text;
     value: number;
@@ -328,14 +350,10 @@ export class BoardScene extends CbScene {
 
     parts.ground.tier(this.deps.tier());
     parts.backdrop.tier(this.deps.tier());
-    parts.spawners.sync((adr) => this.deps.spawnerCount(adr));
-    this.#wontFix = new Set(this.deps.takeWontFix());
-    parts.heap.sync(
-      board,
-      (id, type, x, y, voteMask) => this.#land(parts, id, type, x, y, voteMask),
-      (id, type, x, y, voted, alpha) =>
-        this.#leave(parts, id, type, x, y, voted, alpha)
-    );
+    parts.spawners.sync(this.#spawnerCount);
+    this.#takeWontFix();
+    this.#carryingFresh = false;
+    parts.heap.sync(board, this.#onLand, this.#onGone);
     parts.heap.autoCloses(this.deps.autoClosed());
     parts.crew.sync(board, board.juniors, this.deps.womanEvery('juniors'));
     parts.managers.sync(
@@ -347,7 +365,7 @@ export class BoardScene extends CbScene {
       board,
       board.seniors,
       this.deps.womanEvery('seniors'),
-      (seat) => this.deps.seniorPoolSeat(seat)
+      this.#seniorSeat
     );
     parts.bubbles.hear(parts.crew);
     parts.bubbles.hear(parts.seniors);
@@ -535,14 +553,33 @@ export class BoardScene extends CbScene {
     );
   }
 
+  #takeWontFix(): void {
+    const due = this.deps.takeWontFix();
+    if (due.length === 0 && this.#wontFix.size === 0) return;
+    this.#wontFix.clear();
+    for (const id of due) this.#wontFix.add(id);
+  }
+
   #carried(id: number): boolean {
-    const board = this.deps.board();
-    for (const crew of [board.juniors, board.seniors, board.managers]) {
-      for (const member of crew) {
-        if (member.carrying.some((card) => card.id === id)) return true;
-      }
+    if (!this.#carryingFresh) {
+      this.#carryingFresh = true;
+      this.#gatherCarried(this.deps.board());
     }
-    return false;
+    return this.#carrying.has(id);
+  }
+
+  #gatherCarried(board: Board): void {
+    const carrying = this.#carrying;
+    carrying.clear();
+    for (const member of board.juniors) {
+      for (const card of member.carrying) carrying.add(card.id);
+    }
+    for (const member of board.seniors) {
+      for (const card of member.carrying) carrying.add(card.id);
+    }
+    for (const member of board.managers) {
+      for (const card of member.carrying) carrying.add(card.id);
+    }
   }
 
   #readBoard(px: number, py: number): void {

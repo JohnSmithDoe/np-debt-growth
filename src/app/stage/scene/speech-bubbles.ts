@@ -15,7 +15,8 @@ export class SpeechBubbles {
   readonly #bubbles: Bubble[] = [];
   readonly #text: (key: string) => string;
   readonly #width: () => number;
-  #heard: { layer: CrewLayer; claim: Claim }[] = [];
+  readonly #heardLayers: CrewLayer[] = [];
+  readonly #heardClaims: Claim[] = [];
   #nextInMs: number = SPEECH_BUBBLE.gapMs.min;
 
   constructor(
@@ -65,21 +66,23 @@ export class SpeechBubbles {
 
   hear(layer: CrewLayer): void {
     for (const claim of layer.takeClaims()) {
-      this.#heard.push({ layer, claim });
+      this.#heardLayers.push(layer);
+      this.#heardClaims.push(claim);
     }
   }
 
   update(stepMs: number): void {
     this.#nextInMs -= stepMs;
-    const idle = this.#bubbles.find((bubble) => bubble.layer === null);
-    if (this.#nextInMs <= 0 && idle && this.#heard.length > 0) {
-      const { layer, claim } =
-        this.#heard[Math.floor(Math.random() * this.#heard.length)]!;
-      this.#speak(idle, layer, claim);
+    const heard = this.#heardClaims.length;
+    const idle = this.#idle();
+    if (this.#nextInMs <= 0 && idle && heard > 0) {
+      const pick = Math.floor(Math.random() * heard);
+      this.#speak(idle, this.#heardLayers[pick]!, this.#heardClaims[pick]!);
       const { min, max } = SPEECH_BUBBLE.gapMs;
       this.#nextInMs = min + Math.random() * (max - min);
     }
-    this.#heard.length = 0;
+    this.#heardLayers.length = 0;
+    this.#heardClaims.length = 0;
 
     for (const bubble of this.#bubbles) this.#follow(bubble, stepMs);
   }
@@ -89,6 +92,12 @@ export class SpeechBubbles {
       bubble.text.destroy();
       bubble.tail.destroy();
     }
+  }
+
+  #idle(): Bubble | undefined {
+    for (const bubble of this.#bubbles)
+      if (bubble.layer === null) return bubble;
+    return undefined;
   }
 
   #speak(bubble: Bubble, layer: CrewLayer, claim: Claim): void {

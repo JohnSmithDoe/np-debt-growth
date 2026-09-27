@@ -43,6 +43,8 @@ export abstract class PanZoomScene extends CbScene {
 
   protected abstract redraw(): void;
 
+  protected abstract redrawHover(): void;
+
   protected get hovered(): string | null {
     return this.#hover;
   }
@@ -86,8 +88,7 @@ export abstract class PanZoomScene extends CbScene {
     );
     this.#bindInput();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.#onResize);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.#release);
-    this.events.once(Phaser.Scenes.Events.DESTROY, this.#release);
+    this.onLeave(this.#release);
   }
 
   protected reframe(): void {
@@ -122,7 +123,7 @@ export abstract class PanZoomScene extends CbScene {
     if (id === this.#hover) return;
     this.#hover = id;
     this.input.setDefaultCursor(id ? 'pointer' : 'default');
-    this.redraw();
+    this.redrawHover();
   };
 
   #drag(pointer: Phaser.Input.Pointer): void {
@@ -222,11 +223,7 @@ export abstract class PanZoomScene extends CbScene {
     this.input.on('wheel', this.#onWheel);
   }
 
-  #released = false;
-
   #release = (): void => {
-    if (this.#released) return;
-    this.#released = true;
     this.scale.off(Phaser.Scale.Events.RESIZE, this.#onResize);
     if (this.#canvas) this.#canvas.style.cursor = 'default';
     this.#hover = null;

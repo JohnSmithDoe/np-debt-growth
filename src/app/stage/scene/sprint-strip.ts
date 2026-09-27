@@ -54,7 +54,11 @@ export class SprintStrip {
   #barWidth = SPRINT_BAR_WIDTH;
   #statusX = 0;
   #remaining = 0;
-  #drawnBar = '';
+  #haul = 0;
+  #drawnSlots = -1;
+  #drawnTier = -1;
+  #drawnFilled = -1;
+  #drawnTrain = -2;
   #drawnCooldown = -1;
   #drawnPending = '';
   #drawnClock = '';
@@ -123,13 +127,14 @@ export class SprintStrip {
       this.#top + SPRINT_STRIP_HEIGHT / 2 - 2
     );
 
-    this.#drawnBar = '';
+    this.#drawnSlots = -1;
     this.#drawnClock = '';
     this.#drawnCooldown = -1;
   }
 
   update(): void {
     this.#remaining = this.#deps.roundLeftMs();
+    this.#haul = this.#deps.haulMs();
 
     this.#refreshSlots();
     this.#refreshPending();
@@ -168,16 +173,26 @@ export class SprintStrip {
   }
 
   #refreshSlots(): void {
-    const haul = Math.max(1, this.#deps.haulMs());
+    const haul = Math.max(1, this.#haul);
     const filled = this.#deps.filled();
     const slots = this.#deps.slots();
     const away = this.#remaining > 0;
     const train = away
       ? Math.round((this.#remaining / haul) * TRAIN_STEPS)
       : -1;
-    const key = `${slots}|${this.#deps.tier()}|${filled}|${train}`;
-    if (key === this.#drawnBar) return;
-    this.#drawnBar = key;
+    const tier = this.#deps.tier();
+    if (
+      slots === this.#drawnSlots &&
+      tier === this.#drawnTier &&
+      filled === this.#drawnFilled &&
+      train === this.#drawnTrain
+    ) {
+      return;
+    }
+    this.#drawnSlots = slots;
+    this.#drawnTier = tier;
+    this.#drawnFilled = filled;
+    this.#drawnTrain = train;
 
     this.#slotsLabel.setText(`${filled} / ${slots}`);
     this.#pips.clear();
@@ -337,7 +352,7 @@ export class SprintStrip {
   }
 
   #drawCooldown(): void {
-    const length = this.#deps.haulMs();
+    const length = this.#haul;
     const away = this.#remaining > 0;
     const part = away && length > 0 ? this.#remaining / length : 0;
     const drawn = away ? Math.round(part * 200) : -2;

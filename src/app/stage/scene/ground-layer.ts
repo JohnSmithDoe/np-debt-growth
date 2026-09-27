@@ -6,13 +6,13 @@ import {
   GROUND_TIER_INK,
   GROUND_TILE,
 } from '../model/board.consts';
+import { hash01 } from '../util/hash01';
 
 const TILE_KEY = 'cb-ground-tile';
 const SCATTER_KEY = 'cb-ground-scatter';
 
 function jitterAt(cell: number): number {
-  const noise = Math.sin(cell * 12.9898) * 43758.5453;
-  return noise - Math.floor(noise);
+  return hash01(cell * 12.9898);
 }
 
 function bakeTile(scene: Phaser.Scene): void {

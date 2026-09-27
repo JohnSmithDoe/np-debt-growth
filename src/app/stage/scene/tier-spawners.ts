@@ -5,6 +5,7 @@ import { LANE, LANE_ARRIVAL, LANE_PACK } from '../model/board.consts';
 import { LPC_FOOT } from '../model/lpc-sheet.model';
 import { spawnerSkins } from '../model/spawner-skin.model';
 import { ATLAS_KEY, GLOW_FRAME } from '../util/board-atlas';
+import { hash01 } from '../util/hash01';
 import { LpcSprite } from '../util/lpc-sprite';
 
 interface Pace {
@@ -13,8 +14,7 @@ interface Pace {
 }
 
 function paceOf(adr: number, index: number): Pace {
-  const noise = Math.sin((adr * 37 + index * 11 + 1) * 12.9898) * 43758.5453;
-  const at = noise - Math.floor(noise);
+  const at = hash01((adr * 37 + index * 11 + 1) * 12.9898);
   return { speed: 16 + at * 74, lane: at };
 }
 

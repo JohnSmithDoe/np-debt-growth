@@ -22,8 +22,15 @@ import {
   RARE_CARD_HEIGHT,
   RARE_CARD_WIDTH,
 } from '../model/board.consts';
+import type { GlowStop } from './radial-glow';
+import { paintRadialGlow } from './radial-glow';
 
 export const ATLAS_KEY = 'cb-board-atlas';
+const CARD_GLOW: readonly GlowStop[] = [
+  [0, 0.85],
+  [0.45, 0.25],
+  [1, 0],
+];
 const ATLAS_WIDTH = 512;
 const ATLAS_HEIGHT = 512;
 const PAD = 2;
@@ -122,7 +129,7 @@ export function buildBoardAtlas(
   }
 
   const glow = shelf.place(64, 64);
-  drawGlow(ctx, glow.x, glow.y, 64);
+  paintRadialGlow(ctx, glow.x, glow.y, 64, CARD_GLOW);
   texture.add(GLOW_FRAME, 0, glow.x, glow.y, 64, 64);
 
   texture.refresh();
@@ -254,26 +261,4 @@ export function splitLabel(label: string): [string, string] {
     if (longest(cut) < longest(best)) best = cut;
   }
   return best;
-}
-
-function drawGlow(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number
-): void {
-  const radius = size / 2;
-  const gradient = ctx.createRadialGradient(
-    x + radius,
-    y + radius,
-    0,
-    x + radius,
-    y + radius,
-    radius
-  );
-  gradient.addColorStop(0, 'rgba(255,255,255,0.85)');
-  gradient.addColorStop(0.45, 'rgba(255,255,255,0.25)');
-  gradient.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(x, y, size, size);
 }

@@ -72,6 +72,7 @@ const PULSE = {
 const WIRE = { width: 2, lit: 3, glow: 9, glowAlpha: 0.18 } as const;
 const FIT_MARGIN = 96;
 
+const HOVER_DEPTH = 2.2;
 const TIP_DEPTH = 30;
 const TEXT_DEPTH = 31;
 
@@ -117,10 +118,12 @@ export class SkillScene extends PanZoomScene {
   #pulse?: Phaser.GameObjects.Graphics;
   #buyable: readonly SkillSquare[] = [];
   #icons?: IconPool;
+  #hoverFrame?: Phaser.GameObjects.Graphics;
   #tipPanel?: Phaser.GameObjects.Graphics;
   #tipText?: LabelPool;
 
   #drawn?: SkillView;
+  #byId: ReadonlyMap<string, SkillNodeView> = new Map();
   #shown: ReadonlyMap<string, SquareState> = new Map();
   #glyph = 7;
 
@@ -147,6 +150,7 @@ export class SkillScene extends PanZoomScene {
     this.#frames = this.add.graphics().setDepth(2);
     this.#pulse = this.add.graphics().setDepth(PULSE.depth);
     this.#icons = new IconPool(this, 3);
+    this.#hoverFrame = this.add.graphics().setDepth(HOVER_DEPTH);
     this.#tipPanel = this.add.graphics().setDepth(TIP_DEPTH);
     this.#tipText = new LabelPool(this, TEXT_DEPTH);
 
@@ -169,9 +173,11 @@ export class SkillScene extends PanZoomScene {
 
   #take(view: SkillView): void {
     this.#drawn = view;
+    const byId = new Map(view.nodes.map((node) => [node.id, node]));
+    this.#byId = byId;
     this.#shown = revealSquares(
-      (id) => this.#rankOf(view, id),
-      (id) => view.nodes.find((node) => node.id === id)?.available ?? true
+      (id) => byId.get(id)?.rank ?? 0,
+      (id) => byId.get(id)?.available ?? true
     );
     const buyable = new Set(
       view.nodes.filter((node) => node.buyable).map((node) => node.id)
@@ -253,10 +259,6 @@ export class SkillScene extends PanZoomScene {
     );
   }
 
-  #rankOf(view: SkillView, nodeId: string): number {
-    return view.nodes.find((node) => node.id === nodeId)?.rank ?? 0;
-  }
-
   #centreOnRoot(): void {
     this.#centreOn(skillSquare(SKILL_ROOT_ID));
   }
@@ -282,7 +284,7 @@ export class SkillScene extends PanZoomScene {
     const wires = this.#wires;
     if (!view || !frames || !wires) return;
 
-    const byId = new Map(view.nodes.map((node) => [node.id, node]));
+    const byId = this.#byId;
     frames.clear();
     wires.clear();
     this.#icons?.release();
@@ -299,7 +301,25 @@ export class SkillScene extends PanZoomScene {
     }
 
     this.#drawBands(view);
-    this.#drawTip(byId);
+    this.redrawHover();
+  }
+
+  protected redrawHover(): void {
+    this.#drawHoverFrame();
+    this.#drawTip(this.#byId);
+  }
+
+  #drawHoverFrame(): void {
+    const layer = this.#hoverFrame;
+    if (!layer) return;
+    layer.clear();
+    const id = this.hovered;
+    if (id === null) return;
+    const square = skillSquare(id);
+    const state = this.#shown.get(id);
+    const node = this.#byId.get(id);
+    if (!square || state === undefined || !node) return;
+    this.#frame(layer, square, this.#edgeColour(node, state), HOVER_STROKE);
   }
 
   #drawWire(
@@ -356,7 +376,7 @@ export class SkillScene extends PanZoomScene {
   ): void {
     frames.fillStyle(this.#fillFor(node, state));
     frames.fillRect(square.x, square.y, square.width, square.height);
-    this.#frame(frames, square, this.#edgeColour(node, state));
+    this.#frame(frames, square, this.#edgeColour(node, state), STROKE);
 
     if (!this.#stampIcon(square, state)) {
       const code = skillCode(node.label);
@@ -488,9 +508,9 @@ export class SkillScene extends PanZoomScene {
   #frame(
     frames: Phaser.GameObjects.Graphics,
     rect: HitRect,
-    colour: number
+    colour: number,
+    width: number
   ): void {
-    const width = rect.id === this.hovered ? HOVER_STROKE : STROKE;
     frames
       .lineStyle(width, colour, 1)
       .strokeRect(
@@ -629,7 +649,7 @@ export class SkillScene extends PanZoomScene {
   }
 
   protected tap(target: HitRect): boolean {
-    const node = this.#drawn?.nodes.find((one) => one.id === target.id);
+    const node = this.#byId.get(target.id);
     return node?.buyable === true && this.deps.buySkill(node.id);
   }
 
@@ -639,6 +659,7 @@ export class SkillScene extends PanZoomScene {
     this.#icons?.clear();
     this.#icons = undefined;
     this.#drawn = undefined;
+    this.#byId = new Map();
     this.#buyable = [];
   }
 }

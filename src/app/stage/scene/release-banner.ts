@@ -1,5 +1,9 @@
 import * as Phaser from 'phaser';
 
+import type {
+  ReleasePhase,
+  ReleasePhaseId,
+} from '../../game/model/balance/round';
 import { releasePhaseKey } from '../../game/model/round.model';
 import { phaseAt } from '../../game/util/economy';
 import {
@@ -18,7 +22,12 @@ export class ReleaseBanner {
   readonly #hint: Phaser.GameObjects.Text;
   readonly #steps: Phaser.GameObjects.Text[] = [];
   readonly #arrows: Phaser.GameObjects.Text[] = [];
-  #drawn = '';
+  #shown = false;
+  #drawnPhases: readonly ReleasePhase[] | null = null;
+  #drawnNow: ReleasePhaseId | null = null;
+  #drawnX = NaN;
+  #drawnY = NaN;
+  #drawnWidth = NaN;
 
   constructor(scene: Phaser.Scene, deps: SceneDeps, depth: number) {
     this.#scene = scene;
@@ -32,15 +41,28 @@ export class ReleaseBanner {
   update(centreX: number, centreY: number, maxWidth: number): void {
     const left = this.#deps.roundLeftMs();
     if (left <= 0) {
-      if (this.#drawn !== '') this.#hide();
+      if (this.#shown) this.#hide();
       return;
     }
 
     const phases = this.#deps.releasePhases();
     const now = phaseAt(phases, left);
-    const key = `${now}|${phases.map((p) => p.id).join(',')}|${centreX}|${centreY}|${maxWidth}`;
-    if (key === this.#drawn) return;
-    this.#drawn = key;
+    if (
+      this.#shown &&
+      phases === this.#drawnPhases &&
+      now === this.#drawnNow &&
+      centreX === this.#drawnX &&
+      centreY === this.#drawnY &&
+      maxWidth === this.#drawnWidth
+    ) {
+      return;
+    }
+    this.#shown = true;
+    this.#drawnPhases = phases;
+    this.#drawnNow = now;
+    this.#drawnX = centreX;
+    this.#drawnY = centreY;
+    this.#drawnWidth = maxWidth;
 
     const at = phases.findIndex((phase) => phase.id === now);
     this.#title.setText(this.#deps.text('board.release.title'));
@@ -124,7 +146,8 @@ export class ReleaseBanner {
   }
 
   #hide(): void {
-    this.#drawn = '';
+    this.#shown = false;
+    this.#drawnPhases = null;
     for (const object of [
       this.#title,
       this.#current,

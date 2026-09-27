@@ -42,6 +42,8 @@ export class CrewLayer {
   readonly #block: LpcBlock[] = [];
   readonly #claimedId: number[] = [];
   #claims: Claim[] = [];
+  #spareClaims: Claim[] = [];
+  readonly #anchor = { x: 0, y: 0 };
 
   #scaleX = 1;
   #scaleY = 1;
@@ -120,13 +122,18 @@ export class CrewLayer {
 
   takeClaims(): readonly Claim[] {
     const due = this.#claims;
-    this.#claims = [];
+    this.#spareClaims.length = 0;
+    this.#claims = this.#spareClaims;
+    this.#spareClaims = due;
     return due;
   }
 
-  anchorOf(index: number): { x: number; y: number } | null {
+  anchorOf(index: number): { readonly x: number; readonly y: number } | null {
     const sprite = index < this.#shown ? this.#sprites[index] : undefined;
-    return sprite?.visible ? { x: sprite.x, y: sprite.y } : null;
+    if (!sprite?.visible) return null;
+    this.#anchor.x = sprite.x;
+    this.#anchor.y = sprite.y;
+    return this.#anchor;
   }
 
   get kind(): CrewKind {
