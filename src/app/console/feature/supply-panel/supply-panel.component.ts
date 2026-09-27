@@ -34,8 +34,6 @@ const TABS = ['supply', 'income', 'crew'] as const;
 
 type Tab = (typeof TABS)[number];
 
-const MAXED = 'MAX';
-
 /** Holding a row keeps buying: a pause, then a repeat that speeds up. */
 const HOLD = { delayMs: 350, everyMs: 90, fastMs: 40, fastAfter: 10 } as const;
 
@@ -180,7 +178,7 @@ export class SupplyPanelComponent {
           held,
           cap: SPAWNER_CAP,
           cost: maxed
-            ? MAXED
+            ? this.#say('rail.maxed')
             : formatCompactMoney(this.#store.spawnerCost(row.adr)),
           maxed,
           affordable: this.#store.canBuySpawner(row.adr),
@@ -234,7 +232,9 @@ export class SupplyPanelComponent {
         locked: false,
         held,
         cap: INCOME_CAP,
-        cost: maxed ? MAXED : formatCompactMoney(this.#store.incomeCost(id)),
+        cost: maxed
+          ? this.#say('rail.maxed')
+          : formatCompactMoney(this.#store.incomeCost(id)),
         maxed,
         affordable: this.#store.canBuyIncome(id),
         icon: this.#cardOf(id),
@@ -270,9 +270,9 @@ export class SupplyPanelComponent {
         held,
         cap,
         cost: locked
-          ? 'on the tree'
+          ? this.#say('rail.on-tree')
           : maxed
-            ? MAXED
+            ? this.#say('rail.maxed')
             : formatCompactMoney(this.#store.lineCost(line)),
         maxed,
         affordable: this.#store.canBuyLine(line),

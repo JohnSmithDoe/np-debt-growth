@@ -1,12 +1,12 @@
 <p class="line">
-  <span>{{ copyright }} · free software under the</span>
+  <span>{{ copyright }} · {{ 'credits.free' | translate }}</span>
   <a [href]="licenseUrl" target="_blank" rel="noopener">AGPL-3.0</a>
   <span>·</span>
-  <span>source at</span>
+  <span>{{ 'credits.source' | translate }}</span>
   <a [href]="sourceUrl" target="_blank" rel="noopener">{{ sourceLabel }}</a>
   <span>·</span>
   <button type="button" (click)="toggle()" [attr.aria-expanded]="open()">
-    {{ open() ? 'Hide credits' : 'Credits' }}
+    {{ (open() ? 'credits.hide' : 'credits.show') | translate }}
   </button>
 </p>
 
@@ -28,7 +28,7 @@
     }
   </dl>
   <p class="line">
-    <span>The crew art carries its own copyleft:</span>
+    <span>{{ 'credits.copyleft' | translate }}</span>
     <a [href]="artLicenseUrl" target="_blank" rel="noopener">GPL-3.0</a>
   </p>
 }

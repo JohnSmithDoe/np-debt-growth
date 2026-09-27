@@ -20,7 +20,8 @@ export interface OfficeFrame {
 export function officeFilmstrip(
   tier: number,
   ended: boolean,
-  tierName: (index: number) => string
+  tierName: (index: number) => string,
+  outside: string
 ): readonly OfficeFrame[] {
   const frames: OfficeFrame[] = [];
 
@@ -37,7 +38,7 @@ export function officeFilmstrip(
     frames.push({
       index: MAX_TIER + 1,
       art: CLOSING_OFFICE_ART,
-      caption: 'The engagement, from outside',
+      caption: outside,
       missed: false,
     });
   }

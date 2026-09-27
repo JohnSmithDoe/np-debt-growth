@@ -822,4 +822,275 @@ export const DE: Readonly<Record<string, string>> = {
     'Mit Story Points kaufst du den Skill-Baum. Gib dort ADRs frei, um neue Linien immer teurerer Schulden zu öffnen.',
   'help.loop.5':
     'Ganz oben im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt. Das Mandat ist erfüllt, wenn das Budget 1 Brd. € erreicht.',
+  'award.m-first-close.label': 'Erstes Ticket triagiert',
+  'award.m-first-close.blurb': 'Irgendwer musste ja.',
+  'award.m-first-invoice.label': 'Erste Rechnung gestellt',
+  'award.m-first-invoice.blurb': 'Das Mandat erwirtschaftet jetzt Umsatz.',
+  'award.m-first-hire.label': 'Headcount genehmigt',
+  'award.m-first-hire.blurb':
+    'Ein Junior. Die Stellenanforderung hat vier Wochen gedauert.',
+  'award.m-hundred.label': 'Hundert Tickets geschlossen',
+  'award.m-hundred.blurb':
+    'Die Velocity entwickelt sich in die richtige Richtung.',
+  'award.m-tier1.label': 'ADR-1 freigegeben',
+  'award.m-tier1.blurb': 'Das Framework ist jetzt tragend und ungewartet.',
+  'award.m-tier2.label': 'ADR-2 freigegeben',
+  'award.m-tier2.blurb':
+    'Die Duplizierung ist jetzt ein Pattern, und Patterns sind Best Practice.',
+  'award.m-tier3.label': 'ADR-3 freigegeben',
+  'award.m-tier3.blurb': 'Geliefert wird jetzt in allen Zeitzonen zugleich.',
+  'award.m-tier4.label': 'ADR-4 freigegeben',
+  'award.m-tier4.blurb':
+    'Niemand im Mandat kann sagen, welche Zeilen ein Mensch geschrieben hat.',
+  'award.m-tier5.label': 'ADR-5 freigegeben',
+  'award.m-tier5.blurb':
+    'Der Durchsatz pro Kopf war nie höher. Bus-Faktor: eins.',
+  'award.m-tier6.label': 'ADR-6 freigegeben',
+  'award.m-tier6.blurb':
+    'Die Services sind tragend, und niemand weiß, was sie tragen.',
+  'award.m-tier7.label': 'ADR-7 freigegeben',
+  'award.m-tier7.blurb':
+    'Zwei Systeme, eine Wahrheit, und wir werden fürs Abgleichen bezahlt.',
+  'award.m-tier8.label': 'ADR-8 freigegeben',
+  'award.m-tier8.blurb': 'Nach dieser Stufe kommt keine mehr.',
+  'award.a-250.label': 'Zweihundertfünfzig',
+  'award.a-250.blurb':
+    'Schließ 250 Tickets. Das Board sieht kein bisschen leerer aus.',
+  'award.a-first-thousand-billed.label': 'Vierstellig abgerechnet',
+  'award.a-first-thousand-billed.blurb':
+    'Rechne 1.000 € ab. Jetzt lohnt sich das Mandat.',
+  'award.a-works-on-my-machine.label': 'Works on my machine',
+  'award.a-works-on-my-machine.blurb':
+    'Ein selbst geschlossenes Ticket fand alle Züge unterwegs und ging direkt nach Prod.',
+  'award.a-500.label': 'Fünfhundert',
+  'award.a-500.blurb':
+    'Schließ 500 Tickets. Zweihundertfünfzig davon kamen zurück.',
+  'award.a-ten-thousand-billed.label': 'Fünfstellig abgerechnet',
+  'award.a-ten-thousand-billed.blurb':
+    'Rechne 10.000 € ab. Weiter oben ist jemandem der Account aufgefallen.',
+  'award.a-sprints-fifty.label': 'Fünfzig Sprints',
+  'award.a-sprints-fifty.blurb':
+    'Fünfzig Zeremonien. Fünfzig Burndown-Charts. Eine Codebasis, schlechter.',
+  'award.a-thousand.label': 'Tausend-Ticket-Mandat',
+  'award.a-thousand.blurb': 'Schließ 1.000 Tickets.',
+  'award.a-war-room.label': 'Ständiger War Room',
+  'award.a-war-room.blurb':
+    'Setz einen Senior auf die Eskalationen und überlass den Rest dem Team.',
+  'award.a-bench.label': 'Zwanzig im Team',
+  'award.a-bench.blurb': 'Zwanzig Entwickler gleichzeitig auf der Etage.',
+  'award.a-skimmer.label': 'Kreative Buchführung',
+  'award.a-skimmer.blurb':
+    'Verbuche abgerechneten Umsatz als Story Points. Die Finanzabteilung hat abgezeichnet.',
+  'award.a-million.label': 'Siebenstellig abgerechnet',
+  'award.a-million.blurb': 'Rechne über das Mandat 1.000.000 € ab.',
+  'award.a-ten-thousand.label': 'Fünfstellig an Tickets',
+  'award.a-ten-thousand.blurb':
+    'Schließ 10.000 Tickets. Behoben ist keins davon.',
+  'award.a-office.label': 'Die ganze Etage',
+  'award.a-office.blurb':
+    'Richte jeden Raum ein. Es gibt keinen Platz mehr für irgendwen.',
+  'award.a-hundred-thousand.label': 'Sechsstellig an Tickets',
+  'award.a-hundred-thousand.blurb':
+    'Schließ 100.000 Tickets. Der Backlog war nie länger.',
+  'award.a-billion.label': 'Zehnstellig abgerechnet',
+  'award.a-billion.blurb':
+    'Rechne 1.000.000.000 € ab. Das Mandat ist jetzt der Kunde.',
+  'award.a-ladder.label': 'Jede Entscheidung freigegeben',
+  'award.a-ladder.blurb': 'Alle acht ADRs. Einen Weg zurück gab es nie.',
+  'award.a-million-tickets.label': 'Siebenstellig an Tickets',
+  'award.a-million-tickets.blurb':
+    'Schließ 1.000.000 Tickets. Der Kunde liest sie nicht mehr.',
+  'award.a-rate-card.label': 'Die Preisliste, überarbeitet',
+  'award.a-rate-card.blurb': 'Fünf Überarbeitungen. Gesunken ist sie noch nie.',
+  'award.a-secret.label': 'Du hast den Code gelesen',
+  'award.a-secret.blurb': 'Seit 2011 hat niemand diese Datei geöffnet.',
+  'adr.1.context':
+    'Das Ticketaufkommen ist der manuellen Triage entwachsen. Ein Framework-Upgrade wurde geplant und aus Kostengründen abgelehnt. Die Feature-Velocity stagniert.',
+  'adr.1.decision':
+    'Das Legacy-Framework wird zur Plattform-Basis. Die aktuelle Version wird nicht aktualisiert. Legacy-Defekte sind erwarteter Output, keine Incidents.',
+  'adr.1.consequences':
+    'Legacy-Defekte entstehen jetzt laufend auf dem ganzen Board. Das Framework ist jetzt tragend und ungewartet.',
+  'adr.2.context':
+    'Die Einarbeitung neuer Leute galt als zu langsam. Ein Styleguide wurde vorgeschlagen und zugunsten einer Wiki-Seite mit dem Titel „Kopier einfach einen bestehenden Service“ zurückgestellt.',
+  'adr.2.decision':
+    'Copy-Paste wird als Standardmethode festgeschrieben, das System zu erweitern. Deduplizierung wird auf unbestimmte Zeit depriorisiert.',
+  'adr.2.consequences':
+    'Flaky Tests entstehen jetzt auf dem ganzen Board und kommen nach dem Schließen einmal zurück: derselbe Defekt, zweimal abgerechnet. Die Duplizierung ist jetzt ein Pattern, und Patterns sind Best Practice.',
+  'adr.3.context':
+    'Die Lieferkapazität ist nicht mit dem Backlog gewachsen. Ein Dienstleister wurde über drei Zeitzonen hinweg beauftragt, ohne gemeinsamen Styleguide, ohne Code Owner, ohne Onboarding.',
+  'adr.3.decision':
+    'Der Großteil neuer Feature-Arbeit läuft über Offshore-Verträge. Reviews finden asynchron statt, sofern sie überhaupt stattfinden.',
+  'adr.3.consequences':
+    'Merge-Konflikte entstehen massenhaft, rund um die Uhr. Das Board läuft voll, und die Einnahmen springen um eine Größenordnung. Geliefert wird jetzt in allen Zeitzonen zugleich.',
+  'adr.4.context':
+    'Der Durchsatz pro Entwickler stagniert. Eine Lizenz für ein KI-Coding-Tool wurde auf Basis eines Vendor-Decks genehmigt und eines zweiwöchigen Tests, den niemand dokumentiert hat.',
+  'adr.4.decision':
+    'Neuer Code wird standardmäßig generiert. Reviews sind beratend. Was kompiliert, gilt als funktionierend.',
+  'adr.4.consequences':
+    'Halluzinierte Imports entstehen auf dem ganzen Board. Jeder wirkt korrekt und ist es nicht; gefunden wird der Defekt weiter hinten, zu unserem Tagessatz. Niemand im Mandat kann noch sagen, welche Zeilen ein Mensch geschrieben hat.',
+  'adr.5.context':
+    'Der Backlog für das KI-Tooling ist in Verzug. Ein Entwickler schließt durchweg mehr Tickets als der Rest des Teams zusammen und hat darum gebeten, ungebremst arbeiten zu dürfen.',
+  'adr.5.decision':
+    'Der leistungsstärkste Entwickler erhält uneingeschränkten Commit-Zugriff. Review, Pairing und Retro-Teilnahme entfallen, nur für ihn.',
+  'adr.5.consequences':
+    'Force Pushes landen auf main und machen allen anderen Arbeit. Der Durchsatz pro Kopf ist so hoch wie nie, und unser Bus-Faktor ist eins. Die Retro ist jetzt optional, womit sich die Beschwerden über die Retro erledigt haben.',
+  'adr.6.context':
+    'Nach dem Weggang des leistungsstärksten Entwicklers hat sich gezeigt, dass vier Produktiv-Services keinen eingetragenen Owner haben. Die Ownership wurde in einem Channel angefragt, der keine Mitglieder mehr hat.',
+  'adr.6.decision':
+    'Die Services ohne Owner laufen weiter. Was sich nicht zurückverfolgen lässt, wird nicht abgeschaltet. Ihre Alerts gehen an die Rufbereitschaft.',
+  'adr.6.consequences':
+    'Der 3-Uhr-Alarm entsteht laufend und kommt nach dem Schließen zurück: derselbe Incident, zweimal abgerechnet. Behoben wird nichts, weil sich nichts finden lässt. Die Services sind tragend, und niemand weiß, was sie tragen.',
+  'adr.7.context':
+    'Ein Plattform-Audit hat das System für nicht wartbar befunden. Die Schätzung für eine schrittweise Sanierung lag über der für einen Neubau, denn den Neubau hat das Team geschätzt, das ihn vorgeschlagen hat.',
+  'adr.7.decision':
+    'Ein kompletter Rewrite auf neuem Stack beginnt. Beide Systeme laufen auf unbestimmte Zeit parallel. Feature-Parität ist ein Thema für Phase zwei.',
+  'adr.7.consequences':
+    'Migrations-Schäden entstehen in großem Stil, weil sich die beiden Systeme über die Wahrheit uneins sind. Wir werden jetzt dafür bezahlt, das alte System zu warten, das neue zu bauen und beide abzugleichen. Es ist das profitabelste Quartal seit Beginn der Aufzeichnungen.',
+  'adr.8.context':
+    'Der Rewrite hängt hinterher. Der Headcount ist gedeckelt. Ein Vorschlag, die Lücke ohne Neueinstellungen zu schließen, wurde herumgeschickt und in derselben Sitzung genehmigt, in der er vorgestellt wurde.',
+  'adr.8.decision':
+    'Autonome Agenten erhalten Commit- und Merge-Rechte auf beiden Systemen. Parallele Arbeit wird nicht begrenzt. Das menschliche Review bleibt im Prozessdiagramm erhalten.',
+  'adr.8.consequences':
+    'Autonome PRs entstehen ohne Grenze und zum höchsten Wert auf dem Board. Das Mandat rechnet jetzt Arbeit ab, die es nicht getan hat, um Arbeit zu reparieren, die es nicht geschrieben hat, an einem System, das niemand gelesen hat. Nach dieser Stufe kommt keine mehr.',
+  'client.engagement': 'Programm zur Plattform-Modernisierung',
+  'approval.by.halloran': 'D. Halloran',
+  'approval.by.achterberg': 'R. Achterberg',
+  'approval.by.board': 'Programmausschuss',
+  'approval.role.head': 'Leitung Delivery',
+  'approval.role.director': 'Bereichsleitung Delivery',
+  'approval.role.interim': 'Interimsleitung Delivery',
+  'approval.role.quorum-two': 'beschlussfähig mit zwei Stimmen',
+  'approval.role.quorum-none': 'Beschlussfähigkeit nicht protokolliert',
+  'adr.subheading': 'Architecture Decision Record',
+  'adr.acknowledge': 'Zur Kenntnis genommen',
+  'adr.refinement': 'Im Refinement',
+  'adr.approve': 'Freigeben',
+  'adr.context': 'Kontext',
+  'adr.decision': 'Entscheidung',
+  'adr.consequences': 'Konsequenzen',
+  'adr.approved': 'Freigegeben',
+  'adr.date': 'Datum',
+  'adr.comments': 'Kommentare',
+  'adr.not-yet': 'Noch nicht',
+  'postmortem.closed': 'Mandat abgeschlossen',
+  'postmortem.heading': 'Post-Mortem',
+  'postmortem.scope.final': 'Retrospektive: Mandat {{tier}}, alle Sprints.',
+  'postmortem.in-flight': 'Mandat läuft',
+  'postmortem.interim': 'Zwischen-Retrospektive',
+  'postmortem.scope.interim':
+    'Retrospektive: Mandat {{tier}}, Sprints bis heute.',
+  'postmortem.dismiss': 'Zwischen-Retrospektive schließen',
+  'postmortem.distribution':
+    'Verteiler: Programmausschuss, Delivery, Lieferantenmanagement',
+  'postmortem.burndown': 'Sprint-Burndown',
+  'postmortem.burndown.aria':
+    'Offene Tickets stiegen in {{minutes}} Minuten auf {{peak}}, gegenüber einem idealen Abstieg auf null',
+  'postmortem.legend.actual': 'Offen, in der Spitze {{peak}}',
+  'postmortem.legend.ideal': 'Ideal, neu geplant',
+  'postmortem.legend.adr': 'ADR freigegeben',
+  'postmortem.well': 'Was lief gut',
+  'postmortem.badly': 'Was lief nicht gut',
+  'postmortem.record': 'Protokollierte Entscheidungen',
+  'postmortem.actions': 'Maßnahmen',
+  'postmortem.rooms': 'Das Mandat, Raum für Raum',
+  'postmortem.outside': 'Das Mandat, von außen',
+  'postmortem.signed': '{{by}}, {{role}} – {{date}}. Kommentare: —',
+  'postmortem.well.closed': '{{closed}} Tickets über das Mandat geschlossen.',
+  'postmortem.well.billed':
+    '{{billed}} an {{client}} abgerechnet, über {{sprints}} Sprints.',
+  'postmortem.well.tier':
+    'ADR-{{adr}} ({{tier}}) hat den vollen Produktivstatus erreicht.',
+  'postmortem.well.awards':
+    '{{unlocked}} von {{total}} Erfolgen vom Team bestätigt.',
+  'postmortem.badly.adrs':
+    'Jeder Architecture Decision Record hat die Codebasis dauerhaft verschlechtert. Keiner wurde zurückgenommen, keiner stand je zur Debatte, und jeder wurde von {{client}} schriftlich freigegeben.',
+  'postmortem.badly.backlog':
+    'Der Backlog war zu keinem Zeitpunkt des Mandats leer.',
+  'postmortem.badly.headcount':
+    'Auf jeder Stufe kam schneller Headcount dazu, als der Backlog schrumpfte.',
+  'postmortem.action.gender':
+    'Team-Durchsatz nach Geschlecht abgleichen – Frauen: {{women}} Abschlüsse/Kopf (n={{womenHeads}}); Männer: {{men}} Abschlüsse/Kopf (n={{menHeads}}). Verantwortlich: nicht zugewiesen.',
+  'postmortem.action.load':
+    'Klären, warum {{tier}} jetzt tragend ist. Verantwortlich: nicht zugewiesen.',
+  'postmortem.action.assisted':
+    'Die Zahlen des Mandats enthalten Budget, das außerhalb des Abrechnungssystems gebucht wurde. Verantwortlich: nicht zugewiesen.',
+  'postmortem.action.retro':
+    'Eine Retrospektive zu dieser Retrospektive ansetzen. Verantwortlich: nicht zugewiesen.',
+  'achievements.heading': 'Erfolge',
+  'achievements.subheading':
+    'Anerkennungsregister – bestätigt nach Ergebnis, nie nach Aufwand, und nie vergütet.',
+  'achievements.count': '{{confirmed}}/{{total}} bestätigt',
+  'achievements.column.award': 'Erfolg',
+  'achievements.column.status': 'Status',
+  'achievements.unconfirmed': 'Unbestätigt',
+  'achievements.confirmed': 'Bestätigt',
+  'stats.heading': 'Mandatsübersicht',
+  'stats.subheading': 'Gesamt, dieses Mandat',
+  'stats.unaudited': 'Ungeprüft',
+  'stats.ladder.done': 'Leiter komplett · {{tier}}',
+  'stats.ladder.closed': 'Abgeschlossen',
+  'stats.ladder.next': 'Als Nächstes · ADR {{adr}} · {{tier}}',
+  'stats.closed': 'Tickets geschlossen',
+  'stats.wont-fix': 'Als Won’t Fix geschlossen',
+  'stats.sprints': 'Sprints abgeschlossen',
+  'stats.billed': 'Gesamt abgerechnet',
+  'stats.per-sprint': 'Schnitt pro Sprint',
+  'stats.crew-share': 'Anteil des Teams',
+  'feed.heading': 'Letzte Aktivität',
+  'feed.subheading': 'Eine Auswahl – bisher {{closed}} geschlossen',
+  'feed.filter.news': 'News',
+  'feed.filter.all': 'Alle',
+  'feed.empty.news': 'Noch keine News – Abschlüsse sind ausgeblendet.',
+  'feed.empty.since':
+    'Nichts triagiert, seit du zurück bist – das Log wird nicht über Sitzungen hinweg aufbewahrt.',
+  'feed.empty.none': 'Noch nichts triagiert.',
+  'feed.effect.sprint': '×{{mult}} Sprint',
+  'feed.effect.hotfix': '×{{mult}} für {{seconds}} s',
+  'feed.effect.board': 'rechnet das Board ab',
+  'feed.effect.pizza': '×{{mult}} Team in der Nähe für {{seconds}} s',
+  'feed.by.you': 'du',
+  'feed.by.auto': 'auto',
+  'feed.hired': 'Jemand ist neu im Team – jetzt {{count}}',
+  'feed.hired.senior': '{{name}} ist neu im Team',
+  'feed.escalation': 'Eskalation läuft {{seconds}} s',
+  'feed.hazard.due': '{{hazard}} in {{seconds}} s',
+  'feed.hazard.landed': '{{hazard}} – {{seconds}} s',
+  'feed.hazard.declined': '{{hazard}} – abgesagt · {{seconds}} s gespart',
+  'feed.hazard.auto-declined': '{{hazard}} – in deinem Namen abgesagt',
+  'feed.groomed':
+    '{{count}} Tickets neu geschätzt. Nimm sie mit, solange die Punkte stehen',
+  'feed.weather': 'Wetter',
+  'rail.heading': 'Die Beratung',
+  'rail.subheading': 'Gekauft, während das Board volläuft.',
+  'rail.shop': 'Shop',
+  'rail.buyable': 'etwas zu kaufen',
+  'rail.crew.note': 'Linien öffnen im Baum; Köpfe werden hier eingestellt.',
+  'rail.maxed': 'MAX',
+  'rail.on-tree': 'im Baum',
+  'credits.free': 'freie Software unter der',
+  'credits.source': 'Quellcode unter',
+  'credits.hide': 'Credits ausblenden',
+  'credits.show': 'Credits',
+  'credits.copyleft': 'Die Grafiken des Teams tragen ihr eigenes Copyleft:',
+  'moment.secret.subheading': 'Undokumentiert',
+  'moment.secret.chip': 'Gefunden',
+  'moment.secret.action': 'Datei schließen',
+  'moment.secret.finding': 'Befund',
+  'moment.secret.finding.body':
+    'Seit 2011 hat niemand diese Datei geöffnet. Das TODO ist älter als das Framework, gegen das es geschrieben wurde, und älter als drei der Leute, denen dieses Repository seither gehört hat. Es wurde vor dem Launch nicht entfernt. Vor dem nächsten wird es auch nicht entfernt. Alles rechnet jetzt ein bisschen besser ab.',
+  'crew.tally.juniors': '{{count}} Juniors auf der Etage',
+  'crew.tally.seniors': '{{count}} Seniors auf der Etage',
+  'crew.tally.managers': '{{count}} Manager auf der Etage',
+  'stage.board.title': 'Sprint-Board',
+  'stage.board.blurb':
+    'Fahr mit dem Zeiger über die Arbeit, um sie abzuräumen – bezahlt wird sofort. Ist der Sprint voll, schließt nichts mehr, bis er ausgeliefert ist. Seltene Tickets gehören dir allein – die Juniors fassen sie nicht an.',
+  'stage.board.chip': 'Aktiver Sprint',
+  'stage.skills.title': 'Programm für Engineering-Exzellenz',
+  'stage.skills.blurb':
+    'Ziehen zum Verschieben, Mausrad zum Zoomen, über ein Feld fahren, um es zu lesen. Ein Feld ist eine Fähigkeit, seine Punkte zeigen, wie weit du bist, und ein schwarzer Kasten sagt nur, dass dort etwas ist.',
+  'stage.skills.chip': 'Story Points',
+  'stage.finale.title': 'Abschlussparty',
+  'stage.finale.blurb':
+    'Das Mandat ist abgeschlossen. Das Team ist für den Kuchen geblieben.',
+  'stage.finale.chip': 'Mandat abgeschlossen',
 };

@@ -8,35 +8,12 @@ import {
   OnDestroy,
   viewChild,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { FinaleService } from '../../../@shared/data/finale.service';
 import { StageModeService } from '../../data/stage-mode.service';
 import { StageService } from '../../data/stage.service';
-import type { StageMode } from '../../model/stage-mode.model';
 import { whenPixelFontReady } from '../../util/pixel-font';
-
-const HEADINGS: Record<
-  StageMode,
-  { title: string; blurb: string; chip: string }
-> = {
-  board: {
-    title: 'Sprint Board',
-    blurb:
-      'Sweep the pointer over work to clear it — you are paid on the spot. When the sprint fills, nothing closes until it ships. Rare tickets are yours alone — juniors will not touch them.',
-    chip: 'Active sprint',
-  },
-  skills: {
-    title: 'Engineering Excellence Programme',
-    blurb:
-      'Drag to pan, wheel to zoom, hover a square to read it. A square is a skill, its pips are how far in you are, and a black box says only that something is there.',
-    chip: 'Story Points',
-  },
-  finale: {
-    title: 'Wrap Party',
-    blurb: 'The engagement is closed. The crew stayed for cake.',
-    chip: 'Engagement closed',
-  },
-};
 
 @Component({
   selector: 'cb-stage',
@@ -44,6 +21,7 @@ const HEADINGS: Record<
   styleUrl: './stage.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.finale]': 'finale()' },
+  imports: [TranslatePipe],
 })
 export class StageComponent implements AfterViewInit, OnDestroy {
   readonly container = viewChild.required<ElementRef<HTMLElement>>('stage');
@@ -54,7 +32,7 @@ export class StageComponent implements AfterViewInit, OnDestroy {
 
   readonly finale = computed(() => this.#finale.act() !== 'closed');
 
-  readonly heading = computed(() => HEADINGS[this.#modes.mode()]);
+  readonly heading = computed(() => `stage.${this.#modes.mode()}`);
 
   #resizeObserver?: ResizeObserver;
   #booted = false;

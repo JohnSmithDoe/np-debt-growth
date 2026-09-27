@@ -36,25 +36,28 @@ const award = (seq: number): FeedLine => ({
   award: 'first-blood',
 });
 
+const say = (key: string): string => key;
+
 describe('roundHighlights', () => {
   it('never returns more rows than it has slots for', () => {
     const closes = Array.from({ length: 40 }, (_, i) => close(i, i));
-    expect(roundHighlights(closes, ESCALATION_MULTIPLIER)).toHaveLength(
+    expect(roundHighlights(closes, ESCALATION_MULTIPLIER, say)).toHaveLength(
       ROUND_LOG_SLOTS
     );
     expect(
-      roundHighlights([...closes, award(99)], ESCALATION_MULTIPLIER)
+      roundHighlights([...closes, award(99)], ESCALATION_MULTIPLIER, say)
     ).toHaveLength(ROUND_LOG_SLOTS);
   });
 
   it('is empty when the round was', () => {
-    expect(roundHighlights([], ESCALATION_MULTIPLIER)).toHaveLength(0);
+    expect(roundHighlights([], ESCALATION_MULTIPLIER, say)).toHaveLength(0);
   });
 
   it('keeps the dearest close, not the latest one', () => {
     const rows = roundHighlights(
       [close(1, 500), close(2, 1), close(3, 2), close(4, 3)],
-      ESCALATION_MULTIPLIER
+      ESCALATION_MULTIPLIER,
+      say
     );
     expect(rows.map((row) => row.seq)).toContain(1);
   });
@@ -63,6 +66,7 @@ describe('roundHighlights', () => {
     const rows = roundHighlights(
       [close(1, 9999), close(2, 1, 'incident')],
       ESCALATION_MULTIPLIER,
+      say,
       1
     );
     expect(rows.map((row) => row.seq)).toEqual([2]);
@@ -71,7 +75,8 @@ describe('roundHighlights', () => {
   it('reads in the order the round happened', () => {
     const rows = roundHighlights(
       [close(1, 5), award(2), close(3, 9)],
-      ESCALATION_MULTIPLIER
+      ESCALATION_MULTIPLIER,
+      say
     );
     expect(rows.map((row) => row.seq)).toEqual([1, 2, 3]);
   });
@@ -79,7 +84,8 @@ describe('roundHighlights', () => {
   it('gives news the slots the closes do not need', () => {
     const rows = roundHighlights(
       [award(1), award(2), award(3), award(4)],
-      ESCALATION_MULTIPLIER
+      ESCALATION_MULTIPLIER,
+      say
     );
     expect(rows.map((row) => row.seq)).toEqual([2, 3, 4]);
   });

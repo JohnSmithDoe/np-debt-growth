@@ -1,5 +1,8 @@
-<cb-panel heading="The Practice" subheading="Bought while the board fills.">
-  <span panel-meta class="chip accent">Shop</span>
+<cb-panel
+  [heading]="'rail.heading' | translate"
+  [subheading]="'rail.subheading' | translate"
+>
+  <span panel-meta class="chip accent">{{ 'rail.shop' | translate }}</span>
 
   <div class="shop">
     <div class="tabs" role="tablist">
@@ -13,14 +16,17 @@
         >
           {{ one.label }}
           @if (one.buyable && tab() !== one.id) {
-            <span class="buyable" aria-label="something to buy"></span>
+            <span
+              class="buyable"
+              [attr.aria-label]="'rail.buyable' | translate"
+            ></span>
           }
         </button>
       }
     </div>
 
     @if (tab() === 'crew') {
-      <p class="locked">Lines open on the tree; heads are hired here.</p>
+      <p class="locked">{{ 'rail.crew.note' | translate }}</p>
     }
 
     <ul class="lines">

@@ -1,6 +1,6 @@
 <cb-panel
-  heading="Recent Activity"
-  [subheading]="'A sample — ' + closed() + ' closed so far'"
+  [heading]="'feed.heading' | translate"
+  [subheading]="'feed.subheading' | translate: { closed: closed() }"
 >
   <button
     panel-meta
@@ -10,11 +10,11 @@
     [attr.aria-pressed]="newsOnly()"
     (click)="toggleNewsOnly()"
   >
-    {{ newsOnly() ? 'News' : 'All' }}
+    {{ (newsOnly() ? 'feed.filter.news' : 'feed.filter.all') | translate }}
   </button>
 
   @if (rows().length === 0) {
-    <p class="muted small empty">{{ empty() }}</p>
+    <p class="muted small empty">{{ empty() | translate }}</p>
   } @else {
     <ul class="rows">
       @for (row of rows(); track row.seq) {

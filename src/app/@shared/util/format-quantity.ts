@@ -190,3 +190,12 @@ function decimal(value: number, places: number): string {
 function withThreeSigFigs(mantissa: number): string {
   return decimal(mantissa, decimalsFor(mantissa));
 }
+
+export function formatLongDate(iso: string): string {
+  return new Date(`${iso}T12:00:00Z`).toLocaleDateString(localeTag(), {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}

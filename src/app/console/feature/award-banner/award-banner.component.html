@@ -18,8 +18,8 @@
       <span class="kind chip">{{
         (award.milestone ? 'award.milestone' : 'award.achievement') | translate
       }}</span>
-      <span class="label">{{ award.label }}</span>
-      <span class="blurb">{{ award.blurb }}</span>
+      <span class="label">{{ award.labelKey | translate }}</span>
+      <span class="blurb">{{ award.blurbKey | translate }}</span>
       <span class="offscreen">{{ 'award.dismiss' | translate }}</span>
     </button>
   }

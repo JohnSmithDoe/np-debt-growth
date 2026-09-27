@@ -11,7 +11,11 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { GameStore } from '../../../game/data/game.store';
 import type { Award, AwardWeight } from '../../../game/model/award.model';
-import { AWARD_BY_ID } from '../../../game/model/award.model';
+import {
+  AWARD_BY_ID,
+  awardBlurbKey,
+  awardLabelKey,
+} from '../../../game/model/award.model';
 import { ConfettiComponent } from '../../ui/confetti/confetti.component';
 import { TrophyComponent } from '../../ui/trophy/trophy.component';
 
@@ -42,8 +46,8 @@ function continues(
 
 interface AwardShow {
   readonly id: string;
-  readonly label: string;
-  readonly blurb: string;
+  readonly labelKey: string;
+  readonly blurbKey: string;
   readonly milestone: boolean;
   readonly weight: AwardWeight;
   readonly pieces: number;
@@ -124,8 +128,8 @@ export class AwardBannerComponent {
   #show(award: Award): AwardShow {
     return {
       id: award.id,
-      label: award.label,
-      blurb: award.blurb,
+      labelKey: awardLabelKey(award.id),
+      blurbKey: awardBlurbKey(award.id),
       milestone: award.kind === 'milestone',
       weight: award.weight,
       pieces: BANDS[award.weight].pieces,

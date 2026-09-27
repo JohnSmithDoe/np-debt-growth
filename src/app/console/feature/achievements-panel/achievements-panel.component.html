@@ -1,43 +1,49 @@
 <cb-panel
-  heading="Achievements"
-  subheading="Recognition register — confirmed on outcome, never on effort, and never paid."
+  [heading]="'achievements.heading' | translate"
+  [subheading]="'achievements.subheading' | translate"
 >
-  <span panel-meta class="chip points"
-    >{{ confirmed().length }}/{{ total }} confirmed</span
-  >
-
+  <span panel-meta class="chip points">{{
+    'achievements.count'
+      | translate: { confirmed: confirmed().length, total: total }
+  }}</span>
   <table class="rows">
     <thead>
       <tr>
-        <th scope="col">Achievement</th>
-        <th scope="col" class="right">Status</th>
+        <th scope="col">{{ 'achievements.column.award' | translate }}</th>
+        <th scope="col" class="right">
+          {{ 'achievements.column.status' | translate }}
+        </th>
       </tr>
     </thead>
-
     <tbody>
       @for (row of pending(); track row.id) {
         <tr>
           <td>
-            <p class="small">{{ row.blurb }}</p>
+            <p class="small">{{ row.blurbKey | translate }}</p>
           </td>
-          <td class="right"><span class="chip locked">Unconfirmed</span></td>
+          <td class="right">
+            <span class="chip locked">{{
+              'achievements.unconfirmed' | translate
+            }}</span>
+          </td>
         </tr>
       }
     </tbody>
-
     @if (confirmed().length) {
       <tbody class="done">
         <tr class="split">
-          <td colspan="2">Confirmed</td>
+          <td colspan="2">{{ 'achievements.confirmed' | translate }}</td>
         </tr>
         @for (row of confirmed(); track row.id) {
           <tr>
             <td>
               <cb-trophy />
-              <span class="label">{{ row.label }}</span>
+              <span class="label">{{ row.labelKey | translate }}</span>
             </td>
             <td class="right">
-              <span class="chip">Confirmed</span>
+              <span class="chip">{{
+                'achievements.confirmed' | translate
+              }}</span>
             </td>
           </tr>
         }

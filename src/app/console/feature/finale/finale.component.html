@@ -44,7 +44,7 @@
           <section>
             <h2>{{ 'finale.roll.approved' | translate: { client } }}</h2>
             <ul>
-              @for (approver of approvers; track approver) {
+              @for (approver of approvers(); track approver) {
                 <li>{{ approver }}</li>
               }
             </ul>

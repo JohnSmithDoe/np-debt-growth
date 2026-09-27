@@ -1,17 +1,23 @@
-<cb-panel heading="Engagement Summary" subheading="Lifetime, this engagement">
-  <span panel-meta class="chip">Unaudited</span>
+<cb-panel
+  [heading]="'stats.heading' | translate"
+  [subheading]="'stats.subheading' | translate"
+>
+  <span panel-meta class="chip">{{ 'stats.unaudited' | translate }}</span>
 
   @if (rung(); as rung) {
     <div class="rung">
       <p class="rung-head">
         @if (rung.done) {
-          <span class="label"
-            >Ladder complete · {{ rung.nameKey | translate }}</span
-          >
-          <span class="num money">Closed</span>
+          <span class="label">{{
+            'stats.ladder.done' | translate: { tier: rung.nameKey | translate }
+          }}</span>
+          <span class="num money">{{ 'stats.ladder.closed' | translate }}</span>
         } @else {
           <span class="label">
-            Next · ADR {{ rung.index }} · {{ rung.nameKey | translate }}
+            {{
+              'stats.ladder.next'
+                | translate: { adr: rung.index, tier: rung.nameKey | translate }
+            }}
           </span>
           <span class="num money">{{ rung.cost }}</span>
         }
@@ -25,7 +31,7 @@
   <dl>
     @for (stat of stats(); track stat.label) {
       <div>
-        <dt>{{ stat.label }}</dt>
+        <dt>{{ stat.label | translate }}</dt>
         <dd class="num" [class.money]="stat.tone === 'money'">
           {{ stat.value }}
         </dd>

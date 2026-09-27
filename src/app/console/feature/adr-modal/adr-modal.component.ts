@@ -9,25 +9,40 @@ import {
   signal,
 } from '@angular/core';
 
-import { formatWhole } from '../../../@shared/util/format-quantity';
+import {
+  formatLongDate,
+  formatWhole,
+} from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import type { DebtTier } from '../../../game/model/tier.model';
-import { tierAt, tierNameKey } from '../../../game/model/tier.model';
-import type { Approval } from '../../model/client.model';
-import { approvalAt, CLIENT_NAME } from '../../model/client.model';
+import {
+  ADR_PARTS,
+  adrPartKey,
+  tierAt,
+  tierNameKey,
+} from '../../../game/model/tier.model';
+import {
+  approvalAt,
+  CLIENT_NAME,
+  roleKey,
+  signatoryKey,
+} from '../../model/client.model';
 import { AdrUiService } from '../../data/adr-ui.service';
 import { BackdropDirective } from '../../ui/backdrop/backdrop.directive';
 import { PanelComponent } from '../../ui/panel/panel.component';
 import { backdropUrl } from '../../../@shared/util/backdrop-art';
 import { officeArtFor } from '../../util/office-art';
-import type { AdrCopy } from './adr-copy';
-import { ADR_COPY } from './adr-copy';
 import { adrPrice } from '../../../game/model/skill.model';
 
 interface AdrData {
   readonly tier: DebtTier;
-  readonly copy: AdrCopy;
-  readonly approval: Approval | undefined;
+  readonly parts: readonly {
+    readonly heading: string;
+    readonly body: string;
+  }[];
+  readonly approval:
+    | { readonly by: string; readonly role: string; readonly date: string }
+    | undefined;
   readonly art: string;
   readonly office: string;
   readonly signed: boolean;
@@ -75,12 +90,19 @@ export class AdrModalComponent {
 
   #read(tier: number, signed: boolean): AdrData | null {
     const debtTier = tierAt(tier);
-    const copy = ADR_COPY[tier];
-    if (!debtTier || !copy) return null;
+    if (!debtTier) return null;
+    const approval = signed ? approvalAt(tier) : undefined;
     return {
       tier: debtTier,
-      copy,
-      approval: signed ? approvalAt(tier) : undefined,
+      parts: ADR_PARTS.map((part) => ({
+        heading: `adr.${part}`,
+        body: adrPartKey(tier, part),
+      })),
+      approval: approval && {
+        by: signatoryKey(approval.by),
+        role: roleKey(approval.role),
+        date: formatLongDate(approval.date),
+      },
       art: backdropUrl(tier, 'tier'),
       office: officeArtFor(tier),
       signed,

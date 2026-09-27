@@ -3,21 +3,23 @@
     <article class="doc">
       <header>
         @if (final()) {
-          <span class="chip sev0">Engagement closed</span>
-          <h2>Post-Mortem</h2>
+          <span class="chip sev0">{{ 'postmortem.closed' | translate }}</span>
+          <h2>{{ 'postmortem.heading' | translate }}</h2>
           <p class="muted small">
-            Retrospective — {{ tierName() }} engagement, all sprints.
+            {{ 'postmortem.scope.final' | translate: { tier: tierName() } }}
           </p>
         } @else {
-          <span class="chip warn">Engagement in flight</span>
-          <h2>Interim Retrospective</h2>
+          <span class="chip warn">{{
+            'postmortem.in-flight' | translate
+          }}</span>
+          <h2>{{ 'postmortem.interim' | translate }}</h2>
           <p class="muted small">
-            Retrospective — {{ tierName() }} engagement, sprints to date.
+            {{ 'postmortem.scope.interim' | translate: { tier: tierName() } }}
           </p>
           <button
             type="button"
             class="btn small ghost dismiss"
-            aria-label="Close the interim retrospective"
+            [attr.aria-label]="'postmortem.dismiss' | translate"
             (click)="close()"
           >
             ✕
@@ -25,8 +27,8 @@
         }
 
         <p class="distribution">
-          {{ client }} · {{ engagement }}<br />
-          Distribution: Programme Board, Delivery, Vendor Management
+          {{ client }} · {{ engagement | translate }}<br />
+          {{ 'postmortem.distribution' | translate }}
         </p>
       </header>
 
@@ -39,17 +41,16 @@
 
       @if (chart(); as burndown) {
         <section>
-          <h4>Sprint burn-down</h4>
+          <h4>{{ 'postmortem.burndown' | translate }}</h4>
           <svg
             class="burndown"
             [attr.viewBox]="chartBox"
             preserveAspectRatio="none"
             role="img"
-            attr.aria-label="Tickets outstanding rose to {{
-              burndown.peak
-            }} over {{
-              burndown.minutes
-            }} minutes against an ideal descent to zero"
+            [attr.aria-label]="
+              'postmortem.burndown.aria'
+                | translate: { peak: burndown.peak, minutes: burndown.minutes }
+            "
           >
             @for (tick of burndown.ticks; track tick.tier) {
               <line
@@ -64,16 +65,20 @@
             <polyline class="actual" [attr.points]="burndown.outstanding" />
           </svg>
           <p class="muted small legend">
-            <span class="key actual"></span> Outstanding —
-            {{ burndown.peak }} at its worst ·
-            <span class="key ideal"></span> Ideal, rebaselined ·
-            <span class="key adr"></span> ADR approved
+            <span class="key actual"></span>
+            {{
+              'postmortem.legend.actual' | translate: { peak: burndown.peak }
+            }}
+            · <span class="key ideal"></span>
+            {{ 'postmortem.legend.ideal' | translate }} ·
+            <span class="key adr"></span>
+            {{ 'postmortem.legend.adr' | translate }}
           </p>
         </section>
       }
 
       <section>
-        <h4>What went well</h4>
+        <h4>{{ 'postmortem.well' | translate }}</h4>
         <ul>
           @for (line of wentWell(); track line) {
             <li>{{ line }}</li>
@@ -82,7 +87,7 @@
       </section>
 
       <section>
-        <h4>What did not go well</h4>
+        <h4>{{ 'postmortem.badly' | translate }}</h4>
         <ul>
           @for (line of wentBadly(); track line) {
             <li>{{ line }}</li>
@@ -92,7 +97,7 @@
 
       @if (authorisations().length > 0) {
         <section>
-          <h4>Decisions of record</h4>
+          <h4>{{ 'postmortem.record' | translate }}</h4>
           <ul class="record">
             @for (rung of authorisations(); track rung.index) {
               <li>
@@ -105,7 +110,7 @@
       }
 
       <section>
-        <h4>Action items</h4>
+        <h4>{{ 'postmortem.actions' | translate }}</h4>
         <ul>
           @for (line of actionItems(); track line) {
             <li>{{ line }}</li>
@@ -114,7 +119,7 @@
       </section>
 
       <section>
-        <h4>The engagement, room by room</h4>
+        <h4>{{ 'postmortem.rooms' | translate }}</h4>
         <ol class="filmstrip">
           @for (frame of filmstrip(); track frame.index) {
             <li [class.missed]="frame.missed">

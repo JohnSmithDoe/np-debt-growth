@@ -1,7 +1,7 @@
 import type { CloseLine, FeedLine } from '../../game/model/feed.model';
 import { TICKET_TYPES } from '../../game/model/ticket.model';
 
-import type { FeedRow } from './feed-row';
+import type { FeedRow, Say } from './feed-row';
 import { feedRow } from './feed-row';
 
 export const ROUND_LOG_SLOTS = 3;
@@ -16,6 +16,7 @@ function worth(line: CloseLine): number {
 export function roundHighlights(
   lines: readonly FeedLine[],
   escalation: number,
+  say: Say,
   slots = ROUND_LOG_SLOTS
 ): FeedRow[] {
   const closes = lines.filter(isClose);
@@ -30,5 +31,5 @@ export function roundHighlights(
     ...[...closes].sort((a, b) => worth(b) - worth(a)).slice(0, closeTake),
   ]
     .sort((a, b) => a.seq - b.seq)
-    .map((line) => feedRow(line, escalation));
+    .map((line) => feedRow(line, escalation, say));
 }

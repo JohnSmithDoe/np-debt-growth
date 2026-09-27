@@ -26,7 +26,14 @@ import {
   ticketHelpKey,
   ticketLabelKey,
 } from '../model/ticket.model';
-import { DEBT_TIERS, tierBlurbKey, tierNameKey } from '../model/tier.model';
+import {
+  ADR_PARTS,
+  adrPartKey,
+  DEBT_TIERS,
+  tierBlurbKey,
+  tierNameKey,
+} from '../model/tier.model';
+import { AWARDS, awardBlurbKey, awardLabelKey } from '../model/award.model';
 import { PURCHASE_IDS } from '../model/balance/progression';
 
 const BUILT: readonly { readonly owns: RegExp; readonly keys: string[] }[] = [
@@ -46,6 +53,19 @@ const BUILT: readonly { readonly owns: RegExp; readonly keys: string[] }[] = [
     keys: DEBT_TIERS.flatMap((tier) => [
       tierNameKey(tier.index),
       tierBlurbKey(tier.index),
+    ]),
+  },
+  {
+    owns: /^adr\.\d+\./,
+    keys: DEBT_TIERS.flatMap((tier) =>
+      ADR_PARTS.map((part) => adrPartKey(tier.index, part))
+    ),
+  },
+  {
+    owns: /^award\.[a-z0-9-]+\.(?:label|blurb)$/,
+    keys: AWARDS.flatMap((award) => [
+      awardLabelKey(award.id),
+      awardBlurbKey(award.id),
     ]),
   },
   {

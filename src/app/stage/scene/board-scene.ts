@@ -257,9 +257,21 @@ export class BoardScene extends CbScene {
       backdrop: new TierBackdrop(this, DEPTH.floor - 0.5),
       heap: new TicketHeap(this, (key) => this.deps.text(key)),
       flyers: new FlyerPool(this, DEPTH.flyer),
-      crew: new CrewLayer(this, DEPTH.crew, 'juniors', 0),
-      seniors: new CrewLayer(this, DEPTH.crew + 1, 'seniors', 1),
-      managers: new CrewLayer(this, DEPTH.crew + 2, 'managers', 2),
+      crew: new CrewLayer(this, DEPTH.crew, 'juniors', 0, this.deps.text),
+      seniors: new CrewLayer(
+        this,
+        DEPTH.crew + 1,
+        'seniors',
+        1,
+        this.deps.text
+      ),
+      managers: new CrewLayer(
+        this,
+        DEPTH.crew + 2,
+        'managers',
+        2,
+        this.deps.text
+      ),
       bubbles: new SpeechBubbles(
         this,
         DEPTH.bubble,
@@ -806,7 +818,11 @@ export class BoardScene extends CbScene {
       this.deps.unlockSecret();
       this.pulse(note);
       note.setColor(BOARD_TEXT.gold).disableInteractive();
-      this.floatPayout(note.x + note.width / 2, note.y, 'You read the code');
+      this.floatPayout(
+        note.x + note.width / 2,
+        note.y,
+        this.deps.text('award.a-secret.label')
+      );
     });
     this.#secret = note;
   }

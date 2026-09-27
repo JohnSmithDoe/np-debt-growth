@@ -5,15 +5,21 @@ import {
   inject,
 } from '@angular/core';
 
+import { TranslatePipe } from '@ngx-translate/core';
+
 import { GameStore } from '../../../game/data/game.store';
-import { ACHIEVEMENTS } from '../../../game/model/award.model';
+import {
+  ACHIEVEMENTS,
+  awardBlurbKey,
+  awardLabelKey,
+} from '../../../game/model/award.model';
 import { PanelComponent } from '../../ui/panel/panel.component';
 import { TrophyComponent } from '../../ui/trophy/trophy.component';
 
 interface AchievementRow {
   readonly id: string;
-  readonly label: string;
-  readonly blurb: string;
+  readonly labelKey: string;
+  readonly blurbKey: string;
   readonly unlocked: boolean;
 }
 
@@ -22,7 +28,7 @@ interface AchievementRow {
   templateUrl: './achievements-panel.component.html',
   styleUrl: './achievements-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PanelComponent, TrophyComponent],
+  imports: [PanelComponent, TranslatePipe, TrophyComponent],
 })
 export class AchievementsPanelComponent {
   #store = inject(GameStore);
@@ -33,8 +39,8 @@ export class AchievementsPanelComponent {
     const owned = new Set(this.#store.achievements());
     return ACHIEVEMENTS.map((award) => ({
       id: award.id,
-      label: award.label,
-      blurb: award.blurb,
+      labelKey: awardLabelKey(award.id),
+      blurbKey: awardBlurbKey(award.id),
       unlocked: owned.has(award.id),
     }));
   });

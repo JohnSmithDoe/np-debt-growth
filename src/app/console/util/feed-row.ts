@@ -2,10 +2,11 @@ import {
   formatMoney,
   formatQuantity,
 } from '../../@shared/util/format-quantity';
-import { AWARD_BY_ID } from '../../game/model/award.model';
+import { awardLabelKey } from '../../game/model/award.model';
 import { crewName } from '../../game/model/cast.model';
 import type { FeedLine } from '../../game/model/feed.model';
 import type { HazardId } from '../../game/model/hazard.model';
+import { hazardLabelKey } from '../../game/model/hazard.model';
 import { traitLabelKey } from '../../game/model/senior.model';
 import type { TicketEffect } from '../../game/model/ticket.model';
 import { TICKET_TYPES } from '../../game/model/ticket.model';
@@ -32,25 +33,39 @@ export interface NewsRow {
 
 export type FeedRow = CloseRow | NewsRow;
 
+export type Say = (
+  key: string,
+  params?: Record<string, string | number>
+) => string;
+
 function eventLabel(
   effect: TicketEffect,
-  escalation: number
+  escalation: number,
+  say: Say
 ): string | undefined {
   switch (effect) {
     case 'sprintMultiplier':
-      return `×${formatQuantity(escalation)} sprint`;
+      return say('feed.effect.sprint', { mult: formatQuantity(escalation) });
     case 'hotfixBuff':
-      return `×${HOTFIX_MULTIPLIER} for ${HOTFIX_MS / 1000}s`;
+      return say('feed.effect.hotfix', {
+        mult: HOTFIX_MULTIPLIER,
+        seconds: HOTFIX_MS / 1000,
+      });
     case 'billBoard':
-      return 'bills the board';
+      return say('feed.effect.board');
     case 'crewRush':
-      return `×${PIZZA_RUSH} crew nearby for ${PIZZA_MS / 1000}s`;
+      return say('feed.effect.pizza', {
+        mult: PIZZA_RUSH,
+        seconds: PIZZA_MS / 1000,
+      });
     default:
       return undefined;
   }
 }
 
-export function feedRow(line: FeedLine, escalation: number): FeedRow {
+export function feedRow(line: FeedLine, escalation: number, say: Say): FeedRow {
+  const hazard = (id: HazardId | undefined): string =>
+    say(id ? hazardLabelKey(id) : 'feed.weather');
   switch (line.kind) {
     case 'close': {
       const type = TICKET_TYPES[line.close.type];
@@ -59,11 +74,12 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
         seq: line.seq,
         who:
           line.close.by === 'you' || line.close.by === 'auto'
-            ? line.close.by
+            ? say(`feed.by.${line.close.by}`)
             : crewName(line.close.by, line.close.poolSeat, line.close.woman),
         key: `${type.prefix}-${1000 + (line.seq % 8999)}`,
         titleKey: line.titleKey,
-        value: eventLabel(type.effect, escalation) ?? formatMoney(line.value),
+        value:
+          eventLabel(type.effect, escalation, say) ?? formatMoney(line.value),
         rare: type.handOnly,
       };
     }
@@ -72,7 +88,7 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
         kind: 'award',
         seq: line.seq,
         mark: '✦',
-        text: AWARD_BY_ID.get(line.award)?.label ?? line.award,
+        text: say(awardLabelKey(line.award)),
       };
     case 'note':
       switch (line.note) {
@@ -81,7 +97,7 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
             kind: 'note',
             seq: line.seq,
             mark: '✦',
-            text: `Someone joined — the bench is ${line.count}`,
+            text: say('feed.hired', { count: line.count }),
           };
         case 'senior-hired':
           return {
@@ -89,8 +105,14 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
             seq: line.seq,
             mark: '✦',
             text: line.hire
-              ? `${crewName('seniors', line.hire.poolSeat, line.hire.woman)} joined the bench`
-              : `Someone joined — the bench is ${line.count}`,
+              ? say('feed.hired.senior', {
+                  name: crewName(
+                    'seniors',
+                    line.hire.poolSeat,
+                    line.hire.woman
+                  ),
+                })
+              : say('feed.hired', { count: line.count }),
             ...(line.hire ? { detailKey: traitLabelKey(line.hire.trait) } : {}),
           };
         case 'escalation-armed':
@@ -98,59 +120,54 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
             kind: 'alert',
             seq: line.seq,
             mark: '⚠',
-            text: `Escalation live for ${line.count}s`,
+            text: say('feed.escalation', { seconds: line.count }),
           };
         case 'hazard-due':
           return {
             kind: 'alert',
             seq: line.seq,
             mark: '⚠',
-            text: `${hazardName(line.hazard)} in ${line.count}s`,
+            text: say('feed.hazard.due', {
+              hazard: hazard(line.hazard),
+              seconds: line.count,
+            }),
           };
         case 'hazard-landed':
           return {
             kind: 'alert',
             seq: line.seq,
             mark: '⚠',
-            text: `${hazardName(line.hazard)} — ${line.count}s`,
+            text: say('feed.hazard.landed', {
+              hazard: hazard(line.hazard),
+              seconds: line.count,
+            }),
           };
         case 'hazard-declined':
           return {
             kind: 'note',
             seq: line.seq,
             mark: '✦',
-            text: `${hazardName(line.hazard)} — declined · ${line.count}s saved`,
+            text: say('feed.hazard.declined', {
+              hazard: hazard(line.hazard),
+              seconds: line.count,
+            }),
           };
         case 'hazard-auto-declined':
           return {
             kind: 'note',
             seq: line.seq,
             mark: '✦',
-            text: `${hazardName(line.hazard)} — declined on your behalf`,
+            text: say('feed.hazard.auto-declined', {
+              hazard: hazard(line.hazard),
+            }),
           };
         case 'hazard-groomed':
           return {
             kind: 'note',
             seq: line.seq,
             mark: '✦',
-            text: `${line.count} items re-estimated. Sweep them while the points stand`,
+            text: say('feed.groomed', { count: line.count }),
           };
       }
   }
-}
-
-const HAZARD_NAME: Readonly<Record<HazardId, string>> = {
-  'all-hands': 'All-Hands',
-  compliance: 'Compliance Training',
-  retro: 'Sprint Retrospective',
-  reorg: 'Reorganisation Briefing',
-  grooming: 'Backlog Grooming',
-  storm: 'Incident Storm',
-  freeze: 'Prod Freeze',
-  page: 'Pager Duty',
-  migration: 'Migration Window',
-};
-
-function hazardName(id: HazardId | undefined): string {
-  return id ? HAZARD_NAME[id] : 'Weather';
 }

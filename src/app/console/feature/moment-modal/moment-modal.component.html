@@ -2,23 +2,23 @@
   <div class="scrim" (cbBackdrop)="dismiss()">
     <cb-panel
       class="doc"
-      [heading]="moment.heading"
-      [subheading]="moment.subheading"
+      [heading]="moment.heading | translate"
+      [subheading]="moment.subheading | translate"
     >
-      <span panel-meta class="chip accent">{{ moment.chip }}</span>
+      <span panel-meta class="chip accent">{{ moment.chip | translate }}</span>
 
       <img class="plate" [src]="moment.art" alt="" aria-hidden="true" />
 
       <section class="doc-sections">
         @for (part of moment.sections; track part.title) {
-          <h4>{{ part.title }}</h4>
-          <p>{{ part.body }}</p>
+          <h4>{{ part.title | translate }}</h4>
+          <p>{{ part.body | translate }}</p>
         }
       </section>
 
       <div class="doc-actions">
         <button type="button" class="btn primary" (click)="dismiss()">
-          {{ moment.action }}
+          {{ moment.action | translate }}
         </button>
       </div>
     </cb-panel>

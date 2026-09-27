@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import {
   ART_LICENSE_URL,
@@ -14,6 +15,7 @@ import {
   templateUrl: './credits.component.html',
   styleUrl: './credits.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslatePipe],
 })
 export class CreditsComponent {
   readonly credits = CREDITS;

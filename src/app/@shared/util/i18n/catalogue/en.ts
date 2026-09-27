@@ -805,4 +805,273 @@ export const EN: Readonly<Record<string, string>> = {
     'Story points buy the skill tree. Approve ADRs there to open new lines of ever dearer debt.',
   'help.loop.5':
     'Last on the tree, Sign the Closeout starts the acceptance push. The engagement is done when the budget reaches €1 Qa.',
+  'award.m-first-close.label': 'First ticket triaged',
+  'award.m-first-close.blurb': 'Somebody had to.',
+  'award.m-first-invoice.label': 'First invoice raised',
+  'award.m-first-invoice.blurb': 'The engagement is now revenue-generating.',
+  'award.m-first-hire.label': 'Headcount approved',
+  'award.m-first-hire.blurb': 'One junior. The requisition took four weeks.',
+  'award.m-hundred.label': 'One hundred tickets closed',
+  'award.m-hundred.blurb': 'Velocity is trending in the right direction.',
+  'award.m-tier1.label': 'ADR-1 approved',
+  'award.m-tier1.blurb': 'The framework is now load-bearing and unmaintained.',
+  'award.m-tier2.label': 'ADR-2 approved',
+  'award.m-tier2.blurb':
+    'The duplication is now a pattern, and patterns are best practice.',
+  'award.m-tier3.label': 'ADR-3 approved',
+  'award.m-tier3.blurb':
+    'Delivery is now distributed across every timezone at once.',
+  'award.m-tier4.label': 'ADR-4 approved',
+  'award.m-tier4.blurb':
+    'Nobody on the engagement can say which lines a person wrote.',
+  'award.m-tier5.label': 'ADR-5 approved',
+  'award.m-tier5.blurb':
+    'Throughput per head has never been higher. Bus factor: one.',
+  'award.m-tier6.label': 'ADR-6 approved',
+  'award.m-tier6.blurb':
+    'The services are load-bearing and nobody knows what they bear.',
+  'award.m-tier7.label': 'ADR-7 approved',
+  'award.m-tier7.blurb':
+    'Two systems, one truth, and we are paid to reconcile them.',
+  'award.m-tier8.label': 'ADR-8 approved',
+  'award.m-tier8.blurb': 'There is no tier after this one.',
+  'award.a-250.label': 'Two hundred and fifty',
+  'award.a-250.blurb':
+    'Close 250 work items. The board does not look any emptier.',
+  'award.a-first-thousand-billed.label': 'Four figures billed',
+  'award.a-first-thousand-billed.blurb':
+    'Bill €1,000. The engagement is now worth having.',
+  'award.a-works-on-my-machine.label': 'Works on my machine',
+  'award.a-works-on-my-machine.blurb':
+    'An auto-closed ticket found every train away and shipped straight to prod.',
+  'award.a-500.label': 'Five hundred',
+  'award.a-500.blurb':
+    'Close 500 work items. Two hundred and fifty of them came back.',
+  'award.a-ten-thousand-billed.label': 'Five figures billed',
+  'award.a-ten-thousand-billed.blurb':
+    'Bill €10,000. Somebody upstairs has noticed the account.',
+  'award.a-sprints-fifty.label': 'Fifty sprints',
+  'award.a-sprints-fifty.blurb':
+    'Fifty ceremonies. Fifty burndown charts. One codebase, worse.',
+  'award.a-thousand.label': 'Thousand-ticket engagement',
+  'award.a-thousand.blurb': 'Close 1,000 work items.',
+  'award.a-war-room.label': 'Standing war room',
+  'award.a-war-room.blurb':
+    'Put a senior on the escalations and leave the rest to the crew.',
+  'award.a-bench.label': 'Bench of twenty',
+  'award.a-bench.blurb': 'Twenty developers on the floor at once.',
+  'award.a-skimmer.label': 'Creative accounting',
+  'award.a-skimmer.blurb':
+    'Book billed revenue as Story Points. Finance signed off.',
+  'award.a-million.label': 'Seven figures billed',
+  'award.a-million.blurb': 'Bill €1,000,000 across the engagement.',
+  'award.a-ten-thousand.label': 'Five figures of tickets',
+  'award.a-ten-thousand.blurb':
+    'Close 10,000 work items. None of them are fixed.',
+  'award.a-office.label': 'The whole floor',
+  'award.a-office.blurb':
+    'Fit out every plate. There is nowhere left to put anyone.',
+  'award.a-hundred-thousand.label': 'Six figures of tickets',
+  'award.a-hundred-thousand.blurb':
+    'Close 100,000 work items. The backlog has never been longer.',
+  'award.a-billion.label': 'Ten figures billed',
+  'award.a-billion.blurb':
+    'Bill €1,000,000,000. The engagement is now the client.',
+  'award.a-ladder.label': 'Every decision approved',
+  'award.a-ladder.blurb': 'All eight ADRs. There was never a cleanup path.',
+  'award.a-million-tickets.label': 'Seven figures of tickets',
+  'award.a-million-tickets.blurb':
+    'Close 1,000,000 work items. The client has stopped reading them.',
+  'award.a-rate-card.label': 'The rate card, revised',
+  'award.a-rate-card.blurb': 'Five revisions. It has still never gone down.',
+  'award.a-secret.label': 'You read the code',
+  'award.a-secret.blurb': 'Nobody has opened that file since 2011.',
+  'adr.1.context':
+    'Ticket volume has outgrown manual triage. A framework upgrade was scoped and rejected on cost. Feature velocity is flat.',
+  'adr.1.decision':
+    'Adopt Legacy Framework as the platform baseline. The current version will not be upgraded. Legacy Defects are expected output, not incidents.',
+  'adr.1.consequences':
+    'Legacy Defects now spawn continuously across the board. The framework is now load-bearing and unmaintained.',
+  'adr.2.context':
+    'Onboarding time for new hires was judged too long. A style guide was proposed and shelved in favour of an internal wiki page titled "Just copy an existing service."',
+  'adr.2.decision':
+    'Codify copy-paste as the standard method of extending the system. Deduplication is deprioritised indefinitely.',
+  'adr.2.consequences':
+    'Flaky Tests now spawn across the board and respawn once after closing, billing twice for the same defect. The duplication is now a pattern, and patterns are best practice.',
+  'adr.3.context':
+    'Delivery capacity did not scale with backlog growth. A vendor was engaged across three time zones, with no shared style guide, code owner, or onboarding process.',
+  'adr.3.decision':
+    'Route a majority of new feature work through offshore contracting. Reviews are conducted asynchronously, where they are conducted at all.',
+  'adr.3.consequences':
+    'Merge Conflicts spawn at volume, around the clock. The board floods and income jumps by an order of magnitude. Delivery is now distributed across every timezone at once.',
+  'adr.4.context':
+    'Throughput per engineer has plateaued. A licence for an assistive coding tool was approved on the basis of a vendor deck and a two-week trial nobody wrote up.',
+  'adr.4.decision':
+    'Generate new code by default. Review is advisory. Output that compiles is treated as output that works.',
+  'adr.4.consequences':
+    'Hallucinated Imports spawn across the board. Each reads as correct and is not; the defect is found downstream, at our day rate. Nobody on the engagement can now say which lines were written by a person.',
+  'adr.5.context':
+    'Delivery of the assistive-tooling backlog slipped. One engineer consistently closes more tickets than the rest of the team combined and has asked to work unblocked.',
+  'adr.5.decision':
+    'Grant unrestricted commit access to the highest-performing engineer. Suspend review, pairing and retro attendance for that engineer only.',
+  'adr.5.consequences':
+    'Force Pushes land on main and spawn work for everyone else. Throughput per head is now our highest ever and our bus factor is one. The retro has been made optional, which has resolved the complaints about the retro.',
+  'adr.6.context':
+    'Following the departure of the highest-performing engineer, four production services were found to have no listed owner. Ownership was requested in a channel that no longer has members.',
+  'adr.6.decision':
+    'Leave the unowned services running. Do not decommission what cannot be traced. Route their alerts to the on-call rotation.',
+  'adr.6.consequences':
+    'The 3AM Page spawns continuously and comes back after it is closed, billing the same incident twice. Nothing is fixed, because nothing can be found. The services are load-bearing and nobody knows what they bear.',
+  'adr.7.context':
+    'A platform audit found the system unmaintainable. The estimate to remediate incrementally exceeded the estimate to rebuild, because the rebuild was estimated by the team proposing it.',
+  'adr.7.decision':
+    'Begin a full rewrite on a new stack. Run both systems in parallel indefinitely. Feature parity is a phase-two concern.',
+  'adr.7.consequences':
+    'Migration Fallout spawns at scale as the two systems disagree about the truth. We are now paid to maintain the old system, build the new one, and reconcile them. This is the most profitable quarter on record.',
+  'adr.8.context':
+    'The rewrite is behind. Headcount is capped. A proposal was circulated to close the gap without hiring, and approved in the same meeting it was presented.',
+  'adr.8.decision':
+    'Grant autonomous agents commit and merge rights against both systems. Set no limit on concurrent work. Human review is retained in the process diagram.',
+  'adr.8.consequences':
+    'Autonomous PRs spawn without limit and at the highest value on the board. The engagement is now billing for work it did not do, to fix work it did not write, on a system nobody has read. There is no tier after this one.',
+  'client.engagement': 'Platform Modernisation Programme',
+  'approval.by.halloran': 'D. Halloran',
+  'approval.by.achterberg': 'R. Achterberg',
+  'approval.by.board': 'Programme Board',
+  'approval.role.head': 'Head of Delivery',
+  'approval.role.director': 'Director of Delivery',
+  'approval.role.interim': 'Interim Head of Delivery',
+  'approval.role.quorum-two': 'quorum of two',
+  'approval.role.quorum-none': 'quorum not recorded',
+  'adr.subheading': 'Architecture Decision Record',
+  'adr.acknowledge': 'Acknowledge',
+  'adr.refinement': 'In refinement',
+  'adr.approve': 'Approve',
+  'adr.context': 'Context',
+  'adr.decision': 'Decision',
+  'adr.consequences': 'Consequences',
+  'adr.approved': 'Approved',
+  'adr.date': 'Date',
+  'adr.comments': 'Comments',
+  'adr.not-yet': 'Not yet',
+  'postmortem.closed': 'Engagement closed',
+  'postmortem.heading': 'Post-Mortem',
+  'postmortem.scope.final': 'Retrospective — {{tier}} engagement, all sprints.',
+  'postmortem.in-flight': 'Engagement in flight',
+  'postmortem.interim': 'Interim Retrospective',
+  'postmortem.scope.interim':
+    'Retrospective — {{tier}} engagement, sprints to date.',
+  'postmortem.dismiss': 'Close the interim retrospective',
+  'postmortem.distribution':
+    'Distribution: Programme Board, Delivery, Vendor Management',
+  'postmortem.burndown': 'Sprint burn-down',
+  'postmortem.burndown.aria':
+    'Tickets outstanding rose to {{peak}} over {{minutes}} minutes against an ideal descent to zero',
+  'postmortem.legend.actual': 'Outstanding — {{peak}} at its worst',
+  'postmortem.legend.ideal': 'Ideal, rebaselined',
+  'postmortem.legend.adr': 'ADR approved',
+  'postmortem.well': 'What went well',
+  'postmortem.badly': 'What did not go well',
+  'postmortem.record': 'Decisions of record',
+  'postmortem.actions': 'Action items',
+  'postmortem.rooms': 'The engagement, room by room',
+  'postmortem.outside': 'The engagement, from outside',
+  'postmortem.signed': '{{by}}, {{role}} — {{date}}. Comments: —',
+  'postmortem.well.closed': '{{closed}} tickets closed over the engagement.',
+  'postmortem.well.billed':
+    '{{billed}} billed to {{client}}, across {{sprints}} sprints.',
+  'postmortem.well.tier':
+    'ADR-{{adr}} ({{tier}}) reached full production status.',
+  'postmortem.well.awards':
+    '{{unlocked}} of {{total}} achievements confirmed by the crew.',
+  'postmortem.badly.adrs':
+    'Every Architecture Decision Record made the codebase permanently worse. None were reverted, none were on the agenda to be, and each was approved in writing by {{client}}.',
+  'postmortem.badly.backlog':
+    'The backlog was, at no point during the engagement, empty.',
+  'postmortem.badly.headcount':
+    'Headcount was added faster than the backlog shrank, at every tier.',
+  'postmortem.action.gender':
+    'Reconcile crew throughput by gender — women: {{women}} closes/head (n={{womenHeads}}); men: {{men}} closes/head (n={{menHeads}}). Owner: unassigned.',
+  'postmortem.action.load':
+    'Investigate why {{tier}} is now load-bearing. Owner: unassigned.',
+  'postmortem.action.assisted':
+    'Engagement figures include budget booked outside the billing system. Owner: unassigned.',
+  'postmortem.action.retro':
+    'Schedule a retrospective on this retrospective. Owner: unassigned.',
+  'achievements.heading': 'Achievements',
+  'achievements.subheading':
+    'Recognition register — confirmed on outcome, never on effort, and never paid.',
+  'achievements.count': '{{confirmed}}/{{total}} confirmed',
+  'achievements.column.award': 'Achievement',
+  'achievements.column.status': 'Status',
+  'achievements.unconfirmed': 'Unconfirmed',
+  'achievements.confirmed': 'Confirmed',
+  'stats.heading': 'Engagement Summary',
+  'stats.subheading': 'Lifetime, this engagement',
+  'stats.unaudited': 'Unaudited',
+  'stats.ladder.done': 'Ladder complete · {{tier}}',
+  'stats.ladder.closed': 'Closed',
+  'stats.ladder.next': 'Next · ADR {{adr}} · {{tier}}',
+  'stats.closed': 'Tickets closed',
+  'stats.wont-fix': 'Closed as won’t fix',
+  'stats.sprints': 'Sprints closed',
+  'stats.billed': 'Total billed',
+  'stats.per-sprint': 'Mean per sprint',
+  'stats.crew-share': 'Crew’s share',
+  'feed.heading': 'Recent Activity',
+  'feed.subheading': 'A sample — {{closed}} closed so far',
+  'feed.filter.news': 'News',
+  'feed.filter.all': 'All',
+  'feed.empty.news': 'No news yet — closes are hidden.',
+  'feed.empty.since':
+    'Nothing triaged since you came back — the log is not kept between sessions.',
+  'feed.empty.none': 'Nothing triaged yet.',
+  'feed.effect.sprint': '×{{mult}} sprint',
+  'feed.effect.hotfix': '×{{mult}} for {{seconds}}s',
+  'feed.effect.board': 'bills the board',
+  'feed.effect.pizza': '×{{mult}} crew nearby for {{seconds}}s',
+  'feed.by.you': 'you',
+  'feed.by.auto': 'auto',
+  'feed.hired': 'Someone joined — the bench is {{count}}',
+  'feed.hired.senior': '{{name}} joined the bench',
+  'feed.escalation': 'Escalation live for {{seconds}}s',
+  'feed.hazard.due': '{{hazard}} in {{seconds}}s',
+  'feed.hazard.landed': '{{hazard}} — {{seconds}}s',
+  'feed.hazard.declined': '{{hazard}} — declined · {{seconds}}s saved',
+  'feed.hazard.auto-declined': '{{hazard}} — declined on your behalf',
+  'feed.groomed':
+    '{{count}} items re-estimated. Sweep them while the points stand',
+  'feed.weather': 'Weather',
+  'rail.heading': 'The Practice',
+  'rail.subheading': 'Bought while the board fills.',
+  'rail.shop': 'Shop',
+  'rail.buyable': 'something to buy',
+  'rail.crew.note': 'Lines open on the tree; heads are hired here.',
+  'rail.maxed': 'MAX',
+  'rail.on-tree': 'on the tree',
+  'credits.free': 'free software under the',
+  'credits.source': 'source at',
+  'credits.hide': 'Hide credits',
+  'credits.show': 'Credits',
+  'credits.copyleft': 'The crew art carries its own copyleft:',
+  'moment.secret.subheading': 'Undocumented',
+  'moment.secret.chip': 'Found',
+  'moment.secret.action': 'Close the file',
+  'moment.secret.finding': 'Finding',
+  'moment.secret.finding.body':
+    'Nobody has opened that file since 2011. The TODO is older than the framework it was written against and older than three of the people who have since owned this repository. It was not removed before launch. It will not be removed before the next one. Everything bills slightly better now.',
+  'crew.tally.juniors': '{{count}} juniors on the floor',
+  'crew.tally.seniors': '{{count}} seniors on the floor',
+  'crew.tally.managers': '{{count}} managers on the floor',
+  'stage.board.title': 'Sprint Board',
+  'stage.board.blurb':
+    'Sweep the pointer over work to clear it — you are paid on the spot. When the sprint fills, nothing closes until it ships. Rare tickets are yours alone — juniors will not touch them.',
+  'stage.board.chip': 'Active sprint',
+  'stage.skills.title': 'Engineering Excellence Programme',
+  'stage.skills.blurb':
+    'Drag to pan, wheel to zoom, hover a square to read it. A square is a skill, its pips are how far in you are, and a black box says only that something is there.',
+  'stage.skills.chip': 'Story Points',
+  'stage.finale.title': 'Wrap Party',
+  'stage.finale.blurb': 'The engagement is closed. The crew stayed for cake.',
+  'stage.finale.chip': 'Engagement closed',
 };

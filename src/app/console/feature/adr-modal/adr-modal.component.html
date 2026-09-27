@@ -17,7 +17,7 @@
       heading="ADR-{{ adr.tier.index }} — {{
         tierNameKey(adr.tier.index) | translate
       }}"
-      subheading="Architecture Decision Record"
+      [subheading]="'adr.subheading' | translate"
     >
       @if (adr.signed) {
         <button
@@ -26,10 +26,12 @@
           class="btn primary small"
           (click)="back()"
         >
-          Acknowledge
+          {{ 'adr.acknowledge' | translate }}
         </button>
       } @else {
-        <span panel-meta class="chip warn">In refinement</span>
+        <span panel-meta class="chip warn">{{
+          'adr.refinement' | translate
+        }}</span>
       }
 
       @if (adr.signed) {
@@ -43,38 +45,39 @@
         >
           <img class="plate" [src]="adr.art" alt="" aria-hidden="true" />
           <span class="seal">
-            <span class="verb">Approve</span>
+            <span class="verb">{{ 'adr.approve' | translate }}</span>
             <span class="cost">{{ adr.cost }}</span>
           </span>
         </button>
       }
 
       <section class="doc-sections">
-        <h4>Context</h4>
-        <p>{{ adr.copy.context }}</p>
-        <h4>Decision</h4>
-        <p>{{ adr.copy.decision }}</p>
-        <h4>Consequences</h4>
-        <p>{{ adr.copy.consequences }}</p>
+        @for (part of adr.parts; track part.heading) {
+          <h4>{{ part.heading | translate }}</h4>
+          <p>{{ part.body | translate }}</p>
+        }
       </section>
 
       <dl class="approval">
-        <dt>Approved</dt>
+        <dt>{{ 'adr.approved' | translate }}</dt>
         @if (adr.approval; as signed) {
-          <dd>{{ signed.name }}, {{ signed.role }}, {{ client }}</dd>
+          <dd>
+            {{ signed.by | translate }}, {{ signed.role | translate }},
+            {{ client }}
+          </dd>
         } @else {
           <dd class="unsigned">—</dd>
         }
-        <dt>Date</dt>
+        <dt>{{ 'adr.date' | translate }}</dt>
         <dd>{{ adr.approval?.date ?? '—' }}</dd>
-        <dt>Comments</dt>
+        <dt>{{ 'adr.comments' | translate }}</dt>
         <dd>—</dd>
       </dl>
 
       @if (!adr.signed) {
         <div class="doc-actions">
           <button type="button" class="btn ghost" (click)="back()">
-            Not yet
+            {{ 'adr.not-yet' | translate }}
           </button>
         </div>
       }

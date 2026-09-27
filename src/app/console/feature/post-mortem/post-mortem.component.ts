@@ -8,7 +8,9 @@ import {
 
 import { FinaleService } from '../../../@shared/data/finale.service';
 import {
+  formatLongDate,
   formatMoney,
+  formatQuantity,
   formatWhole,
 } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
@@ -19,7 +21,9 @@ import { RetroService } from '../../data/retro.service';
 import {
   APPROVALS,
   CLIENT_NAME,
-  ENGAGEMENT_NAME,
+  ENGAGEMENT_KEY,
+  roleKey,
+  signatoryKey,
 } from '../../model/client.model';
 import { burndownChart, CHART_BOX } from '../../util/burndown-chart';
 import type { OfficeFrame } from '../../util/office-art';
@@ -58,7 +62,7 @@ export class PostMortemComponent {
   );
 
   readonly client = CLIENT_NAME;
-  readonly engagement = ENGAGEMENT_NAME;
+  readonly engagement = ENGAGEMENT_KEY;
 
   readonly chart = computed(() => burndownChart(this.#store.burndown()));
   readonly chartBox = `0 0 ${CHART_BOX.width} ${CHART_BOX.height}`;
@@ -84,23 +88,30 @@ export class PostMortemComponent {
       rungs.push({
         index,
         name: this.#translate.instant(tierNameKey(index)),
-        signed: `${approval.name}, ${approval.role} — ${approval.date}. Comments: —`,
+        signed: this.#say('postmortem.signed', {
+          by: this.#say(signatoryKey(approval.by)),
+          role: this.#say(roleKey(approval.role)),
+          date: formatLongDate(approval.date),
+        }),
       });
     }
     return rungs;
   });
 
   readonly filmstrip = computed<readonly OfficeFrame[]>(() =>
-    officeFilmstrip(this.#store.tier(), this.final(), (index) =>
-      this.#translate.instant(tierNameKey(index))
+    officeFilmstrip(
+      this.#store.tier(),
+      this.final(),
+      (index) => this.#say(tierNameKey(index)),
+      this.#say('postmortem.outside')
     )
   );
 
   readonly tierName = computed(() => {
     const tier = this.#store.tier();
     return tier > 0
-      ? this.#translate.instant(tierNameKey(tier))
-      : this.#translate.instant('postmortem.no-tier');
+      ? this.#say(tierNameKey(tier))
+      : this.#say('postmortem.no-tier');
   });
 
   readonly wentWell = computed<readonly string[]>(() => {
@@ -110,17 +121,27 @@ export class PostMortemComponent {
     const owned = new Set(this.#store.achievements());
     const unlocked = ACHIEVEMENTS.filter((award) => owned.has(award.id)).length;
     return [
-      `${closed} tickets closed over the engagement.`,
-      `${billed} billed to ${CLIENT_NAME}, across ${sprints} sprints.`,
-      `ADR-${this.#store.tier()} (${this.tierName()}) reached full production status.`,
-      `${unlocked} of ${ACHIEVEMENTS.length} achievements confirmed by the crew.`,
+      this.#say('postmortem.well.closed', { closed }),
+      this.#say('postmortem.well.billed', {
+        billed,
+        client: CLIENT_NAME,
+        sprints,
+      }),
+      this.#say('postmortem.well.tier', {
+        adr: this.#store.tier(),
+        tier: this.tierName(),
+      }),
+      this.#say('postmortem.well.awards', {
+        unlocked,
+        total: ACHIEVEMENTS.length,
+      }),
     ];
   });
 
   readonly wentBadly = computed<readonly string[]>(() => [
-    `Every Architecture Decision Record made the codebase permanently worse. None were reverted, none were on the agenda to be, and each was approved in writing by ${CLIENT_NAME}.`,
-    'The backlog was, at no point during the engagement, empty.',
-    'Headcount was added faster than the backlog shrank, at every tier.',
+    this.#say('postmortem.badly.adrs', { client: CLIENT_NAME }),
+    this.#say('postmortem.badly.backlog'),
+    this.#say('postmortem.badly.headcount'),
   ]);
 
   readonly genderSplit = computed<{
@@ -141,7 +162,7 @@ export class PostMortemComponent {
     const rate = (closed: number, count: number): HeadRate => ({
       heads: count,
       closed,
-      perHead: count > 0 ? (closed / count).toFixed(1) : '—',
+      perHead: count > 0 ? formatQuantity(closed / count) : '—',
     });
 
     return { women: rate(closedByWomen, women), men: rate(closedByMen, men) };
@@ -150,17 +171,21 @@ export class PostMortemComponent {
   readonly actionItems = computed<readonly string[]>(() => {
     const split = this.genderSplit();
     const items = [
-      `Reconcile crew throughput by gender — women: ${split.women.perHead} closes/head (n=${split.women.heads}); men: ${split.men.perHead} closes/head (n=${split.men.heads}). Owner: unassigned.`,
-      `Investigate why ${this.tierName()} is now load-bearing. Owner: unassigned.`,
+      this.#say('postmortem.action.gender', {
+        women: split.women.perHead,
+        womenHeads: split.women.heads,
+        men: split.men.perHead,
+        menHeads: split.men.heads,
+      }),
+      this.#say('postmortem.action.load', { tier: this.tierName() }),
     ];
-    if (this.#store.assisted()) {
-      items.push(
-        'Engagement figures include budget booked outside the billing system. Owner: unassigned.'
-      );
-    }
-    items.push(
-      'Schedule a retrospective on this retrospective. Owner: unassigned.'
-    );
+    if (this.#store.assisted())
+      items.push(this.#say('postmortem.action.assisted'));
+    items.push(this.#say('postmortem.action.retro'));
     return items;
   });
+
+  #say(key: string, params?: Record<string, string | number>): string {
+    return this.#translate.instant(key, params);
+  }
 }

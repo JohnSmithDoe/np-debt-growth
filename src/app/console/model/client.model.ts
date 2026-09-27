@@ -1,45 +1,29 @@
 export const CLIENT_NAME = 'Meridian Financial Group';
-export const ENGAGEMENT_NAME = 'Platform Modernisation Programme';
+export const ENGAGEMENT_KEY = 'client.engagement';
+
+export type SignatoryId = 'halloran' | 'achterberg' | 'board';
+export type RoleId =
+  'head' | 'director' | 'interim' | 'quorum-two' | 'quorum-none';
 
 export interface Approval {
-  readonly name: string;
-  readonly role: string;
+  readonly by: SignatoryId;
+  readonly role: RoleId;
+  /** ISO date, formatted in the reader's locale. */
   readonly date: string;
 }
 
+export const signatoryKey = (id: SignatoryId): string => `approval.by.${id}`;
+export const roleKey = (id: RoleId): string => `approval.role.${id}`;
+
 export const APPROVALS: Readonly<Record<number, Approval>> = {
-  1: { name: 'D. Halloran', role: 'Head of Delivery', date: '12 January 2024' },
-  2: {
-    name: 'D. Halloran',
-    role: 'Head of Delivery',
-    date: '27 February 2024',
-  },
-  3: { name: 'D. Halloran', role: 'Director of Delivery', date: '14 May 2024' },
-  4: {
-    name: 'D. Halloran',
-    role: 'Director of Delivery',
-    date: '2 August 2024',
-  },
-  5: {
-    name: 'R. Achterberg',
-    role: 'Interim Head of Delivery',
-    date: '19 September 2024',
-  },
-  6: {
-    name: 'R. Achterberg',
-    role: 'Interim Head of Delivery',
-    date: '30 November 2024',
-  },
-  7: {
-    name: 'Programme Board',
-    role: 'quorum of two',
-    date: '16 February 2025',
-  },
-  8: {
-    name: 'Programme Board',
-    role: 'quorum not recorded',
-    date: '3 April 2025',
-  },
+  1: { by: 'halloran', role: 'head', date: '2024-01-12' },
+  2: { by: 'halloran', role: 'head', date: '2024-02-27' },
+  3: { by: 'halloran', role: 'director', date: '2024-05-14' },
+  4: { by: 'halloran', role: 'director', date: '2024-08-02' },
+  5: { by: 'achterberg', role: 'interim', date: '2024-09-19' },
+  6: { by: 'achterberg', role: 'interim', date: '2024-11-30' },
+  7: { by: 'board', role: 'quorum-two', date: '2025-02-16' },
+  8: { by: 'board', role: 'quorum-none', date: '2025-04-03' },
 };
 
 export function approvalAt(tier: number): Approval | undefined {

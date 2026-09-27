@@ -131,7 +131,7 @@ One thing in the restore looks like a bug and is not:
 
 Two bundled catalogues (`@shared/util/i18n/catalogue/{en,de}.ts`), lazily imported, no HTTP. Specs
 enforce that both carry identical keys, that no value is empty, and — in
-`game/util/catalogue-reach.spec.ts` — that every key a model _builds_ (skills, tickets, tiers, kit,
+`game/util/catalogue-reach.spec.ts` — that every key a model _builds_ (skills, tickets, tiers, ADR records, awards, kit,
 office, traits, hazards) exists in both. Add a game entity and that spec tells you which strings you
 still owe.
 

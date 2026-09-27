@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { GameStore } from '../../../game/data/game.store';
@@ -16,6 +17,7 @@ describe('ActivityFeedComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideTranslateService(),
         {
           provide: GameStore,
           useValue: { log, lifetimeClosed } as unknown as GameStore,
@@ -28,11 +30,11 @@ describe('ActivityFeedComponent', () => {
     TestBed.createComponent(ActivityFeedComponent).componentInstance;
 
   it('says nothing has happened yet only when nothing has', () => {
-    expect(feed().empty()).toBe('Nothing triaged yet.');
+    expect(feed().empty()).toBe('feed.empty.none');
   });
 
   it('says the log is not kept when the run has a history it cannot show', () => {
     lifetimeClosed.set(40_000);
-    expect(feed().empty()).not.toContain('yet.');
+    expect(feed().empty()).toBe('feed.empty.since');
   });
 });

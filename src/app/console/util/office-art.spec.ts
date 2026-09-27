@@ -31,7 +31,7 @@ describe('the office art', () => {
   });
 
   it('leaves the rungs above the one reached blank', () => {
-    const strip = officeFilmstrip(3, false, (i) => `tier ${i}`);
+    const strip = officeFilmstrip(3, false, (i) => `tier ${i}`, 'outside');
 
     expect(
       strip.filter((frame) => frame.missed).map((frame) => frame.index)
@@ -39,8 +39,8 @@ describe('the office art', () => {
   });
 
   it('adds the closing shot only once the engagement is closed', () => {
-    const open = officeFilmstrip(MAX_TIER, false, String);
-    const closed = officeFilmstrip(MAX_TIER, true, String);
+    const open = officeFilmstrip(MAX_TIER, false, String, 'outside');
+    const closed = officeFilmstrip(MAX_TIER, true, String, 'outside');
 
     expect(open.map((frame) => frame.art)).not.toContain(CLOSING_OFFICE_ART);
     expect(closed.at(-1)?.art).toBe(CLOSING_OFFICE_ART);

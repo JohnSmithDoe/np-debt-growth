@@ -5,6 +5,7 @@ import { meetingSpot, NO_TICKET } from '../../game/model/board.model';
 import { crewName } from '../../game/model/cast.model';
 import { TICKET_TYPES } from '../../game/model/ticket.model';
 import type { CrewKind } from '../../game/model/crew.model';
+import type { SceneDeps } from '../model/scene-deps.model';
 import { hireIsWoman, hirePoolSeat } from '../../game/util/economy';
 import type { LpcBlock } from '../model/lpc-sheet.model';
 import {
@@ -29,6 +30,7 @@ export class CrewLayer {
   readonly #held: Phaser.GameObjects.Rectangle[] = [];
   readonly #tally: Phaser.GameObjects.Text;
   readonly #kind: CrewKind;
+  readonly #say: SceneDeps['text'];
   readonly #tallyRow: number;
   readonly #scene: Phaser.Scene;
   readonly #depth: number;
@@ -54,9 +56,11 @@ export class CrewLayer {
     scene: Phaser.Scene,
     depth: number,
     kind: CrewKind,
-    tallyRow: number
+    tallyRow: number,
+    say: SceneDeps['text']
   ) {
     this.#kind = kind;
+    this.#say = say;
     this.#tallyRow = tallyRow;
     this.#scene = scene;
     this.#depth = depth;
@@ -174,7 +178,7 @@ export class CrewLayer {
       }
       this.#tally.setVisible(this.#crowded);
       if (this.#crowded) {
-        this.#tally.setText(`${count} ${this.#kind} on the floor`);
+        this.#tally.setText(this.#say(`crew.tally.${this.#kind}`, { count }));
       }
     }
 

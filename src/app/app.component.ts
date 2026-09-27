@@ -31,7 +31,7 @@ import { SettingsModalComponent } from './console/feature/settings-modal/setting
 import { TitleScreenComponent } from './console/feature/title-screen/title-screen.component';
 import { HelpUiService } from './console/data/help-ui.service';
 import { SettingsUiService } from './console/data/settings-ui.service';
-import { CLIENT_NAME, ENGAGEMENT_NAME } from './console/model/client.model';
+import { CLIENT_NAME, ENGAGEMENT_KEY } from './console/model/client.model';
 import { FinaleService } from './@shared/data/finale.service';
 import { AudioService } from './audio/data/audio.service';
 import { StageModeService } from './stage/data/stage-mode.service';
@@ -75,7 +75,7 @@ export class AppComponent {
   #finale = inject(FinaleService);
 
   readonly client = CLIENT_NAME;
-  readonly engagement = ENGAGEMENT_NAME;
+  readonly engagement = ENGAGEMENT_KEY;
 
   readonly finale = computed(() => this.#finale.act() !== 'closed');
 

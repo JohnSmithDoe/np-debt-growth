@@ -13,6 +13,15 @@ export interface DebtTier {
 export const tierNameKey = (index: number): string => `tier.${index}.name`;
 export const tierBlurbKey = (index: number): string => `tier.${index}.blurb`;
 
+export type AdrPart = 'context' | 'decision' | 'consequences';
+export const ADR_PARTS: readonly AdrPart[] = [
+  'context',
+  'decision',
+  'consequences',
+];
+export const adrPartKey = (index: number, part: AdrPart): string =>
+  `adr.${index}.${part}`;
+
 export const DEBT_TIERS: readonly DebtTier[] = [
   { index: 1, spCost: 750, ticket: 'legacy' },
   { index: 2, spCost: 10_000, ticket: 'flaky' },

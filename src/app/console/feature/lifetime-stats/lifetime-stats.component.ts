@@ -67,21 +67,21 @@ export class LifetimeStatsComponent {
     const sprints = this.#store.lifetimeRounds();
     const perSprint = sprints === 0 ? 0 : billed / sprints;
     return [
-      { label: 'Tickets closed', value: formatWhole(closed), tone: 'plain' },
+      { label: 'stats.closed', value: formatWhole(closed), tone: 'plain' },
       {
-        label: 'Closed as won’t fix',
+        label: 'stats.wont-fix',
         value: formatWhole(this.#store.lifetimeWontFix()),
         tone: 'plain',
       },
-      { label: 'Sprints closed', value: formatWhole(sprints), tone: 'plain' },
-      { label: 'Total billed', value: formatMoney(billed), tone: 'money' },
+      { label: 'stats.sprints', value: formatWhole(sprints), tone: 'plain' },
+      { label: 'stats.billed', value: formatMoney(billed), tone: 'money' },
       {
-        label: 'Mean per sprint',
+        label: 'stats.per-sprint',
         value: formatMoney(perSprint),
         tone: 'money',
       },
       {
-        label: 'Crew’s share',
+        label: 'stats.crew-share',
         value: `${Math.round(this.#store.crewEarnedShare() * 100)}%`,
         tone: 'plain',
       },

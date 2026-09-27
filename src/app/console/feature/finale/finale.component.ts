@@ -18,7 +18,12 @@ import { SaveService } from '../../../game/data/save.service';
 import { CAST } from '../../../game/model/cast.model';
 import { DEBT_TIERS, tierNameKey } from '../../../game/model/tier.model';
 import { RetroService } from '../../data/retro.service';
-import { APPROVALS, CLIENT_NAME } from '../../model/client.model';
+import {
+  APPROVALS,
+  CLIENT_NAME,
+  roleKey,
+  signatoryKey,
+} from '../../model/client.model';
 import {
   COPYRIGHT,
   CREDITS,
@@ -68,13 +73,14 @@ export class FinaleComponent {
     ),
   }));
 
-  readonly approvers = [
+  readonly approvers = computed(() => [
     ...new Set(
       Object.values(APPROVALS).map(
-        (approval) => `${approval.name}, ${approval.role}`
+        (approval) =>
+          `${this.#translate.instant(signatoryKey(approval.by))}, ${this.#translate.instant(roleKey(approval.role))}`
       )
     ),
-  ];
+  ]);
 
   readonly adrs = computed(() =>
     DEBT_TIERS.map(

@@ -6,6 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { GameStore } from '../../../game/data/game.store';
 import { SECRET_SKILL_ID } from '../../../game/model/skill.model';
@@ -19,7 +20,7 @@ import { MOMENT_COPY } from './moment-copy';
   templateUrl: './moment-modal.component.html',
   styleUrl: './moment-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BackdropDirective, PanelComponent],
+  imports: [BackdropDirective, PanelComponent, TranslatePipe],
   host: { '(document:keydown.escape)': 'dismiss()' },
 })
 export class MomentModalComponent {
