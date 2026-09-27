@@ -15,8 +15,7 @@ import {
 import type { SceneDeps } from '../model/scene-deps.model';
 
 const PIP_HEIGHT = 16;
-const BAR_TOP = 5;
-const RAIL_Y = 45;
+const BAR_TOP = (SPRINT_STRIP_HEIGHT - PIP_HEIGHT) / 2;
 const PORTAL_WIDTH = 8;
 const PORTAL_HEIGHT = GHOST_TRAIN.loco.frame.height + 2;
 const TRAIN_STEPS = 1000;
@@ -28,7 +27,7 @@ const MIN_BAR_WIDTH = 96;
 const SEGMENT = { max: 10, min: 8, gap: 2 } as const;
 
 const PAD = 18;
-const BAR_X = 172;
+const BAR_MIN_X = 172;
 const GAP = 18;
 
 export class SprintStrip {
@@ -51,6 +50,7 @@ export class SprintStrip {
   readonly #statusLabel: Phaser.GameObjects.Text;
 
   #top = 0;
+  #barX = BAR_MIN_X;
   #barWidth = SPRINT_BAR_WIDTH;
   #statusX = 0;
   #remaining = 0;
@@ -90,12 +90,12 @@ export class SprintStrip {
   }
 
   get barX(): number {
-    return BAR_X + this.#barWidth / 2;
+    return this.#barX + this.#barWidth / 2;
   }
 
   slotAt(px: number, py: number): number | null {
     if (py < this.#top || py > this.#top + SPRINT_STRIP_HEIGHT) return null;
-    if (px < BAR_X || px > BAR_X + this.#barWidth) return null;
+    if (px < this.#barX || px > this.#barX + this.#barWidth) return null;
     const held = this.#deps.sprint().length;
     return held > 0 ? held - 1 : null;
   }
@@ -110,16 +110,17 @@ export class SprintStrip {
     this.#band.setPosition(0, this.#top).setSize(width, SPRINT_STRIP_HEIGHT);
     this.#rule.setPosition(0, this.#top).setSize(width, 1);
     this.#statusX = width - PAD - STATUS_WIDTH;
-    this.#barWidth = Math.max(
-      MIN_BAR_WIDTH,
-      Math.min(
-        SPRINT_BAR_WIDTH,
-        this.#statusX - GAP - PENDING_WIDTH - GAP - BAR_X
-      )
+    const centre = width / 2;
+    const half = Math.min(
+      SPRINT_BAR_WIDTH / 2,
+      centre - BAR_MIN_X,
+      this.#statusX - GAP - PENDING_WIDTH - GAP - centre
     );
+    this.#barWidth = Math.max(MIN_BAR_WIDTH, half * 2);
+    this.#barX = Math.round(centre - this.#barWidth / 2);
     this.#slotsLabel.setPosition(PAD, this.#top + 17);
     this.#pendingLabel.setPosition(
-      BAR_X + this.#barWidth + GAP,
+      this.#barX + this.#barWidth + GAP,
       this.#top + 11
     );
     this.#statusLabel.setPosition(
@@ -200,19 +201,14 @@ export class SprintStrip {
     const width = this.#barWidth;
     const newest = this.#deps.sprint().at(-1);
     this.#drawSegments(
-      BAR_X,
+      this.#barX,
       this.#top + BAR_TOP,
       width,
       slots <= 0 ? 0 : Math.min(1, filled / slots),
       newest ? TICKET_TYPES[newest.type].colour : BOARD_INK.pipFull
     );
     if (away) {
-      this.#drawTrain(
-        BAR_X,
-        this.#top + RAIL_Y,
-        width,
-        1 - this.#remaining / haul
-      );
+      this.#drawTrain(this.#barX, this.#top, width, 1 - this.#remaining / haul);
     } else {
       this.#parkTrain();
     }
