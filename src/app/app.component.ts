@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   effect,
   inject,
   signal,
@@ -14,7 +13,6 @@ import {
   formatMoney,
   formatPoints,
   formatPointsExact,
-  formatQuantity,
 } from './@shared/util/format-quantity';
 import { BacklogTickerComponent } from './console/ui/backlog-ticker/backlog-ticker.component';
 import { AgentComponent } from './console/feature/agent/agent.component';
@@ -31,9 +29,7 @@ import { SettingsUiService } from './console/data/settings-ui.service';
 import { CLIENT_NAME, ENGAGEMENT_NAME } from './console/model/client.model';
 import { AudioService } from './audio/data/audio.service';
 import { StageModeService } from './stage/data/stage-mode.service';
-import { GameClock } from './game/data/game-clock.service';
 import { GameStore } from './game/data/game.store';
-import { TICK_MS } from './game/model/game.consts';
 
 function formatCountdown(remainingMs: number): string {
   return `${Math.ceil(remainingMs / 1000)}s`;
@@ -61,7 +57,6 @@ function formatCountdown(remainingMs: number): string {
 })
 export class AppComponent {
   #store = inject(GameStore);
-  #clock = inject(GameClock);
   #audio = inject(AudioService);
   #stage = inject(StageModeService);
   #settings = inject(SettingsUiService);
@@ -86,13 +81,9 @@ export class AppComponent {
   readonly sprintCount = this.#store.sprintCount;
   readonly sprintSlots = this.#store.sprintSlots;
   readonly sprintValue = this.#store.sprintValue;
-  readonly escalated = this.#store.escalated;
 
   readonly money = formatCompactMoney;
   readonly points = formatPoints;
-  readonly escalation = computed(() =>
-    formatQuantity(this.#store.escalationMultiplier())
-  );
 
   readonly exactMoney = computed(() => formatMoney(this.budget()));
   readonly exactPoints = computed(
@@ -119,22 +110,6 @@ export class AppComponent {
       : `release ${formatCountdown(this.#store.roundLeftMs())}`
   );
 
-  #now = signal(this.#clock.now());
-  #tickHandle?: ReturnType<typeof setInterval>;
-
-  readonly hotfixRemaining = computed(() =>
-    Math.max(0, this.#store.hotfixUntil() - this.#now())
-  );
-  readonly escalationRemaining = computed(() =>
-    Math.max(0, this.#store.escalationFiresAt() - this.#now())
-  );
-  readonly hotfixLabel = computed(() =>
-    formatCountdown(this.hotfixRemaining())
-  );
-  readonly escalationLabel = computed(() =>
-    formatCountdown(this.escalationRemaining())
-  );
-
   readonly awardPaid = signal(false);
   #awarded = 0;
 
@@ -151,24 +126,10 @@ export class AppComponent {
   }
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => clearInterval(this.#tickHandle));
     effect(() => {
       const awarded = this.#store.awardCount();
       if (awarded > this.#awarded) this.awardPaid.set(true);
       this.#awarded = awarded;
-    });
-    effect(() => {
-      const active =
-        this.#store.hotfixUntil() > 0 || this.#store.escalationFiresAt() > 0;
-      if (active && this.#tickHandle === undefined) {
-        this.#tickHandle = setInterval(
-          () => this.#now.set(this.#clock.now()),
-          TICK_MS
-        );
-      } else if (!active && this.#tickHandle !== undefined) {
-        clearInterval(this.#tickHandle);
-        this.#tickHandle = undefined;
-      }
     });
   }
 }

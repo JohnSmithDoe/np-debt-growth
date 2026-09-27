@@ -40,7 +40,7 @@ import {
   HAZARD_BY_ID,
   hazardDurationMs,
 } from '../model/hazard.model';
-import type { Lane, RoundOutcome } from '../model/round.model';
+import type { BuffNotice, Lane, RoundOutcome } from '../model/round.model';
 import { EMPTY_LANE } from '../model/round.model';
 import type { SkillLock } from '../model/skill.model';
 import {
@@ -59,6 +59,7 @@ import {
   FACT_COUNTDOWN_MS,
   FACT_EVERY_MS,
   HOTFIX_MS,
+  HOTFIX_MULTIPLIER,
   INVITATION_EVERY_MS,
   INVITATION_WINDOW_MS,
 } from '../model/balance/weather';
@@ -760,6 +761,27 @@ export class GameStore {
       if (row?.weather) sky = { ...sky, ...row.weather };
     }
     return sky;
+  }
+
+  buffNotices(): readonly BuffNotice[] {
+    const state = this.#state();
+    const now = state.lastTick;
+    const live: BuffNotice[] = [];
+    if (state.escalated && state.escalationFiresAt > now) {
+      live.push({
+        id: 'escalation',
+        mult: economy.escalationMultiplier(state),
+        msLeft: state.escalationFiresAt - now,
+      });
+    }
+    if (state.hotfixUntil > now) {
+      live.push({
+        id: 'hotfix',
+        mult: HOTFIX_MULTIPLIER,
+        msLeft: state.hotfixUntil - now,
+      });
+    }
+    return live;
   }
 
   hazardNotice(): {

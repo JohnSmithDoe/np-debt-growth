@@ -1,10 +1,7 @@
 import * as Phaser from 'phaser';
 
-import {
-  formatMoney,
-  formatQuantity,
-} from '../../@shared/util/format-quantity';
-import { ticketLabelKey, TICKET_TYPES } from '../../game/model/ticket.model';
+import { formatMoney } from '../../@shared/util/format-quantity';
+import { TICKET_TYPES } from '../../game/model/ticket.model';
 import {
   BOARD_INK,
   BOARD_TEXT,
@@ -20,13 +17,15 @@ const WAGON_PITCH = 12;
 const WAGON_GAP = 2;
 const PORTAL_WIDTH = 8;
 const TRAIN_STEPS = 1000;
-const CLOCK_WIDTH = 148;
-const CLOCK_HEIGHT = 28;
+const STATUS_WIDTH = 132;
+const STATUS_DOT = 3;
+const STATUS_TEXT_X = 12;
+const PENDING_WIDTH = 112;
+const MIN_BAR_WIDTH = 96;
 
 const PAD = 18;
 const BAR_X = 172;
-const PENDING_X = BAR_X + SPRINT_BAR_WIDTH + 20;
-const CLOCK_GAP = 14;
+const GAP = 18;
 
 export class SprintStrip {
   readonly #deps: SceneDeps;
@@ -35,15 +34,13 @@ export class SprintStrip {
   readonly #pips: Phaser.GameObjects.Graphics;
   readonly #slotsLabel: Phaser.GameObjects.Text;
   readonly #pendingLabel: Phaser.GameObjects.Text;
-  readonly #escalationLabel: Phaser.GameObjects.Text;
-  readonly #escalationName: string;
-  #drawnEscalation = '';
   readonly #cooldown: Phaser.GameObjects.Graphics;
-  readonly #clock: Phaser.GameObjects.Rectangle;
-  readonly #clockLabel: Phaser.GameObjects.Text;
+  readonly #statusLabel: Phaser.GameObjects.Text;
 
   #width = 0;
   #top = 0;
+  #barWidth = SPRINT_BAR_WIDTH;
+  #statusX = 0;
   #remaining = 0;
   #drawnLanes = '';
   #drawnCooldown = -1;
@@ -66,17 +63,8 @@ export class SprintStrip {
 
     this.#slotsLabel = this.#text(scene, depth, '11px', BOARD_TEXT.dim);
     this.#pendingLabel = this.#text(scene, depth, '20px', BOARD_TEXT.gold);
-    this.#escalationLabel = this.#text(scene, depth, '12px', BOARD_TEXT.gold);
-    this.#escalationLabel.setOrigin(1, 0);
-    this.#escalationName = deps
-      .text(ticketLabelKey('escalation'))
-      .toUpperCase();
-
-    this.#clock = scene.add
-      .rectangle(0, 0, CLOCK_WIDTH, CLOCK_HEIGHT, BOARD_INK.buttonIdle)
-      .setDepth(depth + 1);
-    this.#clockLabel = this.#text(scene, depth + 2, '12px', BOARD_TEXT.bright);
-    this.#clockLabel.setOrigin(0.5);
+    this.#statusLabel = this.#text(scene, depth, '12px', BOARD_TEXT.body);
+    this.#statusLabel.setOrigin(0, 0.5);
   }
 
   get dropX(): number {
@@ -134,19 +122,27 @@ export class SprintStrip {
 
     this.#band.setPosition(0, this.#top).setSize(width, SPRINT_STRIP_HEIGHT);
     this.#rule.setPosition(0, this.#top).setSize(width, 1);
+    this.#statusX = width - PAD - STATUS_WIDTH;
+    this.#barWidth = Math.max(
+      MIN_BAR_WIDTH,
+      Math.min(
+        SPRINT_BAR_WIDTH,
+        this.#statusX - GAP - PENDING_WIDTH - GAP - BAR_X
+      )
+    );
     this.#slotsLabel.setPosition(PAD, this.#top + 17);
-    this.#pendingLabel.setPosition(PENDING_X, this.#top + 11);
-    this.#escalationLabel.setPosition(
-      width - CLOCK_WIDTH - PAD - CLOCK_GAP,
-      this.#top + 16
+    this.#pendingLabel.setPosition(
+      BAR_X + this.#barWidth + GAP,
+      this.#top + 11
     );
-    this.#clock.setPosition(
-      width - CLOCK_WIDTH / 2 - PAD,
-      this.#top + SPRINT_STRIP_HEIGHT / 2 - 4
+    this.#statusLabel.setPosition(
+      this.#statusX + STATUS_TEXT_X,
+      this.#top + SPRINT_STRIP_HEIGHT / 2 - 2
     );
-    this.#clockLabel.setPosition(this.#clock.x, this.#clock.y);
 
     this.#drawnLanes = '';
+    this.#drawnClock = '';
+    this.#drawnCooldown = -1;
   }
 
   update(): void {
@@ -166,9 +162,7 @@ export class SprintStrip {
       this.#cooldown,
       this.#slotsLabel,
       this.#pendingLabel,
-      this.#escalationLabel,
-      this.#clock,
-      this.#clockLabel,
+      this.#statusLabel,
     ]) {
       object.destroy();
     }
@@ -193,7 +187,7 @@ export class SprintStrip {
     const lanes = Math.max(1, this.#deps.lanes().length);
     return {
       lanes,
-      width: (SPRINT_BAR_WIDTH - (lanes - 1) * LANE_GAP) / lanes,
+      width: (this.#barWidth - (lanes - 1) * LANE_GAP) / lanes,
     };
   }
 
@@ -300,43 +294,44 @@ export class SprintStrip {
 
   #refreshPending(): void {
     const pending = formatMoney(this.#deps.pending());
-    if (pending !== this.#drawnPending) {
-      this.#drawnPending = pending;
-      this.#pendingLabel.setText(pending);
-    }
-    this.#escalationLabel.setVisible(this.#deps.escalated());
-
-    const escalation = `×${formatQuantity(this.#deps.escalationMultiplier())} ${this.#escalationName}`;
-    if (escalation !== this.#drawnEscalation) {
-      this.#drawnEscalation = escalation;
-      this.#escalationLabel.setText(escalation);
-    }
+    if (pending === this.#drawnPending) return;
+    this.#drawnPending = pending;
+    this.#pendingLabel.setText(pending);
   }
 
   #refreshClock(): void {
-    const label = this.#deps.running()
+    const running = this.#deps.running();
+    const label = running
       ? this.#deps.text('strip.collecting')
       : this.#deps.text('strip.releasing', {
           seconds: Math.ceil(this.#remaining / 1000),
         });
     if (label === this.#drawnClock) return;
     this.#drawnClock = label;
-    this.#clockLabel.setText(label);
+    this.#statusLabel
+      .setText(label)
+      .setColor(running ? BOARD_TEXT.body : BOARD_TEXT.gold);
   }
 
+  /** Status dot, and while every train is away the time until the first is back. */
   #drawCooldown(): void {
     const length = this.#deps.haulMs();
-    const width = CLOCK_WIDTH * (length > 0 ? this.#remaining / length : 0);
-    const drawn = Math.round(width);
+    const away = this.#remaining > 0;
+    const part = away && length > 0 ? this.#remaining / length : 0;
+    const drawn = away ? Math.round(part * 200) : -2;
     if (drawn === this.#drawnCooldown) return;
     this.#drawnCooldown = drawn;
-    this.#cooldown.clear();
-    this.#cooldown.fillStyle(BOARD_INK.gold, this.#remaining > 0 ? 0.9 : 0.25);
-    this.#cooldown.fillRect(
-      this.#clock.x - CLOCK_WIDTH / 2,
-      this.#clock.y + CLOCK_HEIGHT / 2 + 5,
-      Math.max(2, width),
-      3
-    );
+
+    const g = this.#cooldown;
+    const y = this.#statusLabel.y;
+    g.clear();
+    g.fillStyle(away ? BOARD_INK.gold : BOARD_INK.pipFull, 1);
+    g.fillCircle(this.#statusX + STATUS_DOT, y, STATUS_DOT);
+    if (!away) return;
+    const track = STATUS_WIDTH - STATUS_TEXT_X;
+    g.fillStyle(BOARD_INK.stripRule, 1);
+    g.fillRect(this.#statusX + STATUS_TEXT_X, y + 11, track, 2);
+    g.fillStyle(BOARD_INK.gold, 0.9);
+    g.fillRect(this.#statusX + STATUS_TEXT_X, y + 11, track * part, 2);
   }
 }

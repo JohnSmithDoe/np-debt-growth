@@ -48,6 +48,15 @@ export const RARE_TITLE_OFFSET = 26;
 export const RARE_LIFT = 14;
 
 export const SPRINT_STRIP_HEIGHT = 48;
+
+export const BUFF_BANNER = {
+  size: '16px',
+  colour: { escalation: '#d8b34a', hotfix: '#4ade80' },
+  pulseMs: 900,
+  swell: 0.06,
+  fade: 0.12,
+  gap: 6,
+} as const;
 export const SPRINT_PIP_LIMIT = 40;
 export const SPRINT_BAR_WIDTH = 420;
 

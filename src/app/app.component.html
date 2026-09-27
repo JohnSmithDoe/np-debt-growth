@@ -30,16 +30,7 @@
           {{ sprintCount() }}/{{ sprintSlots() }}
           <span class="pending">{{ money(sprintValue()) }}</span>
           @if (canFull()) {
-            <span class="chip sev0">full · the truck is on its way</span>
-          }
-          @if (escalated()) {
-            <span class="chip sev0">Escalated ×{{ escalation() }}</span>
-          }
-          @if (hotfixRemaining() > 0) {
-            <span class="chip warn">Hotfix ×2 · {{ hotfixLabel() }}</span>
-          }
-          @if (escalationRemaining() > 0) {
-            <span class="chip sev0">Escalation in {{ escalationLabel() }}</span>
+            <span class="chip sev0">full · release train out</span>
           }
         } @else {
           <span class="muted">—</span>

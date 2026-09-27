@@ -27,3 +27,10 @@ export interface RoundOutcome {
   readonly durationMs: number;
   readonly spVelocity: number;
 }
+
+/** A live pickup buff, for the board's banner: what it multiplies and for how long. */
+export interface BuffNotice {
+  readonly id: 'escalation' | 'hotfix';
+  readonly mult: number;
+  readonly msLeft: number;
+}

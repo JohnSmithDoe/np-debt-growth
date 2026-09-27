@@ -15,6 +15,8 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.topOfBand': 'Seniors nehmen zuerst das größte Ticket',
   'strip.collecting': 'SAMMELN',
   'strip.releasing': 'ZUG {{seconds}}s',
+  'board.buff.escalation': 'ESKALATION ×{{mult}} · {{seconds}}s',
+  'board.buff.hotfix': 'HOTFIX-FENSTER ×{{mult}} · {{seconds}}s',
   'skill.effect.slots': 'Sprint-Umfang +{{count}} pro Swimlane',
   'skill.effect.haulShave': '−{{seconds}} s für jeden Release-Train',
   'skill.effect.spawnRate': '{{pct}} Ticket-Spawnrate',

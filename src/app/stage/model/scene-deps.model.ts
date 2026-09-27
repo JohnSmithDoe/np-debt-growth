@@ -1,4 +1,4 @@
-import type { Lane } from '../../game/model/round.model';
+import type { BuffNotice, Lane } from '../../game/model/round.model';
 import type {
   Board,
   CloseFloat,
@@ -31,7 +31,6 @@ export interface SceneDeps {
   /** The live pizza party in board units, with the share of it left. */
   pizza(): { x: number; y: number; radius: number; left: number } | null;
   pending(): number;
-  escalated(): boolean;
   tier(): number;
   spawnerCount(adr: number): number;
   relabelTarget(type: TicketTypeId): TicketTypeId | null;
@@ -39,7 +38,7 @@ export interface SceneDeps {
   hazardNotice(): HazardNotice | null;
   seniorPoolSeat(seat: number): number;
 
-  escalationMultiplier(): number;
+  buffNotices(): readonly BuffNotice[];
   womanEvery(crew: CrewKind): number;
 
   harvest(ids: readonly number[]): Harvest;

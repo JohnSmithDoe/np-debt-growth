@@ -29,6 +29,7 @@ import {
   CLICK_RING,
   REFUSED_MS,
   BIG_FLOAT_CAPTION,
+  BUFF_BANNER,
   CLOSE_FLOAT,
   CLOSE_FLOATS_PER_FRAME,
   DROP_HOP,
@@ -55,6 +56,7 @@ import { FLIGHT, FlyerPool } from '../util/flyer-pool';
 import { NONE, TicketHeap } from '../util/ticket-heap';
 import { CrewLayer } from './crew-layer';
 import { SpeechBubbles } from './speech-bubbles';
+import { BuffBanners } from './buff-banners';
 import { CbScene } from './cb-scene';
 import { GroundLayer } from './ground-layer';
 import { SprintStrip } from './sprint-strip';
@@ -72,6 +74,7 @@ interface BoardParts {
   readonly spawners: TierSpawners;
   readonly votes: VoteBeams;
   readonly strip: SprintStrip;
+  readonly buffs: BuffBanners;
 }
 
 const DEPTH = {
@@ -250,6 +253,7 @@ export class BoardScene extends CbScene {
       spawners: new TierSpawners(this, DEPTH.spawner),
       votes: new VoteBeams(this, DEPTH.spawner - 1),
       strip,
+      buffs: new BuffBanners(this, this.deps, DEPTH.hover - 1),
     };
     parts.flyers.onArrive = (kind, id) => {
       if (kind === FLIGHT.drop) parts.heap.reveal(id);
@@ -348,6 +352,7 @@ export class BoardScene extends CbScene {
     parts.flyers.update(step);
     parts.strip.update();
     this.#weather();
+    this.#buffs(parts, step);
     this.#bill(parts);
     this.#floatCloses();
     this.#holdStripHover();
@@ -499,6 +504,14 @@ export class BoardScene extends CbScene {
       .setColor(notice.landed ? BOARD_TEXT.bright : BOARD_TEXT.gold)
       .setVisible(true);
     this.#placeBanner();
+  }
+
+  #buffs(parts: BoardParts, step: number): void {
+    const banner = this.#banner;
+    const bottom = banner?.visible
+      ? banner.y - BUFF_BANNER.gap
+      : this.#boardHeight - HAZARD_BANNER_LIFT;
+    parts.buffs.update(step, this.#width / 2, bottom);
   }
 
   #placeBanner(): void {
@@ -825,6 +838,7 @@ export class BoardScene extends CbScene {
     this.#parts = undefined;
     if (!parts) return;
     parts.strip.destroy();
+    parts.buffs.destroy();
     parts.crew.destroy();
     parts.seniors.destroy();
     parts.managers.destroy();
