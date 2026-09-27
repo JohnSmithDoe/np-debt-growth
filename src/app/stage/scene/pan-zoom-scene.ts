@@ -67,6 +67,20 @@ export abstract class PanZoomScene extends CbScene {
     if (was !== this.#legible()) this.redraw();
   }
 
+  /** Zooms to fit `rect` without dropping below legible labels, and centres it. */
+  protected fitTo(rect: HitRect, margin: number): void {
+    const camera = this.cameras.main;
+    const fit = Math.min(
+      camera.width / (rect.width + margin * 2),
+      camera.height / (rect.height + margin * 2)
+    );
+    const was = this.#legible();
+    this.#zoom = Phaser.Math.Clamp(fit, ZOOM_LABELS, ZOOM.native);
+    camera.setZoom(this.#zoom);
+    camera.centerOn(rect.x + rect.width / 2, rect.y + rect.height / 2);
+    if (was !== this.#legible()) this.redraw();
+  }
+
   protected frame(): void {
     buildPixelFont(this);
     this.#canvas = this.game.canvas;

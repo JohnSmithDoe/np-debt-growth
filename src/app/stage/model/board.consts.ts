@@ -316,6 +316,7 @@ export const SCREEN_INK = {
   maxed: 0xd8b34a,
   wireDead: 0x222a33,
   wireLive: 0x39506b,
+  wireLit: 0x5fb37a,
   pipEmpty: 0x2a323c,
   pipFull: 0x4ade80,
   ink: 0xe6e9ef,

@@ -64,6 +64,19 @@ const TIP = {
   offset: 10,
 } as const;
 
+/** A buyable square breathes a ring this far outside its frame. */
+const PULSE = {
+  depth: 2.5,
+  gap: 3,
+  width: 3,
+  periodMs: 1400,
+  low: 0.15,
+  high: 0.9,
+} as const;
+const WIRE = { width: 2, lit: 3, glow: 9, glowAlpha: 0.18 } as const;
+/** Room kept around the buyable squares when the tree opens on them. */
+const FIT_MARGIN = 96;
+
 const TIP_DEPTH = 30;
 const TEXT_DEPTH = 31;
 
@@ -106,6 +119,8 @@ export class SkillScene extends PanZoomScene {
 
   #wires?: Phaser.GameObjects.Graphics;
   #frames?: Phaser.GameObjects.Graphics;
+  #pulse?: Phaser.GameObjects.Graphics;
+  #buyable: readonly SkillSquare[] = [];
   #icons?: IconPool;
   #tipPanel?: Phaser.GameObjects.Graphics;
   #tipText?: LabelPool;
@@ -134,26 +149,80 @@ export class SkillScene extends PanZoomScene {
 
     this.#wires = this.add.graphics().setDepth(1);
     this.#frames = this.add.graphics().setDepth(2);
+    this.#pulse = this.add.graphics().setDepth(PULSE.depth);
     this.#icons = new IconPool(this, 3);
     this.#tipPanel = this.add.graphics().setDepth(TIP_DEPTH);
     this.#tipText = new LabelPool(this, TEXT_DEPTH);
 
-    this.#centreOnRoot();
+    this.#take(this.deps.skillView());
+    this.reframe();
+    this.#openOnBuyable();
     this.redraw();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.#teardown());
   }
 
-  override update(): void {
+  override update(time: number): void {
     const view = this.deps.skillView();
     if (view !== this.#drawn) {
-      this.#drawn = view;
-      this.#shown = revealSquares(
-        (id) => this.#rankOf(view, id),
-        (id) => view.nodes.find((node) => node.id === id)?.available ?? true
-      );
+      this.#take(view);
       this.reframe();
       this.redraw();
     }
+    this.#drawPulse(time);
+  }
+
+  #take(view: SkillView): void {
+    this.#drawn = view;
+    this.#shown = revealSquares(
+      (id) => this.#rankOf(view, id),
+      (id) => view.nodes.find((node) => node.id === id)?.available ?? true
+    );
+    const buyable = new Set(
+      view.nodes.filter((node) => node.buyable).map((node) => node.id)
+    );
+    this.#buyable = SKILL_GRAPH.squares.filter(
+      (square) => buyable.has(square.id) && this.#shown.get(square.id) !== 'box'
+    );
+  }
+
+  #drawPulse(time: number): void {
+    const pulse = this.#pulse;
+    if (!pulse) return;
+    pulse.clear();
+    if (this.#buyable.length === 0) return;
+    const wave = (1 + Math.sin((time / PULSE.periodMs) * Math.PI * 2)) / 2;
+    const alpha = PULSE.low + (PULSE.high - PULSE.low) * wave;
+    const out = PULSE.gap + PULSE.width / 2;
+    pulse.lineStyle(PULSE.width, SCREEN_INK.ready, alpha);
+    for (const square of this.#buyable) {
+      pulse.strokeRect(
+        square.x - out,
+        square.y - out,
+        square.width + out * 2,
+        square.height + out * 2
+      );
+    }
+  }
+
+  #openOnBuyable(): void {
+    const squares = this.#buyable;
+    if (squares.length === 0) return this.#centreOnRoot();
+    const left = Math.min(...squares.map((square) => square.x));
+    const top = Math.min(...squares.map((square) => square.y));
+    const right = Math.max(...squares.map((square) => square.x + square.width));
+    const bottom = Math.max(
+      ...squares.map((square) => square.y + square.height)
+    );
+    this.fitTo(
+      {
+        id: 'buyable',
+        x: left,
+        y: top,
+        width: right - left,
+        height: bottom - top,
+      },
+      FIT_MARGIN
+    );
   }
 
   protected override reframe(): void {
@@ -227,7 +296,7 @@ export class SkillScene extends PanZoomScene {
       const state = this.#shown.get(square.id);
       const node = byId.get(square.id);
       if (state === undefined || !node) continue;
-      this.#drawWire(wires, square, state);
+      this.#drawWire(wires, square, state, node);
       this.#drawSquare(frames, square, node, state);
     }
 
@@ -235,18 +304,46 @@ export class SkillScene extends PanZoomScene {
     this.#drawTip(byId);
   }
 
+  /** Bought-to-bought is lit, into something buyable is blue, the rest dim. */
   #drawWire(
     wires: Phaser.GameObjects.Graphics,
     square: SkillSquare,
-    state: SquareState
+    state: SquareState,
+    node: SkillNodeView
   ): void {
     if (square.parent === null) return;
-    const live =
-      state === 'owned' || this.#shown.get(square.parent) === 'owned';
-    wires.lineStyle(2, live ? SCREEN_INK.wireLive : SCREEN_INK.wireDead, 1);
-    wires.beginPath();
+    const parentOwned = this.#shown.get(square.parent) === 'owned';
+    if (state === 'owned' && parentOwned) {
+      this.#strokeWire(
+        wires,
+        square,
+        WIRE.glow,
+        SCREEN_INK.wireLit,
+        WIRE.glowAlpha
+      );
+      this.#strokeWire(wires, square, WIRE.lit, SCREEN_INK.wireLit, 1);
+      return;
+    }
+    const colour =
+      parentOwned && node.buyable
+        ? SCREEN_INK.ready
+        : state === 'owned' || parentOwned
+          ? SCREEN_INK.wireLive
+          : SCREEN_INK.wireDead;
+    this.#strokeWire(wires, square, WIRE.width, colour, 1);
+  }
+
+  #strokeWire(
+    wires: Phaser.GameObjects.Graphics,
+    square: SkillSquare,
+    width: number,
+    colour: number,
+    alpha: number
+  ): void {
     const [first, ...rest] = square.wire;
     if (!first) return;
+    wires.lineStyle(width, colour, alpha);
+    wires.beginPath();
     wires.moveTo(first.x, first.y);
     for (const point of rest) wires.lineTo(point.x, point.y);
     wires.strokePath();
@@ -544,6 +641,7 @@ export class SkillScene extends PanZoomScene {
     this.#icons?.clear();
     this.#icons = undefined;
     this.#drawn = undefined;
+    this.#buyable = [];
   }
 }
 
