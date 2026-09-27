@@ -28,8 +28,8 @@ import {
   BIG_FLOAT_CAPTION,
   BUFF_BANNER,
   CLOSE_FLOAT,
+  BILL_GROUP_MS,
   CLOSE_FLOATS_PER_FRAME,
-  COMBO,
   DROP_HOP,
   DROP_MS,
   HARVEST_HOP,
@@ -214,7 +214,8 @@ export class BoardScene extends CbScene {
     this.deps.takeWontFix();
   };
   #wontFix = new Set<number>();
-  readonly #laneCombos = new Map<number, PayoutCombo>();
+  /** Lane income held back so the strip floats one sum per window. */
+  readonly #billing = new Map<number, { value: number; since: number }>();
   #onPointerMove = (pointer: Phaser.Input.Pointer): void => {
     this.#readBoard(pointer.worldX, pointer.worldY);
     this.#placeRing(pointer.worldX, pointer.worldY);
@@ -766,21 +767,19 @@ export class BoardScene extends CbScene {
   #bill(parts: BoardParts): void {
     const now = this.time.now;
     for (const [lane, payout] of this.deps.takePayouts()) {
-      let combo = this.#laneCombos.get(lane);
-      if (!combo) {
-        combo = new PayoutCombo(this, DEPTH.combo, () => null);
-        this.#laneCombos.set(lane, combo);
-      }
-      combo.add(
+      const due = this.#billing.get(lane);
+      if (due) due.value += payout;
+      else this.#billing.set(lane, { value: payout, since: now });
+    }
+    for (const [lane, due] of this.#billing) {
+      if (now - due.since < BILL_GROUP_MS) continue;
+      this.#billing.delete(lane);
+      this.floatPayout(
         lane === NO_LANE ? parts.strip.dropX : parts.strip.laneX(lane),
-        parts.strip.dropY + COMBO.lift,
-        payout,
-        0,
-        0,
-        now
+        parts.strip.dropY,
+        `+${formatMoney(due.value)}`
       );
     }
-    for (const combo of this.#laneCombos.values()) combo.update(now);
   }
 
   #buildSecret(): void {
@@ -873,7 +872,5 @@ export class BoardScene extends CbScene {
     parts.ground.destroy();
     parts.backdrop.destroy();
     parts.combo.destroy();
-    for (const combo of this.#laneCombos.values()) combo.destroy();
-    this.#laneCombos.clear();
   }
 }

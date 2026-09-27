@@ -140,6 +140,9 @@ export const HOVER_OFFSET = { x: 14, y: 10, edge: 4 } as const;
 export const CLOSE_FLOAT = { size: '13px', rise: 30 } as const;
 export const FLOAT_MS = 750;
 
+/** The sprint strip's payout floats sum a lane's income over this long. */
+export const BILL_GROUP_MS = 300;
+
 /** Live payout labels at most; past `small` the oldest is recycled. */
 export const FLOAT_CAP = { small: 48, big: 4 } as const;
 
