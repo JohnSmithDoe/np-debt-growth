@@ -8,7 +8,7 @@ import {
   GOLDEN_VALUE_PER_RANK,
   VOTE_BONUS_PER_RANK,
 } from './balance/flow';
-import { HAUL_SHAVE_PER_RANK, SPRINT_SLOTS_STEP } from './balance/round';
+import { SPRINT_SLOTS_STEP, type ReleasePhaseId } from './balance/round';
 import { ROOM_SEATS } from './balance/crew';
 import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from './tier.model';
 
@@ -26,7 +26,7 @@ export type SkillEffect =
       readonly add: number;
     }
   | { readonly kind: 'adr'; readonly adr: number }
-  | { readonly kind: 'haulShave'; readonly seconds: number }
+  | { readonly kind: 'cutCeremony'; readonly phase: ReleasePhaseId }
   | {
       readonly kind: 'standupAura';
       readonly perJunior: number;
@@ -58,8 +58,7 @@ export type SkillEffect =
   | { readonly kind: 'coach'; readonly add: number }
   | { readonly kind: 'deck'; readonly add: number }
   | { readonly kind: 'topOfBand' }
-  | { readonly kind: 'relabelSteps'; readonly add: number }
-  | { readonly kind: 'relabelFillerFirst' }
+  | { readonly kind: 'managerAura'; readonly add: number }
   | {
       readonly kind: 'ticketValue';
       readonly target: TicketTypeId;
@@ -146,10 +145,10 @@ const LINE_DOUBLE_COST = [
   25, 1500, 3000, 6000, 11_000, 20_000, 35_000, 70_000, 140_000,
 ];
 
-/** First-rank prices double a tier, as the reference's do (+50 % income 1 100 → 2 200). */
+/** First-rank prices double a tier (+50 % income 1 100 → 2 200). */
 const perTier = (base: number, tier: number): number => base * 2 ** tier;
 
-/** The estimates node's first rank: paper 75, dog 400, then doubling a tier. */
+/** The estimates node's first rank: lint 75, legacy 400, then doubling a tier. */
 const lineEstimate = (tier: number): number =>
   tier === 0 ? 75 : 400 * 2 ** (tier - 1);
 
@@ -324,9 +323,17 @@ export const SKILL_NODES: readonly SkillNode[] = [
     id: 'duration',
     track: 'A',
     requires: 'radius',
-    levels: [80, 300, 900, 2600, 7000].map((cost) => ({
+    levels: (
+      [
+        [80, 'retro'],
+        [300, 'refinement'],
+        [900, 'review'],
+        [2600, 'smoke'],
+        [7000, 'freeze'],
+      ] as const
+    ).map(([cost, phase]) => ({
       cost,
-      effects: [{ kind: 'haulShave' as const, seconds: HAUL_SHAVE_PER_RANK }],
+      effects: [{ kind: 'cutCeremony' as const, phase }],
     })),
   },
   {
@@ -519,21 +526,21 @@ export const SKILL_NODES: readonly SkillNode[] = [
       {
         cost: 28_000,
         effects: [
-          { kind: 'pace', crew: 'managers', field: 'close', mult: 1.25 },
+          { kind: 'pace', crew: 'managers', field: 'sweep', mult: 1.25 },
           { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.2 },
         ],
       },
       {
         cost: 80_000,
         effects: [
-          { kind: 'pace', crew: 'managers', field: 'close', mult: 1.22 },
+          { kind: 'pace', crew: 'managers', field: 'sweep', mult: 1.22 },
           { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.18 },
         ],
       },
       {
         cost: 240_000,
         effects: [
-          { kind: 'pace', crew: 'managers', field: 'close', mult: 1.2 },
+          { kind: 'pace', crew: 'managers', field: 'sweep', mult: 1.2 },
           { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.15 },
         ],
       },
@@ -544,9 +551,9 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'H',
     requires: 'manager',
     levels: [
-      { cost: 44_000, effects: [{ kind: 'relabelSteps', add: 1 }] },
-      { cost: 132_000, effects: [{ kind: 'relabelFillerFirst' }] },
-      { cost: 360_000, effects: [{ kind: 'relabelSteps', add: 1 }] },
+      { cost: 44_000, effects: [{ kind: 'managerAura', add: 0.25 }] },
+      { cost: 132_000, effects: [{ kind: 'managerAura', add: 0.25 }] },
+      { cost: 360_000, effects: [{ kind: 'managerAura', add: 0.5 }] },
     ],
   },
   {
@@ -596,24 +603,21 @@ export const SKILL_NODES: readonly SkillNode[] = [
     ],
   },
   {
-    id: 'spawnEscalation',
-    track: 'D',
-    requires: 'adr6',
-    levels: [
-      {
-        cost: 255_000,
-        effects: [{ kind: 'spawnRate', target: 'escalation', mult: 1.5 }],
-      },
-    ],
-  },
-  {
     id: 'spawnIncident',
     track: 'D',
     requires: 'incidents',
     levels: [
       {
-        cost: 420_000,
+        cost: 255_000,
         effects: [{ kind: 'spawnRate', target: 'incident', mult: 1.4 }],
+      },
+      {
+        cost: 420_000,
+        effects: [{ kind: 'spawnRate', target: 'escalation', mult: 1.5 }],
+      },
+      {
+        cost: 600_000,
+        effects: [{ kind: 'ticketValue', target: 'incident', mult: 2 }],
       },
     ],
   },
@@ -669,17 +673,6 @@ export const SKILL_NODES: readonly SkillNode[] = [
       { cost: 500, effects: [{ kind: 'ticketValue', target: 'bug', mult: 2 }] },
     ],
   },
-  {
-    id: 'valueIncident',
-    track: 'C',
-    requires: 'incidents',
-    levels: [
-      {
-        cost: 600_000,
-        effects: [{ kind: 'ticketValue', target: 'incident', mult: 2 }],
-      },
-    ],
-  },
 
   {
     id: 'assurance',
@@ -693,8 +686,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   },
   {
     id: 'stretch',
-    track: 'G',
-    requires: 'adr7',
+    track: 'B',
+    requires: 'juniorReach',
     levels: [{ cost: 300_000, effects: [{ kind: 'juniorBand', add: 1 }] }],
   },
 

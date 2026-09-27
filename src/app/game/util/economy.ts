@@ -7,8 +7,6 @@ import type { OfficePlate } from '../model/office.model';
 import { nextPlate, platesAt } from '../model/office.model';
 import { castPoolSize } from '../model/cast.model';
 import type { Weather } from '../model/hazard.model';
-import type { Lane } from '../model/round.model';
-import { EMPTY_LANE } from '../model/round.model';
 import { CALM } from '../model/hazard.model';
 import type { KitItem } from '../model/kit.model';
 import { boughtKit, nextKitItem } from '../model/kit.model';
@@ -52,7 +50,7 @@ import {
   GOLDEN_CHANCE_CAP,
   GOLDEN_CREW_CONVERSION,
   GOLDEN_VALUE_BASE,
-  RELABEL_STEPS_BASE,
+  MANAGER_AURA_BASE,
 } from '../model/balance/flow';
 import {
   CREW_SP_MULT,
@@ -66,10 +64,10 @@ import {
   LINE_PLAN,
 } from '../model/balance/progression';
 import {
-  HAUL_MIN_MS,
-  HAUL_MS,
-  LANES_BASE,
+  RELEASE_PHASES,
   SPRINT_SLOTS_BASE,
+  type ReleasePhase,
+  type ReleasePhaseId,
 } from '../model/balance/round';
 import {
   ESCALATION_HOLD_MS,
@@ -193,88 +191,54 @@ function globalMultiplier(state: Consultancy): number {
   return multOf(state, 'global') * overtime;
 }
 
-/** One lane's sprint scope: the base plus every `capacity` rank. */
-export function laneCapacity(
-  state: Consultancy,
-  weather: Weather = CALM
-): number {
-  const slots = additive(state, 'slots', SPRINT_SLOTS_BASE);
-  return Math.max(1, Math.floor(slots * weather.slots));
-}
-
-export function laneCount(state: Consultancy): number {
-  return LANES_BASE + sumOf(state, (e) => (e.kind === 'cans' ? e.add : null));
-}
-
-/** Every lane the run owns, including ones bought since the last write. */
-export function lanesOf(state: Consultancy): readonly Lane[] {
-  const count = laneCount(state);
-  if (state.lanes.length >= count) return state.lanes.slice(0, count);
-  return [
-    ...state.lanes,
-    ...Array.from({ length: count - state.lanes.length }, () => EMPTY_LANE),
-  ];
-}
-
-/** The whole board of lanes: capacity × lanes, as the reference's row of cans. */
+/**
+ * The sprint scope: the base plus every `capacity` rank, once per team
+ * `cans` has put on it.
+ */
 export function sprintSlots(
   state: Consultancy,
   weather: Weather = CALM
 ): number {
-  return laneCapacity(state, weather) * laneCount(state);
+  const slots = additive(state, 'slots', SPRINT_SLOTS_BASE);
+  const teams = 1 + sumOf(state, (e) => (e.kind === 'cans' ? e.add : null));
+  return Math.max(1, Math.floor(slots * weather.slots)) * teams;
 }
 
-/** Room in the lanes whose train is home; a lane that is away takes nothing. */
+/** Room left in the sprint; none while the train is away. */
 export function sprintRoom(
   state: Consultancy,
   weather: Weather = CALM
 ): number {
-  const cap = laneCapacity(state, weather);
-  return lanesOf(state).reduce(
-    (room, lane) =>
-      lane.releaseLeftMs > 0 ? room : room + Math.max(0, cap - lane.count),
-    0
+  if (state.phase === 'hauling') return 0;
+  return Math.max(0, sprintSlots(state, weather) - state.sprintCount);
+}
+
+/** The ceremonies the train still runs, in order; `duration` ranks cut them. */
+export function releasePhases(state: Consultancy): readonly ReleasePhase[] {
+  const cut = foldRanks(state, new Set<ReleasePhaseId>(), (set, effect) =>
+    effect.kind === 'cutCeremony' ? set.add(effect.phase) : set
+  );
+  return RELEASE_PHASES.filter(
+    (phase) => phase.id === 'ship' || !cut.has(phase.id)
   );
 }
 
-/**
- * Deals `taken` tickets round-robin into lanes with room, skipping lanes
- * whose train is away. Returns the lane each ticket went to, in order.
- */
-export function fillLanes(
-  state: Consultancy,
-  taken: number,
-  weather: Weather = CALM
-): { lanes: readonly Lane[]; cursor: number; placed: readonly number[] } {
-  const cap = laneCapacity(state, weather);
-  const lanes = lanesOf(state).map((lane) => ({ ...lane }));
-  const placed: number[] = [];
-  let cursor = state.laneCursor % lanes.length;
-  for (let n = 0; n < taken; n += 1) {
-    let tried = 0;
-    while (tried < lanes.length) {
-      const lane = lanes[cursor]!;
-      if (lane.releaseLeftMs <= 0 && lane.count < cap) break;
-      cursor = (cursor + 1) % lanes.length;
-      tried += 1;
-    }
-    if (tried === lanes.length) break;
-    lanes[cursor]!.count += 1;
-    placed.push(cursor);
-    cursor = (cursor + 1) % lanes.length;
-  }
-  return { lanes, cursor, placed };
-}
-
-/**
- * The truck, and the only forced wait in the game. `haulShave` effects
- * hurry it, floored by `HAUL_MIN_MS` so the cadence stays a real gate.
- */
+/** The truck, and the only forced wait in the game. */
 export function haulMs(state: Consultancy): number {
-  const shaved = sumOf(state, (e) =>
-    e.kind === 'haulShave' ? e.seconds : null
-  );
-  return Math.max(HAUL_MIN_MS, HAUL_MS - shaved * 1_000);
+  return releasePhases(state).reduce((sum, phase) => sum + phase.ms, 0);
+}
+
+/** The ceremony a train with `leftMs` still to run is in. */
+export function phaseAt(
+  phases: readonly ReleasePhase[],
+  leftMs: number
+): ReleasePhaseId {
+  let remaining = phases.reduce((sum, phase) => sum + phase.ms, 0) - leftMs;
+  for (const phase of phases) {
+    remaining -= phase.ms;
+    if (remaining < 0) return phase.id;
+  }
+  return phases[phases.length - 1]?.id ?? 'ship';
 }
 
 /** Signed off, and not yet at the acceptance goal. */
@@ -574,9 +538,7 @@ export function crewPick(
   crew: CrewKind,
   hire?: SeniorHire
 ): ClaimPick {
-  if (crew === 'managers') {
-    return managersPreferFiller(state) ? 'cheapest' : 'random';
-  }
+  if (crew === 'managers') return 'random';
   if (crew === 'seniors') {
     if (seniorPrefersTop(state, hire)) return 'dearest';
     return hire && seniorClaimsNearest(state, hire) ? 'nearest' : 'random';
@@ -808,12 +770,13 @@ export function managerWalkSpeed(state: Consultancy): number {
   return crewWalkSpeed(state, 'managers');
 }
 
-export function relabelSteps(state: Consultancy): number {
-  return Math.max(1, additive(state, 'relabelSteps', RELABEL_STEPS_BASE));
+/** What a crew close inside a manager's reach bills, as a multiple. */
+export function managerAura(state: Consultancy): number {
+  return additive(state, 'managerAura', MANAGER_AURA_BASE);
 }
 
-export function managersPreferFiller(state: Consultancy): boolean {
-  return holds(state, 'relabelFillerFirst');
+export function managerReach(state: Consultancy): number {
+  return crewSweepRadius(state, 'managers');
 }
 
 export function debtInterest(state: Consultancy): number {
@@ -828,13 +791,6 @@ export function interestTarget(
   id: TicketTypeId
 ): TicketTypeId | null {
   return ladderUp(id, 1, state.tier + 1);
-}
-
-export function relabelTarget(
-  state: Consultancy,
-  id: TicketTypeId
-): TicketTypeId | null {
-  return ladderUp(id, relabelSteps(state), state.tier);
 }
 
 export function escalationMultiplier(state: Consultancy): number {
@@ -857,8 +813,12 @@ export function closeValue(
   return state.escalated ? base * escalationMultiplier(state) : base;
 }
 
-/** What the tickets held in the lanes were worth; already paid at pickup. */
-export function laneWorth(state: Consultancy, mix: TicketMix, now = 0): number {
+/** What the tickets held in the sprint were worth; already paid at pickup. */
+export function sprintWorth(
+  state: Consultancy,
+  mix: TicketMix,
+  now = 0
+): number {
   let worth = 0;
   for (const id of TICKET_TYPE_IDS) {
     const held = mix[id] ?? 0;

@@ -14,6 +14,7 @@ import {
   WOMAN_CLOSE_RATE,
 } from '../model/balance/crew';
 import { INCOME_CAP } from '../model/balance/progression';
+import { HAUL_MS, RELEASE_PHASES } from '../model/balance/round';
 import {
   ceilingPerSec,
   lineCap,
@@ -34,6 +35,8 @@ import {
   crewWomanEvery,
   hireIsWoman,
   hirePoolSeat,
+  phaseAt,
+  releasePhases,
   juniorBatch,
   juniorCloseMs,
   spawnRate,
@@ -51,6 +54,29 @@ describe('the can (C4)', () => {
     );
 
     expect(ceilingPerSec({ ...state })).toBeGreaterThan(0);
+  });
+});
+
+describe('the release train', () => {
+  const ids = (state: Consultancy): string[] =>
+    releasePhases(state).map((phase) => phase.id);
+
+  it('runs every ceremony uncut, and each duration rank cuts one', () => {
+    expect(ids(consultancy())).toEqual(RELEASE_PHASES.map((p) => p.id));
+    expect(haulMs(consultancy())).toBe(HAUL_MS);
+    expect(ids(consultancy({ skills: { duration: 1 } }))).not.toContain(
+      'retro'
+    );
+    expect(ids(consultancy({ skills: { duration: 5 } }))).toEqual(['ship']);
+  });
+
+  it('names the ceremony a lane is in from the time it has left', () => {
+    const phases = RELEASE_PHASES;
+    const first = phases[0]!;
+    const last = phases[phases.length - 1]!;
+    expect(phaseAt(phases, HAUL_MS)).toBe(first.id);
+    expect(phaseAt(phases, HAUL_MS - first.ms)).toBe(phases[1]!.id);
+    expect(phaseAt(phases, 1)).toBe(last.id);
   });
 });
 
@@ -91,7 +117,7 @@ describe('hand-only rares are weather, not a source (D5)', () => {
 
   it('still answers to the skill that exists to move them', () => {
     const base = consultancy({ tier: 1 });
-    const skilled = consultancy({ tier: 1, skills: { spawnEscalation: 1 } });
+    const skilled = consultancy({ tier: 1, skills: { spawnIncident: 2 } });
     expect(spawnRate(skilled, 'escalation')).toBeGreaterThan(
       spawnRate(base, 'escalation')
     );
@@ -387,7 +413,7 @@ describe('the can has two axes (parity #13, #14)', () => {
     expect(slots({ capacity: 3, cans: 2 })).toBe(bare * 3);
   });
 
-  it('adds seats by the rank, mirroring the reference population node', () => {
+  it('adds seats by the rank', () => {
     const none = lineCap(consultancy(), 'junior');
     expect(none).toBe(10);
     const at = (juniorRoom: number): number =>
@@ -427,7 +453,7 @@ describe('the rates tab (parity #25)', () => {
     expect(ticketValue(rated, 'bug')).toBe(ticketValue(flat, 'bug'));
   });
 
-  it('prices the opening heads as the reference does, rounded down', () => {
+  it('prices the opening heads rounded down', () => {
     const prices = Array.from({ length: 10 }, (_, head) =>
       spawnerCost(consultancy({ spawners: { 0: head + 1 } }), 0)
     );
@@ -435,7 +461,7 @@ describe('the rates tab (parity #25)', () => {
     expect(spawnerCost(consultancy({ spawners: { 0: 49 } }), 0)).toBe(1638);
   });
 
-  it('prices the dog line as the reference does, from 500', () => {
+  it('prices the legacy line from 500', () => {
     const prices = Array.from({ length: 12 }, (_, head) =>
       spawnerCost(consultancy({ spawners: { 1: head }, tier: 1 }), 1)
     );
@@ -444,7 +470,7 @@ describe('the rates tab (parity #25)', () => {
     ]);
   });
 
-  it('prices the dog row at 1 250, 2 062 and adds 4 a rank', () => {
+  it('prices the legacy row at 1 250, 2 062 and adds 4 a rank', () => {
     expect(incomeCost(staffed({}), 'legacy')).toBe(1250);
     expect(incomeCost(staffed({ legacy: 1 }), 'legacy')).toBe(2062);
     expect(
@@ -453,7 +479,7 @@ describe('the rates tab (parity #25)', () => {
     ).toBeCloseTo(8, 6);
   });
 
-  it('prices the paper row at the reference: 250, 412, 680, 1 123, 1 853', () => {
+  it('prices the lint row at 250, 412, 680, 1 123, 1 853', () => {
     const prices = [0, 1, 2, 3, 4].map((rank) =>
       incomeCost(staffed({ lint: rank }), 'lint')
     );

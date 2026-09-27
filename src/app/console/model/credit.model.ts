@@ -15,7 +15,15 @@ export const ART_LICENSE_URL = 'assets/legal/GPL-3.0.txt';
 
 export const CREW_CREDITS_URL = 'assets/characters/crew-atlas.credits.txt';
 
+export const INSPIRATION: Credit = {
+  what: 'Inspiration — Garbage Growth',
+  who: 'apepatrick',
+  license: 'the idea only; no code or art is taken from it',
+  url: 'https://store.steampowered.com/app/4680930/Garbage_Growth/',
+};
+
 export const CREDITS: readonly Credit[] = [
+  INSPIRATION,
   {
     what: 'App framework — Angular 21',
     who: 'Google and the Angular contributors',
@@ -78,6 +86,12 @@ export const CREDITS: readonly Credit[] = [
     who: 'Skrjablin; TheOuterLinux, after nene',
     license: 'CC0-1.0',
     url: 'assets/audio/music.credits.txt',
+  },
+  {
+    what: 'Release train — “Ghost Train”',
+    who: 'Varible_37',
+    license: 'free to use, no direct resale (the author’s terms)',
+    url: 'assets/board/train/ghost-train.credits.txt',
   },
   {
     what: 'Sound effects',

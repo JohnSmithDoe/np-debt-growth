@@ -1,0 +1,9 @@
+Ghost Train — ghost-train.png, ghost-passenger-car.png
+Author: Varible_37
+Source: https://varible-37.itch.io/ghost-train
+
+Terms, as stated on the source page:
+"feel free to use this however you wish aprt from direct resale and good luck with your project!"
+
+Shipped unmodified. These two images are not covered by this game's AGPL-3.0 licence;
+the author's terms above apply to them.

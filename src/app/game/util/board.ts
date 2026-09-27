@@ -26,11 +26,7 @@ import {
   LOGICAL_BOARD,
   RARE_HIT,
 } from '../model/geometry';
-import {
-  GOLDEN_LIFE_MS,
-  TICKET_LIFE_MS,
-  WONT_FIX_FADE_MS,
-} from '../model/balance/flow';
+import { GOLDEN_LIFE_MS, WONT_FIX_FADE_MS } from '../model/balance/flow';
 
 const OUT_OF_POOL = -1;
 const COLUMN_SAMPLES = 4;
@@ -50,41 +46,6 @@ function bill(board: Board, card: Carried): TicketTypeId {
     board.pending.push({ type: card.type, leftMs: FLAKY_COMEBACK_MS });
   }
   return card.type;
-}
-
-function refile(
-  board: Board,
-  rules: CrewRules,
-  transform: (type: TicketTypeId) => TicketTypeId | null,
-  card: Carried,
-  rand: () => number
-): null {
-  const target = transform(card.type);
-  const filed = target !== null && !card.relabelled;
-  addTicket(
-    board,
-    filed ? target : card.type,
-    rand,
-    filed && TICKET_TYPES[target].respawns ? true : card.reborn,
-    filed || card.relabelled,
-    card.golden || (rules.gilds > 0 && rand() < rules.gilds)
-  );
-  return null;
-}
-
-function deliver(
-  rules: CrewRules,
-  board: Board,
-  card: Carried,
-  rand: () => number
-): TicketTypeId | null {
-  if (rules.mode === 'refiler') {
-    return rules.transform === null
-      ? null
-      : refile(board, rules, rules.transform, card, rand);
-  }
-
-  return bill(board, card);
 }
 
 export function stepBoard(
@@ -121,7 +82,6 @@ export function addTicket(
   type: TicketTypeId,
   rand: () => number = Math.random,
   reborn = false,
-  relabelled = false,
   golden = false
 ): BoardTicket | null {
   if (board.tickets.length >= BOARD_CAPACITY && !admittedPastCap(type)) {
@@ -139,12 +99,11 @@ export function addTicket(
     golden,
     spBonus: 0,
     voteMask: 0,
-    relabelled,
     lifeLeftMs: TICKET_TYPES[type].handOnly
       ? NEVER_EXPIRES
       : golden
         ? GOLDEN_LIFE_MS
-        : TICKET_LIFE_MS,
+        : board.lifeMs,
     fadeLeftMs: WONT_FIX_FADE_MS,
     x: cellX(col),
     y: cellY(cell - col * HEAP_ROWS),
@@ -304,8 +263,7 @@ function deliverClose(
   rules: CrewRules,
   worker: CrewMember,
   board: Board,
-  seat: CrewSeat,
-  rand: () => number
+  seat: CrewSeat
 ): CrewWork {
   const { poolSeat, woman } = seat;
   const closed: Close[] = [];
@@ -314,7 +272,7 @@ function deliverClose(
   worker.carrying = [];
 
   for (const card of handing) {
-    const banked = deliver(rules, board, card, rand);
+    const banked = bill(board, card);
     if (banked === null) continue;
     closed.push({
       type: banked,
@@ -346,7 +304,6 @@ function pickUp(
     golden: ticket.golden,
     spBonus: ticket.spBonus,
     reborn: ticket.reborn,
-    relabelled: ticket.relabelled,
   }));
   for (const ticket of taken) {
     ticket.claimedBy = NO_TICKET;
@@ -384,6 +341,11 @@ export function work(
     }
     if (worker.phase === 'meeting') worker.phase = 'idle';
 
+    if (rules.mode === 'overseer') {
+      oversee(board, rules, pace, worker, index, dt, rand);
+      continue;
+    }
+
     if (worker.phase === 'idle') {
       startWalk(board, rules, pace, worker, rand);
       continue;
@@ -403,7 +365,7 @@ export function work(
 
       const seat = rules.seatOf(index, pace);
       pickUp(board, rules, pace, worker, target);
-      const took = deliverClose(rules, worker, board, seat, rand);
+      const took = deliverClose(rules, worker, board, seat);
       closed.push(...took.closed);
       byWomen += took.byWomen;
       worker.phase = 'closing';
@@ -417,6 +379,68 @@ export function work(
     worker.leftMs = 0;
   }
   return { closed, byWomen };
+}
+
+/**
+ * A manager closes nothing: they walk to where the crew is working and stand
+ * over it, and whatever the crew closes within their reach bills more.
+ */
+function oversee(
+  board: Board,
+  rules: CrewRules,
+  pace: HirePace,
+  worker: CrewMember,
+  index: number,
+  dt: number,
+  rand: () => number
+): void {
+  if (worker.phase === 'idle') {
+    worker.target = watchSpot(board, rand);
+    if (worker.target !== NO_TICKET) worker.phase = 'toTicket';
+    return;
+  }
+  if (worker.phase === 'toTicket') {
+    const spot = board.byId.get(worker.target);
+    if (spot && !stepToward(worker, spot, (pace.speed * dt) / 1000)) return;
+    worker.phase = 'closing';
+    worker.target = NO_TICKET;
+    worker.leftMs = rules.seatOf(index, pace).closeMs;
+    return;
+  }
+  worker.leftMs -= dt;
+  if (worker.leftMs > 0) return;
+  worker.phase = 'idle';
+  worker.leftMs = 0;
+}
+
+/** A card some closer is walking to, else any card on the board. */
+function watchSpot(board: Board, rand: () => number): number {
+  const busy: number[] = [];
+  for (const crew of [board.juniors, board.seniors]) {
+    for (const worker of crew) {
+      if (worker.phase === 'toTicket' && board.byId.has(worker.target)) {
+        busy.push(worker.target);
+      }
+    }
+  }
+  if (busy.length > 0) return busy[Math.floor(rand() * busy.length)]!;
+  const any = board.claimable[Math.floor(rand() * board.claimable.length)];
+  return any ? any.id : NO_TICKET;
+}
+
+/** Whether a manager stands within `radius` of (x, y). */
+export function overseen(
+  board: Board,
+  x: number,
+  y: number,
+  radius: number
+): boolean {
+  for (const manager of board.managers) {
+    const dx = manager.x - x;
+    const dy = manager.y - y;
+    if (dx * dx + dy * dy <= radius * radius) return true;
+  }
+  return false;
 }
 
 function rushed(rush: Rush | null, worker: CrewMember): boolean {
@@ -443,8 +467,7 @@ function sweep(
         ticket !== undefined &&
         ticket !== target &&
         ticket.lifeLeftMs !== 0 &&
-        rules.claims(ticket.type) &&
-        (!ticket.golden || rules.golden)
+        takes(rules, ticket)
     )
     .sort(
       (a, b) =>
@@ -515,8 +538,7 @@ function claim(
   for (let sample = 0; sample < CLAIM_SAMPLES; sample++) {
     const at = Math.floor(rand() * total);
     const ticket = board.claimable[at];
-    if (!ticket || !rules.claims(ticket.type)) continue;
-    if (ticket.golden && !rules.golden) continue;
+    if (!ticket || !takes(rules, ticket)) continue;
     if (pace.pick === 'random') {
       leavePool(board, ticket);
       return ticket;
@@ -539,9 +561,13 @@ function claim(
   return firstAllowed(board, rules);
 }
 
+function takes(rules: CrewRules, ticket: BoardTicket): boolean {
+  return rules.claims(ticket.type) && (!ticket.golden || rules.golden);
+}
+
 function firstAllowed(board: Board, rules: CrewRules): BoardTicket | null {
   for (const ticket of board.claimable) {
-    if (rules.claims(ticket.type) && (!ticket.golden || rules.golden)) {
+    if (takes(rules, ticket)) {
       leavePool(board, ticket);
       return ticket;
     }

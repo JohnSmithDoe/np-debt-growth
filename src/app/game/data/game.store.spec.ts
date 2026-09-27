@@ -88,13 +88,14 @@ describe('the sprint (C4, D20, D23)', () => {
     expect(store.running()).toBe(true);
   });
 
-  it('sends the truck when the can fills, and takes it back empty', () => {
+  it('sends the train when the sprint fills, and takes it back empty', () => {
     const store = storeWith();
     const slots = sprintSlots(store.snapshot());
     for (let i = 0; i < slots; i += 1) click(store, 'lint');
 
     store.advanceTo(100);
     expect(store.hauling()).toBe(true);
+    expect(store.running()).toBe(false);
     expect(store.lastRound()?.seq).toBe(1);
 
     for (let at = 200; at <= 200 + store.haulMs(); at += 100) {
@@ -133,9 +134,7 @@ describe('the sprint (C4, D20, D23)', () => {
     store.harvest([ticket.id]);
 
     expect(store.board.byId.has(ticket.id)).toBe(false);
-    expect(store.sprint()).toEqual([
-      { type: 'bug', titleKey: written, lane: 0 },
-    ]);
+    expect(store.sprint()).toEqual([{ type: 'bug', titleKey: written }]);
   });
 
   it('keeps a hotfix on its own clock when a train leaves', () => {
@@ -607,7 +606,7 @@ describe('Triage Policy auto-closes what nobody claims', () => {
     expect(store.budget()).toBe(0);
   });
 
-  it('sends lane-less work to prod as a P0, a few at a time', () => {
+  it('sends work that finds the train away to prod as a P0, a few at a time', () => {
     const store = triaged();
     store.endRoundNow(0);
     expect(store.hauling()).toBe(true);

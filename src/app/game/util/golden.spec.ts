@@ -44,7 +44,7 @@ describe('golden work (the automation-exempt class)', () => {
   it('is left on the board by a crew that has no clearance', () => {
     const state = consultancy({ levels: { junior: 8 }, skills: { golden: 1 } });
     const board = emptyBoard();
-    addTicket(board, 'lint', () => 0.5, false, false, true);
+    addTicket(board, 'lint', () => 0.5, false, true);
 
     const [rules] = crewRules(board, state, CALM).filter(
       (row) => row.kind === 'juniors'
@@ -63,7 +63,7 @@ describe('golden work (the automation-exempt class)', () => {
       skills: { golden: 1, goldenValue: 1, goldenCrew: 1 },
     });
     const board = emptyBoard();
-    addTicket(board, 'lint', () => 0.5, false, false, true);
+    addTicket(board, 'lint', () => 0.5, false, true);
 
     const [rules] = crewRules(board, state, CALM).filter(
       (row) => row.kind === 'juniors'

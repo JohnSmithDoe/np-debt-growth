@@ -1,5 +1,5 @@
 import type { FinaleAct } from '../../@shared/model/finale.model';
-import type { BuffNotice, Lane } from '../../game/model/round.model';
+import type { BuffNotice } from '../../game/model/round.model';
 import type {
   Board,
   CloseFloat,
@@ -7,6 +7,7 @@ import type {
   SprintSlot,
 } from '../../game/model/board.model';
 import type { HazardId } from '../../game/model/hazard.model';
+import type { ReleasePhase } from '../../game/model/balance/round';
 import type { TicketTypeId } from '../../game/model/ticket.model';
 import type { CrewKind } from '../../game/model/crew.model';
 import type { SkillView } from './skill-view.model';
@@ -25,8 +26,6 @@ export interface SceneDeps {
   slots(): number;
   filled(): number;
   sprint(): readonly SprintSlot[];
-  lanes(): readonly Lane[];
-  laneCapacity(): number;
   /** Planning-poker coaches, one beam each. */
   coaches(): number;
   /** The live pizza party in board units, with the share of it left. */
@@ -34,7 +33,8 @@ export interface SceneDeps {
   pending(): number;
   tier(): number;
   spawnerCount(adr: number): number;
-  relabelTarget(type: TicketTypeId): TicketTypeId | null;
+  /** Board units around each manager where crew closes bill the aura. */
+  managerReach(): number;
   crewCeiling(crew: CrewKind): TicketTypeId | null;
   hazardNotice(): HazardNotice | null;
   seniorPoolSeat(seat: number): number;
@@ -48,8 +48,9 @@ export interface SceneDeps {
   running(): boolean;
   roundLeftMs(): number;
   haulMs(): number;
-  /** Keyed by lane; `NO_LANE` is billed to the whole strip. */
-  takePayouts(): ReadonlyMap<number, number>;
+  releasePhases(): readonly ReleasePhase[];
+  /** Euros billed since the last call. */
+  takePayouts(): number;
   takeCloseFloats(): readonly CloseFloat[];
   takeWontFix(): readonly number[];
   unlockSecret(): void;

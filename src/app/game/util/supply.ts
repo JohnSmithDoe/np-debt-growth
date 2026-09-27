@@ -34,14 +34,7 @@ export function spawnInto(
     const dearer = interest > 0 ? economy.interestTarget(state, id) : null;
     for (let n = 0; n < due; n++) {
       const arriving = dearer && rand() < interest ? dearer : id;
-      const ticket = addTicket(
-        board,
-        arriving,
-        rand,
-        false,
-        false,
-        rand() < golden
-      );
+      const ticket = addTicket(board, arriving, rand, false, rand() < golden);
       if (ticket && !ticket.golden) {
         ticket.voteMask = economy.voteMask(
           state,

@@ -17,7 +17,7 @@ export const SPAWNER_CAP = 50;
 
 /**
  * Each level costs this much more than the one before it. Single precision,
- * as the reference stores it: 500 × 1.15 floors to its 574, not 575.
+ * so 500 × 1.15 floors to 574, not 575.
  */
 export const SPAWNER_COST_STEP = Math.fround(1.15);
 

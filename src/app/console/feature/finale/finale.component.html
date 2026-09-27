@@ -63,6 +63,15 @@
           </section>
 
           <section>
+            <h2>{{ 'finale.roll.inspired' | translate }}</h2>
+            <p class="name">Garbage Growth</p>
+            <p>{{ inspiration.who }}</p>
+            <p class="thanks">
+              {{ 'finale.roll.inspired.thanks' | translate }}
+            </p>
+          </section>
+
+          <section>
             <h2>{{ 'finale.roll.built' | translate }}</h2>
             @for (credit of built; track credit.what) {
               <h3>{{ credit.what }}</h3>

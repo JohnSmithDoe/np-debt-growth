@@ -1,4 +1,4 @@
-import type { Lane, RoundOutcome, RoundPhase } from './round.model';
+import type { RoundOutcome, RoundPhase } from './round.model';
 import { SPAWNER_FREE_AT_ADR_0 } from './spawner.model';
 import type { SeniorHire } from './senior.model';
 import { SKILL_ROOT_ID } from './skill.model';
@@ -33,8 +33,6 @@ export interface Consultancy {
   readonly tier: number;
 
   readonly sprintCount: number;
-  readonly lanes: readonly Lane[];
-  readonly laneCursor: number;
   readonly escalated: boolean;
   readonly escalationFiresAt: number;
   readonly hotfixUntil: number;
@@ -42,6 +40,8 @@ export interface Consultancy {
 
   readonly achievements: readonly string[];
   readonly endedAt: number;
+  /** Budget granted from outside the billing system (debug doors). */
+  readonly assisted: boolean;
 
   readonly lifetimeClosed: number;
   readonly lifetimeWontFix: number;
@@ -63,8 +63,6 @@ export function resumed(state: Consultancy, now: number): Consultancy {
     roundMs: 0,
     haulLeftMs: 0,
     sprintCount: 0,
-    lanes: [],
-    laneCursor: 0,
     escalated: false,
     escalationFiresAt: 0,
     pizza: null,
@@ -95,14 +93,13 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     roster: [],
     tier: 0,
     sprintCount: 0,
-    lanes: [],
-    laneCursor: 0,
     escalated: false,
     escalationFiresAt: 0,
     hotfixUntil: 0,
     pizza: null,
     achievements: [],
     endedAt: 0,
+    assisted: false,
     lifetimeClosed: 0,
     lifetimeWontFix: 0,
     lifetimeBilled: 0,

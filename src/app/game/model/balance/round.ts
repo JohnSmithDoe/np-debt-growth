@@ -5,19 +5,29 @@
  */
 export const SPRINT_SLOTS_BASE = 100;
 
-/** Each `capacity` rank, per lane — the reference's +25 capacity. */
+/** Each `capacity` rank, per team. */
 export const SPRINT_SLOTS_STEP = 25;
 
-/** You start with one swimlane; `cans` opens up to nine more. */
-export const LANES_BASE = 1;
+export type ReleasePhaseId =
+  'freeze' | 'ship' | 'smoke' | 'review' | 'retro' | 'refinement';
 
-export const HAUL_MS = 4_000;
+export interface ReleasePhase {
+  readonly id: ReleasePhaseId;
+  readonly ms: number;
+}
 
 /**
- * The truck can be hurried, but never to nothing: below this the cadence
- * stops being a gate and the can stops meaning anything.
+ * The release train, in running order. `duration` ranks cut the
+ * ceremonies; `ship` is never cut, so the train never shrinks to nothing.
  */
-export const HAUL_MIN_MS = 2_500;
+export const RELEASE_PHASES: readonly ReleasePhase[] = [
+  { id: 'freeze', ms: 1_200 },
+  { id: 'ship', ms: 1_200 },
+  { id: 'smoke', ms: 1_200 },
+  { id: 'review', ms: 1_200 },
+  { id: 'retro', ms: 1_200 },
+  { id: 'refinement', ms: 1_200 },
+];
 
-/** Each `duration` rank; five of them reach `HAUL_MIN_MS` exactly. */
-export const HAUL_SHAVE_PER_RANK = 0.3;
+/** The uncut train. */
+export const HAUL_MS = RELEASE_PHASES.reduce((sum, phase) => sum + phase.ms, 0);

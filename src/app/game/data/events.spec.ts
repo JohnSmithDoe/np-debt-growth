@@ -145,7 +145,6 @@ describe('a full sprint and the rares (D23, D31)', () => {
   it('refuses ordinary work with no room left — the can is a hard cap', () => {
     const store = storeWith({
       sprintCount: 999,
-      lanes: [{ count: 999, releaseLeftMs: 0 }],
     });
     const harvest = store.harvest([place(store, 'bug')]);
 
@@ -200,6 +199,28 @@ describe('the ending: sign-off, then acceptance', () => {
     store.advanceTo(100);
     expect(store.ended()).toBe(true);
     expect(store.inAcceptance()).toBe(false);
+  });
+
+  it('stops the clock once ended: nothing closes behind the post-mortem', () => {
+    const store = storeWith({
+      tier: MAX_TIER,
+      skills: { signoff: 1 },
+      budget: ACCEPTANCE.goal,
+    });
+    store.advanceTo(100);
+    const ended = store.snapshot();
+    const id = place(store, 'lint');
+    store.advanceTo(60_000);
+    expect(store.harvest([id]).taken).toEqual([]);
+    expect(store.snapshot().runMs).toBe(ended.runMs);
+    expect(store.snapshot().lifetimeClosed).toBe(ended.lifetimeClosed);
+  });
+
+  it('keeps a granted run marked as assisted in the save', () => {
+    const store = storeWith();
+    store.grant(1, 0);
+    const restored = storeWith(store.snapshot());
+    expect(restored.assisted()).toBe(true);
   });
 
   it('does not end on budget alone before sign-off', () => {

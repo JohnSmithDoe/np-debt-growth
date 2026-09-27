@@ -56,10 +56,10 @@ and the shell's is Tauri and serde (`Apache-2.0 OR MIT`).
 Two obligations are owed to whoever _runs_ a build rather than to whoever clones
 it, so no file in this repo can discharge them:
 
-| Obligation                | Why it has to be inside the app                                                                               |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| **AGPL §13**              | A player interacting with the game over a network must be offered its source from the app itself.             |
-| **GPL-3.0 / OGA-BY 3.0**  | The crew atlas's attribution and a copy of its licence have to travel with the picture, packaged builds included. |
+| Obligation               | Why it has to be inside the app                                                                                   |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| **AGPL §13**             | A player interacting with the game over a network must be offered its source from the app itself.                 |
+| **GPL-3.0 / OGA-BY 3.0** | The crew atlas's attribution and a copy of its licence have to travel with the picture, packaged builds included. |
 
 Both live in the title screen's footer — `src/app/console/ui/credits/`, listing
 its facts from `console/model/credit.model.ts`. The title screen opens every
@@ -101,7 +101,8 @@ per-character `*.credits.txt` in `art/characters/` records what each one used.
 
 ### Generated art
 
-Everything in `src/assets/art/`, `src/assets/board/` and `src/assets/skills/` —
+Everything in `src/assets/art/`, `src/assets/board/` (bar the release train, below) and
+`src/assets/skills/` —
 the title screens, the tier plates, the screen art, the office floor plates and
 the seventy-one skill node icons — is generated with **FLUX.2 Klein
 (Apache-2.0) via [mflux](https://github.com/filipstrand/mflux)**. The
@@ -120,6 +121,14 @@ here.
 every asset here can be re-derived from the repo. The palette's first block is
 `src/global.scss`'s `--np-cb-*` tokens, which is what keeps the art and the DOM
 chrome the same colours.
+
+### The release train
+
+The locomotive and passenger car in `src/assets/board/train/` are **"Ghost Train" by
+Varible_37** ([itch.io](https://varible-37.itch.io/ghost-train)), shipped unmodified. They
+are not AGPL: the author's terms apply — use them however you wish, apart from direct
+resale. No credit is required; the footer gives it anyway, and `ghost-train.credits.txt`
+beside the files quotes the terms and the source.
 
 ### Typeface
 

@@ -15,13 +15,28 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.floorPlate': 'Wirkt nicht selbst: öffnet den nächsten Raum',
   'skill.effect.topOfBand': 'Seniors nehmen zuerst das größte Ticket',
   'strip.collecting': 'SAMMELN',
-  'strip.releasing': 'ZUG {{seconds}}s',
+  'strip.releasing': 'IM RELEASE',
+  'board.release.title': 'RELEASE-ZUG',
+  'board.release.hint':
+    'Der Sprint wird ausgeliefert. Bis der Zug zurück ist, nimmt niemand etwas an.',
+  'release.phase.freeze': 'Code Freeze',
+  'release.phase.freeze.short': 'Freeze',
+  'release.phase.ship': 'Ab in Produktion',
+  'release.phase.ship.short': 'Prod',
+  'release.phase.smoke': 'Smoke-Test',
+  'release.phase.smoke.short': 'Smoke',
+  'release.phase.review': 'Sprint Review',
+  'release.phase.review.short': 'Review',
+  'release.phase.retro': 'Retro',
+  'release.phase.retro.short': 'Retro',
+  'release.phase.refinement': 'Refinement',
+  'release.phase.refinement.short': 'Refine',
   'board.buff.acceptance':
     'ABNAHME · ÜBERSTUNDEN ×{{mult}} · {{have}} / {{goal}}',
   'board.buff.escalation': 'ESKALATION ×{{mult}} · {{seconds}}s',
   'board.buff.hotfix': 'HOTFIX-FENSTER ×{{mult}} · {{seconds}}s',
-  'skill.effect.slots': 'Sprint-Umfang +{{count}} pro Swimlane',
-  'skill.effect.haulShave': '−{{seconds}} s für jeden Release-Train',
+  'skill.effect.slots': 'Sprint-Umfang +{{count}} pro Team',
+  'skill.effect.cutCeremony': 'Streicht {{phase}} aus jedem Release-Zug',
   'skill.effect.spawnRate': '{{pct}} Ticket-Spawnrate',
   'skill.effect.spawnRate.ticket': '{{pct}} Spawnrate von {{ticket}}',
   'skill.effect.standupAura': '{{each}} Junior-Tempo je Junior, bis {{cap}}',
@@ -32,7 +47,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.lock.unknown': 'Unbekannt',
   'skill.status.maxed': 'Max',
   'skill.status.ready': 'Bereit',
-  'crew.takes.nothing': 'Schließt nichts — schreibt um',
+  'crew.takes.nothing': 'Schließt nichts — schaut zu',
   'crew.takes.upTo': 'Nimmt bis {{ticket}}',
   'hazard.all-hands.label': 'All-Hands',
   'hazard.compliance.label': 'Compliance-Schulung',
@@ -83,13 +98,12 @@ export const DE: Readonly<Record<string, string>> = {
   'trait.sweeper.label': 'Räumt weiter ab',
   'purchase.velocity.effect':
     'jedes geschlossene Ticket zahlt zusätzlich {{sp}} Story Point',
-  'purchase.manager.effect': 'ein Ticket alle {{seconds}}s umgeschrieben',
+  'purchase.manager.effect': 'Abschlüsse in seiner Nähe rechnen ×{{aura}} ab',
   'purchase.manager.label': 'Kundenbetreuer',
   'purchase.senior.effect':
     'räumt alle {{seconds}}s den ganzen Fleck ab und ist die einzige Einstellung, die einen P0 anfasst',
-  'skill.effect.relabelFillerFirst':
-    'Kundenbetreuer schreiben das billigste Ticket um',
-  'skill.effect.relabelSteps': '+{{count}} Stufe pro Umschreibung',
+  'skill.effect.managerAura':
+    '{{pct}} auf Abschlüsse unter den Augen eines Managers',
   'office.archive.blurb':
     'Zehn Jahre Stundenzettel. Jede Stunde auf der Rechnung ist belegbar.',
   'office.archive.label': 'Aktenarchiv',
@@ -219,6 +233,9 @@ export const DE: Readonly<Record<string, string>> = {
   'finale.roll.aside.resemblance':
     'Ähnlichkeiten mit einem echten Mandat sind der ganze Witz.',
   'finale.roll.built': 'Gebaut mit',
+  'finale.roll.inspired': 'Inspiriert von',
+  'finale.roll.inspired.thanks':
+    'Eine Beratung ist nur ein Müllunternehmen, das nach Stunden abrechnet. Spielt das Original.',
   'finale.roll.crew': 'Die Crew',
   'finale.roll.drawn': 'Gezeichnet wurde die Crew von',
   'finale.roll.drawn.thanks':
@@ -253,7 +270,7 @@ export const DE: Readonly<Record<string, string>> = {
     'Partnersachen so abrechnen, wie ein Partner abrechnet.',
   'skill.effect.goldenChance': 'Goldene Arbeit: {{value}} der Eingänge',
   'skill.effect.goldenCrew':
-    'Das Team nimmt goldene Arbeit an, und {{value}} seiner Abschlüsse und Umbuchungen werden golden',
+    'Das Team nimmt goldene Arbeit an, und {{value}} seiner Abschlüsse werden golden',
   'skill.effect.goldenValue': 'Goldene Arbeit zahlt +{{times}}×',
   'spawner.0.blurb':
     'Frische Absolventen, die Formatierungsverbrechen und Off-by-Ones liefern. Der Zulauf endet nie.',
@@ -294,7 +311,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.capacity.9.label': 'Sprintziel abgekündigt',
   'skill.capacity.10.label': 'Welches Sprintziel',
   'skill.capacity.blurb':
-    'Ein Sprint ist dazu da, klein zu sein. Trotzdem vergrößern: Jede Swimlane fasst mehr, bevor ihr Zug fahren muss.',
+    'Ein Sprint ist dazu da, klein zu sein. Trotzdem vergrößern: Jedes Team fasst mehr, bevor der Zug fahren muss.',
   'skill.client.1.label': 'Der Kunde',
   'skill.crew.1.label': 'Juniors',
   'skill.legacyLine.1.label': 'Legacy-Framework',
@@ -317,12 +334,13 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.debtInterest.3.label': 'Zins auf Zins',
   'skill.debtInterest.blurb':
     'Chance, dass ein Ticket eine Sprosse höher ankommt als es sollte.',
-  'skill.duration.1.label': 'Timebox nachverhandelt',
-  'skill.duration.2.label': 'Sprint-Verlängerung',
-  'skill.duration.3.label': 'Die zweiwöchige Woche',
-  'skill.duration.4.label': 'Quartalsplanung',
-  'skill.duration.5.label': 'Abrechenbare Stunden',
-  'skill.duration.blurb': 'Sekunden auf dem Board, bevor die Runde abrechnet.',
+  'skill.duration.1.label': 'Retro jetzt in Slack',
+  'skill.duration.2.label': 'Refinement im Daily',
+  'skill.duration.3.label': 'Review per Daumen hoch',
+  'skill.duration.4.label': 'Smoke-Test in Prod',
+  'skill.duration.5.label': 'Deploy am Freitag',
+  'skill.duration.blurb':
+    'Jeder Release-Zug sitzt die ganze Zeremonie ab. Jede Stufe streicht eine; „Ab in Produktion“ streicht niemand.',
   'skill.escalation.1.label': 'Notfallsätze',
   'skill.escalation.2.label': 'Bus-Faktor',
   'skill.escalation.3.label': 'Parallelbetrieb',
@@ -358,7 +376,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.managerSpeed.2.label': 'Kundengolf',
   'skill.managerSpeed.3.label': 'Executive Sponsor',
   'skill.managerSpeed.blurb':
-    'Manager legen schneller ab und laufen schneller.',
+    'Manager überblicken einen größeren Bereich und laufen schneller.',
   'skill.o1.1.label': 'Erweiterung Großraum',
   'skill.o1.blurb': 'Ein zweiter Raum. Schreibtische — und Platz dafür.',
   'skill.o2.1.label': 'Besprechungsraum',
@@ -377,11 +395,11 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.radius.2.label': 'Muscle Memory',
   'skill.radius.3.label': 'Backlog Grooming',
   'skill.radius.blurb': 'Erfasst alles im Umkreis des Zeigers.',
-  'skill.relabel.1.label': 'Scope Creep',
-  'skill.relabel.2.label': 'Cherry-Picking',
-  'skill.relabel.3.label': 'Umklassifizierung',
+  'skill.relabel.1.label': 'Freigabebefugnis',
+  'skill.relabel.2.label': 'Change Requests',
+  'skill.relabel.3.label': 'Stundensatz-Review',
   'skill.relabel.blurb':
-    'Manager klassifizieren ein Ticket weiter nach oben um.',
+    'Was das Team unter den Augen eines Managers schließt, rechnet mehr ab.',
   'skill.root.1.label': 'Backlog-Triage',
   'skill.root.blurb': 'Öffnet das Backlog. Alles andere hängt daran.',
   'skill.secret.1.label': 'Du hast den Code gelesen',
@@ -406,11 +424,12 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.seniorSpeed.blurb':
     'Seniors schließen schneller und laufen schneller.',
   'skill.spawnConflict.1.label': 'Langlebige Branches',
-  'skill.spawnEscalation.1.label': 'Eskalationschance',
-  'skill.spawnEscalation.blurb': 'Mehr Eskalationen treffen ein.',
   'skill.spawnFlaky.1.label': 'Copy-Paste-Register',
   'skill.spawnIncident.1.label': 'Incident-Kultur',
-  'skill.spawnIncident.blurb': 'Mehr Incidents treffen ein.',
+  'skill.spawnIncident.2.label': 'Eskalationschance',
+  'skill.spawnIncident.3.label': 'Incident-Auszahlung',
+  'skill.spawnIncident.blurb':
+    'Mehr Incidents treffen ein, dann mehr Eskalationen, dann rechnen Incidents doppelt ab.',
   'skill.spawnLegacy.1.label': 'Framework-Karussell',
   'skill.spawnLint.1.label': 'Review überspringen',
   'skill.stretch.1.label': 'Stretch Assignment',
@@ -421,15 +440,13 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.triagePolicy.1.label': 'Triage-Richtlinie',
   'skill.triagePolicy.2.label': 'Scope Freeze',
   'skill.triagePolicy.blurb':
-    'Die Crew nimmt den Typ nicht mehr. Eine liegengebliebene Karte schließt sich selbst, statt zu veralten, und wird ausgeliefert. Sind alle Züge unterwegs, bleibt ihr nur der Weg nach Prod.',
+    'Die Crew nimmt den Typ nicht mehr. Eine liegengebliebene Karte schließt sich selbst, statt zu veralten, und wird ausgeliefert. Ist der Zug unterwegs, bleibt ihr nur der Weg nach Prod.',
   'skill.valueBug.1.label': 'Bug Bounty',
   'skill.valueBug.blurb': 'Bugs rechnen doppelt ab.',
   'skill.valueConflict.1.label': 'Konflikt-Boost',
   'skill.valueConflict.blurb': 'Merge-Konflikte rechnen doppelt ab.',
   'skill.valueFlaky.1.label': 'Flake-Pauschale',
   'skill.valueFlaky.blurb': 'Flaky Tests rechnen doppelt ab.',
-  'skill.valueIncident.1.label': 'Incident-Auszahlung',
-  'skill.valueIncident.blurb': 'Incidents rechnen doppelt ab.',
   'skill.valueLegacy.1.label': 'Defektzuschlag',
   'skill.valueLegacy.blurb': 'Legacy-Tickets rechnen doppelt ab.',
   'skill.valueLint.1.label': 'Doppel-Lint',
@@ -544,7 +561,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.timesheets.blurb':
     'Was Team und Pipeline schließen, wird zweimal gebucht.',
   'skill.effect.crewSp': 'Abschlüsse von Team und Pipeline zahlen doppelte SP',
-  'skill.effect.cans': '+{{count}} Swimlane, mit eigenem Release-Zug',
+  'skill.effect.cans': '+{{count}} Team im Sprint, mit eigenem Umfang',
   'skill.effect.room': '+{{count}} Plätze',
   'skill.effect.adr': 'Genehmigt ADR-{{adr}}: öffnet die Linie und ihre Arbeit',
   'skill.adrs.1.label': 'Architekturentscheidungen',
@@ -558,7 +575,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.cans.8.label': 'Taskforce (final)',
   'skill.cans.9.label': 'Taskforce (final) 2',
   'skill.cans.blurb':
-    'Noch eine Swimlane. Sie füllt sich allein und fährt mit eigenem Zug, also hält ein Release die anderen nie auf.',
+    'Noch ein Team im Sprint. Der Sprint fasst dann den Umfang eines ganzen Teams mehr, bevor der Zug fahren muss.',
   'skill.juniorRoom.1.label': 'Bullpen',
   'skill.juniorRoom.2.label': 'Zweiter Bullpen',
   'skill.juniorRoom.3.label': 'Flächenerweiterung',
@@ -780,7 +797,7 @@ export const DE: Readonly<Record<string, string>> = {
   'help.ticket.lint':
     'Das Brot-und-Butter-Geschäft der Eröffnung: billig und reichlich. Der erste Typ, den die Triage-Richtlinie selbst schließt.',
   'help.ticket.bug':
-    'Seltener als Lint und viermal so viel wert. Die zweite Wahl der Triage-Richtlinie.',
+    'Seltener als Lint und doppelt so viel wert. Die zweite Wahl der Triage-Richtlinie.',
   'help.ticket.legacy':
     'Die erste Linie, die ein ADR öffnet. Jede Sprosse der Leiter rechnet das Zehnfache der letzten ab.',
   'help.ticket.flaky':
@@ -796,7 +813,7 @@ export const DE: Readonly<Record<string, string>> = {
   'help.ticket.swarm':
     'Die oberste Sprosse und die teuerste Arbeit auf dem Board.',
   'help.ticket.incident':
-    'Zahlt mit jedem freigegebenen ADR mehr. Auch selbst geschlossene Arbeit, die alle Release-Züge unterwegs findet, landet hier, als P0.',
+    'Zahlt mit jedem freigegebenen ADR mehr. Auch selbst geschlossene Arbeit, die den Release-Zug unterwegs findet, landet hier, als P0.',
   'help.ticket.escalation':
     'Nimm sie, und jeder Abschluss zahlt {{seconds}} s lang ×{{mult}}. Nimm mit, was geht, solange sie läuft.',
   'help.ticket.hotfix':
@@ -818,7 +835,7 @@ export const DE: Readonly<Record<string, string>> = {
   'help.loop.1':
     'Die Entwickler jeder Linie werfen Tickets aufs Board. Fahr mit dem Zeiger über eins, um es aufzunehmen: Abgerechnet wird sofort.',
   'help.loop.2':
-    'Aufgenommene Arbeit füllt die Sprint-Bahnen. Eine volle Bahn fährt mit ihrem Release-Zug los und nimmt nichts, bis der Zug zurück ist.',
+    'Aufgenommene Arbeit füllt den Sprint. Ein voller Sprint fährt mit dem Release-Zug los und nimmt nichts, bis der Zug zurück ist.',
   'help.loop.3':
     'Mit Euro kaufst du rechts im Shop: mehr Entwickler, bessere Sätze und ein Team, das Arbeit für dich aufnimmt.',
   'help.loop.4':
@@ -864,7 +881,7 @@ export const DE: Readonly<Record<string, string>> = {
     'Rechne 1.000 € ab. Jetzt lohnt sich das Mandat.',
   'award.a-works-on-my-machine.label': 'Works on my machine',
   'award.a-works-on-my-machine.blurb':
-    'Ein selbst geschlossenes Ticket fand alle Züge unterwegs und ging direkt nach Prod.',
+    'Ein selbst geschlossenes Ticket fand den Zug unterwegs und ging direkt nach Prod.',
   'award.a-500.label': 'Fünfhundert',
   'award.a-500.blurb':
     'Schließ 500 Tickets. Zweihundertfünfzig davon kamen zurück.',

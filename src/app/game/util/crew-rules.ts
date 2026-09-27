@@ -1,7 +1,6 @@
 import type { Board } from '../model/board.model';
 import type { Consultancy } from '../model/consultancy.model';
 import type { Weather } from '../model/hazard.model';
-import type { TicketTypeId } from '../model/ticket.model';
 import type { CrewMember } from '../model/board.model';
 import type { CrewKind } from '../model/crew.model';
 import type {
@@ -46,7 +45,6 @@ function rulesFor(
 ): CrewRules {
   const stats = CREW_STATS[kind];
   const womanEvery = economy.crewWomanEvery(state, kind);
-  const transform = kind === 'managers' ? relabel(state) : null;
 
   return {
     kind,
@@ -56,15 +54,11 @@ function rulesFor(
     mode: stats.mode,
     ...economy.crewPace(state, kind),
     seatOf: (index, pace) => seatOf(state, kind, index, pace, womanEvery),
-    claims: transform
-      ? (type) => transform(type) !== null
-      : economy.crewClaims(state, kind),
+    claims: economy.crewClaims(state, kind),
     golden: economy.crewTakesGolden(state),
-    gilds: transform ? economy.crewGoldenConversion(state) : 0,
     paces: stats.perSeat ? seatPaces(state, kind, weather) : null,
     interrupted: stats.interruptible && weather.meeting,
     rush: economy.pizzaRush(state),
-    transform,
   };
 }
 
@@ -97,12 +91,6 @@ function seatPaces(
     paces.push(economy.crewPace(state, kind, economy.hireAt(state, seat)));
   }
   return paces;
-}
-
-function relabel(
-  state: Consultancy
-): (type: TicketTypeId) => TicketTypeId | null {
-  return (type) => economy.relabelTarget(state, type);
 }
 
 export type { ClaimPick, CrewRules, CrewSeat, HirePace };

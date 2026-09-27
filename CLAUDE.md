@@ -50,22 +50,21 @@ Types within a domain: `feature` → `ui`/`data`/`util`/`model`, `data` → `sce
 **Sheriff module roots are exactly `<domain>/<type>` — depth two.** A new folder beside
 `game/model/` is not a module and inherits no tag; nest new code under an existing pair.
 
-### The loop: swimlanes, release trains, no wall clock
+### The loop: one sprint, a release train, no wall clock
 
 There is no round timer. Money and story points land **per ticket at pickup**. Closed work fills
-**swimlanes** (`state.lanes`, dealt round-robin by `economy.fillLanes`); each lane has a sprint scope
-(`laneCapacity`) and, when full, ships on its own **release train** (`haulMs`) and takes nothing
-until it is back. The others keep taking; collection is refused only when every train is away
-(`phase: 'hauling'`). A "round" is one lane's release. `cans` adds a lane, `capacity` raises the
-sprint scope. The cadence is an output of the player's throughput, not an input. Player-facing copy
+**one sprint** (`sprintSlots`: `capacity` ranks raise it, each `cans` rank puts another team's scope
+on it). A full sprint leaves on the **release train** (`haulMs`, the ceremonies in `RELEASE_PHASES`
+that `duration` has not cut) and the board takes nothing until it is back (`phase: 'hauling'`) —
+deliberately blocking, and the release banner tells the wait. A "round" is one sprint's release. The cadence is an output of the player's throughput, not an input. Player-facing copy
 never says "truck", "can" or "WIP". The board is never wiped at once, but work nobody reaches in
-`TICKET_LIFE_MS` is **closed as "won't fix"** (`expireTickets`): the debt stays, it just leaves
+`ticketLifeMs(tier)` (12 s early, 3.5 s from ADR-6) is **closed as "won't fix"** (`expireTickets`): the debt stays, it just leaves
 the board. At `BOARD_CAPACITY` a full board **displaces** — each arrival pushes out the unclaimed
 card nearest expiry (`displaceOldest`) — so the field's mix always matches what was bought. Never
 make it refuse arrivals instead: spawns run cheapest type first, so refusing starves the late
 lines. The hand and the crew collect, plus Triage Policy's **auto-close**: a type it names
-(lint, then bugs) is claimed by no crew and closes itself when its life runs out, filling a lane
-like any close; with every train away it goes to prod as a P0 (three live at most). There is no
+(lint, then bugs) is claimed by no crew and closes itself when its life runs out, filling the sprint
+like any close; with the train away it goes to prod as a P0 (three live at most). There is no
 income that doesn't come from a close, and no offline progress.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
@@ -74,8 +73,7 @@ row costs euros. The one exception is `signoff`, €20 T, and buying it does not
 starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: spawns ×3, billing ×12)
 and the run ends when the budget reaches €1 Qa (`economy.accepted` sets `endedAt`). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
 bills**, once the €25 `velocity` row is bought, plus the per-ticket `estimates` nodes and planning-poker
-votes a ticket fell through (`voteBonus`, decided at spawn). Euro upgrades never touch SP, as the
-reference's gum works. Don't add a euro node or an SP rail row without meaning to.
+votes a ticket fell through (`voteBonus`, decided at spawn). Euro upgrades never touch SP. Don't add a euro node or an SP rail row without meaning to.
 
 Every line has the same five tree nodes (`LINE_NODES`): `value` ×2 opens `spawn` (5 × +20 %),
 `income` (5 × +50 %) and `estimates` (5 × +20 SP, lint +4); all three maxed (`SkillNode.maxed`) open
@@ -125,7 +123,7 @@ One thing in the restore looks like a bug and is not:
   on it, so a run with an unbought root is stranded — including the ADR modal's own approve button,
   which routes through `buySkill`. The `velocity` row is `open` on the rail for the same reason:
   it is the SP source, so it cannot sit behind an SP node. The run opens with one developer and
-  nothing else, as the reference does.
+  nothing else.
 
 ### i18n
 
@@ -156,7 +154,7 @@ licence texts copied into `assets/legal/` by `angular.json`. `credit.model.spec.
 stops resolving to a file the build ships. **If that footer moves, it moves somewhere equally
 unavoidable.** Read `README.md` before touching credits, the atlas, or the asset pipeline.
 
-Art is generated, not sourced: `tools/art-batch.mjs` is the manifest (one row per image, prompt
+Art is generated, not sourced — the one exception is the release train, Varible_37's "Ghost Train" in `assets/board/train/` (author's terms, credited in the footer): `tools/art-batch.mjs` is the manifest (one row per image, prompt
 included). Illustrations ship un-pixelated as WebP via `tools/backdrop.mjs`; icons, floor plates
 and the 2011 easter egg go through `tools/pixelate.mjs` / `icon-knockout.mjs` onto the palette
 whose first block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored —
@@ -164,8 +162,8 @@ takes, not assets, and the only source of the raw art.
 
 ## Debug doors
 
-- `globalThis.debtGrowth` — `grant`, `reset`, `endRound` (send every train that is home),
-  `startRound` (bring them all back), `buySkill`, `buyLine`, `buySpawner(adr)`, `place(type, golden?)` (drop one
+- `globalThis.debtGrowth` — `grant`, `reset`, `endRound` (send the train if it is home),
+  `startRound` (bring it back), `buySkill`, `buyLine`, `buySpawner(adr)`, `place(type, golden?)` (drop one
   card), `finale(curtain?)` (the curtain call; `true` skips the roll). Always open; the viewport and art harnesses drive the game through it, and a whole run
   scripts in a few lines.
 - The in-app debug bar unlocks with the Konami code (`ServiceDoorService`).
@@ -174,8 +172,8 @@ takes, not assets, and the only source of the raw art.
 ## The docs
 
 `docs/gamedesign.md` is the design **as the code has it**: loop, currencies, crew, progression,
-where every knob lives, the current measured run, the reference's measured numbers (§11) and what
-the screen shows (§12). Read it before touching balance. Prices and ranks are not copied into it;
+where every knob lives, the current measured run and what
+the screen shows (§11). Read it before touching balance. Prices and ranks are not copied into it;
 the code is the list.
 
 Docs describe the current state only — no history; git has that.
@@ -183,7 +181,7 @@ Docs describe the current state only — no history; git has that.
 ## Balance is measured, not asserted by eye
 
 The economy runs without a board: `game/util/sim.ts` prices any state per second (supply,
-density, crew walk, hand sweep, lanes), and `game/util/autoplay.ts` plays a whole run on it in
+density, crew walk, hand sweep, the sprint), and `game/util/autoplay.ts` plays a whole run on it in
 about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.5 of a real board — if you
 change how the board collects, change the sim with it.
 

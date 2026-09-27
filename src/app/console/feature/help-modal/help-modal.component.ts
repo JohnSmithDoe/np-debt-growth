@@ -14,7 +14,7 @@ import {
   GOLDEN_LIFE_MS,
   PIZZA_MS,
   PIZZA_RUSH,
-  TICKET_LIFE_MS,
+  ticketLifeMs,
 } from '../../../game/model/balance/flow';
 import {
   HOTFIX_MS,
@@ -79,7 +79,9 @@ export class HelpModalComponent {
   #icons = inject(BoardIcons);
 
   readonly shown = this.#ui.isOpen;
-  readonly lifeSeconds = seconds(TICKET_LIFE_MS);
+  readonly lifeSeconds = computed(() =>
+    seconds(ticketLifeMs(this.#store.tier()))
+  );
   readonly loop = [1, 2, 3, 4, 5].map((step) => `help.loop.${step}`);
 
   readonly line = computed(() =>

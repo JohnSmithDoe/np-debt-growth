@@ -259,17 +259,27 @@ function drawRareCard(
   ctx.fillStyle = colour;
   ctx.font = '700 10px monospace';
   const [first, second] = splitLabel(text(ticketLabelKey(type.id)));
-  ctx.fillText(first, x + 8, y + 32);
-  ctx.fillText(second, x + 8, y + 45);
+  // maxWidth squeezes an unbreakable word; past the card it bleeds into the next frame.
+  const room = RARE_CARD_WIDTH - 16;
+  ctx.fillText(first, x + 8, y + 32, room);
+  ctx.fillText(second, x + 8, y + 45, room);
 }
 
-function splitLabel(label: string): [string, string] {
-  const space = label.indexOf(' ');
-  if (space < 0) return [label.toUpperCase(), ''];
-  return [
-    label.slice(0, space).toUpperCase(),
-    label.slice(space + 1).toUpperCase(),
-  ];
+/** Breaks at the space or hyphen that leaves the longer line shortest. */
+export function splitLabel(label: string): [string, string] {
+  const upper = label.toUpperCase();
+  let best: [string, string] = [upper, ''];
+  for (const [at, char] of [...upper].entries()) {
+    if (char !== ' ' && char !== '-') continue;
+    const cut: [string, string] = [
+      upper.slice(0, char === '-' ? at + 1 : at),
+      upper.slice(at + 1),
+    ];
+    const longest = (pair: [string, string]) =>
+      Math.max(pair[0].length, pair[1].length);
+    if (longest(cut) < longest(best)) best = cut;
+  }
+  return best;
 }
 
 function drawGlow(

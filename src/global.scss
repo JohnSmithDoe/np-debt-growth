@@ -27,9 +27,8 @@
 
   --np-cb-radius: 3px;
   --np-cb-rail: 23rem;
-  /** The smallest window the layout is built for; tauri.conf.json matches. */
+  /** The narrowest window the layout is built for; tauri.conf.json matches. */
   --np-cb-min-width: 1280px;
-  --np-cb-min-height: 800px;
   --np-cb-scrim: rgb(6 8 11 / 0.74);
   --np-cb-lift: 0 10px 30px rgb(0 0 0 / 0.5);
 

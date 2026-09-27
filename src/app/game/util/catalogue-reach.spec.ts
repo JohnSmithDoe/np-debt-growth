@@ -37,6 +37,8 @@ import {
 } from '../model/tier.model';
 import { AWARDS, awardBlurbKey, awardLabelKey } from '../model/award.model';
 import { PURCHASE_IDS } from '../model/balance/progression';
+import { RELEASE_PHASES } from '../model/balance/round';
+import { releasePhaseKey } from '../model/round.model';
 
 const BUILT: readonly { readonly owns: RegExp; readonly keys: string[] }[] = [
   {
@@ -63,6 +65,13 @@ const BUILT: readonly { readonly owns: RegExp; readonly keys: string[] }[] = [
       ...[0, ...DEBT_TIERS.map((tier) => tier.index)].map(epicNameKey),
       ACCEPTANCE_EPIC_KEY,
     ],
+  },
+  {
+    owns: /^release\.phase\./,
+    keys: RELEASE_PHASES.flatMap((phase) => [
+      releasePhaseKey(phase.id),
+      releasePhaseKey(phase.id, true),
+    ]),
   },
   {
     owns: /^adr\.\d+\./,

@@ -14,9 +14,11 @@ import {
   TICKET_SLOT,
 } from '../model/geometry';
 import {
-  TICKET_LIFE_MS,
+  GOLDEN_LIFE_MS,
+  ticketLifeMs,
   VOTE_CYCLE_MS,
   VOTE_ON_MS,
+  WONT_FIX_FADE_MS,
 } from '../model/balance/flow';
 import * as economy from './economy';
 import { heldBack } from './first-act';
@@ -24,12 +26,15 @@ import { heldBack } from './first-act';
 /**
  * The economy without a board: what a state earns per second, as arithmetic.
  *
- *   collected = min(supply, what the hand, the crew and auto-close reach, what the lanes take)
+ *   reached   = min(supply, what the hand, the crew and auto-close reach)
+ *   collected = reached / (1 + reached / what the lanes take)
  *   €/s       = Σ collected × ticketValue (× goldenMultiplier on gold)
  *   SP/s      = Σ collected × pickupStoryPoints + expected planning-poker votes
  *
- * Not counted, so the sim is a floor: hotfix, escalation, quarter bills, pizza,
- * manager relabels.
+ * Managers close nothing; the crew closes inside their reach bill × the aura.
+ *
+ * Not counted: hotfix, escalation, quarter bills, pizza, prod incidents,
+ * weather. Each moves a real board's euros by 10 % at most.
  */
 
 export interface SimPolicy {
@@ -61,12 +66,14 @@ interface Stream {
 
 const BOARD_AREA = LOGICAL_BOARD.width * LOGICAL_BOARD.height;
 const DENSITY_PASSES = 8;
+/** How much denser the crew's work is under a manager than across the floor. */
+const OVERSEER_FOCUS = 1;
 /** Cards past this stack in the overflow rows above the field, out of the sweep. */
 const FIELD_CELLS = HEAP_COLS * HEAP_FIELD_ROWS;
 /** Where new work scatters, below the vote beams; landings past it stack above them. */
 const SPAWN_CELLS = HEAP_COLS * HEAP_SPAWN_ROWS;
 
-/** Closer kinds in claim order; managers relabel rather than close. */
+/** Closer kinds in claim order; managers oversee rather than close. */
 const CLOSERS: readonly CrewKind[] = ['seniors', 'juniors'];
 
 function streams(state: Consultancy): Stream[] {
@@ -241,6 +248,20 @@ function crewCapacity(
   return (ceiling * filled * closeMs) / (closeMs + walkMs);
 }
 
+/**
+ * Share of crew closes a manager stands over. Managers walk to where a closer
+ * is headed, so their reach covers more of the work than of the floor.
+ */
+function overseenShare(state: Consultancy): number {
+  const managers = economy.crewSize(state, 'managers');
+  if (managers === 0) return 0;
+  const reach = economy.managerReach(state);
+  return Math.min(
+    1,
+    (OVERSEER_FOCUS * managers * Math.PI * reach * reach) / BOARD_AREA
+  );
+}
+
 /** Takes up to `amount` from `pool` in proportion to what each stream has left. */
 function takeMixed(
   pool: readonly Stream[],
@@ -261,7 +282,8 @@ function collect(
   state: Consultancy,
   policy: SimPolicy,
   all: readonly Stream[],
-  density: number
+  density: number,
+  reach: number
 ): void {
   const crewGold = economy.crewTakesGolden(state);
   for (const crew of CLOSERS) {
@@ -293,25 +315,64 @@ function collect(
     (spreadOver(density) - 1);
   takeMixed(all, policy.clicksPerSec * others, 'hand');
 
-  // Whatever of an auto-closed type the hand leaves closes itself.
+  // Whatever of an auto-closed type the hand leaves closes itself, if it lives
+  // that long.
   const auto = economy.autoClosed(state);
   for (const s of all) {
     if (!auto.has(s.type)) continue;
-    s.auto += s.left;
-    s.left = 0;
+    const lived = s.golden ? s.left : s.left * reach;
+    s.auto += lived;
+    s.left -= lived;
   }
+}
+
+interface Occupancy {
+  readonly density: number;
+  /** Share of unclaimed plain cards that reach the end of their life. */
+  readonly reach: number;
+}
+
+/**
+ * Card-seconds on the board: a collected card is there half its life, the rest
+ * all of it, won't-fix a fade longer. Past the cap, the fades are pushed out
+ * first, then the plain cards nearest expiry; golden ones last.
+ */
+function occupancy(
+  all: readonly Stream[],
+  arrivals: readonly number[],
+  lifeMs: number
+): Occupancy {
+  const fadeSec = WONT_FIX_FADE_MS / 1000;
+  let held = 0;
+  let fading = 0;
+  let unclaimed = 0;
+  all.forEach((s, at) => {
+    const life = (s.golden ? GOLDEN_LIFE_MS : lifeMs) / 1000;
+    held += life * (arrivals[at]! - (s.hand + s.crew) / 2);
+    fading += fadeSec * s.left;
+    if (!s.golden) unclaimed += life * (s.left + s.auto);
+  });
+  const over = Math.max(0, held - BOARD_CAPACITY);
+  return {
+    density: Math.min(BOARD_CAPACITY, held + fading),
+    reach: unclaimed > 0 ? Math.max(0, 1 - over / unclaimed) : 1,
+  };
 }
 
 export function flow(state: Consultancy, policy: SimPolicy): Flow {
   const all = streams(state);
   const supplyPerSec = all.reduce((sum, s) => sum + s.left, 0);
   const arrivals = all.map((s) => s.left);
-  const lifeSec = TICKET_LIFE_MS / 1000;
+  const lifeMs = ticketLifeMs(state.tier);
+  const lifeSec = lifeMs / 1000;
 
   // Cards on the field depend on how fast they are collected, and collection
   // on how many there are: settle it by iterating. A full board pushes its
   // oldest card out for each arrival, so it holds at the cap.
-  let density = Math.min(BOARD_CAPACITY, supplyPerSec * lifeSec);
+  let board: Occupancy = {
+    density: Math.min(BOARD_CAPACITY, supplyPerSec * lifeSec),
+    reach: 1,
+  };
   for (let pass = 0; pass < DENSITY_PASSES; pass += 1) {
     all.forEach((s, at) => {
       s.left = arrivals[at]!;
@@ -319,19 +380,20 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
       s.crew = 0;
       s.auto = 0;
     });
-    collect(state, policy, all, density);
-    const taken = all.reduce((sum, s) => sum + s.hand + s.crew + s.auto, 0);
-    density = Math.min(
-      BOARD_CAPACITY,
-      Math.max(0, supplyPerSec - taken / 2) * lifeSec
-    );
+    collect(state, policy, all, board.density, board.reach);
+    board = occupancy(all, arrivals, lifeMs);
   }
+  const density = board.density;
 
+  // Lanes are dealt round-robin, so they fill together and ship together, and
+  // nothing is collected while every train is away: a cycle takes slots/rate
+  // to fill plus the haul.
   const collected = all.reduce((sum, s) => sum + s.hand + s.crew + s.auto, 0);
   const lanes = economy.ceilingPerSec(state);
-  const scale = collected > lanes ? lanes / collected : 1;
+  const scale = lanes > 0 ? 1 / (1 + collected / lanes) : 0;
 
   const conversion = economy.crewGoldenConversion(state);
+  const aura = 1 + (economy.managerAura(state) - 1) * overseenShare(state);
   const goldMult = economy.goldenMultiplier(state);
   const pays = economy.pickupsPaySp(state);
   const votes = pays
@@ -355,7 +417,7 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
       ? s.worth
       : s.worth * (1 - conversion) + s.worth * goldMult * conversion;
     handEuro += byHand * s.worth;
-    crewEuro += byCrew * crewWorth + byAuto * s.worth;
+    crewEuro += byCrew * crewWorth * aura + byAuto * s.worth;
     hand += byHand;
     crew += byCrew + byAuto;
     sp +=

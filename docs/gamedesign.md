@@ -3,25 +3,23 @@
 The design as the code has it. Every number names the file it lives in; paths are relative to
 `src/app/game/` unless stated.
 
-The reference is **Garbage Growth** (Steam demo, ends at the gorilla). Its measured numbers are
-in §11; they go in as they are.
-
 ---
 
 ## 0. The economy in six lines
 
 1. **Developers throw tickets.** Each head on a line throws one ticket about every 4 s; every
    ADR opens a line whose tickets are worth ×10 the last.
-2. **Tickets don't wait.** Unreached work is closed as "won't fix" after 3.5 s, or sooner when a
+2. **Tickets don't wait.** Unreached work is closed as "won't fix" after 12 s at the start, 3.5 s from ADR-6, or sooner when a
    full board pushes it out for newer work.
 3. **You and the crew pick them up**, and with Triage Policy lint and bugs close themselves.
    Every pickup pays its value in €, and SP once the €25 `velocity` row is bought.
-4. **Lanes cap the pace.** A full lane ships and is locked for the release train.
+4. **The sprint caps the pace.** A full sprint ships on the release train and the board waits
+   until it is back.
 5. **€ buys supply, SP buys the tree.** The rail sells heads, rate rows and crew; the tree
    sells everything else, the ADRs included. `signoff` starts the acceptance push; the run
    ends at €1 Qa.
 6. **Income = collected tickets/s × their worth**, where collected is the least of what the
-   lines throw, what the hand and crew reach, and what the lanes take. `util/sim.ts` computes
+   lines throw, what the hand and crew reach, and what the sprint takes. `util/sim.ts` computes
    exactly this without a board (§9).
 
 It is an **active game**: there is no offline progress and no income that doesn't come from a
@@ -40,7 +38,7 @@ Three mechanisms make that the economy rather than flavour:
 - **Debt interest** (`util/supply.ts`, `economy.debtInterest`). A spawn can arrive one rung
   dearer than the one that was due (`interestTarget` → `ladderUp`). The `debtInterest` node buys
   the chance up toward `DEBT_INTEREST_CAP` 0.25 (`balance/flow.ts`).
-- **Managers relabel** (§5): they walk cheap cards up the ladder for someone else to close.
+- **Managers oversee** (§5): they close nothing; crew closes inside their reach bill more.
 
 ---
 
@@ -58,7 +56,8 @@ which spends no time in the tree.
    metered by `SpawnBudget` (burst cap `SPAWN_BURST_CAP` 12). Tickets are thrown from the lane
    on a catchable arc (`DROP_MS` 1 850, `DROP_HOP` 90 in `stage/model/board.consts.ts`); the
    sweep catches them mid-flight.
-2. **Expire.** A crew-workable card nobody reaches in `TICKET_LIFE_MS` 3.5 s (golden:
+2. **Expire.** A crew-workable card nobody reaches in `ticketLifeMs(tier)` — `TICKET_LIFE_BY_TIER`, 12 s at tier 0 down to
+   `TICKET_LIFE_MS` 3.5 s from ADR-6 — (golden:
    `GOLDEN_LIFE_MS` 20 s) is closed as **"won't fix"** (`expireTickets` in `util/board.ts`, counted in `lifetimeWontFix`).
 3. **Displace.** The field holds `BOARD_CAPACITY` 600 cards (`model/geometry.ts`). When it is
    full, each arrival pushes out the unclaimed card nearest its own expiry, which is closed as
@@ -72,29 +71,33 @@ which spends no time in the tree.
    lane on two parabolas meeting at the apex (`HARVEST_MS` 1 600, `HARVEST_HOP` 150).
 5. **Auto-close.** A type `triagePolicy` names (`{ kind: 'autoClose' }`: lint at rank 1, bugs at
    rank 2) is claimed by no crew. When such a card's life runs out it closes itself instead of
-   going stale (`expireTickets` hands it to the store), fills a lane slot and bills like any
+   going stale (`expireTickets` hands it to the store), fills a sprint slot and bills like any
    close, SP included, credited to the crew's share. Its card tints green over its life on the
-   GPU (`AUTO_CLOSE_RAMP`). If no lane has room it **goes to prod**: it becomes an `incident`,
+   GPU (`AUTO_CLOSE_RAMP`). If the sprint has no room it **goes to prod**: it becomes an `incident`,
    at most `PROD_INCIDENT_LIVE_CAP` 3 live at once (the rest go stale), counted in
    `lifetimeProdIncidents`; the first earns _Works on my machine_.
-6. **Lanes and release trains.** Closed work is dealt round-robin into **swimlanes**
-   (`economy.fillLanes`), skipping lanes that are away. A full lane ships on its own release
-   train for `haulMs` and takes nothing until it is back; the rest keep taking. Collection is
-   refused only when every lane is away or full (`phase: 'hauling'`); refused cards bounce where
-   they lie (`REFUSAL_BOUNCE`).
+6. **One sprint, one release train.** Closed work fills the sprint. A full sprint leaves on the
+   train for `haulMs`, and collection is refused until it is back (`phase: 'hauling'`); refused
+   cards bounce where they lie (`REFUSAL_BOUNCE`). The wait is the release, and it is meant to
+   be felt; `duration` shortens it.
 
 ```
-laneCapacity   = SPRINT_SLOTS_BASE 100 + Σ slots        (capacity node, +25 a rank ×10; o2 +14)
-laneCount      = LANES_BASE 1 + Σ cans                  (cans node, +1 a rank ×9)
-sprintSlots    = laneCapacity × laneCount
-haulMs         = max(HAUL_MIN_MS 2 500, HAUL_MS 4 000 − duration ranks × 300)
+sprintSlots    = (SPRINT_SLOTS_BASE 100 + Σ slots) × (1 + Σ cans)
+                 (capacity +25 a rank ×10, o2 +14; cans +1 team a rank ×9)
+haulMs         = Σ ms of the RELEASE_PHASES still run  (6 × 1 200 uncut; each duration rank cuts one)
 ceilingPerSec  = sprintSlots / haulMs
 ```
 
 All in `balance/round.ts` and `util/economy.ts`. The cadence is an output of the player's
-throughput. A "round" in the code is one lane's release.
+throughput. A "round" in the code is one sprint's release.
 
-Player-facing copy never says "truck" or "can": lanes, sprint scope, release train.
+The train runs ceremonies in order: Code Freeze → Ship to Production → Smoke Test → Sprint
+Review → Retro → Refinement (`economy.releasePhases`, `phaseAt`). The five `duration` ranks cut
+Retro, Refinement, Review, Smoke Test and Code Freeze in that order, each named for its cut;
+Ship to Production is never cut. While the train is out, `ReleaseBanner` spells the phase across
+the board's upper third in the big-payout gold, with the whole ceremony under it.
+
+Player-facing copy never says "truck", "can" or "lane": sprint, sprint scope, release train.
 
 ---
 
@@ -111,8 +114,7 @@ Player-facing copy never says "truck" or "can": lanes, sprint scope, release tra
 (`LINE_PLAN.velocity`, `open: true`), every close pays `SP_PER_PICKUP` 1, **whatever it bills**,
 plus:
 
-- the line's `estimates<Ticket>` node, `ESTIMATE_SP_PER_RANK` 20 SP a rank, 5 ranks (the
-  reference pays +2); lint's pays `ESTIMATE_SP_PER_RANK_OPENING` 4, since auto-close bills every
+- the line's `estimates<Ticket>` node, `ESTIMATE_SP_PER_RANK` 20 SP a rank, 5 ranks; lint's pays `ESTIMATE_SP_PER_RANK_OPENING` 4, since auto-close bills every
   lint card;
 - ×`CREW_SP_MULT` 2 on crew closes with `timesheets`;
 - `voteBonus`: SP for every live planning-poker vote the ticket fell through, decided at spawn
@@ -144,7 +146,7 @@ Value nodes and rate rows lift euros only. Awards (`model/award.model.ts`) pay n
 
 Value ×10 a tier, one throw rate: the rule read off the two measured tiers. `respawns` doubles
 the effective close rate. `RETYPE_LADDER` (value types by tier) is what `ladderUp` walks for debt
-interest and manager relabels.
+interest.
 
 ### Hand-only cards
 
@@ -169,8 +171,7 @@ and `util/first-act.ts` places the first card on its beat.
 Any arrival rolls `goldenChance` (+2 % a rank of `golden`, cap `GOLDEN_CHANCE_CAP` 0.2). A golden
 card is worth `GOLDEN_VALUE_BASE` 100× + `GOLDEN_VALUE_PER_RANK` 50× a `goldenValue` rank
 (additive, 100× → 300×). **No crew kind claims golden** until `goldenCrew`, which also turns
-`GOLDEN_CREW_CONVERSION` 5 % of crew closes golden. Managers get the same: a relabel keeps a
-card's gold, and 5 % of relabels come back golden (`CrewRules.gilds`). Golden is what keeps the hand worth using
+`GOLDEN_CREW_CONVERSION` 5 % of crew closes golden. Golden is what keeps the hand worth using
 once the crew works; after `goldenCrew` the cursor is a bonus, by design.
 
 ---
@@ -183,7 +184,7 @@ One row per kind in `CREW_STATS` (`balance/crew.ts`). The row order is claim pri
 | -------- | ----- | ---- | ----- | ----- | ---- | ----------- | ---------------------------- |
 | seniors  | 10 s  | 70   | 3     | 70    | 3–∞  | 6           | 10 + `seniorRoom` 3 × 5 → 25 |
 | juniors  | 5 s   | 90   | 1     | 40    | 0–4  | 4           | 10 + `juniorRoom` 3 × 5 → 25 |
-| managers | 24 s  | 110  | 1     | 0     | 0–∞  | 3           | 5 + `managerRoom` 1 × 5 → 10 |
+| managers | 12 s  | 110  | 1     | 110   | —    | 3           | 5 + `managerRoom` 1 × 5 → 10 |
 
 - **File on arrival, then recover.** A worker walks to a card, files it at once, and rests for
   its close time. A claim samples four cards (`CLAIM_SAMPLES`) and takes the nearest of them
@@ -193,18 +194,20 @@ One row per kind in `CREW_STATS` (`balance/crew.ts`). The row order is claim pri
   tier 3 up; both take 3–4. The `senior` node hangs off ADR-3, so no senior waits for work.
 - **Seniors have one trait each**, by seat (`model/senior.model.ts`, `hireFor`): `closer`,
   `sweeper`, `runner`, `firefighter` (top of band), `scout` (nearest).
-- **Managers relabel** (`mode: 'refiler'`): they walk a card `relabelSteps` rungs up the ladder.
+- **Managers oversee** (`mode: 'overseer'`): a manager walks to a card some closer is headed
+  for, stands there for its close time, and moves on. A crew close within its sweep radius
+  (`managerReach`) bills `managerAura` × — `MANAGER_AURA_BASE` 1.5, +0.25 / +0.25 / +0.5 from
+  `relabel`; `managerSpeed` widens the reach. The stage draws each reach on the floor.
 - **Women close twice as fast** (`WOMAN_CLOSE_RATE` 2), every _n_-th seat per kind; counted in
   `lifetimeClosedByWomen` and shown in the post-mortem.
 - **Crew skills are two effect kinds**: `{ kind: 'pace', crew, field: 'close' | 'walk' | 'sweep',
 mult }` and `{ kind: 'batch', crew, add, closeMult? }`. Senior traits use the same shape.
 - **Seats are per line**: `LINE_PLAN` cap + the line's room ranks × `ROOM_SEATS` 5
   (`economy.lineCap`, `{ kind: 'room', line }`). Each room sits behind its kind's speed node
-  (unlock → improve → raise the cap, as the reference orders it) and is priced off its unlock,
-  the reference's population/unlock ratio (20 000 / 1 200) climbing ×3 a rank.
+  (unlock → improve → raise the cap) and is priced off its unlock at a 20 000 / 1 200 ratio,
+  climbing ×3 a rank.
 - **Pizza party** (`pizza` node, ADR-5): the engineering manager drops a hand-only voucher;
-  sweeping it makes crew inside `PIZZA_RADIUS` 240 work ×`PIZZA_RUSH` 5 for `PIZZA_MS` 12 s. The
-  reference's Chad.
+  sweeping it makes crew inside `PIZZA_RADIUS` 240 work ×`PIZZA_RUSH` 5 for `PIZZA_MS` 12 s.
 
 The crew and Triage Policy's auto-close (§2) are the only automation; the only crew kinds are
 juniors, seniors and managers. Hand-only cards are the player's alone. The CI auto-close
@@ -264,18 +267,18 @@ five +20 % ranks end at exactly ×2. First-rank prices double a tier: `value` 25
 `LINE_DOUBLE_COST`; `spawn` `2 200 × 2^t` (ranks ×1.25); `income` `1 100 × 2^t` (ranks ×1.25);
 `estimates` 75 / `400 × 2^(t−1)` (ranks ×1.5); `double` `2 500 × 2^t`.
 
-| Track           | Holds                                                                                                                                        |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A** Hand      | `radius`, `capacity` (sprint scope +25 ×10), `cans` (+1 lane ×9, tier 1), `duration`, `lineOfSight`, `golden` → `goldenValue` → `goldenCrew` |
-| **B** Juniors   | `junior` (1 200), `juniorSpeed`, `juniorRoom`, `juniorReach`, `juniorPresence`, `ticketStacking`, `timesheets`, `pizza`                      |
-| **E** Seniors   | `senior` (240 000, ADR-3), speed, reach, presence, `seniorRoom`                                                                              |
-| **H** Managers  | `manager`, speed, `relabel`, `managerRoom`                                                                                                   |
-| **C** Client    | the per-line `value` / `income` / `estimates` / `double` nodes, `valueBug`, `valueIncident`, `escalation`, `coaches`, `deck`                 |
-| **D** Debt      | the per-line `spawn` nodes, `debtInterest`, `triagePolicy`, `spawnEscalation`, `spawnIncident`                                               |
-| **G** Capstones | `assurance`, `stretch`, `signoff`                                                                                                            |
-| **N** ADRs      | `adr1` … `adr8`, chained; each rung is the parent of its line's `value` node (Lint's hangs off the client heading)                           |
-| **O** Office    | `o1`–`o7` (the floor plates; `o1` and `o4` are cosmetic), `kit`                                                                              |
-| `secret`        | Konami-granted, ×1.1 global                                                                                                                  |
+| Track           | Holds                                                                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** Hand      | `radius`, `capacity` (sprint scope +25 ×10), `cans` (+1 team's scope ×9, tier 1), `duration` (cuts a ceremony ×5), `lineOfSight`, `golden` → `goldenValue` → `goldenCrew` |
+| **B** Juniors   | `junior` (1 200), `juniorSpeed`, `juniorRoom`, `juniorReach` → `stretch`, `juniorPresence`, `ticketStacking`, `timesheets`, `pizza`                                       |
+| **E** Seniors   | `senior` (240 000, ADR-3), speed, reach, presence, `seniorRoom`                                                                                                           |
+| **H** Managers  | `manager`, speed, `relabel`, `managerRoom`                                                                                                                                |
+| **C** Client    | the per-line `value` / `income` / `estimates` / `double` nodes, `valueBug`, `escalation`, `coaches`, `deck`                                                               |
+| **D** Debt      | the per-line `spawn` nodes, `debtInterest`, `triagePolicy`, `spawnIncident` (incidents, escalations, incident value)                                                      |
+| **G** Capstones | `assurance`, `signoff`                                                                                                                                                    |
+| **N** ADRs      | `adr1` … `adr8`, chained; each rung is the parent of its line's `value` node (Lint's hangs off the client heading)                                                        |
+| **O** Office    | `o1`–`o7` (the floor plates; `o1` and `o4` are cosmetic), `kit`                                                                                                           |
+| `secret`        | Konami-granted, ×1.1 global                                                                                                                                               |
 
 There are no global spawn-rate or income nodes: a line only grows through its own nodes.
 
@@ -294,8 +297,8 @@ new rung is a choice, not a shopping spree:
 | ADR-3 | Conflict line, `senior`                                                     |
 | ADR-4 | Slop line, `manager`, `debtInterest`                                        |
 | ADR-5 | Rockstar line, `pizza`, `timesheets`, `coaches` → `deck`                    |
-| ADR-6 | Zombie line, `spawnIncident`, `valueIncident`, `spawnEscalation`            |
-| ADR-7 | Rewrite line, `goldenCrew`, `stretch`                                       |
+| ADR-6 | Zombie line, `spawnIncident` (3 ranks)                                      |
+| ADR-7 | Rewrite line, `goldenCrew`                                                  |
 | ADR-8 | Swarm line, `assurance`, `signoff`                                          |
 
 `double<T>` is the one node with a second term (`maxed`); it stays a dim box, not a readable
@@ -313,7 +316,7 @@ final. Nodes with more than five ranks draw their pips in rows of five.
 **Planning poker** (`coaches` 400 k → 27.5 M, `deck` 600 k → 41.2 M, 10 ranks each, ×1.6 a rank, from
 ADR-5, priced for that rung's SP income): coaches on the lane edge hold
 votes live for `VOTE_ON_MS` 1.4 s of every `VOTE_CYCLE_MS` 4 s, offset from each other. A
-non-golden ticket that lands below a live vote's beam gains `VOTE_BONUS_BASE` 45 SP + 15 a `deck` rank (the reference pays 30).
+non-golden ticket that lands below a live vote's beam gains `VOTE_BONUS_BASE` 45 SP + 15 a `deck` rank.
 The beams sit in board units (`VOTE_BEAMS`, `voteBeamY`), so a ticket landing above one is passed over;
 decided at spawn from the landing cell and kept on the ticket as `voteMask`, one bit per beam. New work scatters only below the top `HEAP_SPAWN_GAP_ROWS`
 field rows, so it falls through the beams; a crowded board stacks above them and misses the vote.
@@ -322,7 +325,7 @@ sits `VOTES.belowSpawners` under the fixed spawner path and the floor on the spr
 things (sweep ring, pizza) use √(x·y), so the hand covers the board area the sim prices. Drawn by `stage/scene/vote-beams.ts`: the beams rest dim, and a beam
 flashes only where a card it voted on falls through it (`FlyerPool` reports the crossing), its coach
 raising a card. The card's purple border (`voteFrame`) steps in with each voting beam it crosses,
-so every flash is a vote and every vote flashes. The reference's gum angels.
+so every flash is a vote and every vote flashes.
 
 ### The ADR ladder
 
@@ -330,16 +333,16 @@ so every flash is a vote and every vote flashes. The reference's gum angels.
 ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR modal's approve button
 (`unlockNextTier`) buys the same node; the rail has no ADR panel.
 
-| ADR | SP        | Unlocks    | Source                 |
-| --- | --------- | ---------- | ---------------------- |
-| 1   | 750       | `legacy`   | reference (dogs)       |
-| 2   | 10 000    | `flaky`    | reference (bike)       |
-| 3   | 300 000   | `conflict` | ours (gorilla 600 000) |
-| 4   | 500 000   | `slop`     | ours                   |
-| 5   | 800 000   | `rockstar` | ours                   |
-| 6   | 1 200 000 | `zombie`   | ours                   |
-| 7   | 1 400 000 | `rewrite`  | ours                   |
-| 8   | 1 600 000 | `swarm`    | ours                   |
+| ADR | SP        | Unlocks    |
+| --- | --------- | ---------- |
+| 1   | 750       | `legacy`   |
+| 2   | 10 000    | `flaky`    |
+| 3   | 300 000   | `conflict` |
+| 4   | 500 000   | `slop`     |
+| 5   | 800 000   | `rockstar` |
+| 6   | 1 200 000 | `zombie`   |
+| 7   | 1 400 000 | `rewrite`  |
+| 8   | 1 600 000 | `swarm`    |
 
 **`signoff`** (€20 T, off ADR-8) is `FINAL_SKILL_ID` and the tree's only euro node. Buying it
 starts the **acceptance push** (`ACCEPTANCE` in `balance/progression.ts`, `economy.inAcceptance`):
@@ -365,7 +368,7 @@ ticketValue = (type.value + rate-row bonus)
 closeValue  = ticketValue × escalation ×5 (inside the window) × golden multiplier (if golden)
 ```
 
-Paid at pickup. There is no invoice; nothing past lane capacity is ever priced.
+Paid at pickup. There is no invoice; nothing past sprint scope is ever priced.
 
 ---
 
@@ -399,21 +402,27 @@ The sim prices no weather; `balance.spec.ts` holds the crew's share over
 game uses:
 
 - **Supply** per line = `closeRate`, shifted a rung by debt interest, split golden / plain.
-- **Density** on the field = min(600, arrivals × 3.5 s, less what gets collected), settled by
-  iterating; a full board displaces rather than refuses, so nothing is turned away.
+- **Density** on the field = min(600, card-seconds held): a collected card half its life, the
+  rest all of it (the tier's life, golden 20 s), won't-fix its 0.9 s fade longer; settled by iterating.
+  Past 600 the board displaces rather than refuses: fades go first, then plain cards nearest
+  expiry, so fewer reach auto-close (at ADR-6 a real board displaces ~100 cards/s).
 - **Crew** take their band at their ceiling, slowed by the walk: a random board distance
   (≈ `MEAN_WALK`), or the nearest of four sampled cards with `nearest`, and by how full a
   senior's sweep batch can get at that density.
 - **Hand** takes one aimed card per sweep (gold first, then the dearest) plus a proportional mix
   of whatever other cards the ring touches, counted on the heap grid by box overlap
   (`cellsTouched`). Crew sweep batches count centres within their radius (`cellsInReach`).
-- **Auto-close** takes whatever of an auto-closed type the hand left.
-- All of it clamped by `ceilingPerSec`; € and SP priced as at pickup.
+- **Auto-close** takes whatever of an auto-closed type the hand left and lives to expiry.
+- **Managers**: crew euros × (1 + (aura − 1) × covered share), the share being the managers'
+  reach area over the board's, capped at 1 (`overseenShare`).
+- **Sprint**: nothing is collected while the train is away, so what is reached is collected at
+  reached / (1 + reached / `ceilingPerSec`); € and SP priced as at pickup.
 
-Not counted: hotfix, escalation, quarter bills, pizza, manager relabels, prod incidents and
-weather. `data/sim.spec.ts`
-plays the same states on a real board and holds the sim within ×1.5 (it runs 1.07–1.38× high;
-late euros ride on a few gold tickets, so one seeded run is noisy).
+Not counted: hotfix, escalation, quarter bills, pizza, prod incidents and
+weather; each moves a real board's euros by 10 % at most. `data/sim.spec.ts` plays the same
+states on a real board (four seeds, averaged) and holds the sim within ×1.5, and plays a whole advised run on a real
+board and holds its acceptance within ×1.1 of the sim's, because per-tier error compounds
+over a run.
 Only the 476 field cells are sweepable; the rest of the 600 stack in overflow rows above the
 field, and the sim counts that.
 
@@ -443,7 +452,7 @@ paperclip (`console/feature/agent/`, on by default, switchable in settings) show
 | Rate row                            | `INCOME_ROWS` in `balance/progression.ts`                                        |
 | Crew line                           | one row in `LINE_PLAN`                                                           |
 | Skill                               | one node in `SKILL_NODES`                                                        |
-| Lanes, trains, hotfix, escalation   | `balance/round.ts`                                                               |
+| Sprint, train, hotfix, escalation   | `balance/round.ts`                                                               |
 | Spawn, golden, votes, pizza, expiry | `balance/flow.ts`                                                                |
 | Board cap                           | `BOARD_CAPACITY` in `model/geometry.ts`                                          |
 | Hazard                              | one row in `HAZARDS`                                                             |
@@ -457,7 +466,7 @@ paperclip (`console/feature/agent/`, on by default, switchable in settings) show
   the run accepted in 25–45 min, the acceptance push 2–5 min, the last five ADR gaps and
   ADR-8 → sign-off over two minutes, and the crew's share — at least 5 %
   of the closes before `goldenCrew`, judged from three minutes after the first junior (the hand's
-  gold outweighs their euros until then, as in the reference), and 4 % of the euros after it. Run with the
+  gold outweighs their euros until then), and 4 % of the euros after it. Run with the
   reports:
 
   ```bash
@@ -487,7 +496,7 @@ What that run cannot see, because the sim does not price it:
 
 ### Load-bearing, do not undo
 
-- Lanes are a hard cap, and the haul is the only forced wait. Softening it brings the wall clock
+- The sprint is a hard cap, and the haul is the only forced wait. Softening it brings the wall clock
   back.
 - Bands: they make crew kinds different tools rather than tiers of one tool.
 - Golden is crew-exempt until `goldenCrew`.
@@ -498,50 +507,13 @@ What that run cannot see, because the sim does not price it:
 
 ---
 
-## 11. Reference numbers (Garbage Growth, measured by Martin)
-
-These are accepted as real and go in as they are.
-
-| Reference                               | Value                                                                                           | Ours                                                            |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Head price                              | `floor(base × 1.15^k)`, float32 step; people 2, dogs 500, bikes 15 000; cap 50, one free person | same                                                            |
-| Gum unlock                              | 25 $ rail row                                                                                   | `velocity` 25 €                                                 |
-| Gum per pickup                          | 1 per item, whatever it's worth                                                                 | `SP_PER_PICKUP` 1                                               |
-| Paper income row                        | `floor(250 × 1.65^k)`, +3 flat a rank, 10 ranks, multipliers applied after                      | `INCOME_ROWS` tier 0                                            |
-| Dog income row                          | `floor(1 250 × 1.65^k)`, +4 a rank                                                              | `INCOME_ROWS` tier 1                                            |
-| Paper ×2                                | 25 gum, then 2 500                                                                              | `valueLint`, `doubleLint`                                       |
-| Paper +2 gum                            | 75 → 112 (×1.5), 5 ranks                                                                        | `estimatesLint`, +4                                             |
-| +50 % paper income                      | 1 100 → 1 375                                                                                   | `incomeLint`                                                    |
-| 20 % chance to throw 2 papers           | 2 200 gum                                                                                       | `spawnLint` rank 1                                              |
-| Radius +25 %                            | 100 gum                                                                                         | `radius`                                                        |
-| Rat unlock / hire                       | 1 200 gum / 1 000 $                                                                             | `junior` / `LINE_PLAN.junior`                                   |
-| Rat speed / population / slimy (×2 gum) | 1 500 / 20 000 (+5 ×3) / 15 000                                                                 | `juniorSpeed` / `juniorRoom` / `timesheets`                     |
-| Rats                                    | 10 on the rail, 25 with population                                                              | `LINE_PLAN.junior` 10 + `juniorRoom`                            |
-| Dogs unlock                             | 750 gum                                                                                         | `adr1`                                                          |
-| +1 trashcan                             | 1 500 gum                                                                                       | `cans` rank 1                                                   |
-| Golden 2 %, 100×                        | 2 000 gum; +50× a rank ×4 from 2 000                                                            | `golden`, `goldenValue`                                         |
-| Dog ×2 / +50 % / +2 gum / throw 2       | 1 500 / 2 200 / 400 / 4 400                                                                     | `valueLegacy`, `incomeLegacy`, `estimatesLegacy`, `spawnLegacy` |
-| Bike / gorilla unlock                   | 10 000 / 600 000 gum                                                                            | `adr2` / `adr3`                                                 |
-| Can                                     | holds 100; +25 a rank ×10; up to 10 cans, each with its own truck                               | lanes, `capacity`, `cans`                                       |
-| Gum angels                              | +30 gum per beam crossed, normal litter only; two 10-rank nodes (+1 angel, +15)                 | `coaches`, `deck`                                               |
-| Litter lifetime                         | ~15 s                                                                                           | `TICKET_LIFE_MS` 3.5 s (ours)                                   |
-| Opening throw                           | ~1 item per 4 s from one person                                                                 | `lint` 0.25/s                                                   |
-| Golden rat                              | late; takes golden, turns 5 % golden                                                            | `goldenCrew`                                                    |
-| Run length                              | demo ~30 min to the gorilla; full game 57–70 min                                                | gorilla 9.8, accepted 31.6 (target 30)                          |
-
-Only rank 1 of each line's throw-two and +50 % nodes is measured; ranks 2–5, the second ×2 above
-paper, and every tier above the dog are extrapolated (value ×10 a tier, € prices ×5, SP prices
-×2). ADR-4…8 have no reference counterpart; the reference's first area ends at the gorilla and
-continues on a second screen (the sea), which we do not build.
-
----
-
-## 12. The screen
+## 11. The screen
 
 What the player sees, and where it lives. Paths are relative to `src/app/`.
 
-- **Window.** Built for 1280 × 800 and up (`--np-cb-min-width` / `--np-cb-min-height` in
-  `global.scss`, `minWidth` / `minHeight` in `tauri.conf.json`); the desktop window opens at
+- **Window.** Built for 1280 × 800 and up (`--np-cb-min-width` in `global.scss`, `minWidth` /
+  `minHeight` in `tauri.conf.json`); below 800 tall the page does not scroll, the board shrinks and
+  the shop scrolls its rows. The desktop window opens at
   1440 × 900. `tools/viewport-check.mjs` measures 1280, 1440 and 1920 and fails if the page scrolls.
 - **Backdrop.** Each tier's art sits behind the cards at 40 % (`TIER_BACKDROP`,
   `stage/scene/tier-backdrop.ts`): its title screen first, then its ADR plate, swapping every 30 s
@@ -559,10 +531,11 @@ What the player sees, and where it lives. Paths are relative to `src/app/`.
 - **Crew** wear their role: juniors short-sleeved in bright colours, seniors long-sleeved in dark
   ones, managers in hat and vest (`stage/model/lpc-uniform.spec.ts`).
 - **Payouts.** Every sweep floats its own `+€` and `+SP` and fades (`floatPayout`, pooled in
-  `stage/util/float-pool.ts`, capped by `FLOAT_CAP`). The sprint strip keeps one float per lane
-  and updates its sum while money keeps landing.
-- **Sprint strip.** One bar per lane, filled left to right in up to ten segments tinted by the
-  lane's newest ticket; a lane that is away shows its train between two portals
+  `stage/util/float-pool.ts`, capped by `FLOAT_CAP`). The sprint strip keeps one float for the
+  sprint and updates its sum while money keeps landing.
+- **Sprint strip.** One bar, filled left to right in up to ten segments tinted by the newest
+  ticket; below it Varible_37's ghost train (one image per car count, composed at run time)
+  crosses between two portals while it is out
   (`stage/scene/sprint-strip.ts`).
 - **Masthead.** Budget and SP roll to their value and glow as they climb
   (`console/ui/rolling/`); Budget shows €/s over the last 10 s of game time. The Sprint label

@@ -17,7 +17,7 @@
       <section>
         <h3>{{ 'help.line.heading' | translate }}</h3>
         <p class="muted small intro">
-          {{ 'help.line.intro' | translate: { seconds: lifeSeconds } }}
+          {{ 'help.line.intro' | translate: { seconds: lifeSeconds() } }}
         </p>
         <ul class="guide">
           @for (row of line(); track row.key) {

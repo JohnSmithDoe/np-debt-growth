@@ -53,7 +53,6 @@ export class HarnessDoor {
           type,
           Math.random,
           false,
-          false,
           golden
         );
         return ticket ? ticket.id : NO_TICKET;

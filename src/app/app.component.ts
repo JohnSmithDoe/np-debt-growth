@@ -79,7 +79,7 @@ export class AppComponent {
   readonly finale = computed(() => this.#finale.act() !== 'closed');
 
   readonly onTree = computed(() => this.#stage.mode() === 'skills');
-  /** The tree opens with the SP unlock, as the reference's gum row does. */
+  /** The tree opens with the SP unlock. */
   readonly treeOpen = computed(() => this.#store.levels().velocity > 0);
 
   toTree(): void {

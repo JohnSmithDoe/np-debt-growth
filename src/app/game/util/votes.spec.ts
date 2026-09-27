@@ -14,7 +14,7 @@ import * as economy from './economy';
 
 const FLOOR = cellY(0);
 
-describe('planning poker (the reference gum angels)', () => {
+describe('planning poker', () => {
   it('holds no vote until a coach is hired', () => {
     expect(economy.voteBonus(consultancy(), 0, FLOOR)).toBe(0);
   });
@@ -109,7 +109,7 @@ describe('planning poker (the reference gum angels)', () => {
   });
 });
 
-describe('the pizza party (the reference Chad)', () => {
+describe('the pizza party', () => {
   it('sends no voucher until the node is bought', () => {
     expect(economy.spawnRate(consultancy(), 'pizza')).toBe(0);
     expect(

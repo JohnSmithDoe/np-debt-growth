@@ -5,24 +5,25 @@ import { TICKET_TYPES } from '../../game/model/ticket.model';
 import {
   BOARD_INK,
   BOARD_TEXT,
+  GHOST_TRAIN,
   SPRINT_BAR_WIDTH,
   SPRINT_STRIP_HEIGHT,
 } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
 
 const PIP_HEIGHT = 16;
-const LANE_GAP = 6;
-const LOCO_WIDTH = 14;
-const WAGON_PITCH = 12;
-const WAGON_GAP = 2;
+/** The bar sits high in the strip; the train runs on its own track below it. */
+const BAR_TOP = 5;
+const RAIL_Y = 45;
 const PORTAL_WIDTH = 8;
+const PORTAL_HEIGHT = GHOST_TRAIN.loco.frame.height + 2;
 const TRAIN_STEPS = 1000;
 const STATUS_WIDTH = 132;
 const STATUS_DOT = 3;
 const STATUS_TEXT_X = 12;
 const PENDING_WIDTH = 112;
 const MIN_BAR_WIDTH = 96;
-/** A lane fills left to right in segments; fewer when lanes get narrow. */
+/** The sprint fills left to right in segments; fewer when the bar gets narrow. */
 const SEGMENT = { max: 10, min: 8, gap: 2 } as const;
 
 const PAD = 18;
@@ -30,7 +31,16 @@ const BAR_X = 172;
 const GAP = 18;
 
 export class SprintStrip {
+  static preload(scene: Phaser.Scene): void {
+    for (const part of [GHOST_TRAIN.loco, GHOST_TRAIN.car]) {
+      scene.load.image(part.key, part.url);
+    }
+  }
+
+  readonly #scene: Phaser.Scene;
+  readonly #depth: number;
   readonly #deps: SceneDeps;
+  #train?: Phaser.GameObjects.Image;
   readonly #band: Phaser.GameObjects.Rectangle;
   readonly #rule: Phaser.GameObjects.Rectangle;
   readonly #pips: Phaser.GameObjects.Graphics;
@@ -44,12 +54,14 @@ export class SprintStrip {
   #barWidth = SPRINT_BAR_WIDTH;
   #statusX = 0;
   #remaining = 0;
-  #drawnLanes = '';
+  #drawnBar = '';
   #drawnCooldown = -1;
   #drawnPending = '';
   #drawnClock = '';
 
   constructor(scene: Phaser.Scene, deps: SceneDeps, depth: number) {
+    this.#scene = scene;
+    this.#depth = depth;
     this.#deps = deps;
 
     this.#band = scene.add
@@ -74,48 +86,24 @@ export class SprintStrip {
   }
 
   get dropY(): number {
-    return this.#top + SPRINT_STRIP_HEIGHT * 0.45;
+    return this.#top + BAR_TOP + PIP_HEIGHT / 2;
   }
 
-  slotX(slot: number): number {
-    return this.laneX(this.#deps.sprint()[slot]?.lane ?? 0);
+  /** Where the sprint's cards land: the middle of the bar. */
+  get barX(): number {
+    return BAR_X + this.#barWidth / 2;
   }
 
-  /** The first lane that is home with room: where unfiled work is headed. */
-  get nextLaneX(): number {
-    const cap = this.#deps.laneCapacity();
-    const lanes = this.#deps.lanes();
-    const open = lanes.findIndex(
-      (lane) => lane.releaseLeftMs <= 0 && lane.count < cap
-    );
-    return this.laneX(Math.max(0, open));
-  }
-
-  /** Screen x of a lane's bar centre. */
-  laneX(lane: number): number {
-    const { width } = this.#bar();
-    return BAR_X + lane * (width + LANE_GAP) + width / 2;
-  }
-
-  /** The newest ticket in the lane under the pointer, for the hover. */
+  /** The newest ticket in the sprint while the pointer is on the bar. */
   slotAt(px: number, py: number): number | null {
     if (py < this.#top || py > this.#top + SPRINT_STRIP_HEIGHT) return null;
-
-    const { lanes, width } = this.#bar();
-    const step = width + LANE_GAP;
-    const lane = Math.floor((px - BAR_X) / step);
-    if (lane < 0 || lane >= lanes) return null;
-    if (px > BAR_X + lane * step + width) return null;
-
-    const sprint = this.#deps.sprint();
-    for (let slot = sprint.length - 1; slot >= 0; slot--) {
-      if (sprint[slot]?.lane === lane) return slot;
-    }
-    return null;
+    if (px < BAR_X || px > BAR_X + this.#barWidth) return null;
+    const held = this.#deps.sprint().length;
+    return held > 0 ? held - 1 : null;
   }
 
   get slotY(): number {
-    return this.#top + SPRINT_STRIP_HEIGHT / 2;
+    return this.#top + BAR_TOP + PIP_HEIGHT / 2;
   }
 
   layout(width: number, height: number): void {
@@ -142,7 +130,7 @@ export class SprintStrip {
       this.#top + SPRINT_STRIP_HEIGHT / 2 - 2
     );
 
-    this.#drawnLanes = '';
+    this.#drawnBar = '';
     this.#drawnClock = '';
     this.#drawnCooldown = -1;
   }
@@ -165,6 +153,7 @@ export class SprintStrip {
       this.#slotsLabel,
       this.#pendingLabel,
       this.#statusLabel,
+      ...(this.#train ? [this.#train] : []),
     ]) {
       object.destroy();
     }
@@ -185,59 +174,40 @@ export class SprintStrip {
       .setDepth(depth + 1);
   }
 
-  #bar(): { lanes: number; width: number } {
-    const lanes = Math.max(1, this.#deps.lanes().length);
-    return {
-      lanes,
-      width: (this.#barWidth - (lanes - 1) * LANE_GAP) / lanes,
-    };
-  }
-
-  /** One box per swimlane; a lane that is away shows its train crossing it. */
+  /** The sprint filling, and below it the train carrying the last one. */
   #refreshSlots(): void {
-    const lanes = this.#deps.lanes();
-    const cap = this.#deps.laneCapacity();
     const haul = Math.max(1, this.#deps.haulMs());
-    const drawn = lanes
-      .map((lane) =>
-        lane.releaseLeftMs > 0
-          ? `r${Math.round((lane.releaseLeftMs / haul) * TRAIN_STEPS)}`
-          : `${lane.count}`
-      )
-      .join(',');
-    const key = `${cap}|${this.#deps.tier()}|${drawn}`;
-    if (key === this.#drawnLanes) return;
-    this.#drawnLanes = key;
-
     const filled = this.#deps.filled();
     const slots = this.#deps.slots();
-    this.#slotsLabel.setText(`${lanes.length} × ${cap}   ${filled} / ${slots}`);
+    const away = this.#remaining > 0;
+    const train = away
+      ? Math.round((this.#remaining / haul) * TRAIN_STEPS)
+      : -1;
+    const key = `${slots}|${this.#deps.tier()}|${filled}|${train}`;
+    if (key === this.#drawnBar) return;
+    this.#drawnBar = key;
+
+    this.#slotsLabel.setText(`${filled} / ${slots}`);
     this.#pips.clear();
 
-    const { width } = this.#bar();
-    const y = this.#top + (SPRINT_STRIP_HEIGHT - PIP_HEIGHT) / 2;
-    const sprint = this.#deps.sprint();
-    const newest = new Map<number, number>();
-    for (const slot of sprint) {
-      newest.set(slot.lane, TICKET_TYPES[slot.type].colour);
-    }
-
-    for (const [index, lane] of lanes.entries()) {
-      const x = BAR_X + index * (width + LANE_GAP);
-      if (lane.releaseLeftMs > 0) {
-        this.#pips.fillStyle(BOARD_INK.laneAway, 1);
-        this.#pips.fillRect(x, y, width, PIP_HEIGHT);
-        this.#drawTrain(x, y, width, 1 - lane.releaseLeftMs / haul);
-        continue;
-      }
-      const part = cap <= 0 ? 0 : Math.min(1, lane.count / cap);
-      this.#drawSegments(
-        x,
-        y,
+    const width = this.#barWidth;
+    const newest = this.#deps.sprint().at(-1);
+    this.#drawSegments(
+      BAR_X,
+      this.#top + BAR_TOP,
+      width,
+      slots <= 0 ? 0 : Math.min(1, filled / slots),
+      newest ? TICKET_TYPES[newest.type].colour : BOARD_INK.pipFull
+    );
+    if (away) {
+      this.#drawTrain(
+        BAR_X,
+        this.#top + RAIL_Y,
         width,
-        part,
-        newest.get(index) ?? BOARD_INK.pipFull
+        1 - this.#remaining / haul
       );
+    } else {
+      this.#parkTrain();
     }
   }
 
@@ -267,54 +237,95 @@ export class SprintStrip {
     }
   }
 
-  /** The release train: out of the left tunnel, one wagon per tier, into the right. */
-  #drawTrain(x: number, y: number, width: number, progress: number): void {
-    const wagons = this.#deps.tier() + 1;
-    const length = wagons * WAGON_PITCH + LOCO_WIDTH;
+  /** The release train: out of the left tunnel, one car per tier, into the right. */
+  #drawTrain(x: number, rail: number, width: number, progress: number): void {
+    const cars = this.#deps.tier() + 1;
+    const pitch = GHOST_TRAIN.car.frame.width + GHOST_TRAIN.gap;
+    const length = cars * pitch + GHOST_TRAIN.loco.frame.width;
     const from = x + PORTAL_WIDTH;
     const to = x + width - PORTAL_WIDTH;
     const run = Math.min(1, Math.max(0, progress));
     const left = from - length + (to - from + length) * run;
-    const loco = left + wagons * WAGON_PITCH;
-    const body = WAGON_PITCH - WAGON_GAP;
-    const top = y + 3;
-    const g = this.#pips;
-    const rect = (rx: number, ry: number, rw: number, rh: number): void => {
-      const a = Math.max(rx, from);
-      const b = Math.min(rx + rw, to);
-      if (b > a) g.fillRect(a, ry, b - a, rh);
-    };
 
-    g.fillStyle(BOARD_INK.stripRule, 1);
-    g.fillRect(from, top + 12, to - from, 1);
+    this.#pips.fillStyle(BOARD_INK.stripRule, 1);
+    this.#pips.fillRect(from, rail, to - from, 1);
 
-    g.fillStyle(BOARD_INK.gold, 1);
-    for (let n = 0; n < wagons; n++)
-      rect(left + n * WAGON_PITCH, top + 2, body, 7);
-    g.fillStyle(BOARD_INK.train, 1);
-    rect(loco, top, LOCO_WIDTH, 9);
-    rect(loco + 10, top - 3, 3, 3);
-    g.fillStyle(BOARD_INK.trainWindow, 1);
-    rect(loco + 2, top + 2, 4, 3);
-
-    g.fillStyle(BOARD_INK.strip, 1);
-    for (let n = 0; n < wagons; n++) {
-      rect(left + n * WAGON_PITCH + 2, top + 9, 3, 3);
-      rect(left + n * WAGON_PITCH + body - 3, top + 9, 3, 3);
+    const train = this.#trainOf(cars);
+    const a = Math.max(left, from);
+    const b = Math.min(left + length, to);
+    if (b > a) {
+      train
+        .setPosition(Math.round(left), rail)
+        .setCrop(a - left, 0, b - a, train.height)
+        .setVisible(true);
+    } else {
+      train.setVisible(false);
     }
-    for (const wheel of [3, 10]) rect(loco + wheel, top + 9, 3, 3);
 
-    this.#drawPortal(x, y);
-    this.#drawPortal(to, y);
+    this.#drawPortal(x, rail);
+    this.#drawPortal(to, rail);
   }
 
-  #drawPortal(x: number, y: number): void {
+  #parkTrain(): void {
+    this.#train?.setVisible(false);
+  }
+
+  /** The whole train as one image, built once per car count, so no part can drift. */
+  #trainOf(cars: number): Phaser.GameObjects.Image {
+    const key = `${GHOST_TRAIN.loco.key}-${cars}`;
+    if (!this.#scene.textures.exists(key)) this.#composeTrain(key, cars);
+    this.#train ??= this.#scene.add
+      .image(0, 0, key)
+      .setOrigin(0, 1)
+      .setDepth(this.#depth + 1);
+    if (this.#train.texture.key !== key) this.#train.setTexture(key);
+    return this.#train;
+  }
+
+  #composeTrain(key: string, cars: number): void {
+    const { loco, car, gap } = GHOST_TRAIN;
+    const pitch = car.frame.width + gap;
+    const height = Math.max(loco.frame.height, car.frame.height);
+    const canvas = this.#scene.textures.createCanvas(
+      key,
+      cars * pitch + loco.frame.width,
+      height
+    );
+    if (!canvas) return;
+    const ctx = canvas.getContext();
+    const sheet = (art: typeof loco | typeof car): CanvasImageSource =>
+      this.#scene.textures.get(art.key).getSourceImage() as CanvasImageSource;
+    const blit = (art: typeof loco | typeof car, x: number): void => {
+      const f = art.frame;
+      ctx.drawImage(
+        sheet(art),
+        f.x,
+        f.y,
+        f.width,
+        f.height,
+        x,
+        height - f.height,
+        f.width,
+        f.height
+      );
+    };
+    for (let n = 0; n < cars; n++) blit(car, n * pitch);
+    // The sheet's engine faces left; this train runs to the right.
+    ctx.save();
+    ctx.translate(cars * pitch + loco.frame.width, 0);
+    ctx.scale(-1, 1);
+    blit(loco, 0);
+    ctx.restore();
+    canvas.refresh();
+  }
+
+  #drawPortal(x: number, rail: number): void {
     const g = this.#pips;
+    const top = rail - PORTAL_HEIGHT;
     g.fillStyle(BOARD_INK.tunnelFrame, 1);
-    g.fillRect(x, y - 4, PORTAL_WIDTH, PIP_HEIGHT + 4);
+    g.fillRect(x, top - 2, PORTAL_WIDTH, PORTAL_HEIGHT + 3);
     g.fillStyle(BOARD_INK.tunnel, 1);
-    g.fillRect(x + 2, y, PORTAL_WIDTH - 4, PIP_HEIGHT);
-    g.fillRect(x + 3, y - 1, PORTAL_WIDTH - 6, 1);
+    g.fillRect(x + 2, top, PORTAL_WIDTH - 4, PORTAL_HEIGHT + 1);
   }
 
   #refreshPending(): void {
@@ -326,19 +337,17 @@ export class SprintStrip {
 
   #refreshClock(): void {
     const running = this.#deps.running();
-    const label = running
-      ? this.#deps.text('strip.collecting')
-      : this.#deps.text('strip.releasing', {
-          seconds: Math.ceil(this.#remaining / 1000),
-        });
+    const label = this.#deps.text(
+      running ? 'strip.collecting' : 'strip.releasing'
+    );
     if (label === this.#drawnClock) return;
     this.#drawnClock = label;
     this.#statusLabel
       .setText(label)
-      .setColor(running ? BOARD_TEXT.body : BOARD_TEXT.gold);
+      .setColor(this.#remaining > 0 ? BOARD_TEXT.gold : BOARD_TEXT.body);
   }
 
-  /** Status dot, and while every train is away the time until the first is back. */
+  /** Status dot, and while the train is out the time until it is back. */
   #drawCooldown(): void {
     const length = this.#deps.haulMs();
     const away = this.#remaining > 0;

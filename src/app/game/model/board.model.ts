@@ -1,5 +1,6 @@
 import type { TicketTypeId } from './ticket.model';
 import type { CrewKind } from './crew.model';
+import { TICKET_LIFE_MS } from './balance/flow';
 import {
   HEAP_OVERFLOW_ROWS,
   HEAP_SPAWN_GAP_ROWS,
@@ -19,7 +20,6 @@ export interface Carried {
   readonly titleKey: string;
   readonly golden: boolean;
   readonly reborn: boolean;
-  readonly relabelled: boolean;
   readonly spBonus: number;
 }
 
@@ -37,7 +37,6 @@ export interface BoardTicket {
   lifeLeftMs: number;
   /** Runs down once `lifeLeftMs` hits 0; the card is closed as won't-fix at 0. */
   fadeLeftMs: number;
-  relabelled: boolean;
   readonly x: number;
   readonly y: number;
   claimedBy: number;
@@ -72,13 +71,9 @@ export interface Close {
   readonly y: number;
 }
 
-/** A payout that belongs to no one lane, such as the quarter-end bill. */
-export const NO_LANE = -1;
-
 export interface SprintSlot {
   readonly type: TicketTypeId;
   readonly titleKey: string;
-  readonly lane: number;
 }
 
 export type TicketMix = Readonly<Partial<Record<TicketTypeId, number>>>;
@@ -132,6 +127,8 @@ export interface Board {
   readonly lowFree: Int32Array;
   nextId: number;
   nextCrewId: number;
+  /** How long a new plain card lives; the store sets it by tier. */
+  lifeMs: number;
 }
 
 export const HEAP_COLS = Math.floor(LOGICAL_BOARD.width / TICKET_SLOT.width);
@@ -201,5 +198,6 @@ export function emptyBoard(): Board {
     lowFree: new Int32Array(HEAP_COLS),
     nextId: 1,
     nextCrewId: 0,
+    lifeMs: TICKET_LIFE_MS,
   };
 }

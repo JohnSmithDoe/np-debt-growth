@@ -4,13 +4,7 @@ import {
   formatCompactWhole,
   formatMoney,
 } from '../../@shared/util/format-quantity';
-import type {
-  Board,
-  BoardTicket,
-  CrewMember,
-  SprintSlot,
-} from '../../game/model/board.model';
-import { NO_LANE } from '../../game/model/board.model';
+import type { Board, SprintSlot } from '../../game/model/board.model';
 import { pickTouching, pickWithin } from '../../game/util/board';
 import { WONT_FIX_FADE_MS } from '../../game/model/balance/flow';
 import { hazardLabelKey } from '../../game/model/hazard.model';
@@ -20,16 +14,16 @@ import type { TicketTypeId } from '../../game/model/ticket.model';
 import { ticketLabelKey, TICKET_TYPES } from '../../game/model/ticket.model';
 import { spawnerFor } from '../../game/model/spawner.model';
 import {
+  AURA,
   BOARD_INK,
   BOARD_TEXT,
   CARD_HEIGHT,
   CARD_WIDTH,
-  CLAIM_TINT_REACH,
-  CLAIM_TINT_STEPS,
   CLICK_RING,
   REFUSED_MS,
   BIG_FLOAT_CAPTION,
   BUFF_BANNER,
+  RELEASE_BANNER,
   CLOSE_FLOAT,
   CLOSE_FLOATS_PER_FRAME,
   DROP_HOP,
@@ -67,6 +61,7 @@ import { GroundLayer } from './ground-layer';
 import { TierBackdrop } from './tier-backdrop';
 import { SprintStrip } from './sprint-strip';
 import { TierSpawners } from './tier-spawners';
+import { ReleaseBanner } from './release-banner';
 import { VoteBeams } from './vote-beams';
 
 interface BoardParts {
@@ -82,6 +77,7 @@ interface BoardParts {
   readonly votes: VoteBeams;
   readonly strip: SprintStrip;
   readonly buffs: BuffBanners;
+  readonly release: ReleaseBanner;
 }
 
 const DEPTH = {
@@ -119,21 +115,6 @@ const PICK_RADIUS = Math.max(
 
 const stripHoverKey = (slot: number, held: SprintSlot): string =>
   `sprint:${slot}:${held.titleKey}`;
-
-function claimProgress(worker: CrewMember, ticket: BoardTicket): number {
-  const gap = Math.hypot(ticket.x - worker.x, ticket.y - worker.y);
-  const at = 1 - Math.min(1, gap / CLAIM_TINT_REACH);
-  return Math.round(at * CLAIM_TINT_STEPS) / CLAIM_TINT_STEPS;
-}
-
-function blendColour(from: number, to: number, at: number): number {
-  const mix = (shift: number): number => {
-    const a = (from >> shift) & 0xff;
-    const b = (to >> shift) & 0xff;
-    return Math.round(a + (b - a) * at) << shift;
-  };
-  return mix(16) | mix(8) | mix(0);
-}
 
 function cardAt(
   board: Board,
@@ -188,17 +169,12 @@ export class BoardScene extends CbScene {
 
   #ring?: Phaser.GameObjects.Arc;
   #pizza?: Phaser.GameObjects.Arc;
+  #auras?: Phaser.GameObjects.Graphics;
   #onBoard = false;
 
   #banner?: Phaser.GameObjects.Text;
   #warning = '';
   #groomed = false;
-
-  #slotFrom = 0;
-  #seenSlots = 0;
-  readonly #claimedSlots = new Set<number>();
-
-  readonly #preTints = new Map<number, number>();
 
   #onResize = (): void => this.#layout();
   #onPointerDown = (
@@ -214,10 +190,11 @@ export class BoardScene extends CbScene {
     this.deps.takeWontFix();
   };
   #wontFix = new Set<number>();
-  readonly #billing = new Map<
-    number,
-    { text: Phaser.GameObjects.Text; value: number; label: string }
-  >();
+  #billing: {
+    text: Phaser.GameObjects.Text;
+    value: number;
+    label: string;
+  } | null = null;
   #onPointerMove = (pointer: Phaser.Input.Pointer): void => {
     this.#readBoard(pointer.worldX, pointer.worldY);
     this.#placeRing(pointer.worldX, pointer.worldY);
@@ -238,6 +215,7 @@ export class BoardScene extends CbScene {
   preload(): void {
     loadCrewAtlas(this);
     TierBackdrop.preload(this);
+    SprintStrip.preload(this);
   }
 
   create(): void {
@@ -282,6 +260,7 @@ export class BoardScene extends CbScene {
       votes: new VoteBeams(this, DEPTH.spawner - 1),
       strip,
       buffs: new BuffBanners(this, this.deps, DEPTH.hover - 1),
+      release: new ReleaseBanner(this, this.deps, DEPTH.hover - 2),
     };
     parts.flyers.onArrive = (kind, id) => {
       if (kind === FLIGHT.drop) parts.heap.reveal(id);
@@ -326,6 +305,8 @@ export class BoardScene extends CbScene {
       .setDepth(DEPTH.floor + 1)
       .setVisible(false);
 
+    this.#auras = this.add.graphics().setDepth(DEPTH.floor + 1);
+
     this.#buildSecret();
     this.#layout();
 
@@ -347,7 +328,6 @@ export class BoardScene extends CbScene {
     parts.ground.tier(this.deps.tier());
     parts.backdrop.tier(this.deps.tier());
     parts.spawners.sync((adr) => this.deps.spawnerCount(adr));
-    this.#openSlots();
     this.#wontFix = new Set(this.deps.takeWontFix());
     parts.heap.sync(
       board,
@@ -356,7 +336,6 @@ export class BoardScene extends CbScene {
         this.#leave(parts, id, type, x, y, voted, alpha)
     );
     parts.heap.autoCloses(this.deps.autoClosed());
-    this.#preTint(parts, board);
     parts.crew.sync(board, board.juniors, this.deps.womanEvery('juniors'));
     parts.managers.sync(
       board,
@@ -382,6 +361,11 @@ export class BoardScene extends CbScene {
     parts.bubbles.update(step);
     parts.flyers.update(step);
     parts.strip.update();
+    parts.release.update(
+      this.#width / 2,
+      this.#boardHeight * RELEASE_BANNER.centre,
+      this.#width - 48
+    );
     this.#weather(parts);
     this.#buffs(parts, step);
     this.#bill(parts);
@@ -390,6 +374,7 @@ export class BoardScene extends CbScene {
     this.#sweepFrame();
     this.#ring?.setVisible(this.#onBoard && this.deps.showClickRing());
     this.#drawPizza();
+    this.#drawAuras(board);
   }
 
   #drawPizza(): void {
@@ -472,14 +457,13 @@ export class BoardScene extends CbScene {
       return;
     }
     if (this.#carried(id)) return;
-    const slot = this.#claimSlot(type);
     parts.flyers.launch(
       frame,
       FLIGHT.harvest,
       NONE,
       from.x,
       from.y,
-      slot === NONE ? parts.strip.nextLaneX : parts.strip.slotX(slot),
+      parts.strip.barX,
       parts.strip.slotY,
       HARVEST_MS,
       HARVEST_HOP,
@@ -488,27 +472,21 @@ export class BoardScene extends CbScene {
     );
   }
 
-  #preTint(parts: BoardParts, board: Board): void {
-    this.#preTints.clear();
+  /** Each manager's reach on the floor: crew closes inside it bill the aura. */
+  #drawAuras(board: Board): void {
+    const ring = this.#auras;
+    if (!ring) return;
+    ring.clear();
+    const reach = this.deps.managerReach() * this.#ringScale;
+    if (reach <= 0) return;
     for (const manager of board.managers) {
-      if (manager.phase === 'idle') continue;
-      const ticket = board.byId.get(manager.target);
-      if (!ticket) continue;
-      const to = this.deps.relabelTarget(ticket.type);
-      if (to === null) continue;
-      const at =
-        manager.phase === 'closing' ? 1 : claimProgress(manager, ticket);
-      if (at <= 0) continue;
-      this.#preTints.set(
-        ticket.id,
-        blendColour(
-          TICKET_TYPES[ticket.type].colour,
-          TICKET_TYPES[to].colour,
-          at
-        )
-      );
+      const x = manager.x * this.#scaleX + this.#offX;
+      const y = manager.y * this.#scaleY + this.#offY;
+      ring.fillStyle(BOARD_INK.aura, AURA.fill).fillCircle(x, y, reach);
+      ring
+        .lineStyle(AURA.line, BOARD_INK.aura, AURA.stroke)
+        .strokeCircle(x, y, reach);
     }
-    parts.heap.preTint(this.#preTints);
   }
 
   #weather(parts: BoardParts): void {
@@ -557,14 +535,7 @@ export class BoardScene extends CbScene {
     );
   }
 
-  #openSlots(): void {
-    const filled = this.deps.sprint().length;
-    this.#slotFrom = Math.min(this.#seenSlots, filled);
-    this.#seenSlots = filled;
-    this.#claimedSlots.clear();
-  }
-
-  /** A crew pickup is carried off by hand; it reaches its lane on delivery. */
+  /** A crew pickup is carried off by hand; it reaches the sprint on delivery. */
   #carried(id: number): boolean {
     const board = this.deps.board();
     for (const crew of [board.juniors, board.seniors, board.managers]) {
@@ -573,16 +544,6 @@ export class BoardScene extends CbScene {
       }
     }
     return false;
-  }
-
-  #claimSlot(type: TicketTypeId): number {
-    const sprint = this.deps.sprint();
-    for (let slot = this.#slotFrom; slot < sprint.length; slot++) {
-      if (sprint[slot]?.type !== type || this.#claimedSlots.has(slot)) continue;
-      this.#claimedSlots.add(slot);
-      return slot;
-    }
-    return NONE;
   }
 
   #readBoard(px: number, py: number): void {
@@ -785,24 +746,20 @@ export class BoardScene extends CbScene {
     return this.deps.text(titleKey);
   }
 
-  /** A lane's float stays up while income keeps landing; only its sum changes. */
+  /** The sprint's float stays up while income keeps landing; only its sum changes. */
   #bill(parts: BoardParts): void {
-    for (const [lane, payout] of this.deps.takePayouts()) {
-      const live = this.#billing.get(lane);
-      if (live && live.text.visible && live.text.text === live.label) {
-        live.value += payout;
-        live.label = `+${formatMoney(live.value)}`;
-        live.text.setText(live.label);
-        continue;
-      }
-      const label = `+${formatMoney(payout)}`;
-      const text = this.floatPayout(
-        lane === NO_LANE ? parts.strip.dropX : parts.strip.laneX(lane),
-        parts.strip.dropY,
-        label
-      );
-      this.#billing.set(lane, { text, value: payout, label });
+    const payout = this.deps.takePayouts();
+    if (payout <= 0) return;
+    const live = this.#billing;
+    if (live && live.text.visible && live.text.text === live.label) {
+      live.value += payout;
+      live.label = `+${formatMoney(live.value)}`;
+      live.text.setText(live.label);
+      return;
     }
+    const label = `+${formatMoney(payout)}`;
+    const text = this.floatPayout(parts.strip.barX, parts.strip.dropY, label);
+    this.#billing = { text, value: payout, label };
   }
 
   #buildSecret(): void {
@@ -888,6 +845,7 @@ export class BoardScene extends CbScene {
     if (!parts) return;
     parts.strip.destroy();
     parts.buffs.destroy();
+    parts.release.destroy();
     parts.crew.destroy();
     parts.seniors.destroy();
     parts.managers.destroy();
@@ -898,6 +856,6 @@ export class BoardScene extends CbScene {
     parts.heap.destroy();
     parts.ground.destroy();
     parts.backdrop.destroy();
-    this.#billing.clear();
+    this.#billing = null;
   }
 }

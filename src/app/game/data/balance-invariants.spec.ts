@@ -7,6 +7,11 @@ import { SKILL_BY_ID } from '../model/skill.model';
 import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from '../model/tier.model';
 import { CREW_KINDS, CREW_STATS } from '../model/balance/crew';
 import { LINE_PLAN } from '../model/balance/progression';
+import {
+  TICKET_LIFE_BY_TIER,
+  TICKET_LIFE_MS,
+  ticketLifeMs,
+} from '../model/balance/flow';
 import * as economy from '../util/economy';
 
 /**
@@ -40,6 +45,15 @@ describe('the debt tier ladder', () => {
     for (const tier of DEBT_TIERS) {
       expect(TICKET_TYPES[tier.ticket].tier).toBe(tier.index);
     }
+  });
+});
+
+describe('ticket life', () => {
+  it('shortens with every tier and settles on the late-game life', () => {
+    for (let n = 1; n < TICKET_LIFE_BY_TIER.length; n += 1) {
+      expect(TICKET_LIFE_BY_TIER[n]).toBeLessThan(TICKET_LIFE_BY_TIER[n - 1]!);
+    }
+    expect(ticketLifeMs(DEBT_TIERS.length)).toBe(TICKET_LIFE_MS);
   });
 });
 

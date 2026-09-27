@@ -13,7 +13,7 @@ export interface HirePace {
 
 export type ClaimPick = 'random' | 'nearest' | 'cheapest' | 'dearest';
 
-export type CrewMode = 'closer' | 'refiler';
+export type CrewMode = 'closer' | 'overseer';
 
 export interface CrewSeat {
   readonly closeMs: number;
@@ -38,11 +38,8 @@ export interface CrewRules extends HirePace {
   readonly claims: (type: TicketTypeId) => boolean;
   /** May this crew kind pick up golden work at all? */
   readonly golden: boolean;
-  /** Chance a re-filed card comes back golden; closers gild at billing instead. */
-  readonly gilds: number;
   readonly paces: readonly HirePace[] | null;
   readonly seatOf: (index: number, pace: HirePace) => CrewSeat;
   readonly interrupted: boolean;
   readonly rush: Rush | null;
-  readonly transform: ((type: TicketTypeId) => TicketTypeId | null) | null;
 }

@@ -22,7 +22,6 @@ import {
   TICKET_LIFE_MS,
   WONT_FIX_FADE_MS,
 } from '../model/balance/flow';
-import { GOLDEN_CREW_CONVERSION } from '../model/balance/flow';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPRINT_SLOTS_BASE } from '../model/balance/round';
 import { BOARD_CAPACITY, CARD_HIT, LOGICAL_BOARD } from '../model/geometry';
@@ -32,13 +31,13 @@ const SENIOR_WALK_MS =
   (LOGICAL_BOARD.width / CREW_STATS.seniors.walkSpeed) * 1000 * 2;
 const WALK_AND_CLOSE_LIMIT_MS = 120_000;
 import type { TicketTypeId } from '../model/ticket.model';
-import { TICKET_TYPES } from '../model/ticket.model';
 import {
   addTicket,
   expireTickets,
   fadeOf,
   pickTouching,
   pickWithin,
+  overseen,
   removeTicket,
   workCrews as stepCrews,
 } from './board';
@@ -113,22 +112,6 @@ function firstClose(
     if (took.length > 0) return took.map((close) => close.type);
   }
   return [];
-}
-
-function settle(
-  board: Board,
-  state: Consultancy,
-  ms: number,
-  rand = cycling()
-): void {
-  run(board, state, ms, rand);
-  for (let at = 0; at < WALK_AND_CLOSE_LIMIT_MS * 2; at += STEP_MS) {
-    const busy = [...board.managers, ...board.juniors, ...board.seniors].some(
-      (worker) => worker.carrying.length > 0
-    );
-    if (!busy) return;
-    workCrews(board, state, STEP_MS, rand);
-  }
 }
 
 describe('a junior closing a ticket', () => {
@@ -540,7 +523,7 @@ describe('the board fills up', () => {
 
   it('keeps a golden card for its own, longer life', () => {
     const board = emptyBoard();
-    const gold = addTicket(board, 'lint', Math.random, false, false, true)!;
+    const gold = addTicket(board, 'lint', Math.random, false, true)!;
     expireTickets(board, TICKET_LIFE_MS * 2, []);
     expect(board.byId.has(gold.id)).toBe(true);
 
@@ -571,7 +554,7 @@ describe('the board fills up', () => {
 
   it('pushes a golden card out only once nothing else is left', () => {
     const board = emptyBoard();
-    const gold = addTicket(board, 'lint', Math.random, false, false, true)!;
+    const gold = addTicket(board, 'lint', Math.random, false, true)!;
     gold.lifeLeftMs = 1;
     for (let n = 1; n < BOARD_CAPACITY; n++) addTicket(board, 'lint');
     addTicket(board, 'legacy');
@@ -579,7 +562,7 @@ describe('the board fills up', () => {
 
     const hoard = emptyBoard();
     for (let n = 0; n < BOARD_CAPACITY; n++) {
-      addTicket(hoard, 'lint', Math.random, false, false, true);
+      addTicket(hoard, 'lint', Math.random, false, true);
     }
     expect(addTicket(hoard, 'lint')).not.toBeNull();
   });
@@ -635,138 +618,61 @@ describe('throughput', () => {
   });
 });
 
-describe('an account manager (D41)', () => {
-  const managed = (skills: Record<string, number> = {}): Consultancy =>
-    stateWith({
-      levels: { ...BARE, manager: 1 },
-      tier: 4,
-      skills,
-    });
+describe('an account manager', () => {
+  const managed = (levels: Partial<typeof BARE> = {}): Consultancy =>
+    stateWith({ levels: { ...BARE, manager: 1, ...levels }, tier: 4 });
 
-  it('files a ticket as something dearer and closes nothing', () => {
+  it('closes nothing and leaves the cards as they were', () => {
     const board = emptyBoard();
     const state = managed();
-    addTicket(board, 'lint');
+    fill(board, 'lint', 5, cycling());
 
-    settle(board, state, managerCloseMs(state) + 3 * WALK_MS);
-    expect(board.tickets.length).toBe(1);
-    const filed = board.tickets[0]!;
-    expect(filed.type).not.toBe('lint');
-    expect(TICKET_TYPES[filed.type].value).toBeGreaterThan(
-      TICKET_TYPES.lint.value
-    );
+    const closed = run(board, state, managerCloseMs(state) * 3 + WALK_MS);
+    expect(closed).toEqual([]);
+    expect(board.tickets.map((t) => t.type)).toEqual(Array(5).fill('lint'));
+    expect(board.tickets.every((t) => t.claimedBy === NO_TICKET)).toBe(true);
   });
 
-  it('files it at most once, however long it is left there', () => {
+  it('walks to where a closer is headed and stands over it', () => {
     const board = emptyBoard();
-    const state = managed();
-    addTicket(board, 'lint');
+    const state = managed({ junior: 1 });
+    fill(board, 'lint', 3, cycling());
 
-    settle(board, state, managerCloseMs(state) * 6 + 6 * WALK_MS);
-    const filed = board.tickets[0]!;
-    expect(filed.relabelled).toBe(true);
-    expect(filed.type).toBe('bug');
-  });
-
-  it('never files a ticket as a tier the player has not unlocked', () => {
-    const board = emptyBoard();
-    const state = stateWith({
-      levels: { ...BARE, manager: 1 },
-      tier: 0,
-      skills: { h3: 2 },
-    });
-    addTicket(board, 'lint');
-
-    run(board, state, managerCloseMs(state) * 3 + 3 * WALK_MS);
-    expect(board.tickets.every((t) => TICKET_TYPES[t.type].tier <= 0)).toBe(
-      true
-    );
-  });
-
-  it('leaves the rares and the events where they are', () => {
-    const board = emptyBoard();
-    const state = managed();
-    addTicket(board, 'incident');
-    addTicket(board, 'quarter');
-
-    run(board, state, managerCloseMs(state) + WALK_MS);
-    expect(board.tickets.map((t) => t.type).sort()).toEqual([
-      'incident',
-      'quarter',
-    ]);
-    expect(board.managers.every((m) => m.phase === 'idle')).toBe(true);
-  });
-
-  it('keeps working while the sprint has no room at all', () => {
-    const board = emptyBoard();
-    const state = stateWith({
-      levels: { ...BARE, manager: 1 },
-      tier: 4,
-      sprintCount: sprintSlots(stateWith()) + 99,
-    });
-    addTicket(board, 'lint');
-
-    settle(board, state, managerCloseMs(state) + 3 * WALK_MS);
-    expect(board.tickets[0]!.relabelled).toBe(true);
-  });
-
-  it('never buys a comeback by re-filing into one', () => {
-    const board = emptyBoard();
-    const state = stateWith({
-      levels: { ...BARE, manager: 1 },
-      tier: 2,
-      skills: { h3: 2 },
-    });
-    fill(board, 'bug', 6, cycling());
-
-    run(board, state, managerCloseMs(state) * 3 + WALK_MS);
-    expect(board.pending).toEqual([]);
-  });
-
-  it('keeps a golden ticket golden through the re-file', () => {
-    const board = emptyBoard();
-    const state = managed({ goldenCrew: 1 });
-    addTicket(board, 'lint', cycling(), false, false, true);
-
-    settle(board, state, managerCloseMs(state) + 3 * WALK_MS);
-    expect(board.tickets[0]!.relabelled).toBe(true);
-    expect(board.tickets[0]!.golden).toBe(true);
-  });
-
-  it('gilds re-files at the golden crew rate, and only then', () => {
-    const managersOf = (state: Consultancy) =>
-      crewRules(emptyBoard(), state, CALM).find((r) => r.kind === 'managers');
-    expect(managersOf(managed())?.gilds).toBe(0);
-    expect(managersOf(managed({ goldenCrew: 1 }))?.gilds).toBe(
-      GOLDEN_CREW_CONVERSION
-    );
-
-    const board = emptyBoard();
-    const state = managed({ goldenCrew: 1 });
-    const certain = crewRules(board, state, CALM).map((rules) =>
-      rules.kind === 'managers' ? { ...rules, gilds: 1 } : rules
-    );
-    addTicket(board, 'lint');
     const rand = cycling();
-    const until = managerCloseMs(state) + 3 * WALK_MS;
-    for (let at = 0; at < until; at += STEP_MS) {
-      stepCrews(board, certain, STEP_MS, rand);
+    let stood = false;
+    for (let at = 0; at < WALK_MS * 2 && !stood; at += STEP_MS) {
+      workCrews(board, state, STEP_MS, rand);
+      stood = board.managers[0]?.phase === 'closing';
     }
-    expect(board.tickets[0]!.relabelled).toBe(true);
-    expect(board.tickets[0]!.golden).toBe(true);
+    expect(stood).toBe(true);
   });
 
-  it('leaves the pools consistent after re-filing', () => {
+  it('moves on once it has stood for its close time', () => {
     const board = emptyBoard();
-    const state = managed({ h3: 1 });
-    fill(board, 'lint', 30, cycling());
+    const state = managed();
+    fill(board, 'lint', 3, cycling());
 
-    run(board, state, managerCloseMs(state) * 4 + WALK_MS);
-    const pooled = board.claimable.length + board.rares.length;
-    const held = board.tickets.filter((t) => t.claimedBy !== NO_TICKET).length;
-    expect(pooled + held).toBe(board.tickets.length);
-    board.claimable.forEach((t, at) => expect(t.poolAt).toBe(at));
-    board.rares.forEach((t, at) => expect(t.poolAt).toBe(at));
+    const rand = cycling();
+    const seen = new Set<string>();
+    for (let at = 0; at < managerCloseMs(state) * 3 + WALK_MS; at += STEP_MS) {
+      workCrews(board, state, STEP_MS, rand);
+      seen.add(board.managers[0]!.phase);
+    }
+    expect([...seen]).toEqual(
+      expect.arrayContaining(['toTicket', 'closing', 'idle'])
+    );
+  });
+
+  it('covers the close it stands over, and nothing past its reach', () => {
+    const board = emptyBoard();
+    const state = managed();
+    run(board, state, STEP_MS);
+    const manager = board.managers[0]!;
+    manager.x = 300;
+    manager.y = 200;
+
+    expect(overseen(board, 300 + 50, 200, 60)).toBe(true);
+    expect(overseen(board, 300 + 70, 200, 60)).toBe(false);
   });
 });
 

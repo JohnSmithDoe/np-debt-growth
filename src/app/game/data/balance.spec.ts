@@ -19,7 +19,7 @@ import { TRAIT_IDS } from '../model/senior.model';
 
 /** Design bound: no single trait may make a senior worth more than this many. */
 const TRAIT_D21_CEILING = 1.25;
-import { HAUL_MIN_MS, HAUL_MS } from '../model/balance/round';
+import { HAUL_MS } from '../model/balance/round';
 import { pickTouching } from '../util/board';
 import * as economy from '../util/economy';
 import type { LedgerMark } from '../util/autoplay';
@@ -57,7 +57,7 @@ function everySkill(): Record<string, number> {
 }
 
 const MILESTONES = [
-  // The reference's order: the first new spawner (750) before the rats (~1 200).
+  // The first new spawner (750) comes before the juniors (~1 200).
   ['tier 1', (s: Consultancy) => s.tier >= 1],
   ['first junior', (s: Consultancy) => s.levels.junior >= 1],
   ['tier 2', (s: Consultancy) => s.tier >= 2],
@@ -171,8 +171,8 @@ describe('the crew earns its keep, and never all of it', () => {
     );
   });
 
-  // Until the crew take gold, the hand's gold outweighs everything they bill,
-  // as in the reference; what they carry then is the closes, not the euros.
+  // Until the crew take gold, the hand's gold outweighs everything they bill;
+  // what they carry then is the closes, not the euros.
   it('carries the closes before it is cleared for gold', () => {
     const firstJunior = run.reached.get('first junior')!;
     const cleared = run.reached.get('golden crew')!;
@@ -302,7 +302,7 @@ describe('the regime migration (C5)', () => {
 });
 
 describe('supply is priced against the bucket (D25)', () => {
-  // The reference's opening never meets the cap: you don't know there is one.
+  // The opening never meets the cap: you don't know there is one.
   it('opens with a lane far wider than the path can fill', () => {
     const start = freshConsultancy(0, SAVE_VERSION);
     expect(economy.ceilingPerSec(start)).toBeGreaterThan(
@@ -393,7 +393,7 @@ describe("an unattended run keeps cycling (C1's successor)", () => {
   };
 
   // Before the crew are cleared for gold, the hand is what collects it. After,
-  // the reference's cursor only hurries things along, so no margin is owed.
+  // the hand only hurries things along, so no margin is owed.
   const beforeGoldenCrew = (): Record<string, number> => ({
     ...everySkill(),
     goldenCrew: 0,
@@ -444,7 +444,7 @@ describe('the session arc', () => {
   it('finishes inside a sitting, not a coffee break', () => {
     const at = run.reached.get('accepted');
     expect(at, 'the run never finished acceptance').toBeDefined();
-    // Targets 30 min, half the reference. Wide enough that ordinary tuning
+    // Targets 30 min. Wide enough that ordinary tuning
     // does not trip it, tight enough to catch the curve collapsing.
     expect(at! / 60_000).toBeGreaterThan(25);
     expect(at! / 60_000).toBeLessThan(45);
@@ -485,7 +485,8 @@ describe('the session arc', () => {
 
   it('never hurries the truck away entirely', () => {
     const hurried = { ...fullyLevelled(40, 4, 8), skills: everySkill() };
-    expect(economy.haulMs(hurried)).toBeGreaterThanOrEqual(HAUL_MIN_MS);
+    expect(economy.releasePhases(hurried).map((p) => p.id)).toEqual(['ship']);
+    expect(economy.haulMs(hurried)).toBeGreaterThan(0);
     expect(economy.haulMs(hurried)).toBeLessThan(HAUL_MS);
   });
 

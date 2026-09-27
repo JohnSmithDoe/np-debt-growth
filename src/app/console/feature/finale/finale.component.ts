@@ -28,6 +28,7 @@ import {
   COPYRIGHT,
   CREDITS,
   CREW_CREDITS_URL,
+  INSPIRATION,
   LPC_ARTISTS,
 } from '../../model/credit.model';
 import { ConfettiComponent } from '../../ui/confetti/confetti.component';
@@ -64,7 +65,10 @@ export class FinaleComponent {
   readonly client = CLIENT_NAME;
   readonly author = COPYRIGHT.replace(/^© \d+ /, '');
   readonly artists = LPC_ARTISTS;
-  readonly built = CREDITS.filter((credit) => credit.url !== CREW_CREDITS_URL);
+  readonly inspiration = INSPIRATION;
+  readonly built = CREDITS.filter(
+    (credit) => credit.url !== CREW_CREDITS_URL && credit !== INSPIRATION
+  );
 
   readonly crew: readonly CrewLine[] = CREW_LINES.map((line) => ({
     key: line.key,

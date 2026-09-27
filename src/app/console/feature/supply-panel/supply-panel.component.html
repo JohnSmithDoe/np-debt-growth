@@ -37,6 +37,7 @@
             class="line"
             [class.maxed]="row.maxed || row.locked"
             [class.teaser]="row.teaser"
+            [class.first]="row.first"
             [class.affordable]="row.affordable"
             [class.bought-a]="
               flash()?.key === row.key && flash()!.beat % 2 === 0

@@ -99,7 +99,7 @@ export function formatCompactWhole(value: number): string {
 
 const NO_POINTS = '0';
 
-/** Story points are whole, as the reference's gum is. */
+/** Story points are whole. */
 export function formatPoints(value: number): string {
   return value === 0 ? NO_POINTS : formatCompactWhole(Math.floor(value));
 }

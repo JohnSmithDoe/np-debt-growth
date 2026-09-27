@@ -1,5 +1,6 @@
 import { LINE_EFFECT_PARAMS } from '../../game/model/purchase-copy.model';
 import type { SkillEffect, SkillNode } from '../../game/model/skill.model';
+import { releasePhaseKey } from '../../game/model/round.model';
 import { ticketLabelKey } from '../../game/model/ticket.model';
 import {
   DEBT_INTEREST_CAP,
@@ -69,10 +70,10 @@ function describe(effect: SkillEffect): EffectText {
       return { key: 'skill.effect.room', params: { count: effect.add } };
     case 'adr':
       return { key: 'skill.effect.adr', params: { adr: effect.adr } };
-    case 'haulShave':
+    case 'cutCeremony':
       return {
-        key: 'skill.effect.haulShave',
-        params: { seconds: effect.seconds },
+        key: 'skill.effect.cutCeremony',
+        params: { phase: effect.phase },
       };
     case 'standupAura':
       return {
@@ -115,13 +116,11 @@ function describe(effect: SkillEffect): EffectText {
       return { key: 'skill.effect.nearestClaim' };
     case 'topOfBand':
       return { key: 'skill.effect.topOfBand' };
-    case 'relabelSteps':
+    case 'managerAura':
       return {
-        key: 'skill.effect.relabelSteps',
-        params: { count: effect.add },
+        key: 'skill.effect.managerAura',
+        params: { pct: percent(1 + effect.add) },
       };
-    case 'relabelFillerFirst':
-      return { key: 'skill.effect.relabelFillerFirst' };
     case 'ticketValue':
       return {
         key: 'skill.effect.ticketValue',
@@ -177,6 +176,9 @@ function oneEffect(effect: SkillEffect, text: SceneDeps['text']): string {
     ...(params && 'ticket' in params
       ? { ticket: text(ticketLabelKey(String(params['ticket']))) }
       : {}),
+    ...(effect.kind === 'cutCeremony'
+      ? { phase: text(releasePhaseKey(effect.phase)) }
+      : {}),
   });
 }
 
@@ -198,15 +200,15 @@ export function skillEffectText(
 export type SkillBadge = '+' | '%';
 
 /**
- * Additive or multiplicative, at a glance — the reference puts this on every
- * node so a shopper can tell a flat bump from a compounding one.
+ * Additive or multiplicative, at a glance, on every node, so a shopper can
+ * tell a flat bump from a compounding one.
  */
 export function skillBadge(node: SkillNode, level: number): SkillBadge | null {
   const effects = node.levels[level - 1]?.effects ?? [];
   let badge: SkillBadge | null = null;
   for (const effect of effects) {
     if ('mult' in effect) return '%';
-    if ('add' in effect || effect.kind === 'haulShave') badge = '+';
+    if ('add' in effect || effect.kind === 'cutCeremony') badge = '+';
   }
   return badge;
 }

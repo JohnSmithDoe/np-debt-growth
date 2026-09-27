@@ -60,7 +60,7 @@ export const TICKET_TYPES: Readonly<Record<TicketTypeId, TicketType>> = {
   bug: {
     id: 'bug',
     prefix: 'BUG',
-    value: 4,
+    value: 2,
     ratePerSec: 0.08,
     tier: 0,
     handOnly: false,

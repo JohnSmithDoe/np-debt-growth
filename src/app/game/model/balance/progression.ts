@@ -2,7 +2,7 @@ import type { TicketTypeId } from '../ticket.model';
 
 /**
  * Story points land at pickup, a flat count per ticket whatever it bills, once
- * the `velocity` row is bought — the reference's one gum per piece of trash.
+ * the `velocity` row is bought.
  */
 export const SP_PER_PICKUP = 1;
 /** Crew closes pay this much more SP once `timesheets` is bought. */
@@ -23,8 +23,8 @@ export interface IncomeRow {
 }
 
 /**
- * Measured off the reference, paper 250 / +3 and dog 1 250 / +4, and carried
- * up the lines on that step: the first rank ×5 a tier, the increment +1.
+ * Lint 250 / +3 and legacy 1 250 / +4, carried up the lines on that step: the
+ * first rank ×5 a tier, the increment +1.
  */
 const LINE_ROW_TICKETS: readonly TicketTypeId[] = [
   'lint',

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { freshConsultancy } from '../model/consultancy.model';
 import { SAVE_VERSION } from '../model/game.consts';
+import { ESCALATION_HOLD_MS } from '../model/balance/weather';
 import { newNotes } from './feed';
 
 const fresh = () => freshConsultancy(0, SAVE_VERSION);
@@ -27,7 +28,7 @@ describe('the news an award cannot carry', () => {
     const idle = fresh();
     const armed = { ...idle, escalationFiresAt: 1000 };
     expect(newNotes(idle, armed)).toEqual([
-      { note: 'escalation-armed', count: 6 },
+      { note: 'escalation-armed', count: ESCALATION_HOLD_MS / 1000 },
     ]);
     expect(newNotes(armed, { ...armed, escalationFiresAt: 2000 })).toEqual([]);
   });

@@ -115,6 +115,15 @@
     animation: bought-b 420ms ease-out;
   }
 
+  &.first {
+    border-color: color-mix(in srgb, var(--np-cb-good) 55%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--np-cb-good) 14%,
+      var(--np-cb-panel, #131922)
+    );
+  }
+
   &.teaser {
     border-style: dashed;
     background: transparent;

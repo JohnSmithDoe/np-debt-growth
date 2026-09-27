@@ -24,6 +24,7 @@ import { ticketLabelKey } from '../../../game/model/ticket.model';
 import {
   SPAWNED_TICKET_IDS,
   SPAWNER_CAP,
+  SPAWNER_FREE_AT_ADR_0,
   SPAWNERS,
   spawnerBlurbKey,
   spawnerLabelKey,
@@ -49,6 +50,8 @@ interface Row {
   readonly locked: boolean;
   /** Not buyable yet: drawn as a silhouette of what is coming. */
   readonly teaser?: boolean;
+  /** The opening buy, tinted until the first one lands. */
+  readonly first?: boolean;
   readonly held: number;
   readonly cap: number;
   readonly cost: string;
@@ -182,6 +185,7 @@ export class SupplyPanelComponent {
             : formatCompactMoney(this.#store.spawnerCost(row.adr)),
           maxed,
           affordable: this.#store.canBuySpawner(row.adr),
+          first: row.adr === 0 && held <= SPAWNER_FREE_AT_ADR_0,
           icon: this.#walkerOf(row.adr),
         };
       }

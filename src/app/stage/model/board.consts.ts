@@ -62,6 +62,32 @@ export const BUFF_BANNER = {
   fade: 0.12,
   gap: 6,
 } as const;
+/** Varible_37's ghost train; frames are each sheet's opaque box, resting on one rail row. */
+export const GHOST_TRAIN = {
+  loco: {
+    key: 'ghost-train',
+    url: 'assets/board/train/ghost-train.png',
+    frame: { x: 5, y: 23, width: 56, height: 22 },
+  },
+  car: {
+    key: 'ghost-passenger-car',
+    url: 'assets/board/train/ghost-passenger-car.png',
+    frame: { x: 17, y: 27, width: 30, height: 18 },
+  },
+  gap: 2,
+} as const;
+
+/** The release, told across the board. */
+export const RELEASE_BANNER = {
+  titleSize: '13px',
+  currentSize: '44px',
+  stepSize: '13px',
+  gap: 8,
+  stepGap: 8,
+  doneAlpha: 0.45,
+  /** Share of the board's height the block is centred on. */
+  centre: 0.32,
+} as const;
 export const SPRINT_PIP_LIMIT = 40;
 export const SPRINT_BAR_WIDTH = 420;
 
@@ -254,6 +280,9 @@ export const LANE_PACK = {
   ],
 } as const;
 
+/** A manager's reach, drawn on the floor under the crew. */
+export const AURA = { fill: 0.08, stroke: 0.45, line: 1.5 } as const;
+
 export const BOARD_INK = {
   floorLine: 0x1a212a,
   clickRing: 0x98a1b0,
@@ -264,13 +293,12 @@ export const BOARD_INK = {
   button: 0x1f6feb,
   buttonIdle: 0x232b35,
   gold: 0xd8b34a,
-  laneAway: 0x1b2129,
-  train: 0xe6e9ef,
-  trainWindow: 0x1f6feb,
+  trainAway: 0x1b2129,
   tunnel: 0x07090c,
   tunnelFrame: 0x3a4452,
   vote: 0xa855f7,
   pizza: 0xf97316,
+  aura: 0x4c8dff,
   card: 0xe6e9ef,
   coach: 0x98a1b0,
 } as const;
