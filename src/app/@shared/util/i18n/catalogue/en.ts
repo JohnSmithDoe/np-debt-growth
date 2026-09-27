@@ -14,6 +14,8 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.topOfBand': 'Seniors take the biggest ticket first',
   'strip.collecting': 'COLLECTING',
   'strip.releasing': 'TRAIN {{seconds}}s',
+  'board.buff.acceptance':
+    'ACCEPTANCE · OVERTIME ×{{mult}} · {{have}} / {{goal}}',
   'board.buff.escalation': 'ESCALATION ×{{mult}} · {{seconds}}s',
   'board.buff.hotfix': 'HOTFIX WINDOW ×{{mult}} · {{seconds}}s',
   'skill.effect.slots': 'Sprint scope +{{count}} per swimlane',
@@ -191,7 +193,7 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'None approved',
   'skill.golden.1.label': 'Partner-Only Work',
   'skill.signoff.blurb':
-    'The engagement is complete. Everything that could be billed has been billed. Buy this and you go home.',
+    'The closeout starts the acceptance push: work pours in, every ticket bills overtime, and the client signs when the budget reaches €1 Qa.',
   'skill.signoff.1.label': 'Sign the Closeout',
   'skill.golden.blurb':
     'Some work arrives flagged partner-only. It pays a fortune, and the crew will not go near it.',

@@ -22,11 +22,16 @@ import {
 import type { SeniorHire, TraitId } from '../model/senior.model';
 import { TRAITS, hireFor } from '../model/senior.model';
 import type { PaceField, SkillEffect } from '../model/skill.model';
-import { OFFICE_NODE_IDS, SKILL_BY_ID } from '../model/skill.model';
+import {
+  FINAL_SKILL_ID,
+  OFFICE_NODE_IDS,
+  SKILL_BY_ID,
+} from '../model/skill.model';
 import type { TicketType, TicketTypeId } from '../model/ticket.model';
 import { ladderUp, TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
 import { approachCap } from '../model/balance/curve';
 import type { PurchaseId } from '../model/balance/progression';
+import { ACCEPTANCE } from '../model/balance/progression';
 import type { ClaimPick, CrewKind, HirePace, Rush } from '../model/crew.model';
 import type { CrewBand } from '../model/balance/crew';
 import {
@@ -41,6 +46,7 @@ import {
   VOTE_CYCLE_MS,
   VOTE_ON_MS,
   CLICK_RADIUS_BASE,
+  HAND_ONLY_RATE_PER_TIER,
   CLICK_RADIUS_MAX,
   DEBT_INTEREST_CAP,
   GOLDEN_CHANCE_CAP,
@@ -182,7 +188,8 @@ function holds(state: Consultancy, kind: SkillEffect['kind']): boolean {
 }
 
 function globalMultiplier(state: Consultancy): number {
-  return multOf(state, 'global');
+  const overtime = inAcceptance(state) ? ACCEPTANCE.value : 1;
+  return multOf(state, 'global') * overtime;
 }
 
 /** One lane's sprint scope: the base plus every `capacity` rank. */
@@ -267,6 +274,16 @@ export function haulMs(state: Consultancy): number {
     e.kind === 'haulShave' ? e.seconds : null
   );
   return Math.max(HAUL_MIN_MS, HAUL_MS - shaved * 1_000);
+}
+
+/** Signed off, and not yet at the acceptance goal. */
+export function inAcceptance(state: Consultancy): boolean {
+  return state.endedAt === 0 && skillRank(state, FINAL_SKILL_ID) > 0;
+}
+
+/** The acceptance push has billed its goal: the run is over. */
+export function accepted(state: Consultancy): boolean {
+  return inAcceptance(state) && state.budget >= ACCEPTANCE.goal;
 }
 
 /**
@@ -443,7 +460,11 @@ export function spawnRate(state: Consultancy, id: TicketTypeId): number {
       ? e.mult
       : null
   );
-  return type.ratePerSec * sourceMultiplier(state, type) * fromSkills;
+  const climb = type.handOnly ? 1 + HAND_ONLY_RATE_PER_TIER * state.tier : 1;
+  const push = inAcceptance(state) ? ACCEPTANCE.spawn : 1;
+  return (
+    type.ratePerSec * sourceMultiplier(state, type) * fromSkills * climb * push
+  );
 }
 
 export function closeRate(state: Consultancy, id: TicketTypeId): number {

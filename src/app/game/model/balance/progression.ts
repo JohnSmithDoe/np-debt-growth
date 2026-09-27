@@ -50,6 +50,13 @@ export const INCOME_ROWS: Readonly<Partial<Record<TicketTypeId, IncomeRow>>> =
 export const INCOME_COST_OF_SPAWNER = 125;
 export const INCOME_VALUE_ADD = 3;
 
+/**
+ * Signing off starts the acceptance push instead of ending the run: the
+ * board spawns `spawn`× as fast, everything bills `value`× (overtime), and
+ * the run ends when the budget reaches `goal`.
+ */
+export const ACCEPTANCE = { goal: 1e15, spawn: 3, value: 12 } as const;
+
 export const PURCHASE_IDS = [
   'junior',
   'senior',

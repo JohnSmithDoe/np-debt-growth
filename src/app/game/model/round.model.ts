@@ -28,9 +28,16 @@ export interface RoundOutcome {
   readonly spVelocity: number;
 }
 
-/** A live pickup buff, for the board's banner: what it multiplies and for how long. */
-export interface BuffNotice {
-  readonly id: 'escalation' | 'hotfix';
-  readonly mult: number;
-  readonly msLeft: number;
-}
+/** A live buff, for the board's banner: what it multiplies, and for how long or how far. */
+export type BuffNotice =
+  | {
+      readonly id: 'escalation' | 'hotfix';
+      readonly mult: number;
+      readonly msLeft: number;
+    }
+  | {
+      readonly id: 'acceptance';
+      readonly mult: number;
+      readonly budget: number;
+      readonly goal: number;
+    };

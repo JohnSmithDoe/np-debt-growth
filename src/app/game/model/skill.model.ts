@@ -632,8 +632,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'C',
     requires: 'poker',
     levels: [
-      600, 1500, 3600, 9000, 22_500, 54_000, 135_000, 330_000, 810_000,
-      1_950_000,
+      600, 1800, 5400, 16_200, 48_600, 145_800, 437_400, 1_312_200, 3_936_600,
+      11_809_800,
     ].map((cost) => ({ cost, effects: [{ kind: 'coach' as const, add: 1 }] })),
   },
   {
@@ -641,8 +641,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'C',
     requires: 'coaches',
     levels: [
-      900, 2100, 4800, 12_000, 30_000, 75_000, 180_000, 450_000, 1_050_000,
-      2_400_000,
+      900, 2700, 8100, 24_300, 72_900, 218_700, 656_100, 1_968_300, 5_904_900,
+      17_714_700,
     ].map((cost) => ({
       cost,
       effects: [{ kind: 'deck' as const, add: VOTE_BONUS_PER_RANK }],
@@ -797,7 +797,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'G',
     currency: 'eur',
     requires: 'adr8',
-    levels: [{ cost: 100_000_000_000_000, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 20_000_000_000_000, effects: [{ kind: 'none' }] }],
   },
 
   {

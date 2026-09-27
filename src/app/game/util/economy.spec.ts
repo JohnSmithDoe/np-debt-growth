@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { HAND_ONLY_RATE_PER_TIER } from '../model/balance/flow';
 import type { Consultancy } from '../model/consultancy.model';
 import { consultancy } from '../model/consultancy.fixture';
 import { castPoolSize, crewName } from '../model/cast.model';
@@ -75,9 +76,17 @@ describe('hand-only rares are weather, not a source (D5)', () => {
       levels: { junior: 40, senior: 40 },
       skills: { supply: 5, capacity: 5, spawnLint: 1, spawnBug: 1, pizza: 1 },
     });
+    const bare = consultancy({ tier: 3, skills: { pizza: 1 } });
     for (const id of rares) {
-      expect(spawnRate(bought, id)).toBeCloseTo(TICKET_TYPES[id].ratePerSec, 6);
+      expect(spawnRate(bought, id)).toBeCloseTo(spawnRate(bare, id), 6);
     }
+  });
+
+  it('arrives more often as the run climbs the ladder', () => {
+    expect(spawnRate(consultancy({ tier: 6 }), 'escalation')).toBeCloseTo(
+      TICKET_TYPES.escalation.ratePerSec * (1 + HAND_ONLY_RATE_PER_TIER * 6),
+      9
+    );
   });
 
   it('still answers to the skill that exists to move them', () => {

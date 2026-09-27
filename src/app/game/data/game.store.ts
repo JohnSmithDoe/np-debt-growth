@@ -45,7 +45,6 @@ import type { BuffNotice, Lane, RoundOutcome } from '../model/round.model';
 import { EMPTY_LANE } from '../model/round.model';
 import type { SkillLock } from '../model/skill.model';
 import {
-  FINAL_SKILL_ID,
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_NODES,
@@ -54,6 +53,7 @@ import { tierAt } from '../model/tier.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
+import { ACCEPTANCE } from '../model/balance/progression';
 import {
   PIZZA_MS,
   PROD_INCIDENT_LIVE_CAP,
@@ -383,17 +383,7 @@ export class GameStore {
 
   readonly ended = computed(() => this.#state().endedAt > 0);
 
-  /** The run ends when the last upgrade on the tree is bought. */
-  canEndRun(): boolean {
-    const state = this.#state();
-    return state.endedAt === 0 && economy.skillRank(state, FINAL_SKILL_ID) > 0;
-  }
-
-  endRun(now: number): boolean {
-    if (!this.canEndRun()) return false;
-    this.#state.set({ ...this.#state(), endedAt: now });
-    return true;
-  }
+  readonly inAcceptance = computed(() => economy.inAcceptance(this.#state()));
 
   advanceTo(now: number): void {
     const state = this.#state();
@@ -638,6 +628,9 @@ export class GameStore {
     this.#note();
 
     this.#stepLanes(dtMs, now);
+    if (economy.accepted(this.#state())) {
+      this.#state.set({ ...this.#state(), endedAt: now });
+    }
   }
 
   /**
@@ -846,6 +839,14 @@ export class GameStore {
     const state = this.#state();
     const now = state.lastTick;
     const live: BuffNotice[] = [];
+    if (economy.inAcceptance(state)) {
+      live.push({
+        id: 'acceptance',
+        mult: ACCEPTANCE.value,
+        budget: state.budget,
+        goal: ACCEPTANCE.goal,
+      });
+    }
     if (state.escalated && state.escalationFiresAt > now) {
       live.push({
         id: 'escalation',

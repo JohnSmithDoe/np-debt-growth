@@ -15,6 +15,8 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.topOfBand': 'Seniors nehmen zuerst das größte Ticket',
   'strip.collecting': 'SAMMELN',
   'strip.releasing': 'ZUG {{seconds}}s',
+  'board.buff.acceptance':
+    'ABNAHME · ÜBERSTUNDEN ×{{mult}} · {{have}} / {{goal}}',
   'board.buff.escalation': 'ESKALATION ×{{mult}} · {{seconds}}s',
   'board.buff.hotfix': 'HOTFIX-FENSTER ×{{mult}} · {{seconds}}s',
   'skill.effect.slots': 'Sprint-Umfang +{{count}} pro Swimlane',
@@ -194,7 +196,7 @@ export const DE: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'Keiner freigegeben',
   'skill.golden.1.label': 'Partnersache',
   'skill.signoff.blurb':
-    'Das Mandat ist beendet. Alles, was abrechenbar war, ist abgerechnet. Kauf das und du gehst nach Hause.',
+    'Der Abschluss startet den Abnahme-Endspurt: Arbeit strömt herein, jedes Ticket wird mit Überstunden abgerechnet, und der Kunde unterschreibt, wenn das Budget 1 Brd. € erreicht.',
   'skill.signoff.1.label': 'Abschluss unterschreiben',
   'skill.golden.blurb':
     'Manche Arbeit kommt als Partnersache herein. Sie zahlt ein Vermögen, und das Team fasst sie nicht an.',

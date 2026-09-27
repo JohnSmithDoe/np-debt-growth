@@ -1,7 +1,6 @@
 import type { Consultancy } from '../model/consultancy.model';
 import type { SkillLock } from '../model/skill.model';
 import {
-  FINAL_SKILL_ID,
   SKILL_BY_ID,
   SKILL_NODES,
   skillLabelKey,
@@ -92,7 +91,6 @@ export function buySkill(state: Consultancy, id: string): Consultancy | null {
         : state.roster,
     tier,
     skills: { ...state.skills, [id]: rank + 1 },
-    endedAt: id === FINAL_SKILL_ID ? state.lastTick : state.endedAt,
   };
 }
 

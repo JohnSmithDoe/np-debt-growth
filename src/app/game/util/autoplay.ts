@@ -113,7 +113,7 @@ function earn(
   book(f, seconds);
   const euros = f.euroPerSec * seconds;
   const awards = economy.pendingAwards(state);
-  return {
+  const next: Consultancy = {
     ...state,
     budget: state.budget + euros,
     storyPoints: state.storyPoints + f.spPerSec * seconds,
@@ -126,6 +126,7 @@ function earn(
     runMs: state.runMs + seconds * 1000,
     lastTick: state.lastTick + seconds * 1000,
   };
+  return economy.accepted(next) ? { ...next, endedAt: next.lastTick } : next;
 }
 
 /** Buys greedily, cheapest first, until nothing affordable is left. */

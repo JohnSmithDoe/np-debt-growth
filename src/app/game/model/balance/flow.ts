@@ -56,6 +56,9 @@ export const GOLDEN_VALUE_PER_RANK = 50;
 export const GOLDEN_CREW_CONVERSION = 0.05;
 
 /** SP a ticket pays at pickup per `estimates<T>` rank on its line. */
+/** Hand-only cards arrive this much more often per ADR approved: the hand's targets grow with the run. */
+export const HAND_ONLY_RATE_PER_TIER = 0.5;
+
 /** Auto-closed work with no lane goes to prod as a P0; this many at once, the rest go stale. */
 export const PROD_INCIDENT_LIVE_CAP = 3;
 

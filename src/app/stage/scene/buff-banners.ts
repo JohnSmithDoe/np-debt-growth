@@ -1,11 +1,14 @@
 import * as Phaser from 'phaser';
 
-import { formatQuantity } from '../../@shared/util/format-quantity';
+import {
+  formatCompactMoney,
+  formatQuantity,
+} from '../../@shared/util/format-quantity';
 import type { BuffNotice } from '../../game/model/round.model';
 import { BUFF_BANNER, HOVER_GROUND } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
 
-const IDS: readonly BuffNotice['id'][] = ['escalation', 'hotfix'];
+const IDS: readonly BuffNotice['id'][] = ['acceptance', 'escalation', 'hotfix'];
 
 /** One pulsing line per live buff, stacked upward from `bottom`. */
 export class BuffBanners {
@@ -50,12 +53,20 @@ export class BuffBanners {
         this.#drawn.delete(id);
         continue;
       }
-      const text = this.#deps.text(`board.buff.${id}`, {
-        mult: Number.isInteger(notice.mult)
-          ? notice.mult
-          : formatQuantity(notice.mult),
-        seconds: Math.ceil(notice.msLeft / 1000),
-      });
+      const mult = Number.isInteger(notice.mult)
+        ? notice.mult
+        : formatQuantity(notice.mult);
+      const text =
+        notice.id === 'acceptance'
+          ? this.#deps.text('board.buff.acceptance', {
+              mult,
+              have: formatCompactMoney(notice.budget),
+              goal: formatCompactMoney(notice.goal),
+            })
+          : this.#deps.text(`board.buff.${notice.id}`, {
+              mult,
+              seconds: Math.ceil(notice.msLeft / 1000),
+            });
       if (this.#drawn.get(id) !== text) {
         this.#drawn.set(id, text);
         line.setText(text);

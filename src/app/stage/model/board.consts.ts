@@ -54,7 +54,7 @@ export const AUTO_CLOSE_RAMP = { ink: 0x5cff9d, peak: 1 } as const;
 
 export const BUFF_BANNER = {
   size: '16px',
-  colour: { escalation: '#d8b34a', hotfix: '#4ade80' },
+  colour: { acceptance: '#e06c9f', escalation: '#d8b34a', hotfix: '#4ade80' },
   pulseMs: 900,
   swell: 0.06,
   fade: 0.12,

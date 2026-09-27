@@ -67,8 +67,9 @@ const MILESTONES = [
   ['tier 6', (s: Consultancy) => s.tier >= 6],
   ['tier 7', (s: Consultancy) => s.tier >= 7],
   ['tier 8', (s: Consultancy) => s.tier >= 8],
-  // The run ends on a purchase, so the purchase is the last milestone.
   ['signed off', (s: Consultancy) => (s.skills[FINAL_SKILL_ID] ?? 0) > 0],
+  // Sign-off starts the acceptance push; the run ends when it bills its goal.
+  ['accepted', (s: Consultancy) => s.endedAt > 0],
 ] as const;
 
 const UNORDERED_MILESTONES = [
@@ -441,8 +442,8 @@ describe('the session arc', () => {
   });
 
   it('finishes inside a sitting, not a coffee break', () => {
-    const at = run.reached.get('signed off');
-    expect(at, 'the run never bought the last upgrade').toBeDefined();
+    const at = run.reached.get('accepted');
+    expect(at, 'the run never finished acceptance').toBeDefined();
     // Targets 30 min, half the reference. Wide enough that ordinary tuning
     // does not trip it, tight enough to catch the curve collapsing.
     expect(at! / 60_000).toBeGreaterThan(25);
@@ -462,6 +463,13 @@ describe('the session arc', () => {
     ] as const) {
       expect(gap(from, to), `${from} to ${to}`).toBeGreaterThan(2);
     }
+  });
+
+  it('keeps the acceptance push a short finale', () => {
+    const push =
+      (run.reached.get('accepted')! - run.reached.get('signed off')!) / 60_000;
+    expect(push).toBeGreaterThan(2);
+    expect(push).toBeLessThan(5);
   });
 
   it('leaves nothing on the tree unbought by the time it signs off', () => {

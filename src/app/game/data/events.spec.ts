@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { ACCEPTANCE } from '../model/balance/progression';
 import { GameStore } from './game.store';
 import type { Consultancy } from '../model/consultancy.model';
 import { freshConsultancy } from '../model/consultancy.model';
@@ -182,23 +183,28 @@ describe('awards (D19, D29)', () => {
   });
 });
 
-describe('the ending (D2)', () => {
-  it('cannot be closed before the ladder is finished', () => {
-    const store = storeWith({ tier: 1 });
-    expect(store.canEndRun()).toBe(false);
-    expect(store.endRun(1_000)).toBe(false);
-  });
-
-  it('closes once, and stays closed', () => {
+describe('the ending: sign-off, then acceptance', () => {
+  it('starts the acceptance push on sign-off, without ending the run', () => {
     const store = storeWith({ tier: MAX_TIER, skills: { signoff: 1 } });
-    expect(store.endRun(1_000)).toBe(true);
-    expect(store.ended()).toBe(true);
-    expect(store.endRun(2_000)).toBe(false);
+    store.advanceTo(100);
+    expect(store.inAcceptance()).toBe(true);
+    expect(store.ended()).toBe(false);
   });
 
-  it('will not close before the last upgrade is signed', () => {
-    const store = storeWith({ tier: MAX_TIER });
-    expect(store.canEndRun()).toBe(false);
-    expect(store.endRun(1_000)).toBe(false);
+  it('ends the run once the push bills its goal, and stays ended', () => {
+    const store = storeWith({
+      tier: MAX_TIER,
+      skills: { signoff: 1 },
+      budget: ACCEPTANCE.goal,
+    });
+    store.advanceTo(100);
+    expect(store.ended()).toBe(true);
+    expect(store.inAcceptance()).toBe(false);
+  });
+
+  it('does not end on budget alone before sign-off', () => {
+    const store = storeWith({ tier: MAX_TIER, budget: ACCEPTANCE.goal });
+    store.advanceTo(100);
+    expect(store.ended()).toBe(false);
   });
 });
