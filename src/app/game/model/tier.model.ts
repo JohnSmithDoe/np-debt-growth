@@ -30,12 +30,12 @@ export const adrPartKey = (index: number, part: AdrPart): string =>
 export const DEBT_TIERS: readonly DebtTier[] = [
   { index: 1, spCost: 750, ticket: 'legacy' },
   { index: 2, spCost: 10_000, ticket: 'flaky' },
-  { index: 3, spCost: 300_000, ticket: 'conflict' },
-  { index: 4, spCost: 500_000, ticket: 'slop' },
-  { index: 5, spCost: 800_000, ticket: 'rockstar' },
-  { index: 6, spCost: 1_200_000, ticket: 'zombie' },
-  { index: 7, spCost: 1_400_000, ticket: 'rewrite' },
-  { index: 8, spCost: 1_600_000, ticket: 'swarm' },
+  { index: 3, spCost: 80_000, ticket: 'conflict' },
+  { index: 4, spCost: 200_000, ticket: 'slop' },
+  { index: 5, spCost: 500_000, ticket: 'rockstar' },
+  { index: 6, spCost: 2_000_000, ticket: 'zombie' },
+  { index: 7, spCost: 8_000_000, ticket: 'rewrite' },
+  { index: 8, spCost: 15_000_000, ticket: 'swarm' },
 ];
 
 export const MAX_TIER = DEBT_TIERS.length;

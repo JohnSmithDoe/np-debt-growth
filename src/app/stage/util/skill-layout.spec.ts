@@ -177,7 +177,7 @@ describe('skill reveal', () => {
     expect(shown.get('o3')).toBe('box');
     expect(shown.get('junior')).toBe('box');
     expect(shown.get('juniorSpeed')).toBeUndefined();
-    expect(shown.get('duration')).toBe('open');
+    expect(shown.get('cutRetro')).toBe('open');
   });
 
   it('reveals through a heading as if it were not there', () => {

@@ -5,6 +5,7 @@ import {
   DEBT_INTEREST_PER_RANK,
   ESTIMATE_SP_PER_RANK,
   ESTIMATE_SP_PER_RANK_OPENING,
+  ESTIMATE_SP_TIER_GROWTH,
   GOLDEN_VALUE_PER_RANK,
   VOTE_BONUS_PER_RANK,
 } from './balance/flow';
@@ -112,7 +113,10 @@ export interface SkillLock {
 export const skillLabelKey = (id: string, level = 1): string =>
   `skill.${id}.${level}.label`;
 
-export const skillBlurbKey = (id: string): string => `skill.${id}.blurb`;
+const TIERED_NODE = /^(capacity|cans)\d+$/;
+
+export const skillBlurbKey = (id: string): string =>
+  `skill.${TIERED_NODE.exec(id)?.[1] ?? id}.blurb`;
 
 /**
  * One node per ADR, chained. Approving it opens that rung's spawner line and
@@ -237,7 +241,8 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
               add:
                 tier === 0
                   ? ESTIMATE_SP_PER_RANK_OPENING
-                  : ESTIMATE_SP_PER_RANK,
+                  : ESTIMATE_SP_PER_RANK *
+                    ESTIMATE_SP_TIER_GROWTH ** (tier - 1),
               target: ticket,
             },
           ],
@@ -257,6 +262,70 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap(
           },
         ],
       },
+    ];
+  }
+);
+
+interface SprintRung {
+  readonly capacity: readonly number[];
+  readonly cans: readonly number[];
+  readonly cut?: readonly [ReleasePhaseId, number];
+}
+
+const SPRINT_RUNGS: readonly SprintRung[] = [
+  { capacity: [120, 300], cans: [], cut: ['retro', 80] },
+  { capacity: [750], cans: [1500, 1800], cut: ['refinement', 300] },
+  { capacity: [1900], cans: [5400], cut: ['review', 900] },
+  { capacity: [8000], cans: [25_000], cut: ['smoke', 4000] },
+  { capacity: [12_000], cans: [48_000], cut: ['freeze', 7000] },
+  { capacity: [30_000], cans: [140_000] },
+  { capacity: [150_000], cans: [900_000] },
+  { capacity: [400_000], cans: [2_500_000] },
+  { capacity: [480_000], cans: [3_750_000] },
+];
+
+const SPRINT_NODES: readonly SkillNode[] = SPRINT_RUNGS.flatMap(
+  ({ capacity, cans, cut }, tier) => {
+    const requires = tier === 0 ? 'radius' : adrNodeId(tier);
+    const suffix = tier === 0 ? '' : String(tier);
+    return [
+      {
+        id: `capacity${suffix}`,
+        track: 'A' as const,
+        requires,
+        levels: capacity.map((cost) => ({
+          cost,
+          effects: [{ kind: 'slots' as const, add: SPRINT_SLOTS_STEP }],
+        })),
+      },
+      ...(cans.length === 0
+        ? []
+        : [
+            {
+              id: `cans${suffix}`,
+              track: 'A' as const,
+              requires,
+              levels: cans.map((cost) => ({
+                cost,
+                effects: [{ kind: 'cans' as const, add: 1 }],
+              })),
+            },
+          ]),
+      ...(cut === undefined
+        ? []
+        : [
+            {
+              id: `cut${capitalised(cut[0])}`,
+              track: 'A' as const,
+              requires,
+              levels: [
+                {
+                  cost: cut[1],
+                  effects: [{ kind: 'cutCeremony' as const, phase: cut[0] }],
+                },
+              ],
+            },
+          ]),
     ];
   }
 );
@@ -300,42 +369,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
       { cost: 1650, effects: [{ kind: 'clickRadius', mult: 1.22 }] },
     ],
   },
-  {
-    id: 'capacity',
-    track: 'A',
-    requires: 'radius',
-    levels: [
-      120, 300, 750, 1900, 4800, 12_000, 30_000, 75_000, 190_000, 480_000,
-    ].map((cost) => ({
-      cost,
-      effects: [{ kind: 'slots' as const, add: SPRINT_SLOTS_STEP }],
-    })),
-  },
-  {
-    id: 'cans',
-    track: 'A',
-    requires: 'adr1',
-    levels: [
-      1500, 1800, 5400, 16_000, 48_000, 140_000, 420_000, 1_250_000, 3_750_000,
-    ].map((cost) => ({ cost, effects: [{ kind: 'cans' as const, add: 1 }] })),
-  },
-  {
-    id: 'duration',
-    track: 'A',
-    requires: 'radius',
-    levels: (
-      [
-        [80, 'retro'],
-        [300, 'refinement'],
-        [900, 'review'],
-        [2600, 'smoke'],
-        [7000, 'freeze'],
-      ] as const
-    ).map(([cost, phase]) => ({
-      cost,
-      effects: [{ kind: 'cutCeremony' as const, phase }],
-    })),
-  },
+  ...SPRINT_NODES,
   {
     id: 'lineOfSight',
     track: 'A',
@@ -791,7 +825,7 @@ export const SKILL_NODES: readonly SkillNode[] = [
     track: 'G',
     currency: 'eur',
     requires: 'adr8',
-    levels: [{ cost: 20_000_000_000_000, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 300_000_000_000_000, effects: [{ kind: 'none' }] }],
   },
 
   {

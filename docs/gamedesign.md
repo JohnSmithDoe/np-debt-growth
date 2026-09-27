@@ -17,7 +17,7 @@ The design as the code has it. Every number names the file it lives in; paths ar
    until it is back.
 5. **€ buys supply, SP buys the tree.** The rail sells heads, rate rows and crew; the tree
    sells everything else, the ADRs included. `signoff` starts the acceptance push; the run
-   ends at €1 Qa.
+   ends at €20 Qa.
 6. **Income = collected tickets/s × their worth**, where collected is the least of what the
    lines throw, what the hand and crew reach, and what the sprint takes. `util/sim.ts` computes
    exactly this without a board (§9).
@@ -79,12 +79,12 @@ which spends no time in the tree.
 6. **One sprint, one release train.** Closed work fills the sprint. A full sprint leaves on the
    train for `haulMs`, and collection is refused until it is back (`phase: 'hauling'`); refused
    cards bounce where they lie (`REFUSAL_BOUNCE`). The wait is the release, and it is meant to
-   be felt; `duration` shortens it.
+   be felt; the ceremony cuts shorten it.
 
 ```
 sprintSlots    = (SPRINT_SLOTS_BASE 100 + Σ slots) × (1 + Σ cans)
                  (capacity +25 a rank ×10, o2 +14; cans +1 team a rank ×9)
-haulMs         = Σ ms of the RELEASE_PHASES still run  (6 × 1 200 uncut; each duration rank cuts one)
+haulMs         = Σ ms of the RELEASE_PHASES still run  (6 × 1 200 uncut; each cut node skips one)
 ceilingPerSec  = sprintSlots / haulMs
 ```
 
@@ -92,9 +92,9 @@ All in `balance/round.ts` and `util/economy.ts`. The cadence is an output of the
 throughput. A "round" in the code is one sprint's release.
 
 The train runs ceremonies in order: Code Freeze → Ship to Production → Smoke Test → Sprint
-Review → Retro → Refinement (`economy.releasePhases`, `phaseAt`). The five `duration` ranks cut
-Retro, Refinement, Review, Smoke Test and Code Freeze in that order, each named for its cut;
-Ship to Production is never cut. While the train is out, `ReleaseBanner` spells the phase across
+Review → Retro → Refinement (`economy.releasePhases`, `phaseAt`). Five single-rank nodes cut one
+each, one per rung: `cutRetro` (tier 0), `cutRefinement` (ADR-1), `cutReview` (ADR-2), `cutSmoke`
+(ADR-3), `cutFreeze` (ADR-4); Ship to Production is never cut. While the train is out, `ReleaseBanner` spells the phase across
 the board's upper third in the big-payout gold, with the whole ceremony under it.
 
 Player-facing copy never says "truck", "can" or "lane": sprint, sprint scope, release train.
@@ -114,8 +114,9 @@ Player-facing copy never says "truck", "can" or "lane": sprint, sprint scope, re
 (`LINE_PLAN.velocity`, `open: true`), every close pays `SP_PER_PICKUP` 1, **whatever it bills**,
 plus:
 
-- the line's `estimates<Ticket>` node, `ESTIMATE_SP_PER_RANK` 20 SP a rank, 5 ranks; lint's pays `ESTIMATE_SP_PER_RANK_OPENING` 4, since auto-close bills every
-  lint card;
+- the line's `estimates<Ticket>` node, 5 ranks of `ESTIMATE_SP_PER_RANK` 20 SP at tier 1, ×`ESTIMATE_SP_TIER_GROWTH` 2
+  each tier above, so SP income doubles a tier as `perTier` prices do; lint's pays
+  `ESTIMATE_SP_PER_RANK_OPENING` 4, since auto-close bills every lint card;
 - ×`CREW_SP_MULT` 2 on crew closes with `timesheets`;
 - `voteBonus`: SP for every live planning-poker vote the ticket fell through, decided at spawn
   (§6).
@@ -256,7 +257,7 @@ Each square carries a `+`/`%` badge from its next rank's effects (`skillBadge`).
 ```
 value<T>  ×2 ──┬── spawn<T>      5 × +20 % throw-two  → ×2 spawn
                ├── income<T>     5 × +50 % income     → ×3.5
-               └── estimates<T>  5 × +20 SP
+               └── estimates<T>  5 × +20·2^(t−1) SP
                         │
                double<T>  ×2   opens once all three are maxed (`maxed`)
 ```
@@ -267,18 +268,18 @@ five +20 % ranks end at exactly ×2. First-rank prices double a tier: `value` 25
 `LINE_DOUBLE_COST`; `spawn` `2 200 × 2^t` (ranks ×1.25); `income` `1 100 × 2^t` (ranks ×1.25);
 `estimates` 75 / `400 × 2^(t−1)` (ranks ×1.5); `double` `2 500 × 2^t`.
 
-| Track           | Holds                                                                                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A** Hand      | `radius`, `capacity` (sprint scope +25 ×10), `cans` (+1 team's scope ×9, tier 1), `duration` (cuts a ceremony ×5), `lineOfSight`, `golden` → `goldenValue` → `goldenCrew` |
-| **B** Juniors   | `junior` (1 200), `juniorSpeed`, `juniorRoom`, `juniorReach` → `stretch`, `juniorPresence`, `ticketStacking`, `timesheets`, `pizza`                                       |
-| **E** Seniors   | `senior` (240 000, ADR-3), speed, reach, presence, `seniorRoom`                                                                                                           |
-| **H** Managers  | `manager`, speed, `relabel`, `managerRoom`                                                                                                                                |
-| **C** Client    | the per-line `value` / `income` / `estimates` / `double` nodes, `valueBug`, `escalation`, `coaches`, `deck`                                                               |
-| **D** Debt      | the per-line `spawn` nodes, `debtInterest`, `triagePolicy`, `spawnIncident` (incidents, escalations, incident value)                                                      |
-| **G** Capstones | `assurance`, `signoff`                                                                                                                                                    |
-| **N** ADRs      | `adr1` … `adr8`, chained; each rung is the parent of its line's `value` node (Lint's hangs off the client heading)                                                        |
-| **O** Office    | `o1`–`o7` (the floor plates; `o1` and `o4` are cosmetic), `kit`                                                                                                           |
-| `secret`        | Konami-granted, ×1.1 global                                                                                                                                               |
+| Track           | Holds                                                                                                                                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** Hand      | `radius`, the sprint nodes (`SPRINT_RUNGS`: per tier `capacity<t>` +25 scope, `cans<t>` +1 team, `cut<Ceremony>` on tiers 0–4), `lineOfSight`, `golden` → `goldenValue` → `goldenCrew` |
+| **B** Juniors   | `junior` (1 200), `juniorSpeed`, `juniorRoom`, `juniorReach` → `stretch`, `juniorPresence`, `ticketStacking`, `timesheets`, `pizza`                                                    |
+| **E** Seniors   | `senior` (240 000, ADR-3), speed, reach, presence, `seniorRoom`                                                                                                                        |
+| **H** Managers  | `manager`, speed, `relabel`, `managerRoom`                                                                                                                                             |
+| **C** Client    | the per-line `value` / `income` / `estimates` / `double` nodes, `valueBug`, `escalation`, `coaches`, `deck`                                                                            |
+| **D** Debt      | the per-line `spawn` nodes, `debtInterest`, `triagePolicy`, `spawnIncident` (incidents, escalations, incident value)                                                                   |
+| **G** Capstones | `assurance`, `signoff`                                                                                                                                                                 |
+| **N** ADRs      | `adr1` … `adr8`, chained; each rung is the parent of its line's `value` node (Lint's hangs off the client heading)                                                                     |
+| **O** Office    | `o1`–`o7` (the floor plates; `o1` and `o4` are cosmetic), `kit`                                                                                                                        |
+| `secret`        | Konami-granted, ×1.1 global                                                                                                                                                            |
 
 There are no global spawn-rate or income nodes: a line only grows through its own nodes.
 
@@ -290,16 +291,20 @@ Every rung opens its line and at least one mechanic, so no rung is only more of 
 rung's extras are priced for its SP income — together about a minute of it on arrival — so a
 new rung is a choice, not a shopping spree:
 
-| Rung  | Opens                                                                       |
-| ----- | --------------------------------------------------------------------------- |
-| ADR-1 | Legacy line, `junior` (the whole crew arm, `triagePolicy` under it), `cans` |
-| ADR-2 | Flaky line, `golden`                                                        |
-| ADR-3 | Conflict line, `senior`                                                     |
-| ADR-4 | Slop line, `manager`, `debtInterest`                                        |
-| ADR-5 | Rockstar line, `pizza`, `timesheets`, `coaches` → `deck`                    |
-| ADR-6 | Zombie line, `spawnIncident` (3 ranks)                                      |
-| ADR-7 | Rewrite line, `goldenCrew`                                                  |
-| ADR-8 | Swarm line, `assurance`, `signoff`                                          |
+| Rung  | Opens                                                               |
+| ----- | ------------------------------------------------------------------- |
+| ADR-1 | Legacy line, `junior` (the whole crew arm, `triagePolicy` under it) |
+| ADR-2 | Flaky line, `golden`                                                |
+| ADR-3 | Conflict line, `senior`                                             |
+| ADR-4 | Slop line, `manager`, `debtInterest`                                |
+| ADR-5 | Rockstar line, `pizza`, `timesheets`, `coaches` → `deck`            |
+| ADR-6 | Zombie line, `spawnIncident` (3 ranks)                              |
+| ADR-7 | Rewrite line, `goldenCrew`                                          |
+| ADR-8 | Swarm line, `assurance`, `signoff`                                  |
+
+Every rung also carries its own sprint set (`SPRINT_RUNGS` in `skill.model.ts`): a `capacity<t>`
+and a `cans<t>` node, plus one ceremony cut on tiers 0–4. None of them waits on another rung's
+set, and each is priced for its own rung's SP income, like the extras.
 
 `double<T>` is the one node with a second term (`maxed`); it stays a dim box, not a readable
 square, until its three ladders are full. The map is orthogonal (`stage/util/skill-layout.ts`):
@@ -333,23 +338,25 @@ so every flash is a vote and every vote flashes.
 ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR modal's approve button
 (`unlockNextTier`) buys the same node; the rail has no ADR panel.
 
-| ADR | SP        | Unlocks    |
-| --- | --------- | ---------- |
-| 1   | 750       | `legacy`   |
-| 2   | 10 000    | `flaky`    |
-| 3   | 300 000   | `conflict` |
-| 4   | 500 000   | `slop`     |
-| 5   | 800 000   | `rockstar` |
-| 6   | 1 200 000 | `zombie`   |
-| 7   | 1 400 000 | `rewrite`  |
-| 8   | 1 600 000 | `swarm`    |
+| ADR | SP         | Unlocks    |
+| --- | ---------- | ---------- |
+| 1   | 750        | `legacy`   |
+| 2   | 10 000     | `flaky`    |
+| 3   | 80 000     | `conflict` |
+| 4   | 200 000    | `slop`     |
+| 5   | 500 000    | `rockstar` |
+| 6   | 2 000 000  | `zombie`   |
+| 7   | 8 000 000  | `rewrite`  |
+| 8   | 15 000 000 | `swarm`    |
 
-**`signoff`** (€20 T, off ADR-8) is `FINAL_SKILL_ID` and the tree's only euro node. Buying it
+The prices grow with the rung because SP income does: `estimates` pays twice as much each tier.
+
+**`signoff`** (€300 T, off ADR-8) is `FINAL_SKILL_ID` and the tree's only euro node. Buying it
 starts the **acceptance push** (`ACCEPTANCE` in `balance/progression.ts`, `economy.inAcceptance`):
 spawns run ×3, everything bills ×12 overtime (in `globalMultiplier`), and a pink banner on the
-board counts the budget up to €1 Qa. Reaching it sets `endedAt` (`economy.accepted`, checked each
-store step and in the autoplayer) and the post-mortem opens. No prestige. About four minutes
-after ADR-8 to sign-off, three for the push.
+board counts the budget up to €20 Qa. Reaching it sets `endedAt` (`economy.accepted`, checked each
+store step and in the autoplayer) and the post-mortem opens. No prestige. About two and a
+half minutes after ADR-8 to sign-off, and as long again for the push.
 
 Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buySpawner`,
 `buyIncome`); `GameStore` commits the result and handles the side effects.

@@ -213,7 +213,7 @@ export function sprintRoom(
   return Math.max(0, sprintSlots(state, weather) - state.sprintCount);
 }
 
-/** The ceremonies the train still runs, in order; `duration` ranks cut them. */
+/** The ceremonies the train still runs, in order; the cut nodes skip them. */
 export function releasePhases(state: Consultancy): readonly ReleasePhase[] {
   const cut = foldRanks(state, new Set<ReleasePhaseId>(), (set, effect) =>
     effect.kind === 'cutCeremony' ? set.add(effect.phase) : set

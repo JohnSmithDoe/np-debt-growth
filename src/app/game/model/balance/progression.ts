@@ -55,7 +55,7 @@ export const INCOME_VALUE_ADD = 3;
  * board spawns `spawn`× as fast, everything bills `value`× (overtime), and
  * the run ends when the budget reaches `goal`.
  */
-export const ACCEPTANCE = { goal: 1e15, spawn: 3, value: 12 } as const;
+export const ACCEPTANCE = { goal: 2e16, spawn: 3, value: 12 } as const;
 
 export const PURCHASE_IDS = [
   'junior',

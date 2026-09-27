@@ -33,7 +33,7 @@ export const DEFAULT_POLICY: AutoplayPolicy = {
   clicksPerSec: 1,
   spendFraction: 0.25,
   spendEveryMs: 5_000,
-  openingPath: ['radius', 'capacity', 'duration'],
+  openingPath: ['radius', 'capacity', 'cutRetro'],
   saveForAdrSec: 0,
 };
 
@@ -132,7 +132,7 @@ function earn(
 /** Buys greedily, cheapest first, until nothing affordable is left. */
 export function spend(state: Consultancy, policy: AutoplayPolicy): Consultancy {
   let next = state;
-  if ((next.skills['duration'] ?? 0) < 1) {
+  if ((next.skills['cutRetro'] ?? 0) < 1) {
     for (const id of policy.openingPath)
       next = purchase.buySkill(next, id) ?? next;
   }

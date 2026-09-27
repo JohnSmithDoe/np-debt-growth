@@ -4,7 +4,6 @@ const OWN_ICONS: readonly string[] = [
   'radius',
   'capacity',
   'cans',
-  'duration',
   'lineOfSight',
   'junior',
   'juniorSpeed',
@@ -60,11 +59,19 @@ const LINE_NODE = /^(value|spawn|income|estimates|double)[A-Z]/;
 const ROOM_ICON = 'headcount';
 const ROOM_NODE = /^(junior|senior|manager)Room$/;
 
+/** Tiered sprint nodes share their family's icon; every ceremony cut shares one. */
+const TIERED_NODE = /^(capacity|cans)\d+$/;
+const CUT_NODE = /^cut[A-Z]/;
+const CUT_ICON = 'duration';
+
 const OWN = new Set(OWN_ICONS);
 
 export function skillIconOf(nodeId: string): string | null {
   if (OWN.has(nodeId)) return nodeId;
   if (ROOM_NODE.test(nodeId)) return ROOM_ICON;
+  const family = TIERED_NODE.exec(nodeId)?.[1];
+  if (family !== undefined) return family;
+  if (CUT_NODE.test(nodeId)) return CUT_ICON;
   const kind = LINE_NODE.exec(nodeId)?.[1];
   return kind === undefined ? null : `line-${kind}`;
 }
@@ -72,6 +79,7 @@ export function skillIconOf(nodeId: string): string | null {
 export const SKILL_ICON_FILES: readonly string[] = [
   ...OWN_ICONS,
   ROOM_ICON,
+  CUT_ICON,
   ...LINE_KINDS.map((kind) => `line-${kind}`),
 ];
 

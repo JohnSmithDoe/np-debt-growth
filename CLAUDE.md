@@ -53,9 +53,9 @@ Types within a domain: `feature` → `ui`/`data`/`util`/`model`, `data` → `sce
 ### The loop: one sprint, a release train, no wall clock
 
 There is no round timer. Money and story points land **per ticket at pickup**. Closed work fills
-**one sprint** (`sprintSlots`: `capacity` ranks raise it, each `cans` rank puts another team's scope
+**one sprint** (`sprintSlots`: each rung's `capacity<t>` raises it, each `cans<t>` puts another team's scope
 on it). A full sprint leaves on the **release train** (`haulMs`, the ceremonies in `RELEASE_PHASES`
-that `duration` has not cut) and the board takes nothing until it is back (`phase: 'hauling'`) —
+that no `cut<Ceremony>` node has cut) and the board takes nothing until it is back (`phase: 'hauling'`) —
 deliberately blocking, and the release banner tells the wait. A "round" is one sprint's release. The cadence is an output of the player's throughput, not an input. Player-facing copy
 never says "truck", "can" or "WIP". The board is never wiped at once, but work nobody reaches in
 `ticketLifeMs(tier)` (12 s early, 3.5 s from ADR-6) is **closed as "won't fix"** (`expireTickets`): the debt stays, it just leaves
@@ -69,14 +69,14 @@ income that doesn't come from a close, and no offline progress.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
-row costs euros. The one exception is `signoff`, €20 T, and buying it does not end the run: it
+row costs euros. The one exception is `signoff`, €300 T, and buying it does not end the run: it
 starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: spawns ×3, billing ×12)
-and the run ends when the budget reaches €1 Qa (`economy.accepted` sets `endedAt`). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
+and the run ends when the budget reaches €20 Qa (`economy.accepted` sets `endedAt`). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
 bills**, once the €25 `velocity` row is bought, plus the per-ticket `estimates` nodes and planning-poker
 votes a ticket fell through (`voteBonus`, decided at spawn). Euro upgrades never touch SP. Don't add a euro node or an SP rail row without meaning to.
 
 Every line has the same five tree nodes (`LINE_NODES`): `value` ×2 opens `spawn` (5 × +20 %),
-`income` (5 × +50 %) and `estimates` (5 × +20 SP, lint +4); all three maxed (`SkillNode.maxed`) open
+`income` (5 × +50 %) and `estimates` (5 × +20·2^(t−1) SP, lint +4); all three maxed (`SkillNode.maxed`) open
 `double` ×2. There are no global spawn or income nodes. Every purchase is a pure step in
 `game/util/purchase.ts`; the store commits it and adds the side effects.
 

@@ -79,6 +79,8 @@ export const HAND_ONLY_RATE_PER_TIER = 0.5;
 /** Auto-closed work with no lane goes to prod as a P0; this many at once, the rest go stale. */
 export const PROD_INCIDENT_LIVE_CAP = 3;
 
+/** Tier 1's; each tier above doubles it, as `perTier` doubles its prices. */
 export const ESTIMATE_SP_PER_RANK = 20;
+export const ESTIMATE_SP_TIER_GROWTH = 2;
 /** Lint and bugs: auto-close bills every card of them, so their estimates pay less. */
 export const ESTIMATE_SP_PER_RANK_OPENING = 4;

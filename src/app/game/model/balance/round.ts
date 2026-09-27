@@ -17,7 +17,7 @@ export interface ReleasePhase {
 }
 
 /**
- * The release train, in running order. `duration` ranks cut the
+ * The release train, in running order. cut nodes (`cutRetro` …) skip the
  * ceremonies; `ship` is never cut, so the train never shrinks to nothing.
  */
 export const RELEASE_PHASES: readonly ReleasePhase[] = [

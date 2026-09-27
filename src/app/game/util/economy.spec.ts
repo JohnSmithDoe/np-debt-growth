@@ -61,13 +61,25 @@ describe('the release train', () => {
   const ids = (state: Consultancy): string[] =>
     releasePhases(state).map((phase) => phase.id);
 
-  it('runs every ceremony uncut, and each duration rank cuts one', () => {
+  it('runs every ceremony uncut, and each cut node skips one', () => {
     expect(ids(consultancy())).toEqual(RELEASE_PHASES.map((p) => p.id));
     expect(haulMs(consultancy())).toBe(HAUL_MS);
-    expect(ids(consultancy({ skills: { duration: 1 } }))).not.toContain(
+    expect(ids(consultancy({ skills: { cutRetro: 1 } }))).not.toContain(
       'retro'
     );
-    expect(ids(consultancy({ skills: { duration: 5 } }))).toEqual(['ship']);
+    expect(
+      ids(
+        consultancy({
+          skills: {
+            cutRetro: 1,
+            cutRefinement: 1,
+            cutReview: 1,
+            cutSmoke: 1,
+            cutFreeze: 1,
+          },
+        })
+      )
+    ).toEqual(['ship']);
   });
 
   it('names the ceremony a lane is in from the time it has left', () => {
@@ -408,9 +420,9 @@ describe('the can has two axes (parity #13, #14)', () => {
   });
 
   it('adds a whole swimlane per can, at the same sprint scope', () => {
-    const bare = slots({ capacity: 3 });
-    expect(slots({ capacity: 3, cans: 1 })).toBe(bare * 2);
-    expect(slots({ capacity: 3, cans: 2 })).toBe(bare * 3);
+    const bare = slots({ capacity: 2 });
+    expect(slots({ capacity: 2, cans1: 1 })).toBe(bare * 2);
+    expect(slots({ capacity: 2, cans1: 2 })).toBe(bare * 3);
   });
 
   it('adds seats by the rank', () => {

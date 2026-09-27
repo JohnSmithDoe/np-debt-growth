@@ -73,7 +73,7 @@ const MILESTONES = [
 ] as const;
 
 const UNORDERED_MILESTONES = [
-  ['faster truck', (s: Consultancy) => (s.skills['duration'] ?? 0) >= 1],
+  ['faster truck', (s: Consultancy) => (s.skills['cutRetro'] ?? 0) >= 1],
   ['golden crew', (s: Consultancy) => (s.skills['goldenCrew'] ?? 0) >= 1],
   [
     'tree opened',

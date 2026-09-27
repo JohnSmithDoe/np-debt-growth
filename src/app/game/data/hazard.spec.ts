@@ -125,7 +125,16 @@ describe('facts', () => {
   });
 
   it('re-estimates the board it lands on, and bills nothing itself', () => {
-    const store = storeWith({ tier: 3, skills: { duration: 5 } });
+    const store = storeWith({
+      tier: 3,
+      skills: {
+        cutRetro: 1,
+        cutRefinement: 1,
+        cutReview: 1,
+        cutSmoke: 1,
+        cutFreeze: 1,
+      },
+    });
 
     let at = 0;
     while (at < FACT_EVERY_MS * 6 && store.hazardNotice()?.id !== 'grooming') {
@@ -192,7 +201,16 @@ describe('the late weather', () => {
   });
 
   it('a Migration Window stops ordinary supply, and only that', () => {
-    const store = storeWith({ tier: 7, skills: { duration: 5 } });
+    const store = storeWith({
+      tier: 7,
+      skills: {
+        cutRetro: 1,
+        cutRefinement: 1,
+        cutReview: 1,
+        cutSmoke: 1,
+        cutFreeze: 1,
+      },
+    });
     const at = windTo(store, 'migration');
     store.endRoundNow(at);
     expect(store.hauling()).toBe(true);

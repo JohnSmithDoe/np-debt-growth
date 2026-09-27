@@ -251,7 +251,7 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'None approved',
   'skill.golden.1.label': 'Partner-Only Work',
   'skill.signoff.blurb':
-    'The closeout starts the acceptance push: work pours in, every ticket bills overtime, and the client signs when the budget reaches €1 Qa.',
+    'The closeout starts the acceptance push: work pours in, every ticket bills overtime, and the client signs when the budget reaches €20 Qa.',
   'skill.signoff.1.label': 'Sign the Closeout',
   'skill.golden.blurb':
     'Some work arrives flagged partner-only. It pays a fortune, and the crew will not go near it.',
@@ -297,14 +297,14 @@ export const EN: Readonly<Record<string, string>> = {
     'Everything bills better, and a committee signs it off.',
   'skill.capacity.1.label': 'Bigger Sprints',
   'skill.capacity.2.label': 'Bigger Again',
-  'skill.capacity.3.label': 'Stretch Goal',
-  'skill.capacity.4.label': 'Stretch Goals',
-  'skill.capacity.5.label': 'Aggressive Commitment',
-  'skill.capacity.6.label': 'Overcommitted',
-  'skill.capacity.7.label': 'Sprint Vibes',
-  'skill.capacity.8.label': 'Capacity Under Review',
-  'skill.capacity.9.label': 'Sprint Goal Deprecated',
-  'skill.capacity.10.label': 'What Sprint Goal',
+  'skill.capacity1.1.label': 'Stretch Goal',
+  'skill.capacity2.1.label': 'Stretch Goals',
+  'skill.capacity3.1.label': 'Aggressive Commitment',
+  'skill.capacity4.1.label': 'Overcommitted',
+  'skill.capacity5.1.label': 'Sprint Vibes',
+  'skill.capacity6.1.label': 'Capacity Under Review',
+  'skill.capacity7.1.label': 'Sprint Goal Deprecated',
+  'skill.capacity8.1.label': 'What Sprint Goal',
   'skill.capacity.blurb':
     'A sprint exists to be small. Grow it anyway: every team holds more before the train has to leave.',
   'skill.client.1.label': 'The Client',
@@ -329,13 +329,21 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.debtInterest.3.label': 'Interest on Interest',
   'skill.debtInterest.blurb':
     'A chance a ticket arrives one rung further up than it should.',
-  'skill.duration.1.label': 'Retro Moved to Slack',
-  'skill.duration.2.label': 'Refined During Standup',
-  'skill.duration.3.label': 'Reviewed by Thumbs-Up',
-  'skill.duration.4.label': 'Smoke-Tested in Prod',
-  'skill.duration.5.label': 'Friday Deploys',
-  'skill.duration.blurb':
-    'Every release train sits through the whole ceremony. Each rank cuts one; shipping to production is the one nobody cuts.',
+  'skill.cutRetro.1.label': 'Retro Moved to Slack',
+  'skill.cutRefinement.1.label': 'Refined During Standup',
+  'skill.cutReview.1.label': 'Reviewed by Thumbs-Up',
+  'skill.cutSmoke.1.label': 'Smoke-Tested in Prod',
+  'skill.cutFreeze.1.label': 'Friday Deploys',
+  'skill.cutRetro.blurb':
+    'The retro happens in a Slack thread nobody opens. The release train skips it.',
+  'skill.cutRefinement.blurb':
+    'Tickets are refined in the standup, by whoever talks first. The release train skips refinement.',
+  'skill.cutReview.blurb':
+    'The sprint review is a thumbs-up emoji. The release train skips it.',
+  'skill.cutSmoke.blurb':
+    'Production is the smoke test. The release train skips the one before it.',
+  'skill.cutFreeze.blurb':
+    'No code freeze, not even on Fridays. The train keeps only the shipping, and nobody cuts that.',
   'skill.escalation.1.label': 'Emergency Rates',
   'skill.escalation.2.label': 'Bus Factor',
   'skill.escalation.3.label': 'Dual Running',
@@ -550,15 +558,15 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.adr':
     'Approves ADR-{{adr}}: opens its line and the work it leaves',
   'skill.adrs.1.label': 'Architecture Decisions',
-  'skill.cans.1.label': 'Platform Team',
-  'skill.cans.2.label': 'Growth Team',
-  'skill.cans.3.label': 'Tiger Team',
-  'skill.cans.4.label': 'Tiger Team 2',
-  'skill.cans.5.label': 'Tiger Team (New)',
-  'skill.cans.6.label': 'Enablement Squad',
-  'skill.cans.7.label': 'Task Force',
-  'skill.cans.8.label': 'Task Force (Final)',
-  'skill.cans.9.label': 'Task Force (Final) 2',
+  'skill.cans1.1.label': 'Platform Team',
+  'skill.cans1.2.label': 'Growth Team',
+  'skill.cans2.1.label': 'Tiger Team',
+  'skill.cans3.1.label': 'Tiger Team 2',
+  'skill.cans4.1.label': 'Tiger Team (New)',
+  'skill.cans5.1.label': 'Enablement Squad',
+  'skill.cans6.1.label': 'Task Force',
+  'skill.cans7.1.label': 'Task Force (Final)',
+  'skill.cans8.1.label': 'Task Force (Final) 2',
   'skill.cans.blurb':
     "Put another team on the sprint. It holds a whole team's scope more before the train has to leave.",
   'skill.juniorRoom.1.label': 'Bullpen',
@@ -823,7 +831,7 @@ export const EN: Readonly<Record<string, string>> = {
   'help.loop.4':
     'Story points buy the skill tree. Approve ADRs there to open new lines of ever dearer debt. Drag to pan, wheel to zoom, hover a square to read it; a black box says only that something is there.',
   'help.loop.5':
-    'Last on the tree, Sign the Closeout starts the acceptance push. The engagement is done when the budget reaches €1 Qa.',
+    'Last on the tree, Sign the Closeout starts the acceptance push. The engagement is done when the budget reaches €20 Qa.',
   'award.m-first-close.label': 'First ticket triaged',
   'award.m-first-close.blurb': 'Somebody had to.',
   'award.m-first-invoice.label': 'First invoice raised',
