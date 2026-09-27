@@ -18,6 +18,7 @@ import type { DebtTier } from '../../../game/model/tier.model';
 import {
   ADR_PARTS,
   adrPartKey,
+  epicNameKey,
   tierAt,
   tierNameKey,
 } from '../../../game/model/tier.model';
@@ -36,6 +37,7 @@ import { adrPrice } from '../../../game/model/skill.model';
 
 interface AdrData {
   readonly tier: DebtTier;
+  readonly epic: string;
   readonly parts: readonly {
     readonly heading: string;
     readonly body: string;
@@ -94,6 +96,7 @@ export class AdrModalComponent {
     const approval = signed ? approvalAt(tier) : undefined;
     return {
       tier: debtTier,
+      epic: epicNameKey(tier),
       parts: ADR_PARTS.map((part) => ({
         heading: `adr.${part}`,
         body: adrPartKey(tier, part),

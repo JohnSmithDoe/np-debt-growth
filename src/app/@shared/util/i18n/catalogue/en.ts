@@ -945,6 +945,7 @@ export const EN: Readonly<Record<string, string>> = {
   'approval.role.interim': 'Interim Head of Delivery',
   'approval.role.quorum-two': 'quorum of two',
   'approval.role.quorum-none': 'quorum not recorded',
+  'adr.epic': 'Epic',
   'adr.subheading': 'Architecture Decision Record',
   'adr.acknowledge': 'Acknowledge',
   'adr.refinement': 'In refinement',

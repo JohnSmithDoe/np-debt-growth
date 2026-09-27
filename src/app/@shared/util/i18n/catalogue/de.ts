@@ -964,6 +964,7 @@ export const DE: Readonly<Record<string, string>> = {
   'approval.role.interim': 'Interimsleitung Delivery',
   'approval.role.quorum-two': 'beschlussfähig mit zwei Stimmen',
   'approval.role.quorum-none': 'Beschlussfähigkeit nicht protokolliert',
+  'adr.epic': 'Epic',
   'adr.subheading': 'Architecture Decision Record',
   'adr.acknowledge': 'Zur Kenntnis genommen',
   'adr.refinement': 'Im Refinement',

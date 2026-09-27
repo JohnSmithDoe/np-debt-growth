@@ -34,22 +34,28 @@
         }}</span>
       }
 
-      @if (adr.signed) {
-        <img class="plate" [src]="adr.art" alt="" aria-hidden="true" />
-      } @else {
-        <button
-          type="button"
-          class="sign"
-          [disabled]="!adr.affordable"
-          (click)="approve()"
-        >
+      <div class="poster">
+        @if (adr.signed) {
           <img class="plate" [src]="adr.art" alt="" aria-hidden="true" />
-          <span class="seal">
-            <span class="verb">{{ 'adr.approve' | translate }}</span>
-            <span class="cost">{{ adr.cost }}</span>
-          </span>
-        </button>
-      }
+        } @else {
+          <button
+            type="button"
+            class="sign"
+            [disabled]="!adr.affordable"
+            (click)="approve()"
+          >
+            <img class="plate" [src]="adr.art" alt="" aria-hidden="true" />
+            <span class="seal">
+              <span class="verb">{{ 'adr.approve' | translate }}</span>
+              <span class="cost">{{ adr.cost }}</span>
+            </span>
+          </button>
+        }
+        <p class="epic">
+          <span class="kicker">{{ 'adr.epic' | translate }}</span>
+          <span class="title">{{ adr.epic | translate }}</span>
+        </p>
+      </div>
 
       <section class="doc-sections">
         @for (part of adr.parts; track part.heading) {
