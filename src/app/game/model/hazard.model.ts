@@ -33,12 +33,7 @@ export interface Hazard {
   readonly weather?: Partial<Weather>;
 }
 
-/**
- * Stashed for now, not deleted: the rework has no weather in it, and the
- * reference has none either. Flip this back on when hazards get their own
- * pass — the rows, the `Partial<Weather>` patch and the specs all still work.
- */
-export const HAZARDS_ENABLED = false;
+export const HAZARDS_ENABLED = true;
 
 export const HAZARDS: readonly Hazard[] = [
   {
@@ -80,22 +75,24 @@ export const HAZARDS: readonly Hazard[] = [
     id: 'storm',
     kind: 'fact',
     fromTier: 3,
-    durationMs: 30_000,
-    weather: { incidentRate: 100 },
+    durationMs: 15_000,
+    weather: { incidentRate: 20 },
   },
-  { id: 'grooming', kind: 'fact', fromTier: 3, durationMs: 0 },
+  /** Lands by re-estimating every card on the board; the window is for sweeping it. */
+  { id: 'grooming', kind: 'fact', fromTier: 3, durationMs: 8_000 },
   {
     id: 'page',
     kind: 'fact',
     fromTier: 6,
     durationMs: 12_000,
-    weather: { incidentRate: 25, meeting: true },
+    weather: { incidentRate: 10, meeting: true },
   },
+  /** No new work, and every train comes home as it lands: a quiet board to clear. */
   {
     id: 'migration',
     kind: 'fact',
     fromTier: 7,
-    durationMs: 15_000,
+    durationMs: 10_000,
     weather: { supply: 0 },
   },
 ];

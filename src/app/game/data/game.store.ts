@@ -63,6 +63,7 @@ import {
   ESCALATION_HOLD_MS,
   FACT_COUNTDOWN_MS,
   FACT_EVERY_MS,
+  FACT_OFFSET_MS,
   HOTFIX_MS,
   HOTFIX_MULTIPLIER,
   INVITATION_EVERY_MS,
@@ -134,28 +135,44 @@ interface LiveHazard {
 
 type HazardKindOf = Hazard['kind'];
 
+/** Hazards land on a fixed grid of run time, `offset` into every `every`. */
 interface Cadence {
   readonly every: number;
   readonly needs: number;
+  readonly offset: number;
   due: number;
   seq: number;
 }
 
+/** The first beat after `afterMs`. */
+function nextBeat(cadence: Cadence, afterMs: number): number {
+  const beats = Math.floor((afterMs - cadence.offset) / cadence.every) + 1;
+  return cadence.offset + beats * cadence.every;
+}
+
+/** A kind that just became eligible waits at least half a cadence. */
+function armed(cadence: Cadence, runMs: number): number {
+  return nextBeat(cadence, runMs + cadence.every / 2);
+}
+
 function freshCadence(runMs: number): Record<HazardKindOf, Cadence> {
-  return {
-    invitation: {
-      every: INVITATION_EVERY_MS,
-      needs: INVITATION_WINDOW_MS,
-      due: runMs + INVITATION_EVERY_MS,
-      seq: 0,
-    },
-    fact: {
-      every: FACT_EVERY_MS,
-      needs: FACT_COUNTDOWN_MS,
-      due: runMs + FACT_EVERY_MS,
-      seq: 0,
-    },
+  const invitation: Cadence = {
+    every: INVITATION_EVERY_MS,
+    needs: INVITATION_WINDOW_MS,
+    offset: 0,
+    due: 0,
+    seq: 0,
   };
+  const fact: Cadence = {
+    every: FACT_EVERY_MS,
+    needs: FACT_COUNTDOWN_MS,
+    offset: FACT_OFFSET_MS,
+    due: 0,
+    seq: 0,
+  };
+  invitation.due = armed(invitation, runMs);
+  fact.due = armed(fact, runMs);
+  return { invitation, fact };
 }
 
 interface Reached {
@@ -728,7 +745,7 @@ export class GameStore {
       : [];
 
     if (eligible.length === 0) {
-      cadence.due = runMs + cadence.every;
+      cadence.due = armed(cadence, runMs);
       return;
     }
     if (runMs < cadence.due) return;
@@ -737,7 +754,7 @@ export class GameStore {
     if (!row || !this.#place(row, runMs, state)) return;
 
     cadence.seq += 1;
-    cadence.due = runMs + cadence.every;
+    cadence.due = nextBeat(cadence, runMs);
   }
 
   #place(row: Hazard, runMs: number, state: Consultancy): boolean {
@@ -792,6 +809,7 @@ export class GameStore {
     if (live.id === 'grooming') {
       this.#groom();
     } else {
+      if (live.id === 'migration') this.startRound(now);
       this.#write({
         kind: 'note',
         note: 'hazard-landed',
@@ -800,19 +818,25 @@ export class GameStore {
       });
     }
     this.#sky.set(this.#weatherNow());
-    void now;
   }
 
+  /** Every value card on the board is re-estimated, as if a vote had crossed it. */
   #groom(): void {
-    const doomed = this.#board.tickets.filter(
-      (ticket) => TICKET_TYPES[ticket.type].effect === 'value'
-    );
-    for (const ticket of doomed) removeTicket(this.#board, ticket);
+    const bonus = economy.voteBonusPerCrossing(this.#state());
+    let groomed = 0;
+    for (const ticket of this.#board.tickets) {
+      if (TICKET_TYPES[ticket.type].effect !== 'value') continue;
+      if (TICKET_TYPES[ticket.type].handOnly || ticket.spBonus >= bonus) {
+        continue;
+      }
+      ticket.spBonus = bonus;
+      groomed += 1;
+    }
     this.#write({
       kind: 'note',
       note: 'hazard-groomed',
       hazard: 'grooming',
-      count: doomed.length,
+      count: groomed,
     });
   }
 

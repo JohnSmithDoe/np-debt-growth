@@ -192,6 +192,7 @@ export class BoardScene extends CbScene {
   #onBoard = false;
 
   #banner?: Phaser.GameObjects.Text;
+  #groomed = false;
   #warning = '';
 
   #slotFrom = 0;
@@ -370,7 +371,7 @@ export class BoardScene extends CbScene {
     parts.bubbles.update(step);
     parts.flyers.update(step);
     parts.strip.update();
-    this.#weather();
+    this.#weather(parts);
     this.#buffs(parts, step);
     this.#bill(parts);
     this.#floatCloses();
@@ -498,8 +499,11 @@ export class BoardScene extends CbScene {
     }
     parts.heap.preTint(this.#preTints);
   }
+    const groomed = notice?.id === 'grooming' && notice.landed;
+    if (groomed && !this.#groomed) parts.heap.redraw();
+    this.#groomed = groomed;
 
-  #weather(): void {
+  #weather(parts: BoardParts): void {
     const notice = this.deps.hazardNotice();
     const banner = this.#banner;
     if (!banner) return;

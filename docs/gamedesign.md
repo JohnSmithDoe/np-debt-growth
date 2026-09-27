@@ -14,11 +14,12 @@ in §11; they go in as they are.
    ADR opens a line whose tickets are worth ×10 the last.
 2. **Tickets don't wait.** Unreached work is closed as "won't fix" after 3.5 s, or sooner when a
    full board pushes it out for newer work.
-3. **You and the crew pick them up.** Every pickup pays its value in €, and SP once the €25
-   `velocity` row is bought.
+3. **You and the crew pick them up**, and with Triage Policy lint and bugs close themselves.
+   Every pickup pays its value in €, and SP once the €25 `velocity` row is bought.
 4. **Lanes cap the pace.** A full lane ships and is locked for the release train.
 5. **€ buys supply, SP buys the tree.** The rail sells heads, rate rows and crew; the tree
-   sells everything else, the ADRs included. `signoff` ends the run.
+   sells everything else, the ADRs included. `signoff` starts the acceptance push; the run
+   ends at €1 Qa.
 6. **Income = collected tickets/s × their worth**, where collected is the least of what the
    lines throw, what the hand and crew reach, and what the lanes take. `util/sim.ts` computes
    exactly this without a board (§9).
@@ -63,10 +64,19 @@ which spends no time in the tree.
    won't fix (`displaceOldest`). Every arrival lands, so the field's mix always matches what was
    bought; buying more only makes work turn over faster. Golden cards go only once no ordinary
    card is left; claimed and hand-only cards are never pushed out.
-4. **Collect.** The player's cursor sweeps a radius (everything under it, once a frame) and the
-   crew walk to cards. **Money and SP land per ticket, at pickup.** A taken card hops into its
+4. **Collect.** The player's cursor sweeps a ring and takes every card whose box it touches
+   (`pickTouching`, box overlap against `CARD_HIT` / `RARE_HIT` in `model/geometry.ts`, once a
+   frame); the ring starts at `CLICK_RADIUS_BASE` 6 board units, about 5 screen px. The crew walk
+   to cards. **Money and SP land per ticket, at pickup.** A taken card hops into its
    lane on two parabolas meeting at the apex (`HARVEST_MS` 1 600, `HARVEST_HOP` 150).
-5. **Lanes and release trains.** Closed work is dealt round-robin into **swimlanes**
+5. **Auto-close.** A type `triagePolicy` names (`{ kind: 'autoClose' }`: lint at rank 1, bugs at
+   rank 2) is claimed by no crew. When such a card's life runs out it closes itself instead of
+   going stale (`expireTickets` hands it to the store), fills a lane slot and bills like any
+   close, SP included, credited to the crew's share. Its card tints green over its life on the
+   GPU (`AUTO_CLOSE_RAMP`). If no lane has room it **goes to prod**: it becomes an `incident`,
+   at most `PROD_INCIDENT_LIVE_CAP` 3 live at once (the rest go stale), counted in
+   `lifetimeProdIncidents`; the first earns _Works on my machine_.
+6. **Lanes and release trains.** Closed work is dealt round-robin into **swimlanes**
    (`economy.fillLanes`), skipping lanes that are away. A full lane ships on its own release
    train for `haulMs` and takes nothing until it is back; the rest keep taking. Collection is
    refused only when every lane is away or full (`phase: 'hauling'`); refused cards bounce where
@@ -101,7 +111,8 @@ Player-facing copy never says "truck" or "can": lanes, sprint scope, release tra
 plus:
 
 - the line's `estimates<Ticket>` node, `ESTIMATE_SP_PER_RANK` 20 SP a rank, 5 ranks (the
-  reference pays +2; raised for the 30-minute run);
+  reference pays +2); lint's pays `ESTIMATE_SP_PER_RANK_OPENING` 4, since auto-close bills every
+  lint card;
 - ×`CREW_SP_MULT` 2 on crew closes with `timesheets`;
 - `voteBonus`: SP for every live planning-poker vote the ticket fell through, decided at spawn
   (§6).
@@ -117,18 +128,18 @@ Value nodes and rate rows lift euros only. Awards (`model/award.model.ts`) pay n
 
 ### The value ladder, one rung per ADR
 
-| Type       | €           | Rate/s a head | Tier | Line  |                                        |
-| ---------- | ----------- | ------------- | ---- | ----- | -------------------------------------- |
-| `lint`     | 1           | 0.25          | 0    | ADR-0 | the whole opening                      |
-| `bug`      | 4           | 0.08          | 0    | ADR-0 | held back until ADR-1 (`revealAtTier`) |
-| `legacy`   | 10          | 0.25          | 1    | ADR-1 |                                        |
-| `flaky`    | 100         | 0.25          | 2    | ADR-2 | respawns                               |
-| `conflict` | 1 000       | 0.25          | 3    | ADR-3 |                                        |
-| `slop`     | 10 000      | 0.25          | 4    | ADR-4 |                                        |
-| `rockstar` | 100 000     | 0.25          | 5    | ADR-5 |                                        |
-| `zombie`   | 1 000 000   | 0.25          | 6    | ADR-6 | respawns                               |
-| `rewrite`  | 10 000 000  | 0.25          | 7    | ADR-7 |                                        |
-| `swarm`    | 100 000 000 | 0.25          | 8    | ADR-8 |                                        |
+| Type       | €           | Rate/s a head | Tier | Line  |                              |
+| ---------- | ----------- | ------------- | ---- | ----- | ---------------------------- |
+| `lint`     | 1           | 0.25          | 0    | ADR-0 | the whole opening            |
+| `bug`      | 4           | 0.08          | 0    | ADR-0 | shares the opening with lint |
+| `legacy`   | 10          | 0.25          | 1    | ADR-1 |                              |
+| `flaky`    | 100         | 0.25          | 2    | ADR-2 | respawns                     |
+| `conflict` | 1 000       | 0.25          | 3    | ADR-3 |                              |
+| `slop`     | 10 000      | 0.25          | 4    | ADR-4 |                              |
+| `rockstar` | 100 000     | 0.25          | 5    | ADR-5 |                              |
+| `zombie`   | 1 000 000   | 0.25          | 6    | ADR-6 | respawns                     |
+| `rewrite`  | 10 000 000  | 0.25          | 7    | ADR-7 |                              |
+| `swarm`    | 100 000 000 | 0.25          | 8    | ADR-8 |                              |
 
 Value ×10 a tier, one throw rate: the rule read off the two measured tiers. `respawns` doubles
 the effective close rate. `RETYPE_LADDER` (value types by tier) is what `ladderUp` walks for debt
@@ -136,8 +147,9 @@ interest and manager relabels.
 
 ### Hand-only cards
 
-No purchase makes these arrive faster (`economy.spec.ts`). They never expire and are never
-displaced.
+No purchase makes these arrive faster (`economy.spec.ts`), but the run does: each ADR approved
+adds `HAND_ONLY_RATE_PER_TIER` +50 % to their rate (×5 at ADR-8), so the hand's targets grow
+with the run. They never expire and are never displaced.
 
 | Type         | Rate/s | Effect                                                                   |
 | ------------ | ------ | ------------------------------------------------------------------------ |
@@ -146,7 +158,7 @@ displaced.
 | `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                     |
 | `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2)            |
 | `pizza`      | —      | The pizza-party voucher (§5), from the `pizza` node                      |
-| `invite`     | —      | Hazard invitation; unused while weather is off (§8)                      |
+| `invite`     | —      | Hazard invitation (§8): sweep it to decline the meeting                  |
 
 The opening's reveal order is ticket data: a row's `revealAtMs` / `revealAtTier` holds it back,
 and `util/first-act.ts` places the first card on its beat.
@@ -193,9 +205,9 @@ mult }` and `{ kind: 'batch', crew, add, closeMult? }`. Senior traits use the sa
   sweeping it makes crew inside `PIZZA_RADIUS` 240 work ×`PIZZA_RUSH` 5 for `PIZZA_MS` 12 s. The
   reference's Chad.
 
-The crew are the only automation and the only kinds are juniors, seniors and managers.
-Hand-only cards are the player's alone. The auto-close pipeline, offshore contractors and the
-Promotion Round are gone (see _Parked_ in `next-steps.md`).
+The crew and Triage Policy's auto-close (§2) are the only automation; the only crew kinds are
+juniors, seniors and managers. Hand-only cards are the player's alone. The CI auto-close
+pipeline, offshore contractors and the Promotion Round are gone (see _Parked_ in `next-steps.md`).
 
 ---
 
@@ -288,8 +300,8 @@ final. Nodes with more than five ranks draw their pips in rows of five.
 `line-<kind>.png` (`stage/model/skill-icon.model.ts`). The files are generated from
 `tools/art-batch.mjs` rows of the same names; `spare-*.png` are generated but unused.
 
-**Planning poker** (`coaches` 600 → 1 950 000, `deck` 900 → 2 400 000, 10 ranks each, from
-ADR-2): coaches on the lane edge hold
+**Planning poker** (`coaches` 600 → 11.8 M, `deck` 900 → 17.7 M, 10 ranks each, ×3 a rank, from
+ADR-2, so a board turned purple is a late sight): coaches on the lane edge hold
 votes live for `VOTE_ON_MS` 1.4 s of every `VOTE_CYCLE_MS` 4 s, offset from each other. A
 non-golden ticket that lands below a live vote's beam gains `VOTE_BONUS_BASE` 45 SP + 15 a `deck` rank (the reference pays 30).
 The beams sit in board units (`VOTE_BEAMS`, `voteBeamY`), so a ticket landing above one is passed over;
@@ -317,10 +329,12 @@ ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR modal's approve butto
 | 7   | 1 400 000 | `rewrite`  | ours                   |
 | 8   | 1 600 000 | `swarm`    | ours                   |
 
-**`signoff`** (€100 T, off ADR-8) is `FINAL_SKILL_ID`: buying it sets `endedAt` and ends the
-run. No prestige. It is the tree's only euro node: SP income plateaus near 1.5 M/min from ADR-3,
-while euros keep compounding until the rail is bought out (~32 T/min), so the final is a harvest —
-about 7 minutes of it after ADR-8.
+**`signoff`** (€20 T, off ADR-8) is `FINAL_SKILL_ID` and the tree's only euro node. Buying it
+starts the **acceptance push** (`ACCEPTANCE` in `balance/progression.ts`, `economy.inAcceptance`):
+spawns run ×3, everything bills ×12 overtime (in `globalMultiplier`), and a pink banner on the
+board counts the budget up to €1 Qa. Reaching it sets `endedAt` (`economy.accepted`, checked each
+store step and in the autoplayer) and the post-mortem opens. No prestige. About four minutes
+after ADR-8 to sign-off, three for the push.
 
 Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buySpawner`,
 `buyIncome`); `GameStore` commits the result and handles the side effects.
@@ -333,7 +347,7 @@ Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buy
 ticketValue = (type.value + rate-row bonus)
             × per-line value / income / double nodes
             × tier (incident only)
-            × global (secret, assurance, o6)
+            × global (secret, assurance, o6; ×12 during acceptance)
             × hotfix ×2 (inside the window)
 
 closeValue  = ticketValue × escalation ×5 (inside the window) × golden multiplier (if golden)
@@ -343,12 +357,27 @@ Paid at pickup. There is no invoice; nothing past lane capacity is ever priced.
 
 ---
 
-## 8. Weather — stashed
+## 8. Weather
 
-`HAZARDS_ENABLED = false` (`model/hazard.model.ts`). Ten rows, each a `Partial<Weather>` patch
-(`meeting`, `incidentRate`, `slots`, `supply`), arriving as declinable invitations
-(`INVITATION_EVERY_MS` 120 s) and undeclinable facts (`FACT_EVERY_MS` 120 s). Rows and specs are
-intact; nothing drives them. `CREW_EURO_WINDOW_FLOOR` in `balance.spec.ts` reads the flag.
+`HAZARDS` (`model/hazard.model.ts`), each row a `Partial<Weather>` patch (`meeting`,
+`incidentRate`, `slots`, `supply`). Two cadences, both `…_EVERY_MS` 120 s, with facts
+`FACT_OFFSET_MS` 60 s behind invitations so they never land together (`balance/weather.ts`).
+
+- **Invitations** (from tier 1): an `invite` card lands; sweep it within `INVITATION_WINDOW_MS`
+  4 s to decline, or the crew go to a meeting (all-hands 10 s, compliance 6 s, retro 8 s, reorg
+  10 s). An Account Manager declines them all for you.
+- **Facts** (announced `FACT_COUNTDOWN_MS` 5 s ahead on the board's banner):
+  - `freeze` (tier 3): sprint scope ×0.5 for 25 s. Trains leave twice as often, which feeds
+    the prod-incident trick.
+  - `storm` (tier 3): incidents ×20 for 15 s.
+  - `grooming` (tier 3): every value card on the board is re-estimated (`spBonus` = one vote's
+    bonus) and turns purple; the 8 s window is for sweeping it.
+  - `page` (tier 6): incidents ×10 and the crew in a meeting for 12 s: the P0s are the hand's.
+  - `migration` (tier 7): no new work for 10 s, and every train comes home as it lands, so the
+    player clears a quiet board.
+
+The sim prices no weather; `balance.spec.ts` holds the crew's share over
+`CREW_EURO_WINDOW_FLOOR` 5 % with it on.
 
 ---
 
@@ -364,11 +393,13 @@ game uses:
   (≈ `MEAN_WALK`), or the nearest of four sampled cards with `nearest`, and by how full a
   senior's sweep batch can get at that density.
 - **Hand** takes one aimed card per sweep (gold first, then the dearest) plus a proportional mix
-  of whatever other cards lie in the mouse radius, counted on the heap grid (`cellsInReach`):
-  a radius narrower than a column reaches only its own column. Crew sweep batches count the same way.
+  of whatever other cards the ring touches, counted on the heap grid by box overlap
+  (`cellsTouched`). Crew sweep batches count centres within their radius (`cellsInReach`).
+- **Auto-close** takes whatever of an auto-closed type the hand left.
 - All of it clamped by `ceilingPerSec`; € and SP priced as at pickup.
 
-Not counted: hotfix, escalation, quarter bills, pizza and manager relabels. `data/sim.spec.ts`
+Not counted: hotfix, escalation, quarter bills, pizza, manager relabels, prod incidents and
+weather. `data/sim.spec.ts`
 plays the same states on a real board and holds the sim within ×1.5 (it runs 1.07–1.38× high;
 late euros ride on a few gold tickets, so one seeded run is noisy).
 Only the 476 field cells are sweepable; the rest of the 600 stack in overflow rows above the
@@ -411,7 +442,8 @@ paperclip (`console/feature/agent/`, on by default, switchable in settings) show
 - `data/balance-invariants.spec.ts` guards the **shape**: monotone ladders, tiers numbered by
   position, every rung on the tree and chained, no dominated retype rung.
 - `data/balance.spec.ts` guards the **pacing** on the advised autoplayer (`advisedSpend`):
-  sign-off in 25–45 min, the last five ADR gaps over two minutes, and the crew's share — at least 5 %
+  the run accepted in 25–45 min, the acceptance push 2–5 min, the last five ADR gaps and
+  ADR-8 → sign-off over two minutes, and the crew's share — at least 5 %
   of the closes before `goldenCrew`, judged from three minutes after the first junior (the hand's
   gold outweighs their euros until then, as in the reference), and 4 % of the euros after it. Run with the
   reports:
@@ -425,18 +457,12 @@ paperclip (`console/feature/agent/`, on by default, switchable in settings) show
 
 - `data/sim.spec.ts` guards the **sim** against a real board.
 
-**Measured run** (27 Sep 2026, advised autoplayer, 3.5 s card life, awards paying no SP):
+**Measured run** (27 Sep 2026, advised autoplayer, auto-close, box-overlap ring, poker ×3 a rank):
 
 ```
-first junior 3.9    ADR-1 2.9    ADR-2 5.3    ADR-3 9.3    ADR-4 11.0
-ADR-5 13.1   ADR-6 17.9   ADR-7 21.1   ADR-8 25.0   signed off 35.0   ~3.7 M SP of tree unbought
-golden crew 26.9 · crew: 12–65 % of closes, 2–25 % of euros before golden crew, 24–32 % after
+ADR-1 3.9    ADR-2 7.2    ADR-3 9.8    ADR-4 10.8   ADR-5 13.6   ADR-6 16.7
+ADR-7 19.7   ADR-8 24.0   signed off 28.3   accepted 31.6
 ```
-
-Cheapest-first signs off at 45.9 and buys the tree out.
-
-The advisor on the same sim, 1 sweep/s: ADR-2 4.5 · ADR-3 6.9 · ADR-8 21.9 · signed off 31.8, tree
-not bought out.
 
 ### Load-bearing, do not undo
 
@@ -463,7 +489,7 @@ These are accepted as real and go in as they are.
 | Paper income row                        | `floor(250 × 1.65^k)`, +3 flat a rank, 10 ranks, multipliers applied after                      | `INCOME_ROWS` tier 0                                            |
 | Dog income row                          | `floor(1 250 × 1.65^k)`, +4 a rank                                                              | `INCOME_ROWS` tier 1                                            |
 | Paper ×2                                | 25 gum, then 2 500                                                                              | `valueLint`, `doubleLint`                                       |
-| Paper +2 gum                            | 75 → 112 (×1.5), 5 ranks                                                                        | `estimatesLint`, +4 (deliberate)                                |
+| Paper +2 gum                            | 75 → 112 (×1.5), 5 ranks                                                                        | `estimatesLint`, +4                                             |
 | +50 % paper income                      | 1 100 → 1 375                                                                                   | `incomeLint`                                                    |
 | 20 % chance to throw 2 papers           | 2 200 gum                                                                                       | `spawnLint` rank 1                                              |
 | Radius +25 %                            | 100 gum                                                                                         | `radius`                                                        |
@@ -480,7 +506,7 @@ These are accepted as real and go in as they are.
 | Litter lifetime                         | ~15 s                                                                                           | `TICKET_LIFE_MS` 3.5 s (ours)                                   |
 | Opening throw                           | ~1 item per 4 s from one person                                                                 | `lint` 0.25/s                                                   |
 | Golden rat                              | late; takes golden, turns 5 % golden                                                            | `goldenCrew`                                                    |
-| Run length                              | demo ~30 min to the gorilla; full game 57–70 min                                                | gorilla 16.5, sign-off 31.1 (target 30)                         |
+| Run length                              | demo ~30 min to the gorilla; full game 57–70 min                                                | gorilla 9.8, accepted 31.6 (target 30)                          |
 
 Only rank 1 of each line's throw-two and +50 % nodes is measured; ranks 2–5, the second ×2 above
 paper, and every tier above the dog are extrapolated (value ×10 a tier, € prices ×5, SP prices

@@ -63,19 +63,22 @@ never says "truck", "can" or "WIP". The board is never wiped at once, but work n
 the board. At `BOARD_CAPACITY` a full board **displaces** — each arrival pushes out the unclaimed
 card nearest expiry (`displaceOldest`) — so the field's mix always matches what was bought. Never
 make it refuse arrivals instead: spawns run cheapest type first, so refusing starves the late
-lines. The hand and the crew are the only collectors; there is no income that doesn't come from
-a pickup, and no offline progress.
+lines. The hand and the crew collect, plus Triage Policy's **auto-close**: a type it names
+(lint, then bugs) is claimed by no crew and closes itself when its life runs out, filling a lane
+like any close; with every train away it goes to prod as a P0 (three live at most). There is no
+income that doesn't come from a close, and no offline progress.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
-row costs euros. The one exception is `signoff`, €100 T: SP plateaus from ADR-3 while euros keep
-compounding, so the final is a euro harvest with the tree bought out. SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
-bills**, once the €25 `velocity` row is bought, plus the per-ticket `+2` nodes and planning-poker
+row costs euros. The one exception is `signoff`, €20 T, and buying it does not end the run: it
+starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: spawns ×3, billing ×12)
+and the run ends when the budget reaches €1 Qa (`economy.accepted` sets `endedAt`). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
+bills**, once the €25 `velocity` row is bought, plus the per-ticket `estimates` nodes and planning-poker
 votes a ticket fell through (`voteBonus`, decided at spawn). Euro upgrades never touch SP, as the
 reference's gum works. Don't add a euro node or an SP rail row without meaning to.
 
 Every line has the same five tree nodes (`LINE_NODES`): `value` ×2 opens `spawn` (5 × +20 %),
-`income` (5 × +50 %) and `estimates` (5 × +2 SP); all three maxed (`SkillNode.maxed`) open
+`income` (5 × +50 %) and `estimates` (5 × +20 SP, lint +4); all three maxed (`SkillNode.maxed`) open
 `double` ×2. There are no global spawn or income nodes. Every purchase is a pure step in
 `game/util/purchase.ts`; the store commits it and adds the side effects.
 
@@ -125,7 +128,7 @@ One thing in the restore looks like a bug and is not:
 
 Two bundled catalogues (`@shared/util/i18n/catalogue/{en,de}.ts`), lazily imported, no HTTP. Specs
 enforce that both carry identical keys, that no value is empty, and — in
-`game/util/catalogue-reach.spec.ts` — that every key a model *builds* (skills, tickets, tiers, kit,
+`game/util/catalogue-reach.spec.ts` — that every key a model _builds_ (skills, tickets, tiers, kit,
 office, traits, hazards) exists in both. Add a game entity and that spec tells you which strings you
 still owe.
 
@@ -143,7 +146,7 @@ its `titleKey`, never text. Changing a pool's length means changing `TICKET_TITL
 
 ## Legal obligations that live in code
 
-The crew atlas is GPL-3.0, so the game is AGPL-3.0. Two duties are owed to whoever *runs* a build:
+The crew atlas is GPL-3.0, so the game is AGPL-3.0. Two duties are owed to whoever _runs_ a build:
 AGPL §13 (offer the source from inside the app) and the atlas attribution. Both are discharged by
 the title-screen footer — `console/ui/credits/`, facts from `console/model/credit.model.ts`,
 licence texts copied into `assets/legal/` by `angular.json`. `credit.model.spec.ts` fails if a link
@@ -165,11 +168,11 @@ block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored 
 
 ## The docs, and what each is for
 
-| File | What it is |
-|---|---|
+| File                 | What it is                                                                                                                                                                                                |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `docs/gamedesign.md` | The design **as the code has it** — loop, currencies, crew, progression, where every knob lives, the current measured run, and the reference's measured numbers (§11). Read this before touching balance. |
-| `docs/upgrades.md` | Every tree node and rail row: cost, ranks, effect, and where two purchases overlap. |
-| `docs/next-steps.md` | What is open, ranked, including the stage-performance leads and the traps that cost this project time. |
+| `docs/upgrades.md`   | Every tree node and rail row: cost, ranks, effect, and where two purchases overlap.                                                                                                                       |
+| `docs/next-steps.md` | What is open, ranked, including the stage-performance leads and the traps that cost this project time.                                                                                                    |
 
 Docs describe the current state only — no history; git has that.
 
@@ -181,15 +184,15 @@ about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.5 of a real 
 change how the board collects, change the sim with it.
 
 `game/data/balance.spec.ts` runs the autoplayer on the Synergy Analyser's advice (`advisedSpend`)
-and **fails** if it does not reach sign-off in 25–45 minutes (target 30) or space the last five ADR
-rungs more than two minutes apart; a second, cheapest-first run must walk every track and buy the
+and **fails** if the run is not accepted in 25–45 minutes (target 30, the acceptance push 2–5 of
+them) or the last five ADR rungs and sign-off are not spaced more than two minutes apart; a second, cheapest-first run must walk every track and buy the
 tree out. After any economy change, re-run it with the reports on:
 
 ```bash
 CB_CLOCK=1 CB_LADDER=1 CB_SHARE=1 CB_INCOME=1 pnpm vitest run src/app/game/data/balance.spec.ts
 ```
 
-`game/data/balance-invariants.spec.ts` guards the *shape* of the tables rather than their values.
+`game/data/balance-invariants.spec.ts` guards the _shape_ of the tables rather than their values.
 
 ## Verify by playing it
 

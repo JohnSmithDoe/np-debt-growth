@@ -132,6 +132,11 @@ export class TicketHeap {
     for (const ticket of this.#drawn.values()) this.#draw(ticket);
   }
 
+  /** Repaints every card, for when the game changed them in place. */
+  redraw(): void {
+    for (const ticket of this.#drawn.values()) this.#draw(ticket);
+  }
+
   px(x: number): number {
     return this.#offX + x * this.#scaleX;
   }

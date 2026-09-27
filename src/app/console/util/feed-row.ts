@@ -134,10 +134,10 @@ export function feedRow(line: FeedLine, escalation: number): FeedRow {
           };
         case 'hazard-groomed':
           return {
-            kind: 'alert',
+            kind: 'note',
             seq: line.seq,
-            mark: '⚠',
-            text: `${line.count} items closed as Won't Fix. Nothing was billed`,
+            mark: '✦',
+            text: `${line.count} items re-estimated. Sweep them while the points stand`,
           };
       }
   }

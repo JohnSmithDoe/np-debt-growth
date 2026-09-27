@@ -15,16 +15,16 @@ catalogue's; ids in `code`. Paths are relative to `src/app/game/`. The design re
 
 ### The Hand (track A)
 
-| Node                                       | Ranks | Cost                               | Effect                                                          |
-| ------------------------------------------ | ----- | ---------------------------------- | --------------------------------------------------------------- |
-| Mouse Radius `radius`                      | 3     | 100 / 440 / 1 650                  | mouse radius ×1.25, ×1.28, ×1.22                                |
-| Bigger Sprints `capacity`                  | 10    | 120 → 480 000                      | +`SPRINT_SLOTS_STEP` slots per lane a rank                      |
-| Platform Team `cans` _(ADR-1)_             | 9     | 1 500 → 3 750 000                  | +1 swimlane with its own release train                          |
-| Timebox Renegotiated `duration`            | 5     | 80 → 7 000                         | train back `HAUL_SHAVE_PER_RANK` sooner a rank                  |
-| Line of Sight `lineOfSight`                | 1     | 600                                | crew claim the nearest ticket                                   |
-| Partner-Only Work `golden` _(ADR-2)_       | 1     | 50 000                             | 2 % of arrivals golden                                          |
-| Partner Rate `goldenValue`                 | 4     | 6 000 / 27 000 / 114 000 / 480 000 | golden pays +`GOLDEN_VALUE_PER_RANK` a rank                     |
-| Delegated Authority `goldenCrew` _(ADR-7)_ | 1     | 800 000                            | every kind takes golden; 5 % of closes and re-files turn golden |
+| Node                                       | Ranks | Cost                               | Effect                                                              |
+| ------------------------------------------ | ----- | ---------------------------------- | ------------------------------------------------------------------- |
+| Mouse Radius `radius`                      | 3     | 100 / 440 / 1 650                  | ring radius ×1.25, ×1.28, ×1.22 (from 6 units; hits by box overlap) |
+| Bigger Sprints `capacity`                  | 10    | 120 → 480 000                      | +`SPRINT_SLOTS_STEP` slots per lane a rank                          |
+| Platform Team `cans` _(ADR-1)_             | 9     | 1 500 → 3 750 000                  | +1 swimlane with its own release train                              |
+| Timebox Renegotiated `duration`            | 5     | 80 → 7 000                         | train back `HAUL_SHAVE_PER_RANK` sooner a rank                      |
+| Line of Sight `lineOfSight`                | 1     | 600                                | crew claim the nearest ticket                                       |
+| Partner-Only Work `golden` _(ADR-2)_       | 1     | 50 000                             | 2 % of arrivals golden                                              |
+| Partner Rate `goldenValue`                 | 4     | 6 000 / 27 000 / 114 000 / 480 000 | golden pays +`GOLDEN_VALUE_PER_RANK` a rank                         |
+| Delegated Authority `goldenCrew` _(ADR-7)_ | 1     | 800 000                            | every kind takes golden; 5 % of closes and re-files turn golden     |
 
 ### Juniors (track B)
 
@@ -71,7 +71,7 @@ the kind's unlock, ×3 a rank.
 | Node                                             | Ranks | Cost                      | Effect                                         |
 | ------------------------------------------------ | ----- | ------------------------- | ---------------------------------------------- |
 | Technical Debt Interest `debtInterest` _(ADR-4)_ | 3     | 24 000 / 76 000 / 224 000 | debt interest, `DEBT_INTEREST_PER_RANK` a rank |
-| Triage Policy `triagePolicy` (off `junior`)      | 2     | 500 / 1 600               | juniors leave lint, seniors leave bugs         |
+| Triage Policy `triagePolicy` (off `junior`)      | 2     | 500 / 1 600               | lint (rank 1), bugs (rank 2) auto-close        |
 | Escalation Chance `spawnEscalation` _(ADR-6)_    | 1     | 255 000                   | escalation arrivals ×1.5                       |
 | Incident Culture `spawnIncident` _(ADR-6)_       | 1     | 420 000                   | incident arrivals ×1.4                         |
 
@@ -82,8 +82,8 @@ the kind's unlock, ×3 a rank.
 | Bug Bounty `valueBug`                            | 1     | 500                         | bug ×2                                   |
 | Emergency Rates `escalation`                     | 3     | 1 300 / 4 000 / 12 000      | escalation ×1.4 / 1.3 / 1.25             |
 | Incident Payout `valueIncident` _(ADR-6)_        | 1     | 600 000                     | incident ×2                              |
-| Hire an Agile Coach `coaches` _(ADR-2)_          | 10    | 600 → 1 950 000             | +1 coach a rank                          |
-| Add a 13 `deck`                                  | 10    | 900 → 2 400 000             | vote bonus +`VOTE_BONUS_PER_RANK` a rank |
+| Hire an Agile Coach `coaches` _(ADR-2)_          | 10    | 600 → 11 809 800 (×3)       | +1 coach a rank                          |
+| Add a 13 `deck`                                  | 10    | 900 → 17 714 700 (×3)       | vote bonus +`VOTE_BONUS_PER_RANK` a rank |
 | Human in the Loop `assurance` _(ADR-8, track G)_ | 3     | 105 000 / 270 000 / 675 000 | everything ×1.15 a rank                  |
 
 ### Per line — `LINE_NODES`
@@ -97,7 +97,7 @@ double a line (`perTier`) unless stated.
 | `value…`     | 1     | `LINE_DOUBLE_COST`: 25, 1 500, 3 000, 6 000 … 140 000 | —         | ticket ×2                              |
 | `spawn…`     | 5     | 2 200                                                 | ×1.25     | arrivals +20 % a rank, ×2 maxed        |
 | `income…`    | 5     | 1 100                                                 | ×1.25     | pay +50 % a rank, ×3.5 maxed           |
-| `estimates…` | 5     | 75, then 400 from legacy                              | ×1.5      | +`ESTIMATE_SP_PER_RANK` 20 SP a ticket |
+| `estimates…` | 5     | 75, then 400 from legacy                              | ×1.5      | +20 SP a ticket (lint +4)              |
 | `double…`    | 1     | 2 500                                                 | —         | ticket ×2; needs the three above maxed |
 
 ### ADR ladder (track N)
@@ -120,7 +120,8 @@ it drops. Costs are `DEBT_TIERS[].spCost` in `model/tier.model.ts`.
 
 ### End
 
-Sign the Closeout `signoff` _(ADR-8)_, €100 T — the tree's only euro node; ends the run. `root` ships bought;
+Sign the Closeout `signoff` _(ADR-8)_, €20 T — the tree's only euro node; starts the acceptance
+push, and the run ends at €1 Qa. `root` ships bought;
 `secret` (everything ×1.1) is granted, not bought.
 
 ---
@@ -177,13 +178,13 @@ Kit items, in order (`model/kit.model.ts`):
 
 Where two purchases do the same thing, or a name is used twice.
 
-| What                  | Where                                                               |
-| --------------------- | ------------------------------------------------------------------- |
-| Junior band +1, twice | `juniorReach` rank 2 and `stretch`                                  |
-| Junior walk           | `juniorSpeed` and `o3`                                              |
-| Senior sweep          | `seniorReach` and `o5`                                              |
-| Escalation ×1.25      | `o7` and the Observability kit item                                 |
-| No effect             | `o1`, `o4`; `triagePolicy` rank 2 (seniors never take bugs, tier 0) |
-| "Human in the Loop"   | `assurance` and `doubleSwarm`                                       |
-| "Bullpen"             | `juniorRoom` and "Bullpen Extension" `o1`                           |
-| "Standing Desk(s)"    | the `kit` line and its second item                                  |
+| What                  | Where                                     |
+| --------------------- | ----------------------------------------- |
+| Junior band +1, twice | `juniorReach` rank 2 and `stretch`        |
+| Junior walk           | `juniorSpeed` and `o3`                    |
+| Senior sweep          | `seniorReach` and `o5`                    |
+| Escalation ×1.25      | `o7` and the Observability kit item       |
+| No effect             | `o1`, `o4`                                |
+| "Human in the Loop"   | `assurance` and `doubleSwarm`             |
+| "Bullpen"             | `juniorRoom` and "Bullpen Extension" `o1` |
+| "Standing Desk(s)"    | the `kit` line and its second item        |
