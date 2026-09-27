@@ -1,0 +1,137 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: var(--np-cb-scrim);
+}
+
+.doc {
+  max-width: 44rem;
+  width: 100%;
+  height: auto;
+  max-height: calc(100vh - 4rem);
+  box-shadow: var(--np-cb-lift);
+  cursor: default;
+}
+
+section {
+  padding: 0.4rem 0.85rem 0.6rem;
+}
+
+h3 {
+  margin: 0.2rem 0 0.15rem;
+  font-family: var(--np-cb-font-util);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--np-cb-ink-2);
+}
+
+.intro {
+  margin: 0 0 0.5rem;
+}
+
+.small {
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.loop {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0.3rem 0 0.2rem;
+  padding-left: 1.2rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--np-cb-ink-2);
+
+  li::marker {
+    font-family: var(--np-cb-font-util);
+    color: var(--np-cb-ink-3);
+  }
+}
+
+.guide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--np-cb-surface-2);
+  border: 1px solid var(--np-cb-rule);
+  border-radius: var(--np-cb-radius);
+
+  &.ahead {
+    .card {
+      filter: grayscale(0.6) brightness(0.75);
+    }
+
+    .label {
+      color: var(--np-cb-ink-2);
+    }
+  }
+}
+
+.art {
+  display: grid;
+  place-items: center;
+}
+
+.card {
+  width: 112px;
+  height: 64px;
+  image-rendering: pixelated;
+
+  &.wide {
+    width: 104px;
+    height: 56px;
+  }
+}
+
+.what {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.chip.worth {
+  color: var(--np-cb-money);
+}
+
+.blurb {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--np-cb-ink-2);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 0.85rem 0.4rem;
+}

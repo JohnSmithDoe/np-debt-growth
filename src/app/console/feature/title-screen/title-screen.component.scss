@@ -77,6 +77,12 @@ h1 {
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
 }
 
+.doors {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
 .languages {
   display: flex;
   gap: var(--np-cb-space-2, 0.5rem);

@@ -744,4 +744,65 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.batch.many': '+{{count}} tickets per sweep',
   'skill.effect.batch.slower':
     '+{{count}} ticket per close, {{slower}} close time',
+  'hud.help': 'Field guide',
+  'help.heading': 'Field Guide',
+  'help.subheading':
+    'Every card on the board, and what it does. The game waits while you read.',
+  'help.close': 'Back to work',
+  'help.line.heading': 'Line work',
+  'help.line.intro':
+    'Thrown by the developers on each line. You or the crew can take it, and it bills the moment it is picked up. If nobody gets to it in {{seconds}}s, it is closed as won’t fix.',
+  'help.special.heading': 'Special cards',
+  'help.special.intro':
+    'Only your mouse takes these. The crew leave them alone, and they never go stale.',
+  'help.marks.heading': 'Marks on a card',
+  'help.from.adr': 'from ADR-{{adr}}',
+  'help.from.pizza': 'Pizza Party node',
+  'help.ticket.lint':
+    'The opening’s bread and butter: cheap and plentiful. The first type Triage Policy closes on its own.',
+  'help.ticket.bug':
+    'Rarer than lint and worth four times as much. Triage Policy’s second pick.',
+  'help.ticket.legacy':
+    'The first line an ADR opens. Every rung up the ladder bills ten times the last.',
+  'help.ticket.flaky':
+    'Close it and it fails again: the same card comes back {{seconds}}s later and bills a second time.',
+  'help.ticket.conflict':
+    'The first rung the seniors work. The juniors still take it too.',
+  'help.ticket.slop': 'The highest rung the juniors reach on their own.',
+  'help.ticket.rockstar':
+    'Past the juniors’ band: the seniors take it, the juniors only once they reach higher.',
+  'help.ticket.zombie':
+    'Close it and it pages again: back {{seconds}}s later, billed a second time.',
+  'help.ticket.rewrite': 'Senior work, worth ten force pushes.',
+  'help.ticket.swarm': 'The top rung, and the dearest work on the board.',
+  'help.ticket.incident':
+    'Pays more with every ADR approved. Auto-closed work that finds every release train away lands here too, as a P0.',
+  'help.ticket.escalation':
+    'Sweep it and every close pays ×{{mult}} for {{seconds}}s. Take all you can while it runs.',
+  'help.ticket.hotfix':
+    'Sweep it and every ticket bills ×{{mult}} for {{seconds}}s.',
+  'help.ticket.quarter':
+    'Bills every card resting on the board at once. Worth most when the board is full.',
+  'help.ticket.pizza':
+    'Sweep it and the crew around it work ×{{mult}} as fast for {{seconds}}s.',
+  'help.ticket.invite':
+    'A meeting. Sweep it within {{seconds}}s to decline, or the crew leave the board for the meeting room.',
+  'help.mark.golden.label': 'Golden',
+  'help.mark.golden':
+    'Any card can arrive golden: worth ×{{times}}, and it waits {{seconds}}s. The crew leave it to you until Delegated Authority.',
+  'help.mark.voted.label': 'Re-estimated',
+  'help.mark.voted':
+    'The border means it fell through a planning-poker vote or a grooming session. It pays extra story points when picked up.',
+  'title.help': 'How to play',
+  'help.loop.heading': 'How it works',
+  'help.loop.1':
+    'The developers on each line throw tickets onto the board. Sweep your pointer over one to pick it up: it bills the moment you do.',
+  'help.loop.2':
+    'Picked-up work fills the sprint lanes. A full lane ships on its release train and takes nothing until the train is back.',
+  'help.loop.3':
+    'Euros buy the shop on the right: more developers, better rates, and a crew who pick up work for you.',
+  'help.loop.4':
+    'Story points buy the skill tree. Approve ADRs there to open new lines of ever dearer debt.',
+  'help.loop.5':
+    'Last on the tree, Sign the Closeout starts the acceptance push. The engagement is done when the budget reaches €1 Qa.',
 };

@@ -56,6 +56,7 @@ export interface SceneDeps {
   /** Hands the board's card and crew frames to the DOM rail. */
   publishIcons(icons: {
     readonly tickets: ReadonlyMap<TicketTypeId, string>;
+    readonly marks: ReadonlyMap<'golden' | 'voted', string>;
     readonly crew: ReadonlyMap<CrewKind, string>;
     readonly spawners: ReadonlyMap<number, string>;
   }): void;

@@ -1,0 +1,83 @@
+@if (shown()) {
+  <div class="scrim" (cbBackdrop)="dismiss()">
+    <cb-panel
+      class="doc"
+      [heading]="'help.heading' | translate"
+      [subheading]="'help.subheading' | translate"
+    >
+      <section>
+        <h3>{{ 'help.loop.heading' | translate }}</h3>
+        <ol class="loop">
+          @for (step of loop; track step) {
+            <li>{{ step | translate }}</li>
+          }
+        </ol>
+      </section>
+
+      <section>
+        <h3>{{ 'help.line.heading' | translate }}</h3>
+        <p class="muted small intro">
+          {{ 'help.line.intro' | translate: { seconds: lifeSeconds } }}
+        </p>
+        <ul class="guide">
+          @for (row of line(); track row.key) {
+            <ng-container
+              *ngTemplateOutlet="entry; context: { $implicit: row }"
+            />
+          }
+        </ul>
+      </section>
+
+      <section>
+        <h3>{{ 'help.special.heading' | translate }}</h3>
+        <p class="muted small intro">{{ 'help.special.intro' | translate }}</p>
+        <ul class="guide">
+          @for (row of special(); track row.key) {
+            <ng-container
+              *ngTemplateOutlet="entry; context: { $implicit: row }"
+            />
+          }
+        </ul>
+      </section>
+
+      <section>
+        <h3>{{ 'help.marks.heading' | translate }}</h3>
+        <ul class="guide">
+          @for (row of marks(); track row.key) {
+            <ng-container
+              *ngTemplateOutlet="entry; context: { $implicit: row }"
+            />
+          }
+        </ul>
+      </section>
+
+      <div class="actions">
+        <button type="button" class="btn" (click)="dismiss()">
+          {{ 'help.close' | translate }}
+        </button>
+      </div>
+    </cb-panel>
+  </div>
+}
+
+<ng-template #entry let-row>
+  <li class="row" [class.ahead]="row.ahead">
+    <span class="art">
+      @if (row.image) {
+        <img class="card" [class.wide]="row.wide" [src]="row.image" alt="" />
+      }
+    </span>
+    <span class="what">
+      <span class="head">
+        <span class="label">{{ row.name | translate }}</span>
+        @if (row.worth) {
+          <span class="chip worth">{{ row.worth }}</span>
+        }
+        @if (row.from; as from) {
+          <span class="chip from">{{ from.key | translate: from.params }}</span>
+        }
+      </span>
+      <span class="blurb">{{ row.blurb | translate: row.params }}</span>
+    </span>
+  </li>
+</ng-template>

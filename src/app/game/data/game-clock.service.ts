@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { TICK_MS } from '../model/game.consts';
 import { GameStore } from './game.store';
 
-export type PauseReason = 'tree' | 'hidden';
+export type PauseReason = 'tree' | 'hidden' | 'help';
 
 /**
  * Game time is wall time minus every pause, so the state's absolute deadlines

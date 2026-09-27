@@ -26,8 +26,10 @@ import { AchievementsPanelComponent } from './console/feature/achievements-panel
 import { SupplyPanelComponent } from './console/feature/supply-panel/supply-panel.component';
 import { FinaleComponent } from './console/feature/finale/finale.component';
 import { PostMortemComponent } from './console/feature/post-mortem/post-mortem.component';
+import { HelpModalComponent } from './console/feature/help-modal/help-modal.component';
 import { SettingsModalComponent } from './console/feature/settings-modal/settings-modal.component';
 import { TitleScreenComponent } from './console/feature/title-screen/title-screen.component';
+import { HelpUiService } from './console/data/help-ui.service';
 import { SettingsUiService } from './console/data/settings-ui.service';
 import { CLIENT_NAME, ENGAGEMENT_NAME } from './console/model/client.model';
 import { FinaleService } from './@shared/data/finale.service';
@@ -58,6 +60,7 @@ const RATE_WINDOW_MS = 10_000;
     PostMortemComponent,
     FinaleComponent,
     SettingsModalComponent,
+    HelpModalComponent,
     RollingNumberDirective,
     TranslatePipe,
   ],
@@ -67,6 +70,7 @@ export class AppComponent {
   #audio = inject(AudioService);
   #stage = inject(StageModeService);
   #settings = inject(SettingsUiService);
+  #help = inject(HelpUiService);
   #translate = inject(TranslateService);
   #finale = inject(FinaleService);
 
@@ -142,6 +146,10 @@ export class AppComponent {
 
   openSettings(): void {
     this.#settings.open();
+  }
+
+  openHelp(): void {
+    this.#help.open();
   }
 
   constructor() {

@@ -42,6 +42,7 @@ export interface TicketType {
 }
 
 export const ticketLabelKey = (id: string): string => `ticket.type.${id}`;
+export const ticketHelpKey = (id: TicketTypeId): string => `help.ticket.${id}`;
 
 export const TICKET_TYPES: Readonly<Record<TicketTypeId, TicketType>> = {
   lint: {

@@ -140,9 +140,14 @@ export function buildBoardAtlas(
 
 const ICON_CREW: readonly CrewKind[] = ['juniors', 'seniors', 'managers'];
 
-/** Each plain card and each crew line's first face, as data URLs. */
+export type CardMark = 'golden' | 'voted';
+
+const MARK_SAMPLE: TicketTypeId = 'bug';
+
+/** Every card, a golden and a re-estimated sample, and each crew line's face, as data URLs. */
 export function boardIconUrls(scene: Phaser.Scene): {
   tickets: Map<TicketTypeId, string>;
+  marks: Map<CardMark, string>;
   crew: Map<CrewKind, string>;
   spawners: Map<number, string>;
 } {
@@ -150,9 +155,12 @@ export function boardIconUrls(scene: Phaser.Scene): {
   const crew = new Map<CrewKind, string>();
   const spawners = new Map<number, string>();
   for (const id of TICKET_TYPE_IDS) {
-    if (TICKET_TYPES[id].handOnly) continue;
     tickets.set(id, scene.textures.getBase64(ATLAS_KEY, cardFrame(id)));
   }
+  const marks = new Map<CardMark, string>([
+    ['golden', scene.textures.getBase64(ATLAS_KEY, goldFrame(MARK_SAMPLE))],
+    ['voted', scene.textures.getBase64(ATLAS_KEY, voteFrame(MARK_SAMPLE))],
+  ]);
   if (scene.textures.exists(CREW_ATLAS.key)) {
     for (const kind of ICON_CREW) {
       const skin = crewSkin(kind, 0, false);
@@ -167,7 +175,7 @@ export function boardIconUrls(scene: Phaser.Scene): {
       spawners.set(adr, scene.textures.getBase64(CREW_ATLAS.key, frame));
     }
   }
-  return { tickets, crew, spawners };
+  return { tickets, marks, crew, spawners };
 }
 
 export function paintClaimCard(

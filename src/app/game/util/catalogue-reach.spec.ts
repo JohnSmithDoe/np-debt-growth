@@ -21,7 +21,11 @@ import {
   TICKET_TITLE_COUNTS,
   ticketTitleKey,
 } from '../model/ticket-copy.model';
-import { TICKET_TYPE_IDS, ticketLabelKey } from '../model/ticket.model';
+import {
+  TICKET_TYPE_IDS,
+  ticketHelpKey,
+  ticketLabelKey,
+} from '../model/ticket.model';
 import { DEBT_TIERS, tierBlurbKey, tierNameKey } from '../model/tier.model';
 import { PURCHASE_IDS } from '../model/balance/progression';
 
@@ -47,6 +51,10 @@ const BUILT: readonly { readonly owns: RegExp; readonly keys: string[] }[] = [
   {
     owns: /^ticket\.type\./,
     keys: TICKET_TYPE_IDS.map(ticketLabelKey),
+  },
+  {
+    owns: /^help\.ticket\./,
+    keys: TICKET_TYPE_IDS.map(ticketHelpKey),
   },
   {
     owns: /^ticket\.title\./,

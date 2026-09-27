@@ -760,4 +760,66 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.batch.many': '+{{count}} Tickets pro Durchgang',
   'skill.effect.batch.slower':
     '+{{count}} Ticket pro Abschluss, {{slower}} Bearbeitungszeit',
+  'hud.help': 'Handbuch',
+  'help.heading': 'Handbuch',
+  'help.subheading':
+    'Jede Karte auf dem Board und was sie tut. Das Spiel wartet, solange du liest.',
+  'help.close': 'Zurück an die Arbeit',
+  'help.line.heading': 'Arbeit der Linien',
+  'help.line.intro':
+    'Von den Entwicklern jeder Linie geworfen. Du oder das Team nehmt sie, und sie wird beim Aufnehmen abgerechnet. Holt sie niemand binnen {{seconds}} s, wird sie als Won’t Fix geschlossen.',
+  'help.special.heading': 'Sonderkarten',
+  'help.special.intro':
+    'Die nimmt nur deine Maus. Das Team lässt sie liegen, und sie veralten nie.',
+  'help.marks.heading': 'Markierungen',
+  'help.from.adr': 'ab ADR-{{adr}}',
+  'help.from.pizza': 'Knoten Pizza-Party',
+  'help.ticket.lint':
+    'Das Brot-und-Butter-Geschäft der Eröffnung: billig und reichlich. Der erste Typ, den die Triage-Richtlinie selbst schließt.',
+  'help.ticket.bug':
+    'Seltener als Lint und viermal so viel wert. Die zweite Wahl der Triage-Richtlinie.',
+  'help.ticket.legacy':
+    'Die erste Linie, die ein ADR öffnet. Jede Sprosse der Leiter rechnet das Zehnfache der letzten ab.',
+  'help.ticket.flaky':
+    'Schließ ihn, und er schlägt wieder fehl: Dieselbe Karte kommt {{seconds}} s später zurück und wird ein zweites Mal abgerechnet.',
+  'help.ticket.conflict':
+    'Die erste Sprosse der Seniors. Die Juniors nehmen sie auch noch.',
+  'help.ticket.slop': 'Die höchste Sprosse, die die Juniors allein erreichen.',
+  'help.ticket.rockstar':
+    'Jenseits des Junior-Bands: Die Seniors nehmen ihn, die Juniors erst, wenn sie höher greifen.',
+  'help.ticket.zombie':
+    'Schließ ihn, und er alarmiert erneut: {{seconds}} s später zurück, ein zweites Mal abgerechnet.',
+  'help.ticket.rewrite': 'Senior-Arbeit, zehn Force Pushes wert.',
+  'help.ticket.swarm':
+    'Die oberste Sprosse und die teuerste Arbeit auf dem Board.',
+  'help.ticket.incident':
+    'Zahlt mit jedem freigegebenen ADR mehr. Auch selbst geschlossene Arbeit, die alle Release-Züge unterwegs findet, landet hier, als P0.',
+  'help.ticket.escalation':
+    'Nimm sie, und jeder Abschluss zahlt {{seconds}} s lang ×{{mult}}. Nimm mit, was geht, solange sie läuft.',
+  'help.ticket.hotfix':
+    'Nimm es, und jedes Ticket rechnet {{seconds}} s lang ×{{mult}} ab.',
+  'help.ticket.quarter':
+    'Rechnet jede Karte auf dem Board auf einmal ab. Am meisten wert, wenn das Board voll ist.',
+  'help.ticket.pizza':
+    'Nimm ihn, und das Team drumherum arbeitet {{seconds}} s lang ×{{mult}} so schnell.',
+  'help.ticket.invite':
+    'Ein Meeting. Nimm sie binnen {{seconds}} s, um abzusagen, sonst verlässt das Team das Board für den Besprechungsraum.',
+  'help.mark.golden.label': 'Golden',
+  'help.mark.golden':
+    'Jede Karte kann golden kommen: ×{{times}} wert, und sie wartet {{seconds}} s. Das Team überlässt sie dir bis zur Delegierten Vollmacht.',
+  'help.mark.voted.label': 'Neu geschätzt',
+  'help.mark.voted':
+    'Der Rahmen heißt: Sie ist durch eine Planning-Poker-Abstimmung oder ein Grooming gefallen. Beim Aufnehmen bringt sie zusätzliche Story Points.',
+  'title.help': 'Spielanleitung',
+  'help.loop.heading': 'So läuft es',
+  'help.loop.1':
+    'Die Entwickler jeder Linie werfen Tickets aufs Board. Fahr mit dem Zeiger über eins, um es aufzunehmen: Abgerechnet wird sofort.',
+  'help.loop.2':
+    'Aufgenommene Arbeit füllt die Sprint-Bahnen. Eine volle Bahn fährt mit ihrem Release-Zug los und nimmt nichts, bis der Zug zurück ist.',
+  'help.loop.3':
+    'Mit Euro kaufst du rechts im Shop: mehr Entwickler, bessere Sätze und ein Team, das Arbeit für dich aufnimmt.',
+  'help.loop.4':
+    'Mit Story Points kaufst du den Skill-Baum. Gib dort ADRs frei, um neue Linien immer teurerer Schulden zu öffnen.',
+  'help.loop.5':
+    'Ganz oben im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt. Das Mandat ist erfüllt, wenn das Budget 1 Brd. € erreicht.',
 };

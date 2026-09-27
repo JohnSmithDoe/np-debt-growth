@@ -15,6 +15,7 @@ import { GameStore } from '../../../game/data/game.store';
 import { SaveService } from '../../../game/data/save.service';
 import { DoorService } from '../../data/door.service';
 import { FullscreenService } from '../../data/fullscreen.service';
+import { HelpUiService } from '../../data/help-ui.service';
 import { BacklogTickerComponent } from '../../ui/backlog-ticker/backlog-ticker.component';
 import { CreditsComponent } from '../../ui/credits/credits.component';
 import { CLOSING_OFFICE_ART, officeArtFor } from '../../util/office-art';
@@ -31,6 +32,7 @@ export class TitleScreenComponent {
   #screen = inject(FullscreenService);
   #door = inject(DoorService);
   #store = inject(GameStore);
+  #help = inject(HelpUiService);
 
   readonly art = computed(() =>
     this.#store.ended() ? CLOSING_OFFICE_ART : officeArtFor(this.#store.tier())
@@ -52,6 +54,10 @@ export class TitleScreenComponent {
 
   open(): void {
     this.#door.open();
+  }
+
+  openHelp(): void {
+    this.#help.open();
   }
 
   choose(language: Language): void {
