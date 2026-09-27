@@ -8,11 +8,76 @@
   background: var(--np-cb-scrim);
 }
 
+.sheet {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pane {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tabs {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  padding: 0.4rem 0.85rem 0.2rem;
+
+  button {
+    flex: 1;
+    padding: 5px 8px;
+    border: 1px solid var(--np-cb-rule);
+    border-radius: 3px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    opacity: 0.6;
+
+    &.on {
+      border-color: var(--np-cb-money);
+      opacity: 1;
+    }
+  }
+}
+
+.release-head {
+  margin: 0.6rem 0 0.35rem;
+}
+
+.release {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  .ceremony {
+    padding: 0.15rem 0.45rem;
+    font-family: var(--np-cb-font-util);
+    font-size: 0.66rem;
+    border: 1px solid var(--np-cb-rule);
+    border-radius: 2px;
+    background: var(--np-cb-surface-2);
+    color: var(--np-cb-ink-2);
+  }
+
+  .cut {
+    opacity: 0.45;
+    text-decoration: line-through;
+  }
+}
+
 .doc {
   max-width: 44rem;
   width: 100%;
-  height: auto;
-  max-height: calc(100vh - 4rem);
+  height: min(46rem, calc(100vh - 4rem));
   box-shadow: var(--np-cb-lift);
   cursor: default;
 }
@@ -131,6 +196,7 @@ h3 {
 }
 
 .actions {
+  flex: none;
   display: flex;
   justify-content: flex-end;
   padding: 0.5rem 0.85rem 0.4rem;

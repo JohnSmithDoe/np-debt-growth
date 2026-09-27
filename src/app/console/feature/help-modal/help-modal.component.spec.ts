@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { BoardIcons } from '../../../@shared/data/board-icons.service';
 import { GameClock } from '../../../game/data/game-clock.service';
+import { HAUL_MS, RELEASE_PHASES } from '../../../game/model/balance/round';
 import { TICKET_TYPE_IDS } from '../../../game/model/ticket.model';
 import { HelpUiService } from '../../data/help-ui.service';
 import { HelpModalComponent } from './help-modal.component';
@@ -54,5 +55,17 @@ describe('HelpModalComponent', () => {
     );
     expect(rows.every((row) => row.image === `card:${row.key}`)).toBe(true);
     expect(component.marks().map((row) => row.image)).toEqual(['gold', 'vote']);
+  });
+
+  it('opens on the game tab and walks the whole release train', () => {
+    const component = modal();
+    TestBed.inject(HelpUiService).open();
+
+    expect(component.tab()).toBe('game');
+    expect(component.haulSeconds()).toBe(HAUL_MS / 1000);
+    expect(component.ceremonies().map((phase) => phase.id)).toEqual(
+      RELEASE_PHASES.map((phase) => phase.id)
+    );
+    expect(component.ceremonies().some((phase) => phase.cut)).toBe(false);
   });
 });

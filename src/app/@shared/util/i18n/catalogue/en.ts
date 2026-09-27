@@ -774,7 +774,7 @@ export const EN: Readonly<Record<string, string>> = {
     '+{{count}} ticket per close, {{slower}} close time',
   'help.heading': 'Field Guide',
   'help.subheading':
-    'Every card on the board, and what it does. The game waits while you read.',
+    'How the engagement runs, and every ticket on the board. The game waits while you read.',
   'help.close': 'Back to work',
   'help.line.heading': 'Line work',
   'help.line.intro':
@@ -821,7 +821,23 @@ export const EN: Readonly<Record<string, string>> = {
   'help.mark.voted':
     'The border means it fell through a planning-poker vote or a grooming session. It pays extra story points when picked up.',
   'title.help': 'How to play',
-  'help.loop.heading': 'How it works',
+  'help.tab.game': 'How it works',
+  'help.tab.tickets': 'Tickets',
+  'help.train.heading': 'The release train',
+  'help.train.intro':
+    'There is no round timer. A round is one sprint’s release, so the pace is whatever your throughput makes it.',
+  'help.train.1':
+    'Every line ticket you or the crew pick up takes one slot of the sprint: {{slots}} slots right now.',
+  'help.train.2':
+    'When the last slot fills, the train leaves on its own. The work was billed at pickup; the release pays nothing extra.',
+  'help.train.3':
+    'While it is away, nobody picks up line work, not you and not the crew. Special cards still sweep. The lines keep throwing, and cards nobody reaches still close as won’t fix.',
+  'help.train.4':
+    'Once Triage Policy auto-closes a type, what it closes with the train away goes straight to prod as a P0 incident, {{cap}} live at most.',
+  'help.train.5':
+    'Every train is time you cannot bill. Bigger Sprints adds {{step}} slots a rank, each team you put on the sprint adds a whole team’s scope, and the ceremony nodes on the tree cut the release short. The shipping itself is never cut.',
+  'help.train.release': 'The release right now: {{seconds}}s.',
+  'help.loop.heading': 'The loop',
   'help.loop.1':
     'The developers on each line throw tickets onto the board. Sweep your pointer over one to pick it up: it bills the moment you do.',
   'help.loop.2':

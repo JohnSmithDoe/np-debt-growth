@@ -5,56 +5,103 @@
       [heading]="'help.heading' | translate"
       [subheading]="'help.subheading' | translate"
     >
-      <section>
-        <h3>{{ 'help.loop.heading' | translate }}</h3>
-        <ol class="loop">
-          @for (step of loop; track step) {
-            <li>{{ step | translate }}</li>
+      <div class="sheet">
+        <div class="tabs" role="tablist">
+          @for (one of tabs; track one) {
+            <button
+              type="button"
+              role="tab"
+              [class.on]="tab() === one"
+              [attr.aria-selected]="tab() === one"
+              (click)="tab.set(one)"
+            >
+              {{ 'help.tab.' + one | translate }}
+            </button>
           }
-        </ol>
-      </section>
+        </div>
 
-      <section>
-        <h3>{{ 'help.line.heading' | translate }}</h3>
-        <p class="muted small intro">
-          {{ 'help.line.intro' | translate: { seconds: lifeSeconds() } }}
-        </p>
-        <ul class="guide">
-          @for (row of line(); track row.key) {
-            <ng-container
-              *ngTemplateOutlet="entry; context: { $implicit: row }"
-            />
+        <div class="pane">
+          @if (tab() === 'game') {
+            <section>
+              <h3>{{ 'help.loop.heading' | translate }}</h3>
+              <ol class="loop">
+                @for (step of loop; track step) {
+                  <li>{{ step | translate }}</li>
+                }
+              </ol>
+            </section>
+
+            <section>
+              <h3>{{ 'help.train.heading' | translate }}</h3>
+              <p class="muted small intro">
+                {{ 'help.train.intro' | translate }}
+              </p>
+              <ol class="loop">
+                @for (step of train(); track step.key) {
+                  <li>{{ step.key | translate: step.params }}</li>
+                }
+              </ol>
+              <p class="muted small release-head">
+                {{
+                  'help.train.release' | translate: { seconds: haulSeconds() }
+                }}
+              </p>
+              <ol class="release">
+                @for (phase of ceremonies(); track phase.id) {
+                  <li class="ceremony" [class.cut]="phase.cut">
+                    {{ 'release.phase.' + phase.id | translate }}
+                    <span class="muted">{{ phase.seconds }}s</span>
+                  </li>
+                }
+              </ol>
+            </section>
+          } @else {
+            <section>
+              <h3>{{ 'help.line.heading' | translate }}</h3>
+              <p class="muted small intro">
+                {{ 'help.line.intro' | translate: { seconds: lifeSeconds() } }}
+              </p>
+              <ul class="guide">
+                @for (row of line(); track row.key) {
+                  <ng-container
+                    *ngTemplateOutlet="entry; context: { $implicit: row }"
+                  />
+                }
+              </ul>
+            </section>
+
+            <section>
+              <h3>{{ 'help.special.heading' | translate }}</h3>
+              <p class="muted small intro">
+                {{ 'help.special.intro' | translate }}
+              </p>
+              <ul class="guide">
+                @for (row of special(); track row.key) {
+                  <ng-container
+                    *ngTemplateOutlet="entry; context: { $implicit: row }"
+                  />
+                }
+              </ul>
+            </section>
+
+            <section>
+              <h3>{{ 'help.marks.heading' | translate }}</h3>
+              <ul class="guide">
+                @for (row of marks(); track row.key) {
+                  <ng-container
+                    *ngTemplateOutlet="entry; context: { $implicit: row }"
+                  />
+                }
+              </ul>
+            </section>
           }
-        </ul>
-      </section>
+        </div>
 
-      <section>
-        <h3>{{ 'help.special.heading' | translate }}</h3>
-        <p class="muted small intro">{{ 'help.special.intro' | translate }}</p>
-        <ul class="guide">
-          @for (row of special(); track row.key) {
-            <ng-container
-              *ngTemplateOutlet="entry; context: { $implicit: row }"
-            />
-          }
-        </ul>
-      </section>
-
-      <section>
-        <h3>{{ 'help.marks.heading' | translate }}</h3>
-        <ul class="guide">
-          @for (row of marks(); track row.key) {
-            <ng-container
-              *ngTemplateOutlet="entry; context: { $implicit: row }"
-            />
-          }
-        </ul>
-      </section>
-
-      <div class="actions">
-        <button type="button" class="btn" (click)="dismiss()">
-          {{ 'help.close' | translate }}
-        </button>
+        <div class="actions">
+          <button type="button" class="btn" (click)="dismiss()">
+            {{ 'help.close' | translate }}
+          </button>
+        </div>
       </div>
     </cb-panel>
   </div>

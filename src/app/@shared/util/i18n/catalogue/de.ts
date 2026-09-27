@@ -791,7 +791,7 @@ export const DE: Readonly<Record<string, string>> = {
     '+{{count}} Ticket pro Abschluss, {{slower}} Bearbeitungszeit',
   'help.heading': 'Handbuch',
   'help.subheading':
-    'Jede Karte auf dem Board und was sie tut. Das Spiel wartet, solange du liest.',
+    'Wie das Mandat läuft, und jedes Ticket auf dem Board. Das Spiel wartet, solange du liest.',
   'help.close': 'Zurück an die Arbeit',
   'help.line.heading': 'Arbeit der Linien',
   'help.line.intro':
@@ -839,7 +839,23 @@ export const DE: Readonly<Record<string, string>> = {
   'help.mark.voted':
     'Der Rahmen heißt: Sie ist durch eine Planning-Poker-Abstimmung oder ein Grooming gefallen. Beim Aufnehmen bringt sie zusätzliche Story Points.',
   'title.help': 'Spielanleitung',
-  'help.loop.heading': 'So läuft es',
+  'help.tab.game': 'So läuft es',
+  'help.tab.tickets': 'Tickets',
+  'help.train.heading': 'Der Release-Zug',
+  'help.train.intro':
+    'Es gibt keinen Runden-Timer. Eine Runde ist das Release eines Sprints, das Tempo bestimmt also dein Durchsatz.',
+  'help.train.1':
+    'Jedes Linien-Ticket, das du oder das Team aufnehmt, belegt einen Platz im Sprint: gerade {{slots}} Plätze.',
+  'help.train.2':
+    'Ist der letzte Platz belegt, fährt der Zug von selbst los. Abgerechnet wurde schon beim Aufnehmen; das Release bringt nichts extra.',
+  'help.train.3':
+    'Solange er unterwegs ist, nimmt niemand Linien-Arbeit auf, weder du noch das Team. Sonderkarten lassen sich weiter einsammeln. Die Linien werfen weiter, und Karten, die keiner erreicht, werden weiter als „won’t fix“ geschlossen.',
+  'help.train.4':
+    'Sobald die Triage-Richtlinie einen Typ selbst schließt, geht, was sie bei abwesendem Zug schließt, direkt als P0-Incident nach Prod, höchstens {{cap}} gleichzeitig.',
+  'help.train.5':
+    'Jeder Zug ist Zeit, in der du nichts abrechnest. „Größere Sprints“ bringt {{step}} Plätze je Stufe, jedes Team, das du auf den Sprint setzt, eine ganze Team-Kapazität, und die Zeremonie-Knoten im Baum kürzen das Release. Das Ausliefern selbst fällt nie weg.',
+  'help.train.release': 'Das Release gerade: {{seconds}} s.',
+  'help.loop.heading': 'Der Ablauf',
   'help.loop.1':
     'Die Entwickler jeder Linie werfen Tickets aufs Board. Fahr mit dem Zeiger über eins, um es aufzunehmen: Abgerechnet wird sofort.',
   'help.loop.2':

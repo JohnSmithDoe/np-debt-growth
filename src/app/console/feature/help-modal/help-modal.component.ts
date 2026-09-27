@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   inject,
+  signal,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -21,6 +22,11 @@ import {
   HOTFIX_MULTIPLIER,
   INVITATION_WINDOW_MS,
 } from '../../../game/model/balance/weather';
+import { PROD_INCIDENT_LIVE_CAP } from '../../../game/model/balance/flow';
+import {
+  RELEASE_PHASES,
+  SPRINT_SLOTS_STEP,
+} from '../../../game/model/balance/round';
 import { HAZARDS } from '../../../game/model/hazard.model';
 import {
   FLAKY_COMEBACK_MS,
@@ -46,6 +52,8 @@ export interface GuideRow {
   readonly from: { readonly key: string; readonly params?: object } | null;
   readonly ahead: boolean;
 }
+
+export type HelpTab = 'game' | 'tickets';
 
 const SPECIAL_ORDER: readonly TicketTypeId[] = [
   'incident',
@@ -82,6 +90,27 @@ export class HelpModalComponent {
     seconds(ticketLifeMs(this.#store.tier()))
   );
   readonly loop = [1, 2, 3, 4, 5].map((step) => `help.loop.${step}`);
+  readonly tabs: readonly HelpTab[] = ['game', 'tickets'];
+  readonly tab = signal<HelpTab>('game');
+
+  readonly train = computed(() => [
+    { key: 'help.train.1', params: { slots: this.#store.sprintSlots() } },
+    { key: 'help.train.2', params: {} },
+    { key: 'help.train.3', params: {} },
+    { key: 'help.train.4', params: { cap: PROD_INCIDENT_LIVE_CAP } },
+    { key: 'help.train.5', params: { step: SPRINT_SLOTS_STEP } },
+  ]);
+
+  readonly haulSeconds = computed(() => seconds(this.#store.haulMs()));
+
+  readonly ceremonies = computed(() => {
+    const kept = new Set(this.#store.releasePhases().map((phase) => phase.id));
+    return RELEASE_PHASES.map((phase) => ({
+      id: phase.id,
+      seconds: seconds(phase.ms),
+      cut: !kept.has(phase.id),
+    }));
+  });
 
   readonly line = computed(() =>
     this.shown() ? RETYPE_LADDER.map((id) => this.#row(id)) : []
