@@ -20,6 +20,7 @@ import {
   VOTE_ON_MS,
   WONT_FIX_FADE_MS,
 } from '../model/balance/flow';
+import { HOTFIX_MS, HOTFIX_MULTIPLIER } from '../model/balance/weather';
 import * as economy from './economy';
 import { heldBack } from './first-act';
 
@@ -28,13 +29,14 @@ import { heldBack } from './first-act';
  *
  *   reached   = min(supply, what the hand, the crew and auto-close reach)
  *   collected = reached / (1 + reached / what the lanes take)
- *   €/s       = Σ collected × ticketValue (× goldenMultiplier on gold)
+ *   €/s       = Σ collected × ticketValue (× goldenMultiplier on gold) × buffs
  *   SP/s      = Σ collected × pickupStoryPoints + expected planning-poker votes
  *
  * Managers close nothing; the crew closes inside their reach bill × the aura.
  *
- * Not counted: hotfix, escalation, quarter bills, pizza, prod incidents,
- * weather. Each moves a real board's euros by 10 % at most.
+ * Escalation and hotfix count as the share of time their window is open.
+ * Not counted: quarter bills, pizza, prod incidents, weather. Each moves a
+ * real board's euros by 10 % at most.
  */
 
 export interface SimPolicy {
@@ -57,6 +59,8 @@ export interface Flow {
 interface Stream {
   readonly type: TicketTypeId;
   readonly golden: boolean;
+  /** Comebacks of a closed `respawns` card: plain, unvoted, never back again. */
+  readonly reborn: boolean;
   readonly worth: number;
   left: number;
   hand: number;
@@ -85,7 +89,7 @@ function streams(state: Consultancy): Stream[] {
   for (const id of TICKET_TYPE_IDS) {
     if (TICKET_TYPES[id].effect !== 'value') continue;
     if (heldBack(id, state.runMs, state.tier)) continue;
-    const rate = economy.closeRate(state, id);
+    const rate = economy.spawnRate(state, id);
     if (rate <= 0) continue;
     const dearer = interest > 0 ? economy.interestTarget(state, id) : null;
     const moved = dearer ? rate * interest : 0;
@@ -96,24 +100,30 @@ function streams(state: Consultancy): Stream[] {
   const out: Stream[] = [];
   for (const [type, rate] of supply) {
     const value = economy.ticketValue(state, type);
+    const stream = { type, hand: 0, crew: 0, auto: 0 };
     out.push({
-      type,
+      ...stream,
       golden: false,
+      reborn: false,
       worth: value,
       left: rate * (1 - gold),
-      hand: 0,
-      crew: 0,
-      auto: 0,
     });
     if (gold > 0) {
       out.push({
-        type,
+        ...stream,
         golden: true,
+        reborn: false,
         worth: value * goldMult,
         left: rate * gold,
-        hand: 0,
-        crew: 0,
-        auto: 0,
+      });
+    }
+    if (TICKET_TYPES[type].respawns) {
+      out.push({
+        ...stream,
+        golden: false,
+        reborn: true,
+        worth: value,
+        left: 0,
       });
     }
   }
@@ -359,9 +369,47 @@ function occupancy(
   };
 }
 
+/**
+ * Each close of `id` re-arms a window of `windowMs`; with arrivals at random,
+ * the share of time it is open.
+ */
+function windowOpen(
+  state: Consultancy,
+  id: TicketTypeId,
+  windowMs: number
+): number {
+  if (heldBack(id, state.runMs, state.tier)) return 0;
+  return 1 - Math.exp((-economy.spawnRate(state, id) * windowMs) / 1000);
+}
+
+/** Expected multiplier escalation and hotfix put on every close. */
+function buffs(state: Consultancy): number {
+  const escalated = windowOpen(
+    state,
+    'escalation',
+    economy.escalationHoldMs(state)
+  );
+  const hotfixed = windowOpen(state, 'hotfix', HOTFIX_MS);
+  return (
+    (1 + escalated * (economy.escalationMultiplier(state) - 1)) *
+    (1 + hotfixed * (HOTFIX_MULTIPLIER - 1))
+  );
+}
+
+/** What each stream's first-time cards had closed comes back as its comeback stream. */
+function comebacks(all: readonly Stream[], arrivals: number[]): void {
+  all.forEach((s, at) => {
+    if (!s.reborn) return;
+    arrivals[at] = all.reduce(
+      (sum, o) =>
+        o.type === s.type && !o.reborn ? sum + o.hand + o.crew : sum,
+      0
+    );
+  });
+}
+
 export function flow(state: Consultancy, policy: SimPolicy): Flow {
   const all = streams(state);
-  const supplyPerSec = all.reduce((sum, s) => sum + s.left, 0);
   const arrivals = all.map((s) => s.left);
   const lifeMs = ticketLifeMs(state.tier);
   const lifeSec = lifeMs / 1000;
@@ -370,7 +418,10 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
   // on how many there are: settle it by iterating. A full board pushes its
   // oldest card out for each arrival, so it holds at the cap.
   let board: Occupancy = {
-    density: Math.min(BOARD_CAPACITY, supplyPerSec * lifeSec),
+    density: Math.min(
+      BOARD_CAPACITY,
+      arrivals.reduce((sum, rate) => sum + rate, 0) * lifeSec
+    ),
     reach: 1,
   };
   for (let pass = 0; pass < DENSITY_PASSES; pass += 1) {
@@ -382,7 +433,12 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
     });
     collect(state, policy, all, board.density, board.reach);
     board = occupancy(all, arrivals, lifeMs);
+    comebacks(all, arrivals);
   }
+  const supplyPerSec = all.reduce(
+    (sum, s) => sum + s.left + s.hand + s.crew + s.auto,
+    0
+  );
   const density = board.density;
 
   // Lanes are dealt round-robin, so they fill together and ship together, and
@@ -395,6 +451,7 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
   const conversion = economy.crewGoldenConversion(state);
   const aura = 1 + (economy.managerAura(state) - 1) * overseenShare(state);
   const goldMult = economy.goldenMultiplier(state);
+  const buff = buffs(state);
   const pays = economy.pickupsPaySp(state);
   const votes = pays
     ? (economy.coachCount(state) *
@@ -416,14 +473,14 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
     const crewWorth = s.golden
       ? s.worth
       : s.worth * (1 - conversion) + s.worth * goldMult * conversion;
-    handEuro += byHand * s.worth;
-    crewEuro += byCrew * crewWorth * aura + byAuto * s.worth;
+    handEuro += byHand * s.worth * buff;
+    crewEuro += (byCrew * crewWorth * aura + byAuto * s.worth) * buff;
     hand += byHand;
     crew += byCrew + byAuto;
     sp +=
       (byHand + byAuto) * economy.pickupStoryPoints(state, s.type, false) +
       byCrew * economy.pickupStoryPoints(state, s.type, true) +
-      (s.golden ? 0 : (byHand + byCrew + byAuto) * votes);
+      (s.golden || s.reborn ? 0 : (byHand + byCrew + byAuto) * votes);
   }
 
   return {
