@@ -3,7 +3,7 @@
  * ADR ladder included, hangs off it, so an unbought root strands the run.
  */
 import type { RoundOutcome, RoundPhase } from './round.model';
-import { SPAWNER_FREE_AT_ADR_0 } from './spawner.model';
+import { SPAWNER_FREE_HEADS } from './spawner.model';
 import type { SeniorHire } from './senior.model';
 import { SKILL_ROOT_ID } from './skill.model';
 import type { PurchaseId } from './balance/progression';
@@ -84,7 +84,7 @@ export function freshConsultancy(now: number, version: number): Consultancy {
       number
     >,
     skills: { [SKILL_ROOT_ID]: 1 },
-    spawners: { 0: SPAWNER_FREE_AT_ADR_0 },
+    spawners: { 0: SPAWNER_FREE_HEADS },
     income: {},
     roster: [],
     tier: 0,

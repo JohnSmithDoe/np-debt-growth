@@ -1,9 +1,7 @@
 import * as Phaser from 'phaser';
 
 import {
-  formatCompactMoney,
   formatCompactWhole,
-  formatMoney,
   formatWhole,
 } from '../../@shared/util/format-quantity';
 import { SCREEN_INK } from '../model/board.consts';
@@ -97,17 +95,9 @@ const FILL: Readonly<Record<SquareState, number>> = {
   box: SCREEN_INK.ground,
 };
 
-const WASH_FILL: Readonly<
-  Record<'owned' | 'open', Readonly<Record<'eur' | 'sp', number>>>
-> = {
-  owned: {
-    eur: mix(FILL.owned, SCREEN_INK.money, WASH),
-    sp: mix(FILL.owned, SCREEN_INK.points, WASH),
-  },
-  open: {
-    eur: mix(FILL.open, SCREEN_INK.money, WASH),
-    sp: mix(FILL.open, SCREEN_INK.points, WASH),
-  },
+const WASH_FILL: Readonly<Record<'owned' | 'open', number>> = {
+  owned: mix(FILL.owned, SCREEN_INK.points, WASH),
+  open: mix(FILL.open, SCREEN_INK.points, WASH),
 };
 
 export class SkillScene extends PanZoomScene {
@@ -374,7 +364,7 @@ export class SkillScene extends PanZoomScene {
     node: SkillNodeView,
     state: SquareState
   ): void {
-    frames.fillStyle(this.#fillFor(node, state));
+    frames.fillStyle(this.#fillFor(state));
     frames.fillRect(square.x, square.y, square.width, square.height);
     this.#frame(frames, square, this.#edgeColour(node, state), STROKE);
 
@@ -415,8 +405,8 @@ export class SkillScene extends PanZoomScene {
     );
   }
 
-  #fillFor(node: SkillNodeView, state: SquareState): number {
-    return state === 'box' ? FILL.box : WASH_FILL[state][node.currency];
+  #fillFor(state: SquareState): number {
+    return state === 'box' ? FILL.box : WASH_FILL[state];
   }
 
   #drawPips(
@@ -453,17 +443,14 @@ export class SkillScene extends PanZoomScene {
     state: SquareState
   ): void {
     if (node.maxed || node.cost <= 0) return;
-    const eur = node.currency === 'eur';
-    const price = eur
-      ? formatCompactMoney(node.cost)
-      : formatCompactWhole(node.cost);
+    const price = formatCompactWhole(node.cost);
 
     const k = grow(square);
     this.label(
       square.x + (square.width - price.length * this.#glyph * k) / 2,
       square.y + PRICE_TOP * k,
       price,
-      state === 'box' ? INK.box : eur ? SCREEN_INK.money : SCREEN_INK.points,
+      state === 'box' ? INK.box : SCREEN_INK.points,
       PRICE_ROOM * k,
       k
     );
@@ -599,17 +586,14 @@ export class SkillScene extends PanZoomScene {
 
   #tipStatus(node: SkillNodeView): string {
     if (node.maxed) return node.status;
-    const price =
-      node.currency === 'eur'
-        ? formatMoney(node.cost)
-        : `${formatWhole(node.cost)} SP`;
+    const price = `${formatWhole(node.cost)} SP`;
     return node.buyable ? price : `${price} — ${node.status}`;
   }
 
   #statusInk(node: SkillNodeView): number {
     if (node.maxed) return SCREEN_INK.maxed;
     if (!node.buyable) return SCREEN_INK.ink3;
-    return node.currency === 'eur' ? SCREEN_INK.money : SCREEN_INK.points;
+    return SCREEN_INK.points;
   }
 
   #tipAnchor(

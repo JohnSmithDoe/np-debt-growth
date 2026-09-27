@@ -12,7 +12,6 @@ export interface SkillNodeView {
   readonly ranks: number;
   readonly levels: readonly SkillLevelView[];
   readonly cost: number;
-  readonly currency: 'sp' | 'eur';
   readonly maxed: boolean;
   readonly available: boolean;
   readonly buyable: boolean;

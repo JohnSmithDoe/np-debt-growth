@@ -8,7 +8,7 @@ import {
   skillParent,
 } from '../model/skill.model';
 import { adrNodeId, tierAt } from '../model/tier.model';
-import { SPAWNERS } from '../model/spawner.model';
+import { SPAWNER_FREE_HEADS, SPAWNERS } from '../model/spawner.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPE_IDS } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
@@ -56,8 +56,7 @@ export function skillLockReason(
       resolveParams: ['by'],
     };
   }
-  const held = node.currency === 'eur' ? state.budget : state.storyPoints;
-  if (held < economy.skillRankCost(state, id)) {
+  if (state.storyPoints < economy.skillRankCost(state, id)) {
     return { key: 'skill.lock.underfunded' };
   }
   return null;
@@ -67,27 +66,32 @@ export function buySkill(state: Consultancy, id: string): Consultancy | null {
   if (!skillAvailable(state, id)) return null;
   const node = SKILL_BY_ID.get(id)!;
   const cost = economy.skillRankCost(state, id);
-  const eur = node.currency === 'eur';
-  if ((eur ? state.budget : state.storyPoints) < cost) return null;
+  if (state.storyPoints < cost) return null;
 
   const rank = economy.skillRank(state, id);
   const levels = { ...state.levels };
   let tier = state.tier;
+  let spawners = state.spawners;
   for (const effect of node.levels[rank]?.effects ?? []) {
     if (effect.kind === 'line') levels[effect.line] += 1;
-    if (effect.kind === 'adr') tier = Math.max(tier, effect.adr);
+    if (effect.kind === 'adr') {
+      tier = Math.max(tier, effect.adr);
+      const held = economy.spawnerCount(state, effect.adr);
+      if (held < SPAWNER_FREE_HEADS)
+        spawners = { ...spawners, [effect.adr]: SPAWNER_FREE_HEADS };
+    }
   }
 
   return {
     ...state,
-    budget: eur ? state.budget - cost : state.budget,
-    storyPoints: eur ? state.storyPoints : state.storyPoints - cost,
+    storyPoints: state.storyPoints - cost,
     levels,
     roster:
       levels.senior > state.levels.senior
         ? [...state.roster, economy.nextSeniorHire(state)]
         : state.roster,
     tier,
+    spawners,
     skills: { ...state.skills, [id]: rank + 1 },
   };
 }
@@ -95,8 +99,7 @@ export function buySkill(state: Consultancy, id: string): Consultancy | null {
 export function anySkillAffordable(state: Consultancy): boolean {
   return SKILL_NODES.some((node) => {
     if (!skillAvailable(state, node.id)) return false;
-    const held = node.currency === 'eur' ? state.budget : state.storyPoints;
-    return held >= economy.skillRankCost(state, node.id);
+    return state.storyPoints >= economy.skillRankCost(state, node.id);
   });
 }
 

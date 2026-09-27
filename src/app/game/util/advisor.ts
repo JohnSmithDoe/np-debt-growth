@@ -6,7 +6,6 @@ import type { Consultancy } from '../model/consultancy.model';
 import {
   FINAL_SKILL_ID,
   SECRET_SKILL_ID,
-  SKILL_BY_ID,
   SKILL_NODES,
 } from '../model/skill.model';
 import { MAX_TIER } from '../model/tier.model';
@@ -80,10 +79,7 @@ function costOf(
 ): { currency: Currency; cost: number } {
   switch (buy.kind) {
     case 'skill':
-      return {
-        currency: SKILL_BY_ID.get(buy.id)?.currency === 'eur' ? 'eur' : 'sp',
-        cost: economy.skillRankCost(state, buy.id),
-      };
+      return { currency: 'sp', cost: economy.skillRankCost(state, buy.id) };
     case 'line':
       return { currency: 'eur', cost: economy.lineCost(state, buy.line) };
     case 'spawner':
@@ -294,13 +290,9 @@ export function advise(state: Consultancy, policy: SimPolicy): Advice {
     const found = ranked.find((c) => c.currency === currency);
     return found ? toPick(state, policy, found) : null;
   };
-  const adr = purchase.nextAdrNodeId(state);
-  const sp =
-    adr !== null && purchase.skillAvailable(state, adr)
-      ? towards(state, policy, ranked, goalOf(state, adr), ADR_SLACK)
-      : (top('sp') ?? spare(state, policy));
-  const eur = purchase.skillAvailable(state, FINAL_SKILL_ID)
-    ? towards(state, policy, ranked, goalOf(state, FINAL_SKILL_ID), null)
-    : top('eur');
-  return { eur, sp };
+  const goal = purchase.nextAdrNodeId(state) ?? FINAL_SKILL_ID;
+  const sp = purchase.skillAvailable(state, goal)
+    ? towards(state, policy, ranked, goalOf(state, goal), ADR_SLACK)
+    : (top('sp') ?? spare(state, policy));
+  return { eur: top('eur'), sp };
 }

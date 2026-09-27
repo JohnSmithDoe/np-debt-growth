@@ -13,7 +13,7 @@ export const SPAWNER_CAP = 50;
 
 export const SPAWNER_COST_STEP = Math.fround(1.15);
 
-export const SPAWNER_FREE_AT_ADR_0 = 1;
+export const SPAWNER_FREE_HEADS = 1;
 
 export const spawnerLabelKey = (adr: number): string =>
   adr === 0 ? 'spawner.0.label' : tierNameKey(adr);

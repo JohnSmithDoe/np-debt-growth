@@ -13,7 +13,7 @@ import {
   SPAWNER_BY_ADR,
   SPAWNER_CAP,
   SPAWNER_COST_STEP,
-  SPAWNER_FREE_AT_ADR_0,
+  SPAWNER_FREE_HEADS,
   spawnerFor,
 } from '../model/spawner.model';
 import type { SeniorHire, TraitId } from '../model/senior.model';
@@ -429,7 +429,7 @@ export function spawnerCost(state: Consultancy, adr: number): number {
   if (!row) return Number.POSITIVE_INFINITY;
   const level = spawnerCount(state, adr);
   if (level >= SPAWNER_CAP) return Number.POSITIVE_INFINITY;
-  const paid = adr === 0 ? Math.max(0, level - SPAWNER_FREE_AT_ADR_0) : level;
+  const paid = Math.max(0, level - SPAWNER_FREE_HEADS);
   return Math.floor(row.cost * SPAWNER_COST_STEP ** paid);
 }
 

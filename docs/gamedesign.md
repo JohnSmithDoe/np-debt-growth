@@ -17,7 +17,7 @@ The design as the code has it. Every number names the file it lives in; paths ar
    until it is back.
 5. **€ buys supply, SP buys the tree.** The rail sells heads, rate rows and crew; the tree
    sells everything else, the ADRs included. `signoff` starts the acceptance push; the run
-   ends at €20 Qa.
+   ends at €10 Qa.
 6. **Income = collected tickets/s × their worth**, where collected is the least of what the
    lines throw, what the hand and crew reach, and what the sprint takes. `util/sim.ts` computes
    exactly this without a board (§9).
@@ -237,7 +237,9 @@ Every purchase lives in the code: tree nodes in `model/skill.model.ts` (`SKILL_N
 | **Crew**  | `junior`, `senior`, `manager`, `velocity`, `kit` | per line | `LINE_PLAN` × 1.15^level                         |
 
 - **Spawner bases** (`SPAWNERS`): 2 · 500 · 15 000 · 87 500 · 500 000 · 3.5 M · 27.5 M · 240 M ·
-  2.25 G. ADR-0 starts with one free head that does not raise the price.
+  2.25 G. Every rung's row starts with one free head (`SPAWNER_FREE_HEADS`) that does not raise the
+  price: ADR-0's from the start, the others when their ADR is bought, so a new line is on the board
+  the moment it opens.
 - **Rate rows** (`INCOME_ROWS`, `balance/progression.ts`): tier _t_ costs `250 × 5^t` for its
   first rank and adds a flat `3 + t` € a rank to the ticket's value **before** multipliers.
   Opens once the line has a head (`incomeUnlocked`). Flat on purpose: decisive on cheap work,
@@ -274,7 +276,7 @@ income, ×2 after): `value` 25 / 1 500 then `LINE_DOUBLE_COST`; `spawn` 2 200 ×
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **A** Hand      | `radius`, the sprint nodes (`SPRINT_RUNGS`: per tier `capacity<t>` +25 scope, `cans<t>` +1 team, `cut<Ceremony>` on tiers 0–4), `lineOfSight`, `golden` → `goldenValue`, `goldenValue<t>`, `goldenCrew` |
 | **B** Juniors   | `junior` (1 200), `juniorSpeed`, `juniorRoom<t>`, `juniorReach` → `stretch`, `juniorPresence`, `ticketStacking`, `timesheets`, `pizza`                                                                  |
-| **E** Seniors   | `senior` (240 000, ADR-3), speed, reach, presence, `seniorRoom<t>`                                                                                                                                      |
+| **E** Seniors   | `senior` (60 000, ADR-3), speed, reach, presence, `seniorRoom<t>`                                                                                                                                       |
 | **H** Managers  | `manager`, speed, `relabel`, `managerRoom5`                                                                                                                                                             |
 | **C** Client    | the per-line `value` / `income` / `estimates` / `double` nodes, `valueBug`, `escalation`, `coaches`, `deck`                                                                                             |
 | **D** Debt      | the per-line `spawn` nodes, `debtInterest`, `debtInterest<t>`, `triagePolicy`, `spawnIncident` → `spawnIncident7` (escalations), `spawnIncident8` (incident value)                                      |
@@ -360,22 +362,22 @@ record; the rail has no ADR panel.
 | --- | ---------- | ---------- |
 | 1   | 750        | `legacy`   |
 | 2   | 10 000     | `flaky`    |
-| 3   | 80 000     | `conflict` |
+| 3   | 70 000     | `conflict` |
 | 4   | 200 000    | `slop`     |
-| 5   | 500 000    | `rockstar` |
-| 6   | 1 500 000  | `zombie`   |
-| 7   | 5 000 000  | `rewrite`  |
+| 5   | 650 000    | `rockstar` |
+| 6   | 2 200 000  | `zombie`   |
+| 7   | 6 000 000  | `rewrite`  |
 | 8   | 10 000 000 | `swarm`    |
 
 The prices grow with the rung because SP income does; the late ones stay low so the rung's extras,
 not the ADR, take most of the tier.
 
-**`signoff`** (€300 T, off ADR-8) is `FINAL_SKILL_ID` and the tree's only euro node. Buying it
+**`signoff`** (15 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced as the rung after ADR-8. Buying it
 starts the **acceptance push** (`ACCEPTANCE` in `balance/progression.ts`, `economy.inAcceptance`):
 spawns run ×3, everything bills ×12 overtime (in `globalMultiplier`), and a pink banner on the
-board counts the budget up to €20 Qa. Reaching it sets `endedAt` (`economy.accepted`, checked each
-store step and in the autoplayer) and the post-mortem opens. No prestige. About four minutes
-after ADR-8 to sign-off, and as long again for the push.
+board counts the budget up to €10 Qa. Reaching it sets `endedAt` (`economy.accepted`, checked each
+store step and in the autoplayer) and the post-mortem opens. No prestige. About four and a half
+minutes after ADR-8 to sign-off, and three for the push.
 
 Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buySpawner`,
 `buyIncome`); `GameStore` commits the result and handles the side effects.

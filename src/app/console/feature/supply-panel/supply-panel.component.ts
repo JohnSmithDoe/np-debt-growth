@@ -26,7 +26,7 @@ import { ticketLabelKey } from '../../../game/model/ticket.model';
 import {
   SPAWNED_TICKET_IDS,
   SPAWNER_CAP,
-  SPAWNER_FREE_AT_ADR_0,
+  SPAWNER_FREE_HEADS,
   SPAWNERS,
   spawnerBlurbKey,
   spawnerLabelKey,
@@ -218,7 +218,7 @@ export class SupplyPanelComponent {
         cost: maxed ? this.#say('rail.maxed') : formatCompactMoney(price),
         maxed,
         price: maxed ? null : price,
-        first: row.adr === 0 && held <= SPAWNER_FREE_AT_ADR_0,
+        first: row.adr === 0 && held <= SPAWNER_FREE_HEADS,
         icon: this.#walkerOf(row.adr),
       };
     });

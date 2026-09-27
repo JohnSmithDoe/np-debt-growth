@@ -1,10 +1,5 @@
 import type { Consultancy } from '../model/consultancy.model';
-import {
-  FINAL_SKILL_ID,
-  SECRET_SKILL_ID,
-  SKILL_BY_ID,
-  SKILL_NODES,
-} from '../model/skill.model';
+import { SECRET_SKILL_ID, SKILL_NODES } from '../model/skill.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPAWNED_TICKET_IDS, SPAWNERS } from '../model/spawner.model';
@@ -212,20 +207,11 @@ function skillOffers(state: Consultancy, saving: boolean): readonly Offer[] {
   return SKILL_NODES.filter(
     (node) =>
       node.id !== SECRET_SKILL_ID && purchase.skillAvailable(state, node.id)
-  ).map((node) => {
-    const eur = SKILL_BY_ID.get(node.id)?.currency === 'eur';
-    return {
-      cost: economy.skillRankCost(state, node.id),
-      cap: eur
-        ? node.id === FINAL_SKILL_ID
-          ? state.budget
-          : state.budget * DEFAULT_POLICY.spendFraction
-        : saving
-          ? 0
-          : state.storyPoints,
-      buy: () => purchase.buySkill(state, node.id),
-    };
-  });
+  ).map((node) => ({
+    cost: economy.skillRankCost(state, node.id),
+    cap: saving ? 0 : state.storyPoints,
+    buy: () => purchase.buySkill(state, node.id),
+  }));
 }
 
 function wants(state: Consultancy, line: PurchaseId): boolean {

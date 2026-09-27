@@ -476,9 +476,9 @@ describe('the rates tab (parity #25)', () => {
     expect(spawnerCost(consultancy({ spawners: { 0: 49 } }), 0)).toBe(1638);
   });
 
-  it('prices the legacy line from 500', () => {
+  it('prices the legacy line from 500 past its free head', () => {
     const prices = Array.from({ length: 12 }, (_, head) =>
-      spawnerCost(consultancy({ spawners: { 1: head }, tier: 1 }), 1)
+      spawnerCost(consultancy({ spawners: { 1: head + 1 }, tier: 1 }), 1)
     );
     expect(prices).toEqual([
       500, 574, 661, 760, 874, 1005, 1156, 1330, 1529, 1758, 2022, 2326,

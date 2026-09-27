@@ -81,8 +81,6 @@ export type SkillEffect =
 export type SkillTrack =
   'root' | 'A' | 'B' | 'C' | 'D' | 'E' | 'G' | 'H' | 'N' | 'O' | 'secret';
 
-export type SkillCurrency = 'sp' | 'eur';
-
 export interface SkillLevel {
   readonly cost: number;
   readonly effects: readonly SkillEffect[];
@@ -91,7 +89,6 @@ export interface SkillLevel {
 export interface SkillNode {
   readonly id: string;
   readonly track: SkillTrack;
-  readonly currency?: SkillCurrency;
   readonly requires: string | null;
   readonly maxed?: readonly string[];
   readonly granted?: boolean;
@@ -793,9 +790,8 @@ export const SKILL_NODES: readonly SkillNode[] = [
   {
     id: 'signoff',
     track: 'G',
-    currency: 'eur',
     requires: 'adr8',
-    levels: [{ cost: 300_000_000_000_000, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 15_000_000, effects: [{ kind: 'none' }] }],
   },
 
   {

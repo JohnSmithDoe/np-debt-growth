@@ -255,7 +255,7 @@ export const DE: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'Keiner freigegeben',
   'skill.golden.1.label': 'Partnersache',
   'skill.signoff.blurb':
-    'Der Abschluss startet den Abnahme-Endspurt: Arbeit strömt herein, jedes Ticket wird mit Überstunden abgerechnet, und der Kunde unterschreibt, wenn das Budget 20 Brd. € erreicht.',
+    'Der Abschluss startet den Abnahme-Endspurt: Arbeit strömt herein, jedes Ticket wird mit Überstunden abgerechnet, und der Kunde unterschreibt, wenn das Budget 10 Brd. € erreicht.',
   'skill.signoff.1.label': 'Abschluss unterschreiben',
   'skill.golden.blurb':
     'Manche Arbeit kommt als Partnersache herein. Sie zahlt ein Vermögen, und das Team fasst sie nicht an.',
@@ -331,7 +331,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.debt.1.label': 'Die Schuld',
   'skill.debtInterest.1.label': 'Zinsen auf technische Schulden',
   'skill.debtInterest6.1.label': 'Zinseszins',
-  'skill.debtInterest8.1.label': 'Zins auf Zins',
+  'skill.debtInterest7.1.label': 'Zins auf Zins',
   'skill.debtInterest.blurb':
     'Chance, dass ein Ticket eine Sprosse höher ankommt als es sollte.',
   'skill.cutRetro.1.label': 'Retro jetzt in Slack',
@@ -866,7 +866,7 @@ export const DE: Readonly<Record<string, string>> = {
   'help.loop.4':
     'Mit Story Points kaufst du den Skill-Baum. Gib dort ADRs frei, um neue Linien immer teurerer Schulden zu öffnen. Ziehen verschiebt, das Mausrad zoomt, über ein Feld fahren liest es; ein schwarzer Kasten sagt nur, dass dort etwas ist.',
   'help.loop.5':
-    'Ganz oben im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt. Das Mandat ist erfüllt, wenn das Budget 20 Brd. € erreicht.',
+    'Ganz oben im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt. Das Mandat ist erfüllt, wenn das Budget 10 Brd. € erreicht.',
   'award.m-first-close.label': 'Erstes Ticket triagiert',
   'award.m-first-close.blurb': 'Irgendwer musste ja.',
   'award.m-first-invoice.label': 'Erste Rechnung gestellt',

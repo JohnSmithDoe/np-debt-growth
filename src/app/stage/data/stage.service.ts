@@ -186,7 +186,6 @@ export class StageService {
           cost: level.cost,
         })),
         cost: maxed ? 0 : store.skillRankCost(node.id),
-        currency: node.currency ?? 'sp',
         maxed,
         available: store.skillAvailable(node.id),
         buyable: !maxed && lock === null,
