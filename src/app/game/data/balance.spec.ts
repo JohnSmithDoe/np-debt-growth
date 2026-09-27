@@ -51,6 +51,10 @@ function everySkill(): Record<string, number> {
   );
 }
 
+/** Minutes per tier 0…8 (tier 8 ends at sign-off): short open, long middle, a brisk finish. */
+const TIER_CURVE = [3, 3.5, 4, 4.5, 5, 5, 4.5, 4, 3.5] as const;
+const TIER_SLACK = 0.25;
+
 const MILESTONES = [
   ['tier 1', (s: Consultancy) => s.tier >= 1],
   ['first junior', (s: Consultancy) => s.levels.junior >= 1],
@@ -433,19 +437,27 @@ describe('the session arc', () => {
     expect(at! / 60_000).toBeLessThan(45);
   });
 
-  it('spaces the late rungs, instead of stacking them', () => {
-    const gap = (from: string, to: string): number =>
-      (run.reached.get(to)! - run.reached.get(from)!) / 60_000;
+  it('plays every tier about as long as its place on the curve', () => {
+    const marks = [
+      'tier 1',
+      'tier 2',
+      'tier 3',
+      'tier 4',
+      'tier 5',
+      'tier 6',
+      'tier 7',
+      'tier 8',
+      'signed off',
+    ].map((label) => run.reached.get(label)!);
+    const total = marks.at(-1)!;
+    const want = TIER_CURVE.reduce((sum, minutes) => sum + minutes, 0);
 
-    for (const [from, to] of [
-      ['tier 4', 'tier 5'],
-      ['tier 5', 'tier 6'],
-      ['tier 6', 'tier 7'],
-      ['tier 7', 'tier 8'],
-      ['tier 8', 'signed off'],
-    ] as const) {
-      expect(gap(from, to), `${from} to ${to}`).toBeGreaterThan(2);
-    }
+    marks.forEach((at, tier) => {
+      const share = (at - (marks[tier - 1] ?? 0)) / total;
+      const ratio = share / (TIER_CURVE[tier]! / want);
+      expect(ratio, `tier ${tier}`).toBeGreaterThan(1 - TIER_SLACK);
+      expect(ratio, `tier ${tier}`).toBeLessThan(1 + TIER_SLACK);
+    });
   });
 
   it('keeps the acceptance push a short finale', () => {

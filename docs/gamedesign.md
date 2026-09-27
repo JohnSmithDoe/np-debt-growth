@@ -360,23 +360,23 @@ record; the rail has no ADR panel.
 
 | ADR | SP         | Unlocks    |
 | --- | ---------- | ---------- |
-| 1   | 750        | `legacy`   |
-| 2   | 10 000     | `flaky`    |
-| 3   | 70 000     | `conflict` |
-| 4   | 200 000    | `slop`     |
-| 5   | 650 000    | `rockstar` |
-| 6   | 2 200 000  | `zombie`   |
-| 7   | 6 000 000  | `rewrite`  |
-| 8   | 10 000 000 | `swarm`    |
+| 1   | 350        | `legacy`   |
+| 2   | 6 000      | `flaky`    |
+| 3   | 45 000     | `conflict` |
+| 4   | 150 000    | `slop`     |
+| 5   | 420 000    | `rockstar` |
+| 6   | 3 600 000  | `zombie`   |
+| 7   | 9 000 000  | `rewrite`  |
+| 8   | 12 600 000 | `swarm`    |
 
 The prices grow with the rung because SP income does; the late ones stay low so the rung's extras,
 not the ADR, take most of the tier.
 
-**`signoff`** (15 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced as the rung after ADR-8. Buying it
+**`signoff`** (9 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced so tier 8 is a short last act. Buying it
 starts the **acceptance push** (`ACCEPTANCE` in `balance/progression.ts`, `economy.inAcceptance`):
 spawns run ×3, everything bills ×12 overtime (in `globalMultiplier`), and a pink banner on the
 board counts the budget up to €10 Qa. Reaching it sets `endedAt` (`economy.accepted`, checked each
-store step and in the autoplayer) and the post-mortem opens. No prestige. About four and a half
+store step and in the autoplayer) and the post-mortem opens. No prestige. About three and a half
 minutes after ADR-8 to sign-off, and three for the push.
 
 Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buySpawner`,
@@ -434,9 +434,11 @@ game uses:
   rest all of it (the tier's life, golden 20 s), won't-fix its 0.9 s fade longer; settled by iterating.
   Past 600 the board displaces rather than refuses: fades go first, then plain cards nearest
   expiry, so fewer reach auto-close (at ADR-6 a real board displaces ~100 cards/s).
-- **Crew** take their band at their ceiling, slowed by the walk: a random board distance
-  (≈ `MEAN_WALK`), or the nearest of four sampled cards with `nearest`, and by how full a
-  senior's sweep batch can get at that density.
+- **Crew** are priced seat by seat: a batch per close time plus walk, a woman's close time
+  halved but not her walk. The walk is the expected distance on the board grid
+  (`NEAREST_WALK`) to a random card, or with `nearest` to the nearest of the four claim samples
+  that hold a card this crew takes (binomial in its share of the field). The batch fills as
+  far as the sweep reaches at that density.
 - **Hand** takes one aimed card per sweep (gold first, then the dearest) plus a proportional mix
   of whatever other cards the ring touches, counted on the heap grid by box overlap
   (`cellsTouched`). Crew sweep batches count centres within their radius (`cellsInReach`).
@@ -492,8 +494,9 @@ paperclip (`console/feature/agent/`, on by default, switchable in settings) show
 - `data/balance-invariants.spec.ts` guards the **shape**: monotone ladders, tiers numbered by
   position, every rung on the tree and chained, no dominated retype rung.
 - `data/balance.spec.ts` guards the **pacing** on the advised autoplayer (`advisedSpend`):
-  the run accepted in 25–45 min, the acceptance push 2–5 min, the last five ADR gaps and
-  ADR-8 → sign-off over two minutes, and the crew's share — at least 5 %
+  the run accepted in 25–45 min, the acceptance push 2–5 min, every tier's share of the run
+  within ±25 % of `TIER_CURVE` (3 · 3.5 · 4 · 4.5 · 5 · 5 · 4.5 · 4 · 3.5 min, tier 8 ending at
+  sign-off: a short open, the longest tiers in the middle, a brisk finish), and the crew's share — at least 5 %
   of the closes before `goldenCrew`, judged from three minutes after the first junior (the hand's
   gold outweighs their euros until then), and 4 % of the euros after it. Run with the
   reports:

@@ -69,7 +69,7 @@ income that doesn't come from a close, and no offline progress.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
-row costs euros. The last node, `signoff` (15 M SP, the rung after ADR-8), does not end the run: it
+row costs euros. The last node, `signoff` (9 M SP, off ADR-8), does not end the run: it
 starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: spawns ×3, billing ×12)
 and the run ends when the budget reaches €10 Qa (`economy.accepted` sets `endedAt`). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
 bills**, once the €25 `velocity` row is bought, plus the per-ticket `estimates` nodes and planning-poker
@@ -181,12 +181,13 @@ Docs describe the current state only — no history; git has that.
 
 The economy runs without a board: `game/util/sim.ts` prices any state per second (supply,
 density, crew walk, hand sweep, the sprint), and `game/util/autoplay.ts` plays a whole run on it in
-about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.5 of a real board — if you
+about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.5 of a real board at each stop and ×1.1 over a whole run — if you
 change how the board collects, change the sim with it.
 
 `game/data/balance.spec.ts` runs the autoplayer on the Synergy Analyser's advice (`advisedSpend`)
-and **fails** if the run is not accepted in 25–45 minutes (target 30, the acceptance push 2–5 of
-them) or the last five ADR rungs and sign-off are not spaced more than two minutes apart; a second, cheapest-first run must walk every track and buy the
+and **fails** if the run is not accepted in 25–45 minutes (target about 40, the acceptance push 2–5 of
+them) or a tier's share of the run is more than ±25 % off `TIER_CURVE` (a bell: 3 min at
+the open, 5 in the middle, 3.5 at sign-off); a second, cheapest-first run must walk every track and buy the
 tree out. After any economy change, re-run it with the reports on:
 
 ```bash
