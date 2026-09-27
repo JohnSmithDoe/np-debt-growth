@@ -116,7 +116,7 @@ it drops. Costs are `DEBT_TIERS[].spCost` in `model/tier.model.ts`.
 | War Room `o5`          | 15 000  | senior sweep ×1.2       |
 | Records Store `o6`     | 50 000  | everything ×1.05        |
 | Corner Office `o7`     | 175 000 | escalation ×1.25        |
-| Standing Desks `kit`   | 400     | opens the kit rail line |
+| Desk Fitout `kit`      | 400     | opens the kit rail line |
 
 ### End
 
@@ -159,9 +159,10 @@ rank. Lint starts at 250 for +3; each line after is ×5 the price and +1 the inc
 | Junior `junior`     | 1 000  | 10                     | Bullpen, +5 ×3            |
 | Senior `senior`     | 1 200  | 10                     | Quiet Corner, +5 ×3       |
 | Manager `manager`   | 28 000 | 5                      | Client Lounge, +5         |
-| Kit `kit`           | 400    | 6                      | — one per `KIT_PLAN` item |
+| Kit `kit`           | 12 000 | 6                      | — one per `KIT_PLAN` item |
 
-Kit items, in order (`model/kit.model.ts`):
+Kit items, in order (`model/kit.model.ts`), each at its own price rather than the 1.15 climb. The tree node
+fits the first; the row names the next one:
 
 | Item          | Cost      | Effect           |
 | ------------- | --------- | ---------------- |
@@ -187,4 +188,3 @@ Where two purchases do the same thing, or a name is used twice.
 | No effect             | `o1`, `o4`                                |
 | "Human in the Loop"   | `assurance` and `doubleSwarm`             |
 | "Bullpen"             | `juniorRoom` and "Bullpen Extension" `o1` |
-| "Standing Desk(s)"    | the `kit` line and its second item        |

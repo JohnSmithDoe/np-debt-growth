@@ -60,7 +60,9 @@ export const EN: Readonly<Record<string, string>> = {
   'purchase.kit.label': 'Desk Fitout',
   'purchase.senior.label': 'Senior Dev',
   'purchase.junior.effect': 'one close every {{seconds}}s, plus the walk',
-  'purchase.kit.effect': 'the next item on the desk fitout',
+  'purchase.kit.effect': 'opens the Desk Fitout row on the Crew tab',
+  'purchase.kit.next': '{{item}}: {{effect}}',
+  'purchase.kit.done': 'every desk fitted out',
   'purchase.junior.label': 'Junior Dev',
   'hire.line': 'Senior Developer',
   'trait.closer.blurb':
@@ -298,7 +300,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.juniorSpeed.2.label': 'Pair Programming',
   'skill.juniorSpeed.3.label': 'Crunch Time',
   'skill.juniorSpeed.blurb': 'Juniors close faster and walk faster.',
-  'skill.kit.1.label': 'Standing Desks',
+  'skill.kit.1.label': 'Desk Fitout',
   'skill.kit.blurb': 'The desks fitted out. Every item is on the value side.',
   'skill.lineOfSight.1.label': 'Line of Sight',
   'skill.lineOfSight.blurb':

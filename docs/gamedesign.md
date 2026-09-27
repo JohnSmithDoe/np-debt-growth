@@ -231,7 +231,8 @@ Every purchase, node by node, is catalogued in `upgrades.md`.
   Opens once the line has a head (`incomeUnlocked`). Flat on purpose: decisive on cheap work,
   nothing on dear work, so it pushes the player up a rung.
 - **Crew lines** (`LINE_PLAN`): junior 1 000 (cap 10), senior 1 200 (cap 10), manager 28 000
-  (cap 5), velocity 25 (cap 1), kit 400 (cap 6). Room nodes raise the crew caps. The tree opens each line once (`{ kind: 'line' }`); `velocity` is open from
+  (cap 5), velocity 25 (cap 1). `kit` (cap 6) charges each `KIT_PLAN` item's own price, 12 000 to
+  1.9 M, not the 1.15 climb; its node fits the first. Room nodes raise the crew caps. The tree opens each line once (`{ kind: 'line' }`); `velocity` is open from
   the start because it is the SP source.
 
 ### The tree — SP only

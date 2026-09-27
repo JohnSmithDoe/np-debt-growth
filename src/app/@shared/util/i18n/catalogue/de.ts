@@ -61,7 +61,9 @@ export const DE: Readonly<Record<string, string>> = {
   'purchase.kit.label': 'Schreibtisch-Ausstattung',
   'purchase.senior.label': 'Senior-Entwickler',
   'purchase.junior.effect': 'ein Abschluss alle {{seconds}}s, plus Laufweg',
-  'purchase.kit.effect': 'das nächste Stück Ausstattung am Schreibtisch',
+  'purchase.kit.effect': 'öffnet die Schreibtisch-Ausstattung im Team-Reiter',
+  'purchase.kit.next': '{{item}}: {{effect}}',
+  'purchase.kit.done': 'jeder Schreibtisch ausgestattet',
   'purchase.junior.label': 'Junior-Dev',
   'hire.line': 'Senior-Dev',
   'trait.closer.blurb':
@@ -303,7 +305,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.juniorSpeed.3.label': 'Crunch Time',
   'skill.juniorSpeed.blurb':
     'Juniors schließen schneller und laufen schneller.',
-  'skill.kit.1.label': 'Stehpulte',
+  'skill.kit.1.label': 'Schreibtisch-Ausstattung',
   'skill.kit.blurb':
     'Die Schreibtische ausgestattet. Jedes Teil zählt auf der Wertseite.',
   'skill.lineOfSight.1.label': 'Sichtlinie',

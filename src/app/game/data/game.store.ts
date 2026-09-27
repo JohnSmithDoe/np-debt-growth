@@ -52,6 +52,7 @@ import {
 import { tierAt } from '../model/tier.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
+import type { KitItem } from '../model/kit.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { ACCEPTANCE } from '../model/balance/progression';
 import {
@@ -1205,6 +1206,10 @@ export class GameStore {
 
   lineCost(line: PurchaseId): number {
     return economy.lineCost(this.#state(), line);
+  }
+
+  kitNext(): KitItem | null {
+    return economy.kitNext(this.#state());
   }
 
   lineCap(line: PurchaseId): number {

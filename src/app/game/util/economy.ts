@@ -394,6 +394,7 @@ export function lineCost(state: Consultancy, line: PurchaseId): number {
   const plan = LINE_PLAN[line];
   const held = state.levels[line];
   if (held >= lineCap(state, line)) return Number.POSITIVE_INFINITY;
+  if (line === 'kit') return kitNext(state)?.cost ?? Number.POSITIVE_INFINITY;
   return Math.ceil(plan.cost * LINE_COST_STEP ** Math.max(0, held - 1));
 }
 

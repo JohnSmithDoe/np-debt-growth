@@ -16,6 +16,8 @@ import {
   INCOME_CAP,
   PURCHASE_IDS,
 } from '../../../game/model/balance/progression';
+import type { KitEffect } from '../../../game/model/kit.model';
+import { kitLabelKey } from '../../../game/model/kit.model';
 import { LINE_EFFECT_PARAMS } from '../../../game/model/purchase-copy.model';
 import type { TicketTypeId } from '../../../game/model/ticket.model';
 import { ticketLabelKey } from '../../../game/model/ticket.model';
@@ -54,7 +56,10 @@ interface Row {
   readonly cost: string;
   readonly maxed: boolean;
   readonly affordable: boolean;
-  readonly icon?: { readonly url: string; readonly kind: 'card' | 'crew' };
+  readonly icon?: {
+    readonly url: string;
+    readonly kind: 'card' | 'crew' | 'art';
+  };
 }
 
 const LINE_CREW: Partial<Record<PurchaseId, string>> = {
@@ -62,6 +67,15 @@ const LINE_CREW: Partial<Record<PurchaseId, string>> = {
   senior: 'seniors',
   manager: 'managers',
 };
+
+const LINE_ART: Partial<Record<PurchaseId, string>> = {
+  kit: 'assets/skills/kit.png',
+};
+
+const CREW_ROWS: readonly PurchaseId[] = [
+  'kit',
+  ...PURCHASE_IDS.filter((line) => line !== 'kit' && line !== SP_UNLOCK),
+];
 
 @Component({
   selector: 'cb-supply-panel',
@@ -238,7 +252,7 @@ export class SupplyPanelComponent {
     this.#store.state();
     // Locked lines stay on show — an empty tab reads as broken, not as
     // "these open on the tree".
-    return PURCHASE_IDS.filter((line) => line !== SP_UNLOCK).map((line) => {
+    return CREW_ROWS.map((line) => {
       const locked = !this.#store.lineUnlocked(line);
       const held = this.#store.levels()[line];
       const cap = this.#store.lineCap(line);
@@ -246,7 +260,10 @@ export class SupplyPanelComponent {
       return {
         key: line,
         name: this.#say(`purchase.${line}.label`),
-        blurb: this.#say(`purchase.${line}.effect`, LINE_EFFECT_PARAMS[line]),
+        blurb:
+          line === 'kit'
+            ? this.#kitBlurb()
+            : this.#say(`purchase.${line}.effect`, LINE_EFFECT_PARAMS[line]),
         locked,
         held,
         cap,
@@ -257,10 +274,12 @@ export class SupplyPanelComponent {
             : formatCompactMoney(this.#store.lineCost(line)),
         maxed,
         affordable: this.#store.canBuyLine(line),
-        icon: this.#icon(
-          'crew',
-          this.#icons.icons().crew.get(LINE_CREW[line] ?? '')
-        ),
+        icon:
+          this.#icon('art', LINE_ART[line]) ??
+          this.#icon(
+            'crew',
+            this.#icons.icons().crew.get(LINE_CREW[line] ?? '')
+          ),
       };
     });
   });
@@ -338,6 +357,29 @@ export class SupplyPanelComponent {
     });
   }
 
+  #kitBlurb(): string {
+    const item = this.#store.kitNext();
+    if (item === null) return this.#say('purchase.kit.done');
+    return this.#say('purchase.kit.next', {
+      item: this.#say(kitLabelKey(item.id)),
+      effect: this.#kitEffect(item.effect),
+    });
+  }
+
+  #kitEffect(effect: KitEffect): string {
+    const pct = `+${Math.round((effect.mult - 1) * 100)}%`;
+    switch (effect.kind) {
+      case 'ticketValue':
+        return this.#say('skill.effect.ticketValue', {
+          pct,
+          ticket: this.#say(ticketLabelKey(effect.target)),
+        });
+      case 'global':
+      case 'escalation':
+        return this.#say(`skill.effect.${effect.kind}`, { pct });
+    }
+  }
+
   #cardOf(id: TicketTypeId | undefined): Row['icon'] | undefined {
     return id === undefined
       ? undefined
@@ -345,7 +387,7 @@ export class SupplyPanelComponent {
   }
 
   #icon(
-    kind: 'card' | 'crew',
+    kind: NonNullable<Row['icon']>['kind'],
     url: string | undefined
   ): Row['icon'] | undefined {
     return url === undefined ? undefined : { url, kind };
