@@ -22,6 +22,8 @@ const STATUS_DOT = 3;
 const STATUS_TEXT_X = 12;
 const PENDING_WIDTH = 112;
 const MIN_BAR_WIDTH = 96;
+/** A lane fills left to right in segments; fewer when lanes get narrow. */
+const SEGMENT = { max: 10, min: 8, gap: 2 } as const;
 
 const PAD = 18;
 const BAR_X = 172;
@@ -222,23 +224,46 @@ export class SprintStrip {
 
     for (const [index, lane] of lanes.entries()) {
       const x = BAR_X + index * (width + LANE_GAP);
-      const away = lane.releaseLeftMs > 0;
-      this.#pips.fillStyle(away ? BOARD_INK.laneAway : BOARD_INK.pipEmpty, 1);
-      this.#pips.fillRect(x, y, width, PIP_HEIGHT);
-
-      if (away) {
+      if (lane.releaseLeftMs > 0) {
+        this.#pips.fillStyle(BOARD_INK.laneAway, 1);
+        this.#pips.fillRect(x, y, width, PIP_HEIGHT);
         this.#drawTrain(x, y, width, 1 - lane.releaseLeftMs / haul);
         continue;
       }
       const part = cap <= 0 ? 0 : Math.min(1, lane.count / cap);
-      if (part <= 0) continue;
-      this.#pips.fillStyle(newest.get(index) ?? BOARD_INK.pipFull, 1);
-      this.#pips.fillRect(
+      this.#drawSegments(
         x,
-        y + PIP_HEIGHT * (1 - part),
+        y,
         width,
-        PIP_HEIGHT * part
+        part,
+        newest.get(index) ?? BOARD_INK.pipFull
       );
+    }
+  }
+
+  #drawSegments(
+    x: number,
+    y: number,
+    width: number,
+    part: number,
+    colour: number
+  ): void {
+    const count = Math.max(
+      1,
+      Math.min(
+        SEGMENT.max,
+        Math.floor((width + SEGMENT.gap) / (SEGMENT.min + SEGMENT.gap))
+      )
+    );
+    const each = (width - (count - 1) * SEGMENT.gap) / count;
+    for (let at = 0; at < count; at++) {
+      const left = x + at * (each + SEGMENT.gap);
+      this.#pips.fillStyle(BOARD_INK.pipEmpty, 1);
+      this.#pips.fillRect(left, y, each, PIP_HEIGHT);
+      const fill = Math.min(1, Math.max(0, part * count - at));
+      if (fill <= 0) continue;
+      this.#pips.fillStyle(colour, 1);
+      this.#pips.fillRect(left, y, each * fill, PIP_HEIGHT);
     }
   }
 
