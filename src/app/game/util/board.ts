@@ -138,6 +138,7 @@ export function addTicket(
     reborn,
     golden,
     spBonus: 0,
+    voteMask: 0,
     relabelled,
     lifeLeftMs: TICKET_TYPES[type].handOnly
       ? NEVER_EXPIRES

@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 
-import { FLYER_CAPACITY, FLYER_CEILING, VOTES } from '../model/board.consts';
+import { voteBeamY, voteCount } from '../../game/model/board.model';
+import { FLYER_CAPACITY, FLYER_CEILING } from '../model/board.consts';
 import { ATLAS_KEY, VOTE_RING_FRAME } from './board-atlas';
 
 export const FLIGHT = {
@@ -12,6 +13,9 @@ export const FLIGHT = {
 export type FlightKind = (typeof FLIGHT)[keyof typeof FLIGHT];
 
 export type Arrival = (kind: FlightKind, ticket: number) => void;
+
+/** A falling card crossed beam `beam` at screen `x`, and that beam voted on it. */
+export type VoteCrossing = (beam: number, x: number) => void;
 
 const IDLE = -1;
 /** A card taken mid-fade is fully back by this share of its flight. */
@@ -33,12 +37,17 @@ export class FlyerPool {
   #span = new Float32Array(FLYER_CAPACITY);
   #elapsed = new Float32Array(FLYER_CAPACITY);
   #hold = new Float32Array(FLYER_CAPACITY);
-  #voted = new Uint8Array(FLYER_CAPACITY);
+  /** Beams still to cross that voted on this card, bit per coach. */
+  #votes = new Int32Array(FLYER_CAPACITY);
+  #voteTotal = new Uint8Array(FLYER_CAPACITY);
+  #lastY = new Float32Array(FLYER_CAPACITY);
   #alpha = new Float32Array(FLYER_CAPACITY);
   readonly #falling = new Map<number, number>();
 
   #onArrive: Arrival = () => undefined;
-  #voteTop = 0;
+  #onVote: VoteCrossing = () => undefined;
+  #beamTop = 0;
+  #beamScale = 1;
 
   readonly #scene: Phaser.Scene;
   readonly #depth: number;
@@ -82,7 +91,9 @@ export class FlyerPool {
     this.#span = widen(this.#span, new Float32Array(to));
     this.#elapsed = widen(this.#elapsed, new Float32Array(to));
     this.#hold = widen(this.#hold, new Float32Array(to));
-    this.#voted = widen(this.#voted, new Uint8Array(to));
+    this.#votes = widen(this.#votes, new Int32Array(to));
+    this.#voteTotal = widen(this.#voteTotal, new Uint8Array(to));
+    this.#lastY = widen(this.#lastY, new Float32Array(to));
     this.#alpha = widen(this.#alpha, new Float32Array(to));
     this.#add(from, to);
   }
@@ -91,9 +102,14 @@ export class FlyerPool {
     this.#onArrive = handler;
   }
 
-  /** Screen y of the first planning-poker beam. */
-  set voteTop(y: number) {
-    this.#voteTop = y;
+  set onVote(handler: VoteCrossing) {
+    this.#onVote = handler;
+  }
+
+  /** Where the planning-poker beams sit on screen: `offY + voteBeamY(i) * scaleY`. */
+  beams(offY: number, scaleY: number): void {
+    this.#beamTop = offY;
+    this.#beamScale = scaleY;
   }
 
   launch(
@@ -124,6 +140,7 @@ export class FlyerPool {
     this.#elapsed[slot] = 0;
     this.#hold[slot] = hold;
     this.#alpha[slot] = alpha;
+    this.#lastY[slot] = fromY;
     this.#active.push(slot);
     if (kind === FLIGHT.drop && ticket !== IDLE)
       this.#falling.set(ticket, slot);
@@ -137,11 +154,12 @@ export class FlyerPool {
     return true;
   }
 
-  /** The drop crosses the planning-poker beams and comes out re-estimated. */
-  markVoted(ticket: number): void {
+  /** The drop will be re-estimated by every beam in `mask` as it falls through it. */
+  markVoted(ticket: number, mask: number): void {
     const slot = this.#falling.get(ticket);
-    if (slot === undefined) return;
-    this.#voted[slot] = 1;
+    if (slot === undefined || mask === 0) return;
+    this.#votes[slot] = mask;
+    this.#voteTotal[slot] = voteCount(mask);
     this.#rings[slot]?.setAlpha(0).setVisible(true);
   }
 
@@ -210,7 +228,7 @@ export class FlyerPool {
             image.alpha =
               alpha + (1 - alpha) * Math.min(1, progress / REVIVE_SHARE);
         }
-        if (this.#voted[slot]) this.#followRing(slot, image);
+        if (this.#voteTotal[slot]) this.#followRing(slot, image);
       }
 
       if (progress < 1) continue;
@@ -228,21 +246,32 @@ export class FlyerPool {
   #followRing(slot: number, card: Phaser.GameObjects.Image): void {
     const ring = this.#rings[slot];
     if (!ring) return;
-    const crossed = Phaser.Math.Clamp(
-      (card.y - this.#voteTop) / VOTES.fade,
-      0,
-      1
-    );
+    const from = this.#lastY[slot] ?? card.y;
+    this.#lastY[slot] = card.y;
+    let pending = this.#votes[slot] ?? 0;
+    if (card.y > from) {
+      for (let rest = pending; rest !== 0; rest &= rest - 1) {
+        const beam = 31 - Math.clz32(rest & -rest);
+        const y = this.#beamTop + voteBeamY(beam) * this.#beamScale;
+        if (from < y && y <= card.y) {
+          pending &= ~(1 << beam);
+          this.#onVote(beam, card.x);
+        }
+      }
+      this.#votes[slot] = pending;
+    }
+    const total = this.#voteTotal[slot] ?? 1;
     ring
       .setPosition(card.x, card.y)
       .setRotation(card.rotation)
-      .setAlpha(Math.max(ring.alpha, crossed));
+      .setAlpha((total - voteCount(pending)) / total);
   }
 
   #retire(slot: number): void {
     this.#images[slot]?.setVisible(false);
     this.#rings[slot]?.setVisible(false);
-    this.#voted[slot] = 0;
+    this.#votes[slot] = 0;
+    this.#voteTotal[slot] = 0;
     this.#free.push(slot);
     if (this.#kind[slot] === FLIGHT.drop)
       this.#falling.delete(this.#ticket[slot] ?? IDLE);

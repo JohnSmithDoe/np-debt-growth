@@ -215,8 +215,12 @@ export const VOTES = {
   amplitude: 3,
   wavelength: 38,
   coachX: 16,
-  /** Pixels below the first beam over which a re-estimated card's border fades in. */
-  fade: 36,
+  /** How long a beam stays lit where a card it voted on crossed it. */
+  pulseMs: 520,
+  /** Screen px either side of the crossing the flash reaches. */
+  reach: 110,
+  /** Flashes drawn at once; a busy beam simply stays lit. */
+  maxPulses: 48,
 } as const;
 
 /** `top` and `height` bound the walkers' feet, in screen pixels. */

@@ -154,7 +154,7 @@ export class TicketHeap {
       type: TicketTypeId,
       x: number,
       y: number,
-      voted: boolean
+      voteMask: number
     ) => boolean,
     onGone: (
       id: number,
@@ -188,7 +188,7 @@ export class TicketHeap {
           ticket.type,
           this.px(ticket.x),
           this.py(ticket.y),
-          voted(ticket)
+          ticket.voteMask
         )
       ) {
         this.#draw(ticket);

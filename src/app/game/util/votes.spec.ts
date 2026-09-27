@@ -7,7 +7,7 @@ import {
   VOTE_CYCLE_MS,
   VOTE_ON_MS,
 } from '../model/balance/flow';
-import { cellY, emptyBoard, voteBeamY } from '../model/board.model';
+import { cellY, emptyBoard, voteBeamY, voteCount } from '../model/board.model';
 import { SpawnBudget } from './spawn-budget';
 import { spawnInto } from './supply';
 import * as economy from './economy';
@@ -48,6 +48,42 @@ describe('planning poker (the reference gum angels)', () => {
     }
     expect(seen).toBeGreaterThanOrEqual(1);
     expect(seen).toBeLessThan(4);
+  });
+
+  it('names the beams it pays for, so the stage can light those and no others', () => {
+    const state = consultancy({ skills: { coaches: 4, deck: 1 } });
+    const between = (voteBeamY(1) + voteBeamY(2)) / 2;
+    for (let ms = 0; ms < VOTE_CYCLE_MS; ms += 50) {
+      const mask = economy.voteMask(state, ms, between);
+      expect(mask & ~0b11).toBe(0);
+      for (const beam of [0, 1]) {
+        expect(Boolean(mask & (1 << beam))).toBe(
+          economy.voteLive(state, beam, ms)
+        );
+      }
+      expect(economy.voteBonus(state, ms, between)).toBe(
+        voteCount(mask) * economy.voteBonusPerCrossing(state)
+      );
+    }
+  });
+
+  it('carries the mask on every spawned ticket it pays', () => {
+    const state = consultancy({
+      tier: 0,
+      spawners: { 0: 40 },
+      skills: { coaches: 3 },
+    });
+    const board = emptyBoard();
+    const budget = new SpawnBudget();
+    for (let step = 0; step < 100; step += 1) {
+      spawnInto(board, budget, { ...state, runMs: step * 100 }, 0.1);
+    }
+    expect(board.tickets.some((ticket) => ticket.voteMask !== 0)).toBe(true);
+    for (const ticket of board.tickets) {
+      expect(ticket.spBonus).toBe(
+        voteCount(ticket.voteMask) * economy.voteBonusPerCrossing(state)
+      );
+    }
   });
 
   it('never re-estimates golden work', () => {

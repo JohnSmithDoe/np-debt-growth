@@ -3,17 +3,25 @@ import * as Phaser from 'phaser';
 import { voteBeamY } from '../../game/model/board.model';
 import { BOARD_INK, VOTES } from '../model/board.consts';
 
+interface Pulse {
+  readonly beam: number;
+  readonly x: number;
+  age: number;
+}
+
 /**
- * Planning poker: one coach per vote at the edge of the path, and a beam
- * across the board that is lit while that vote is live. The simulation
- * decides who was re-estimated; this only shows it.
+ * Planning poker: one coach per beam at the edge of the path. A beam lights
+ * only where, and when, a card it re-estimated falls through it; the
+ * simulation decides the vote, the flyer reports the crossing.
  */
 export class VoteBeams {
   readonly #graphics: Phaser.GameObjects.Graphics;
+  readonly #pulses: Pulse[] = [];
   #width = 0;
   #scale = 1;
   #offY = 0;
-  #drawn = '';
+  #coaches = -1;
+  #stale = true;
   #phase = 0;
 
   constructor(scene: Phaser.Scene, depth: number) {
@@ -24,22 +32,37 @@ export class VoteBeams {
     this.#width = width;
     this.#scale = scaleY;
     this.#offY = offY;
-    this.#drawn = '';
+    this.#stale = true;
   }
 
-  update(votes: readonly boolean[], deltaMs: number): void {
+  pulse(beam: number, x: number): void {
+    if (this.#pulses.length >= VOTES.maxPulses) this.#pulses.shift();
+    this.#pulses.push({ beam, x, age: 0 });
+  }
+
+  update(coaches: number, deltaMs: number): void {
     this.#phase = (this.#phase + deltaMs / 240) % (Math.PI * 2);
-    const key = votes.map((live) => (live ? 1 : 0)).join('');
-    if (key === '' && this.#drawn === '') return;
-    if (key === this.#drawn && !votes.some(Boolean)) return;
-    this.#drawn = key;
+    for (const pulse of this.#pulses) pulse.age += deltaMs;
+    while (this.#pulses[0] && this.#pulses[0].age >= VOTES.pulseMs) {
+      this.#pulses.shift();
+    }
+
+    const busy = this.#pulses.length > 0;
+    if (!busy && !this.#stale && coaches === this.#coaches) return;
+    this.#stale = busy;
+    this.#coaches = coaches;
 
     const g = this.#graphics;
     g.clear();
-    for (const [index, live] of votes.entries()) {
-      const y = this.#offY + voteBeamY(index) * this.#scale;
-      this.#beam(y, live, index);
-      this.#coach(y, live);
+    const raised = new Set<number>();
+    for (const pulse of this.#pulses) raised.add(pulse.beam);
+    for (let index = 0; index < coaches; index++) {
+      const y = this.#beamY(index);
+      this.#rest(y);
+      this.#coach(y, raised.has(index));
+    }
+    for (const pulse of this.#pulses) {
+      if (pulse.beam < coaches) this.#flash(pulse);
     }
   }
 
@@ -47,28 +70,44 @@ export class VoteBeams {
     this.#graphics.destroy();
   }
 
-  #beam(y: number, live: boolean, index: number): void {
-    const g = this.#graphics;
-    g.lineStyle(live ? 2 : 1, BOARD_INK.vote, live ? 0.85 : 0.12);
-    g.beginPath();
-    const start = VOTES.coachX + 12;
-    for (let x = start; x <= this.#width; x += 6) {
-      const wave = live
-        ? Math.sin(x / VOTES.wavelength + this.#phase + index) * VOTES.amplitude
-        : 0;
-      if (x === start) g.moveTo(x, y + wave);
-      else g.lineTo(x, y + wave);
-    }
-    g.strokePath();
+  #beamY(index: number): number {
+    return this.#offY + voteBeamY(index) * this.#scale;
   }
 
-  #coach(y: number, live: boolean): void {
+  #rest(y: number): void {
+    const g = this.#graphics;
+    g.lineStyle(1, BOARD_INK.vote, 0.12);
+    g.lineBetween(VOTES.coachX + 12, y, this.#width, y);
+  }
+
+  #flash(pulse: Pulse): void {
+    const g = this.#graphics;
+    const y = this.#beamY(pulse.beam);
+    const life = 1 - pulse.age / VOTES.pulseMs;
+    const start = Math.max(VOTES.coachX + 12, pulse.x - VOTES.reach);
+    const end = Math.min(this.#width, pulse.x + VOTES.reach);
+    const at = (x: number): number =>
+      y +
+      Math.sin(x / VOTES.wavelength + this.#phase + pulse.beam) *
+        VOTES.amplitude *
+        life;
+    for (let x = start; x < end; x += 6) {
+      const next = Math.min(end, x + 6);
+      const near = 1 - Math.abs((x + next) / 2 - pulse.x) / VOTES.reach;
+      g.lineStyle(2, BOARD_INK.vote, 0.9 * life * Math.max(0, near));
+      g.lineBetween(x, at(x), next, at(next));
+    }
+    g.fillStyle(BOARD_INK.vote, life);
+    g.fillCircle(pulse.x, y, 2 + 2 * life);
+  }
+
+  #coach(y: number, raised: boolean): void {
     const g = this.#graphics;
     const x = VOTES.coachX;
     g.fillStyle(BOARD_INK.coach, 1);
     g.fillCircle(x, y - 4, 2.5);
     g.fillRect(x - 2, y - 1, 4, 6);
-    if (!live) return;
+    if (!raised) return;
     g.fillStyle(BOARD_INK.card, 1);
     g.fillRect(x + 4, y - 7, 5, 7);
     g.fillStyle(BOARD_INK.vote, 1);

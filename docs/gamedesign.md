@@ -290,10 +290,10 @@ new rung is a choice, not a shopping spree:
 | Rung  | Opens                                                                       |
 | ----- | --------------------------------------------------------------------------- |
 | ADR-1 | Legacy line, `junior` (the whole crew arm, `triagePolicy` under it), `cans` |
-| ADR-2 | Flaky line, `coaches` → `deck`, `golden`                                    |
+| ADR-2 | Flaky line, `golden`                                                        |
 | ADR-3 | Conflict line, `senior`                                                     |
 | ADR-4 | Slop line, `manager`, `debtInterest`                                        |
-| ADR-5 | Rockstar line, `pizza`, `timesheets`                                        |
+| ADR-5 | Rockstar line, `pizza`, `timesheets`, `coaches` → `deck`                    |
 | ADR-6 | Zombie line, `spawnIncident`, `valueIncident`, `spawnEscalation`            |
 | ADR-7 | Rewrite line, `goldenCrew`, `stretch`                                       |
 | ADR-8 | Swarm line, `assurance`, `signoff`                                          |
@@ -310,17 +310,19 @@ final. Nodes with more than five ranks draw their pips in rows of five.
 `line-<kind>.png` (`stage/model/skill-icon.model.ts`). The files are generated from
 `tools/art-batch.mjs` rows of the same names; `spare-*.png` are generated but unused.
 
-**Planning poker** (`coaches` 600 → 11.8 M, `deck` 900 → 17.7 M, 10 ranks each, ×3 a rank, from
-ADR-2, so a board turned purple is a late sight): coaches on the lane edge hold
+**Planning poker** (`coaches` 400 k → 27.5 M, `deck` 600 k → 41.2 M, 10 ranks each, ×1.6 a rank, from
+ADR-5, priced for that rung's SP income): coaches on the lane edge hold
 votes live for `VOTE_ON_MS` 1.4 s of every `VOTE_CYCLE_MS` 4 s, offset from each other. A
 non-golden ticket that lands below a live vote's beam gains `VOTE_BONUS_BASE` 45 SP + 15 a `deck` rank (the reference pays 30).
 The beams sit in board units (`VOTE_BEAMS`, `voteBeamY`), so a ticket landing above one is passed over;
-decided at spawn from the landing cell. New work scatters only below the top `HEAP_SPAWN_GAP_ROWS`
+decided at spawn from the landing cell and kept on the ticket as `voteMask`, one bit per beam. New work scatters only below the top `HEAP_SPAWN_GAP_ROWS`
 field rows, so it falls through the beams; a crowded board stacks above them and misses the vote.
 The stage scales the board separately across and down (`board-scene.ts` `#layout`), so y 100 always
 sits `VOTES.belowSpawners` under the fixed spawner path and the floor on the sprint strip; round
-things (sweep ring, pizza) use √(x·y), so the hand covers the board area the sim prices. Drawn by `stage/scene/vote-beams.ts`; a re-estimated card
-wears a purple border (`voteFrame`) that fades in as it falls past the beams. The reference's gum angels.
+things (sweep ring, pizza) use √(x·y), so the hand covers the board area the sim prices. Drawn by `stage/scene/vote-beams.ts`: the beams rest dim, and a beam
+flashes only where a card it voted on falls through it (`FlyerPool` reports the crossing), its coach
+raising a card. The card's purple border (`voteFrame`) steps in with each voting beam it crosses,
+so every flash is a vote and every vote flashes. The reference's gum angels.
 
 ### The ADR ladder
 

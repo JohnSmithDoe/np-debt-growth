@@ -1,4 +1,5 @@
 import type { Board } from '../model/board.model';
+import { voteCount } from '../model/board.model';
 import type { Consultancy } from '../model/consultancy.model';
 import type { Weather } from '../model/hazard.model';
 import { CALM } from '../model/hazard.model';
@@ -42,11 +43,13 @@ export function spawnInto(
         rand() < golden
       );
       if (ticket && !ticket.golden) {
-        ticket.spBonus = economy.voteBonus(
+        ticket.voteMask = economy.voteMask(
           state,
           from + n * VOTE_SPREAD_MS,
           ticket.y
         );
+        ticket.spBonus =
+          voteCount(ticket.voteMask) * economy.voteBonusPerCrossing(state);
       }
     }
   }

@@ -1,6 +1,6 @@
 import type { Consultancy } from '../model/consultancy.model';
 import type { TicketMix } from '../model/board.model';
-import { voteBeamY } from '../model/board.model';
+import { voteBeamY, voteCount } from '../model/board.model';
 import type { Award } from '../model/award.model';
 import { AWARDS } from '../model/award.model';
 import type { OfficePlate } from '../model/office.model';
@@ -918,20 +918,31 @@ export function voteLive(
   return (runMs + offset) % VOTE_CYCLE_MS < VOTE_ON_MS;
 }
 
+/** Bit `i` set: beam `i` is live and above `landingY`, so the ticket falls through it. */
+export function voteMask(
+  state: Consultancy,
+  runMs: number,
+  landingY: number
+): number {
+  const coaches = Math.min(coachCount(state), 31);
+  let mask = 0;
+  for (let index = 0; index < coaches; index += 1) {
+    if (landingY > voteBeamY(index) && voteLive(state, index, runMs)) {
+      mask |= 1 << index;
+    }
+  }
+  return mask;
+}
+
 /** SP a ticket landing at `landingY` earns for every live beam above it. */
 export function voteBonus(
   state: Consultancy,
   runMs: number,
   landingY: number
 ): number {
-  const coaches = coachCount(state);
-  let live = 0;
-  for (let index = 0; index < coaches; index += 1) {
-    if (landingY > voteBeamY(index) && voteLive(state, index, runMs)) {
-      live += 1;
-    }
-  }
-  return live * voteBonusPerCrossing(state);
+  return (
+    voteCount(voteMask(state, runMs, landingY)) * voteBonusPerCrossing(state)
+  );
 }
 
 function awardGranted(state: Consultancy, id: string): boolean {

@@ -27,8 +27,8 @@ export interface SceneDeps {
   sprint(): readonly SprintSlot[];
   lanes(): readonly Lane[];
   laneCapacity(): number;
-  /** One flag per coach: is that vote live right now. */
-  votes(): readonly boolean[];
+  /** Planning-poker coaches, one beam each. */
+  coaches(): number;
   /** The live pizza party in board units, with the share of it left. */
   pizza(): { x: number; y: number; radius: number; left: number } | null;
   pending(): number;

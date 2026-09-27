@@ -230,7 +230,7 @@ export class StageService {
       sprint: () => store.sprint(),
       lanes: () => store.lanes(),
       laneCapacity: () => store.laneCapacity(),
-      votes: () => store.votes(),
+      coaches: () => economy.coachCount(store.state()),
       pizza: () => store.pizzaParty(),
       pending: () => store.sprintValue(),
       tier: () => store.tier(),

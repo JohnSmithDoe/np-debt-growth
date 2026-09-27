@@ -286,6 +286,7 @@ export class BoardScene extends CbScene {
     parts.flyers.onArrive = (kind, id) => {
       if (kind === FLIGHT.drop) parts.heap.reveal(id);
     };
+    parts.flyers.onVote = (beam, x) => parts.votes.pulse(beam, x);
     this.#parts = parts;
 
     this.#hover = this.add
@@ -350,7 +351,7 @@ export class BoardScene extends CbScene {
     this.#wontFix = new Set(this.deps.takeWontFix());
     parts.heap.sync(
       board,
-      (id, type, x, y, voted) => this.#land(parts, id, type, x, y, voted),
+      (id, type, x, y, voteMask) => this.#land(parts, id, type, x, y, voteMask),
       (id, type, x, y, voted, alpha) =>
         this.#leave(parts, id, type, x, y, voted, alpha)
     );
@@ -373,7 +374,7 @@ export class BoardScene extends CbScene {
     parts.bubbles.hear(parts.managers);
 
     parts.spawners.update(step);
-    parts.votes.update(this.deps.votes(), step);
+    parts.votes.update(this.deps.coaches(), step);
     parts.heap.update(step);
     parts.crew.update(step);
     parts.seniors.update(step);
@@ -424,7 +425,7 @@ export class BoardScene extends CbScene {
     type: TicketTypeId,
     x: number,
     y: number,
-    voted: boolean
+    voteMask: number
   ): boolean {
     const source = parts.spawners.originOf(spawnerFor(type)?.adr ?? -1);
     const launched = parts.flyers.launch(
@@ -438,7 +439,7 @@ export class BoardScene extends CbScene {
       DROP_MS,
       DROP_HOP
     );
-    if (launched && voted) parts.flyers.markVoted(id);
+    if (launched) parts.flyers.markVoted(id, voteMask);
     return launched;
   }
 
@@ -864,7 +865,7 @@ export class BoardScene extends CbScene {
     parts.heap.layout(this.#scaleX, this.#scaleY, this.#offX, this.#offY);
     parts.spawners.layout(0, 0, width);
     parts.votes.layout(width, this.#scaleY, this.#offY);
-    parts.flyers.voteTop = this.#offY + VOTE_BEAMS.top * this.#scaleY;
+    parts.flyers.beams(this.#offY, this.#scaleY);
     for (const crew of [parts.crew, parts.seniors, parts.managers]) {
       crew.layout(this.#scaleX, this.#scaleY, this.#offX, this.#offY);
     }

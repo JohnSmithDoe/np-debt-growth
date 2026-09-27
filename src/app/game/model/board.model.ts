@@ -31,6 +31,8 @@ export interface BoardTicket {
   golden: boolean;
   /** SP the live votes whose beam it landed below add at pickup. */
   spBonus: number;
+  /** Bit per coach: the beams it fell through on arrival, for the stage to show. */
+  voteMask: number;
   /** Counts down while unclaimed; `NEVER_EXPIRES` for hand-only cards. */
   lifeLeftMs: number;
   /** Runs down once `lifeLeftMs` hits 0; the card is closed as won't-fix at 0. */
@@ -152,6 +154,13 @@ export function cellY(row: number): number {
 
 export function voteBeamY(index: number): number {
   return VOTE_BEAMS.top + index * VOTE_BEAMS.spacing;
+}
+
+/** Beams set in a vote mask. */
+export function voteCount(mask: number): number {
+  let count = 0;
+  for (let rest = mask; rest !== 0; rest &= rest - 1) count += 1;
+  return count;
 }
 
 /** Rows new work scatters into; only a crowded board stacks above them. */

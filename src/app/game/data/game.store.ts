@@ -376,14 +376,6 @@ export class GameStore {
     return { x: rush.x, y: rush.y, radius: rush.radius, left };
   }
 
-  /** Read each frame by the stage, so not a signal: votes flip on the run clock. */
-  votes(): readonly boolean[] {
-    const state = this.#state();
-    return Array.from({ length: economy.coachCount(state) }, (_, index) =>
-      economy.voteLive(state, index, state.runMs)
-    );
-  }
-
   readonly laneCapacity = computed(() =>
     economy.laneCapacity(this.#state(), this.#sky())
   );
