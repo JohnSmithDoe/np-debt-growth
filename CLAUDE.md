@@ -171,12 +171,12 @@ takes, not assets, and the only source of the raw art.
 - The in-app debug bar unlocks with the Konami code (`ServiceDoorService`).
 - `/demo` route renders `DemoScene` alone for floor-plate work.
 
-## The docs, and what each is for
+## The docs
 
-| File                 | What it is                                                                                                                                                                                                                            |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/gamedesign.md` | The design **as the code has it** — loop, currencies, crew, progression, where every knob lives, the current measured run, the reference's measured numbers (§11) and what the screen shows (§12). Read this before touching balance. |
-| `docs/upgrades.md`   | Every tree node and rail row: cost, ranks, effect, and where two purchases overlap.                                                                                                                                                   |
+`docs/gamedesign.md` is the design **as the code has it**: loop, currencies, crew, progression,
+where every knob lives, the current measured run, the reference's measured numbers (§11) and what
+the screen shows (§12). Read it before touching balance. Prices and ranks are not copied into it;
+the code is the list.
 
 Docs describe the current state only — no history; git has that.
 

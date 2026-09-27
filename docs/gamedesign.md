@@ -214,7 +214,15 @@ pipeline, an offshore-contractor crew kind and the Promotion Round were removed.
 
 ## 6. Progression
 
-Every purchase, node by node, is catalogued in `upgrades.md`.
+Every purchase lives in the code: tree nodes in `model/skill.model.ts` (`SKILL_NODES`,
+`LINE_NODES`), rail rows in `balance/progression.ts` (`LINE_PLAN`, `INCOME_ROWS`),
+`model/spawner.model.ts` and `model/kit.model.ts`. Two purchases overlap, or share a name, here:
+
+- Junior band +1 twice: `juniorReach` rank 2 and `stretch`.
+- Junior walk: `juniorSpeed` and `o3`. Senior sweep: `seniorReach` and `o5`.
+- No effect: `o1`, `o4`.
+- "Human in the Loop" names both `assurance` and `doubleSwarm`; "Bullpen" names `juniorRoom`, and
+  "Bullpen Extension" is `o1`.
 
 ### The rail — three tabs, all euros
 
