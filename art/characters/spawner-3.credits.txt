@@ -26,8 +26,8 @@ body/bodies/male/walk.png
 		- https://opengameart.org/content/lpc-jump-expanded
 		- https://opengameart.org/content/lpc-character-bases
 
-head/heads/lizard/male/walk.png
-	- Note: original lizard/drake by Nila122, reworked by BenCreating, modular head and further revisions by bluecarrot16. Nila122 gave blanket permission to MedicineStorm to use Nila122's LPC assets under OGA-BY 3.0 (where original or derived only from other works under OGA-BY).
+head/heads/human/male/walk.png
+	- Note: original head by Redshrike, tweaks by BenCreating, modular version by bluecarrot16
 	- Licenses:
 		- OGA-BY 3.0
 		- CC-BY-SA 3.0
@@ -35,21 +35,111 @@ head/heads/lizard/male/walk.png
 	- Authors:
 		- bluecarrot16
 		- Benjamin K. Smith (BenCreating)
-		- Nila122
+		- Stephen Challener (Redshrike)
 	- Links:
-		- https://opengameart.org/content/drakes-and-lizardfolk
+		- https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles
 		- https://opengameart.org/content/lpc-character-bases
 
-head/fins/fin/adult/walk.png
-	- Note: adapted to v3 base by bluecarrot16
+head/faces/male/neutral/walk.png
+	- Note: Original by Redshrike, Expressions by ElizaWy, mapped to all frames by JaidynReiman
+	- Licenses:
+		- OGA-BY 3.0
+	- Authors:
+		- JaidynReiman
+		- ElizaWy
+		- Stephen Challener (Redshrike)
+	- Links:
+		- https://github.com/ElizaWy/LPC/tree/main/Characters/Head
+		- https://opengameart.org/content/ulpc-expanded-expressions
+
+hair/buzzcut/adult/walk.png
+	- Licenses:
+		- OGA-BY 3.0
+	- Authors:
+		- ElizaWy
+	- Links:
+		- https://opengameart.org/content/lpc-hair
+
+torso/clothes/longsleeve/longsleeve2_polo/male/walk.png
+	- Note: original by ElizaWy; spellcast/thrust/shoot/hurt/male adapted from original by JaidynReiman
+	- Licenses:
+		- OGA-BY 3.0
+	- Authors:
+		- ElizaWy
+		- JaidynReiman
+		- Stephen Challener (Redshrike)
+		- Johannes Sjölund (wulax)
+	- Links:
+		- http://opengameart.org/content/lpc-revised-character-basics
+		- https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing
+		- https://opengameart.org/content/lpc-expanded-sit-run-jump-more
+		- https://opengameart.org/content/lpc-expanded-simple-shirts
+
+legs/pants/male/walk.png
+	- Note: original male pants by wulax, recolors and edits to v3 base by bluecarrot16, climb/jump/run/sit/emotes/revised combat by JaidynReiman based on ElizaWy's LPC Revised
 	- Licenses:
 		- OGA-BY 3.0
 		- GPL 3.0
 		- CC-BY-SA 3.0
 	- Authors:
 		- bluecarrot16
-		- Nila122
+		- JaidynReiman
+		- ElizaWy
+		- Matthew Krohn (makrohn)
+		- Johannes Sjölund (wulax)
+		- Stephen Challener (Redshrike)
 	- Links:
-		- https://opengameart.org/content/lpc-lizard-headgear
+		- https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles
+		- https://opengameart.org/content/lpc-medieval-fantasy-character-sprites
+		- https://opengameart.org/content/lpc-expanded-pants
+
+feet/shoes/basic/male/walk.png
+	- Note: original by wulax, edited for v3 base by bluecarrot16, Jump/Sit/Emote/Run/Revised Combat by JaidynReiman
+	- Licenses:
+		- OGA-BY 3.0
+		- CC-BY-SA 3.0
+		- GPL 3.0
+	- Authors:
+		- JaidynReiman
+		- bluecarrot16
+		- Johannes Sjölund (wulax)
+	- Links:
+		- https://opengameart.org/content/lpc-medieval-fantasy-character-sprites
 		- http://opengameart.org/content/lpc-clothing-updates
+		- https://opengameart.org/content/lpc-expanded-socks-shoes
+
+facial/glasses/glasses/adult/walk/black.png
+	- Licenses:
+		- OGA-BY 3.0
+	- Authors:
+		- ElizaWy
+	- Links:
+		- https://github.com/ElizaWy/LPC/tree/main/Characters/Head%20Accessories
+		- https://opengameart.org/content/lpc-expanded-sit-run-jump-more
+
+backpack/backpack/male/walk/black.png
+	- Note: trivial adjustments by bluecarrot16 to be compatible with v3 bases
+	- Licenses:
+		- CC-BY-SA 3.0
+		- GPL 3.0
+	- Authors:
+		- Benjamin K. Smith (BenCreating)
+		- macmanmatty
+	- Links:
+		- https://opengameart.org/content/lpc-backpacks
+
+tools/pickaxe/male/walk.png
+	- Note: original by bluecarrot16, color reduced by JaidynReiman
+	- Licenses:
+		- OGA-BY-3.0
+		- CC-BY 4.0
+		- CC-BY-SA 3.0+
+		- GPL 2.0+
+	- Authors:
+		- bluecarrot16
+		- JaidynReiman
+		- Pierre Vigier (pvigier)
+		- Tuomo Untinen (reemax)
+	- Links:
+		- https://opengameart.org/content/lpc-hand-tools
 

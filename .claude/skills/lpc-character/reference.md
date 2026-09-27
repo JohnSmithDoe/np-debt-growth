@@ -95,7 +95,8 @@ A sheet is a grid of 64px frames, but **the column count is not fixed**: a weapo
 oversized swing frames and widens the sheet from **13 to 18 columns** (832px → 1152px). Frame
 indices are row-major, so the column count shifts every index — reading a weaponed sheet with
 13-column indices lands on empty cells and animates nothing visible. `export.mjs` reports
-`columns` and `geometry`; `check` predicts them. This repo's cast is unarmed, so 13.
+`columns` and `geometry`; `check` predicts them. The crew is unarmed, so 13; the armed
+spawner lines run 13 to 24. `pack-sheets.mjs` reads cells by row, so the width does not matter.
 
 Row order is identical in both geometries. The blocks, by starting row:
 

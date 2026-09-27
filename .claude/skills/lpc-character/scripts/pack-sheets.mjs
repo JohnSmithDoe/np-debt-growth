@@ -84,8 +84,9 @@ try {
     for (const [skinIndex, skin] of skins.entries()) {
         const sheet = join(inDir, `${skin}.png`);
         const [w] = magick('identify', '-format', '%w %h', sheet).toString().split(' ').map(Number);
-        if (Math.round(w / LPC_FRAME) !== SOURCE_COLS) {
-            throw new Error(`${skin}: ${Math.round(w / LPC_FRAME)} columns, expected ${SOURCE_COLS} — armed sheets are not supported`);
+        // A weapon widens the sheet for its oversized frames; the played rows keep their place.
+        if (Math.round(w / LPC_FRAME) < SOURCE_COLS) {
+            throw new Error(`${skin}: ${Math.round(w / LPC_FRAME)} columns, expected at least ${SOURCE_COLS}`);
         }
 
         for (const block of PACKED_BLOCKS) {

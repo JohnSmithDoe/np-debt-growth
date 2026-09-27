@@ -262,44 +262,44 @@
       "hash": "sex=teen&body=Body_Color_light&head=Human_Male_light&eyes=Eye_Color_blue&expression=Neutral&hair=Bedhead_platinum&clothes=TShirt_all.lpcr.white&legs=Pants_all.lpcr.white&shoes=Basic_Shoes_all.lpcr.white"
     },
     "spawner-1": {
-      "note": "Spawner, ADR-1 Legacy Framework — skeleton, long dead and still serving",
-      "hash": "sex=male&body=Skeleton_all.lpcr.orange&head=Skeleton_all.lpcr.orange"
+      "note": "Spawner, ADR-1 Legacy Framework — skeleton in a dusty shirt and tie, on a cane",
+      "hash": "sex=male&body=Skeleton_all.lpcr.orange&head=Skeleton_all.lpcr.orange&clothes=Longsleeve_2_Buttoned_tan&legs=Pants_brown&shoes=Basic_Shoes_brown&neck=Necktie_maroon&weapon=Cane"
     },
     "spawner-2": {
-      "note": "Spawner, ADR-2 Copy-Paste Culture — stitched together from other people’s parts",
-      "hash": "sex=male&body=Body_Color_all.lpcr.yellow&head=Frankenstein_all.lpcr.yellow"
+      "note": "Spawner, ADR-2 Copy-Paste Culture — stitched together from other people’s parts, with a hammer",
+      "hash": "sex=male&body=Body_Color_all.lpcr.yellow&head=Frankenstein_all.lpcr.yellow&clothes=Shortsleeve_Polo_green&legs=Cuffed_Pants_charcoal&shoes=Basic_Boots_black&weapon=Hammer_steel"
     },
     "spawner-3": {
-      "note": "Spawner, ADR-3 Offshore Contractors — lizard out of the sea",
-      "hash": "sex=male&body=Body_Color_all.lpcr.apple&head=Lizard_male_all.lpcr.apple&fins=Fin_all.lpcr.apple"
+      "note": "Spawner, ADR-3 Offshore Contractors — contractor with glasses, backpack and a pickaxe",
+      "hash": "sex=male&body=Body_Color_light&head=Human_Male_light&eyes=Eye_Color_brown&expression=Neutral&hair=Buzzcut_dark_brown&clothes=Longsleeve_Polo_sky&legs=Pants_charcoal&shoes=Basic_Shoes_black&facial_eyes=Glasses_black&backpack=Backpack_black&weapon=Pickaxe_steel"
     },
     "spawner-4": {
-      "note": "Spawner, ADR-4 AI Slop — alien",
-      "hash": "sex=male&body=Body_Color_all.lpcr.cyan&head=Alien_all.lpcr.cyan"
+      "note": "Spawner, ADR-4 AI Slop — hooded, shaded, carrying a staff",
+      "hash": "sex=male&body=Body_Color_lpcr.peach&head=Human_Male_lpcr.peach&eyes=Eye_Color_blue&expression=Neutral&hat=Hood_gray&clothes=Longsleeve_2_gray&legs=Pants_black&shoes=Basic_Shoes_white&facial_eyes=Sunglasses_black&weapon=Gnarled_staff"
     },
     "spawner-5": {
       "note": "Spawner, ADR-5 Rockstar Dev — long blue hair, shades, sleeveless",
       "hash": "sex=male&body=Body_Color_lpcr.tan&head=Human_Male_lpcr.tan&eyes=Eye_Color_brown&expression=Neutral&hair=Long_straight_blue&clothes=Sleeveless_2_all.lpcr.royal&legs=Pants_all.lpcr.royal&shoes=Revised_Boots_all.lpcr.royal&facial_eyes=Shades_black"
     },
     "spawner-6": {
-      "note": "Spawner, ADR-6 Zombie Service — brain-dead, still up",
-      "hash": "sex=male&body=Body_Color_all.lpcr.amethyst&head=Zombie_all.lpcr.amethyst&wound_brain=Brain"
+      "note": "Spawner, ADR-6 Zombie Service — brain-dead in shirt and tie, still up, with an axe",
+      "hash": "sex=male&body=Body_Color_all.lpcr.amethyst&head=Zombie_all.lpcr.amethyst&wound_brain=Brain&clothes=Shortsleeve_white&neck=Necktie_navy&legs=Pants_charcoal&shoes=Basic_Shoes_black&weapon=Axe_steel"
     },
     "spawner-7": {
-      "note": "Spawner, ADR-7 Big Rewrite — bull in the china shop",
-      "hash": "sex=muscular&body=Body_Color_all.lpcr.red&head=Minotaur_all.lpcr.red"
+      "note": "Spawner, ADR-7 Big Rewrite — demolition crew: yellow helmet, overalls, sledgehammer",
+      "hash": "sex=male&body=Body_Color_lpcr.tan&head=Human_Male_lpcr.tan&eyes=Eye_Color_brown&expression=Neutral&hat=Kettle_helm_all.lpcr.yellow&clothes=TShirt_white&overalls=Overalls_orange&legs=Pants_navy&shoes=Basic_Boots_brown&weapon=Hammer_steel"
     },
     "spawner-8a": {
-      "note": "Spawner, ADR-8 Agent Swarm — rat 1 of 3",
-      "hash": "sex=male&body=Body_Color_all.lpcr.pink&head=Rat_all.lpcr.pink"
+      "note": "Spawner, ADR-8 Agent Swarm — agent 1 of 3: black suit, shades, dagger",
+      "hash": "sex=male&body=Body_Color_light&head=Human_Male_light&eyes=Eye_Color_gray&expression=Neutral&hair=High_and_tight_black&clothes=Longsleeve_2_Buttoned_white&jacket=Collared_coat_black&neck=Necktie_black&legs=Pants_black&shoes=Basic_Shoes_black&facial_eyes=Sunglasses_black&weapon=Dagger"
     },
     "spawner-8b": {
-      "note": "Spawner, ADR-8 Agent Swarm — rat 2 of 3",
-      "hash": "sex=male&body=Body_Color_all.lpcr.pink&head=Rat_all.lpcr.pink"
+      "note": "Spawner, ADR-8 Agent Swarm — agent 2 of 3: black suit, shades, dagger",
+      "hash": "sex=male&body=Body_Color_lpcr.bronze&head=Human_Male_lpcr.bronze&eyes=Eye_Color_brown&expression=Neutral&hair=Buzzcut_black&clothes=Longsleeve_2_Buttoned_white&jacket=Collared_coat_black&neck=Necktie_black&legs=Pants_black&shoes=Basic_Shoes_black&facial_eyes=Sunglasses_black&weapon=Dagger"
     },
     "spawner-8c": {
-      "note": "Spawner, ADR-8 Agent Swarm — rat 3 of 3",
-      "hash": "sex=male&body=Body_Color_all.lpcr.pink&head=Rat_all.lpcr.pink"
+      "note": "Spawner, ADR-8 Agent Swarm — agent 3 of 3: black suit, shades, dagger",
+      "hash": "sex=male&body=Body_Color_lpcr.coffee&head=Human_Male_lpcr.coffee&eyes=Eye_Color_brown&expression=Neutral&hair=Flat_top_fade_black&clothes=Longsleeve_2_Buttoned_white&jacket=Collared_coat_black&neck=Necktie_black&legs=Pants_black&shoes=Basic_Shoes_black&facial_eyes=Sunglasses_black&weapon=Dagger"
     }
   }
 }
