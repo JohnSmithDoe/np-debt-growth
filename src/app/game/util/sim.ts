@@ -24,6 +24,7 @@ import {
   VOTE_ON_MS,
   WONT_FIX_FADE_MS,
 } from '../model/balance/flow';
+import { WOMAN_CLOSE_RATE } from '../model/balance/crew';
 import { HOTFIX_MS, HOTFIX_MULTIPLIER } from '../model/balance/weather';
 import * as economy from './economy';
 import { heldBack } from './first-act';
@@ -112,7 +113,10 @@ function streams(state: Consultancy): Stream[] {
   return out.sort((a, b) => b.worth - a.worth);
 }
 
-const MEAN_WALK = ((): number => {
+const CLAIM_SAMPLES = 4;
+
+/** Expected walk to the nearest of k uniform cards, k = 0 (any card) … CLAIM_SAMPLES. */
+const NEAREST_WALK = ((): readonly number[] => {
   const cols = 30;
   const rows = 14;
   const points: [number, number][] = [];
@@ -124,12 +128,32 @@ const MEAN_WALK = ((): number => {
       ]);
     }
   }
-  let sum = 0;
+  const n = points.length;
+  const sums = new Array<number>(CLAIM_SAMPLES + 1).fill(0);
   for (const [ax, ay] of points) {
-    for (const [bx, by] of points) sum += Math.hypot(ax - bx, ay - by);
+    const away = points
+      .map(([bx, by]) => Math.hypot(ax - bx, ay - by))
+      .sort((a, b) => a - b);
+    away.forEach((d, i) => {
+      sums[0]! += d / n;
+      for (let k = 1; k <= CLAIM_SAMPLES; k += 1) {
+        sums[k]! += d * (((n - i) / n) ** k - ((n - i - 1) / n) ** k);
+      }
+    });
   }
-  return sum / (points.length * points.length);
+  return sums.map((sum) => sum / n);
 })();
+
+function nearestWalk(share: number): number {
+  let walk = 0;
+  let ways = 1;
+  for (let k = 0; k <= CLAIM_SAMPLES; k += 1) {
+    walk +=
+      ways * share ** k * (1 - share) ** (CLAIM_SAMPLES - k) * NEAREST_WALK[k]!;
+    ways = (ways * (CLAIM_SAMPLES - k)) / (k + 1);
+  }
+  return walk;
+}
 
 const reachMemo = new Map<number, number>();
 
@@ -192,35 +216,34 @@ function spreadOver(density: number): number {
   return Math.min(FIELD_CELLS, Math.max(SPAWN_CELLS, density));
 }
 
-const CLAIM_SAMPLES = 4;
-
 function crewCapacity(
   state: Consultancy,
   crew: CrewKind,
   density: number,
   share: number
 ): number {
-  const ceiling =
-    crew === 'juniors'
-      ? economy.juniorCeilingPerSec(state)
-      : economy.seniorCeilingPerSec(state);
+  const seats = crew === 'juniors' ? state.levels.junior : state.levels.senior;
   const claimable = density * share;
-  if (ceiling <= 0 || claimable < 1) return 0;
-
-  const hire = crew === 'seniors' ? economy.hireAt(state, 0) : undefined;
-  const pick = economy.crewPick(state, crew, hire);
-  const samples = Math.max(1, CLAIM_SAMPLES * share);
-  const walk =
-    pick === 'nearest' ? 0.5 * Math.sqrt(BOARD_AREA / samples) : MEAN_WALK;
-  const closeMs = economy.crewCloseMs(state, crew);
-  const walkMs = (walk / economy.crewWalkSpeed(state, crew)) * 1000;
+  if (seats <= 0 || claimable < 1) return 0;
 
   const batch = economy.crewBatch(state, crew);
   const sweep = economy.crewSweepRadius(state, crew);
   const near = (claimable * cellsInReach(sweep)) / spreadOver(density);
-  const filled = Math.min(batch, 1 + near) / batch;
+  const carried = Math.min(batch, 1 + near);
+  const speed = economy.crewWalkSpeed(state, crew);
+  const every = economy.crewWomanEvery(crew);
 
-  return (ceiling * filled * closeMs) / (closeMs + walkMs);
+  let perSec = 0;
+  for (let seat = 0; seat < seats; seat += 1) {
+    const hire = crew === 'seniors' ? economy.hireAt(state, seat) : undefined;
+    const pick = economy.crewPick(state, crew, hire);
+    const walk = pick === 'nearest' ? nearestWalk(share) : NEAREST_WALK[0]!;
+    const closeMs =
+      economy.crewCloseMs(state, crew, hire) /
+      (economy.hireIsWoman(seat, every) ? WOMAN_CLOSE_RATE : 1);
+    perSec += (carried * 1000) / (closeMs + (walk / speed) * 1000);
+  }
+  return perSec;
 }
 
 function overseenShare(state: Consultancy): number {
