@@ -472,24 +472,21 @@ export class SkillScene extends PanZoomScene {
     const depth = node.ranks === 1 ? '' : ` ${node.rank}/${node.ranks}`;
     const secret = id === SKILL_ROOT_ID ? this.#drawn?.secret : null;
 
+    const lines = (text: string, colour: number) =>
+      wrap(text, columns).map((line) => ({ text: line, colour }));
+
     return [
-      { text: `${node.label}${depth}`, colour: INK.code },
-      {
-        text: node.levels[Math.min(node.rank, node.ranks - 1)]?.effect ?? '',
-        colour: INK.effect,
-      },
-      { text: this.#tipStatus(node), colour: this.#statusInk(node) },
-      ...wrap(node.blurb, columns).map((text) => ({
-        text,
-        colour: INK.blurb,
-      })),
+      ...lines(`${node.label}${depth}`, INK.code),
+      ...lines(
+        node.levels[Math.min(node.rank, node.ranks - 1)]?.effect ?? '',
+        INK.effect
+      ),
+      ...lines(this.#tipStatus(node), this.#statusInk(node)),
+      ...lines(node.blurb, INK.blurb),
       ...(secret
         ? [
-            { text: `★ ${secret.label}`, colour: SCREEN_INK.maxed },
-            ...wrap(secret.blurb, columns).map((text) => ({
-              text,
-              colour: INK.blurb,
-            })),
+            ...lines(`★ ${secret.label}`, SCREEN_INK.maxed),
+            ...lines(secret.blurb, INK.blurb),
           ]
         : []),
     ];
