@@ -162,7 +162,7 @@ takes, not assets, and the only source of the raw art.
 ## Debug doors
 
 - `globalThis.debtGrowth` — `grant`, `reset`, `endRound` (send the train if it is home),
-  `startRound` (bring it back), `buySkill`, `buyLine`, `buySpawner(adr)`, `place(type, golden?)` (drop one
+  `startRound` (bring it back), `buySkill`, `buyLine`, `buySpawner(adr)`, `buyOut` (every skill but sign-off and every rail row, wallet untouched), `place(type, golden?)` (drop one
   card), `finale(curtain?)` (the curtain call; `true` skips the roll). Always open; the viewport and art harnesses drive the game through it, and a whole run
   scripts in a few lines.
 - The in-app debug bar unlocks with the Konami code (`ServiceDoorService`).

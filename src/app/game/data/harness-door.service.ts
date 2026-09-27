@@ -18,6 +18,7 @@ export interface HarnessDoors {
   buySkill(id: string): boolean;
   buyLine(line: PurchaseId): boolean;
   buySpawner(adr: number): boolean;
+  buyOut(): void;
   place(type: TicketTypeId, golden?: boolean): number;
   finale(curtain?: boolean): void;
 }
@@ -45,6 +46,7 @@ export class HarnessDoor {
       buySkill: (id) => this.#store.buySkill(id),
       buyLine: (line) => this.#store.buyLine(line),
       buySpawner: (adr) => this.#store.buySpawner(adr),
+      buyOut: () => this.#store.buyOut(),
       place: (type, golden = false) => {
         const ticket = addTicket(
           this.#store.board,

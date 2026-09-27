@@ -1,14 +1,18 @@
 import type { Consultancy } from '../model/consultancy.model';
 import type { SkillLock } from '../model/skill.model';
 import {
+  FINAL_SKILL_ID,
   SKILL_BY_ID,
   SKILL_NODES,
   skillLabelKey,
   skillParent,
 } from '../model/skill.model';
 import { adrNodeId, tierAt } from '../model/tier.model';
+import { SPAWNERS } from '../model/spawner.model';
 import type { TicketTypeId } from '../model/ticket.model';
+import { TICKET_TYPE_IDS } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
+import { PURCHASE_IDS } from '../model/balance/progression';
 import * as economy from './economy';
 
 function unmaxed(state: Consultancy, id: string): readonly string[] {
@@ -142,4 +146,30 @@ export function buyIncome(
     budget: state.budget - economy.incomeCost(state, id),
     income: { ...state.income, [id]: economy.incomeLevel(state, id) + 1 },
   };
+}
+
+export function buyOut(state: Consultancy): Consultancy {
+  const steps: readonly ((s: Consultancy) => Consultancy | null)[] = [
+    ...SKILL_NODES.filter((node) => node.id !== FINAL_SKILL_ID).map(
+      (node) => (s: Consultancy) => buySkill(s, node.id)
+    ),
+    ...PURCHASE_IDS.map((line) => (s: Consultancy) => buyLine(s, line)),
+    ...SPAWNERS.map((row) => (s: Consultancy) => buySpawner(s, row.adr)),
+    ...TICKET_TYPE_IDS.map((id) => (s: Consultancy) => buyIncome(s, id)),
+  ];
+  let next: Consultancy = {
+    ...state,
+    budget: Number.MAX_VALUE,
+    storyPoints: Number.MAX_VALUE,
+  };
+  for (let bought = true; bought;) {
+    bought = false;
+    for (const step of steps) {
+      for (let after = step(next); after; after = step(next)) {
+        next = after;
+        bought = true;
+      }
+    }
+  }
+  return { ...next, budget: state.budget, storyPoints: state.storyPoints };
 }

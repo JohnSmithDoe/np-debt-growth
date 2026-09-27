@@ -52,6 +52,10 @@ export class DebugBarComponent {
     this.#store.grant(grant.budget, grant.points);
   }
 
+  buyOut(): void {
+    this.#store.buyOut();
+  }
+
   finale(): void {
     this.#finale.open();
   }

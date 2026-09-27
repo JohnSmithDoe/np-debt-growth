@@ -1121,6 +1121,13 @@ export class GameStore {
     return true;
   }
 
+  buyOut(): void {
+    const before = this.#state().tier;
+    this.#state.set({ ...purchase.buyOut(this.#state()), assisted: true });
+    for (let tier = before + 1; tier <= this.#state().tier; tier++)
+      this.#approve(tier);
+  }
+
   unlockSecret(): boolean {
     const state = this.#state();
     if (economy.skillRank(state, SECRET_SKILL_ID) > 0) return false;
