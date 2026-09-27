@@ -12,11 +12,7 @@
 
 .track {
   display: inline-flex;
-  animation: ticker 150s linear infinite;
-}
-
-:host(:hover) .track {
-  animation-play-state: paused;
+  will-change: transform;
 }
 
 .item {
@@ -26,16 +22,4 @@
 .key {
   margin-right: 0.4rem;
   color: var(--np-cb-ink-3);
-}
-
-@keyframes ticker {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .track {
-    animation: none;
-  }
 }

@@ -1,3 +1,4 @@
+import { cssHex } from '../../@shared/util/css-hex';
 /*
  * Rare-card labels are split by hand: Phaser maxWidth squeezes an unbreakable word,
  * and past the card it bleeds into the neighbouring atlas frame.
@@ -96,15 +97,15 @@ export function buildBoardAtlas(
     const type = TICKET_TYPES[id];
     if (type.handOnly) continue;
     const at = shelf.place(CARD_WIDTH, CARD_HEIGHT);
-    drawCard(ctx, at.x, at.y, type.prefix, hex(type.colour));
+    drawCard(ctx, at.x, at.y, type.prefix, cssHex(type.colour));
     texture.add(cardFrame(id), 0, at.x, at.y, CARD_WIDTH, CARD_HEIGHT);
 
     const gold = shelf.place(CARD_WIDTH, CARD_HEIGHT);
-    drawCard(ctx, gold.x, gold.y, type.prefix, hex(GOLD_INK));
+    drawCard(ctx, gold.x, gold.y, type.prefix, cssHex(GOLD_INK));
     texture.add(goldFrame(id), 0, gold.x, gold.y, CARD_WIDTH, CARD_HEIGHT);
 
     const vote = shelf.place(CARD_WIDTH, CARD_HEIGHT);
-    drawCard(ctx, vote.x, vote.y, type.prefix, hex(type.colour));
+    drawCard(ctx, vote.x, vote.y, type.prefix, cssHex(type.colour));
     drawVoteRing(ctx, vote.x, vote.y);
     texture.add(voteFrame(id), 0, vote.x, vote.y, CARD_WIDTH, CARD_HEIGHT);
   }
@@ -117,7 +118,7 @@ export function buildBoardAtlas(
     const type = TICKET_TYPES[id];
     if (!type.handOnly) continue;
     const at = shelf.place(RARE_CARD_WIDTH, RARE_CARD_HEIGHT);
-    drawRareCard(ctx, at.x, at.y, type, hex(type.colour), text);
+    drawRareCard(ctx, at.x, at.y, type, cssHex(type.colour), text);
     texture.add(
       cardFrame(id),
       0,
@@ -175,10 +176,6 @@ export function boardIconUrls(scene: Phaser.Scene): {
   return { tickets, marks, crew, spawners };
 }
 
-function hex(colour: number): string {
-  return `#${colour.toString(16).padStart(6, '0')}`;
-}
-
 function panel(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -217,7 +214,7 @@ function drawVoteRing(
   x: number,
   y: number
 ): void {
-  ctx.strokeStyle = hex(BOARD_INK.vote);
+  ctx.strokeStyle = cssHex(BOARD_INK.vote);
   ctx.lineWidth = 2;
   ctx.strokeRect(x + 1, y + 1, CARD_WIDTH - 2, CARD_HEIGHT - 2);
 }

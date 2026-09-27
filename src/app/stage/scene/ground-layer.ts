@@ -1,3 +1,4 @@
+import { cssHex } from '../../@shared/util/css-hex';
 import * as Phaser from 'phaser';
 
 import {
@@ -56,7 +57,7 @@ function bakeScatter(scene: Phaser.Scene): void {
     const x = jitterAt(speck * 3 + 1) * (tile - size);
     const y = jitterAt(speck * 3 + 2) * (tile - size);
     const ink = inks[Math.floor(jitterAt(speck * 3 + 3) * inks.length)] ?? 0;
-    ctx.fillStyle = `#${ink.toString(16).padStart(6, '0')}`;
+    ctx.fillStyle = cssHex(ink);
     ctx.fillRect(Math.round(x), Math.round(y), size, size);
   }
   texture.refresh();

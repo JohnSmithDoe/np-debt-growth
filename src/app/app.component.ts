@@ -114,6 +114,8 @@ export class AppComponent {
     return slots <= 0 ? 0 : Math.min(100, (this.sprintCount() / slots) * 100);
   });
 
+  readonly tier = this.#store.tier;
+  readonly closes = this.#store.sprint;
   readonly epic = computed(() =>
     epicKey(this.#store.tier(), this.#store.inAcceptance())
   );
