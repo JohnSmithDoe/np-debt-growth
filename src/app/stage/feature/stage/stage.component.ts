@@ -8,10 +8,8 @@ import {
   OnDestroy,
   viewChild,
 } from '@angular/core';
-import { TranslatePipe } from '@ngx-translate/core';
 
 import { FinaleService } from '../../../@shared/data/finale.service';
-import { StageModeService } from '../../data/stage-mode.service';
 import { StageService } from '../../data/stage.service';
 import { whenPixelFontReady } from '../../util/pixel-font';
 
@@ -21,18 +19,14 @@ import { whenPixelFontReady } from '../../util/pixel-font';
   styleUrl: './stage.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.finale]': 'finale()' },
-  imports: [TranslatePipe],
 })
 export class StageComponent implements AfterViewInit, OnDestroy {
   readonly container = viewChild.required<ElementRef<HTMLElement>>('stage');
 
   #stage = inject(StageService);
-  #modes = inject(StageModeService);
   #finale = inject(FinaleService);
 
   readonly finale = computed(() => this.#finale.act() !== 'closed');
-
-  readonly heading = computed(() => `stage.${this.#modes.mode()}`);
 
   #resizeObserver?: ResizeObserver;
   #booted = false;

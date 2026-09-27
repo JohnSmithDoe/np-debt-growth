@@ -16,35 +16,12 @@
   border-radius: var(--np-cb-radius);
 }
 
-header {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.6rem 0.85rem;
-  border-bottom: 1px solid var(--np-cb-rule);
-  background: var(--np-cb-surface-2);
-}
-
-h2 {
-  font-family: var(--np-cb-font-body);
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.titles p {
-  font-size: 0.72rem;
-  line-height: 1.35;
-  margin-top: 0.1rem;
-}
-
 .stage-box {
   position: relative;
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  border-radius: 0 0 var(--np-cb-radius) var(--np-cb-radius);
+  border-radius: var(--np-cb-radius);
 }
 
 .stage {
@@ -56,10 +33,6 @@ h2 {
   .board {
     border: 0;
     border-radius: 0;
-  }
-
-  header {
-    display: none;
   }
 
   .stage-box {

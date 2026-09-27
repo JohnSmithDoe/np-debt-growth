@@ -115,6 +115,15 @@
     transform-origin: left center;
   }
 
+  .sprint {
+    min-width: 0;
+  }
+
+  .sprint dt {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .sprint dd {
     display: flex;
     gap: 0.5rem;

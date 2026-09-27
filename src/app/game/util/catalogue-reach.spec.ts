@@ -27,9 +27,11 @@ import {
   ticketLabelKey,
 } from '../model/ticket.model';
 import {
+  ACCEPTANCE_EPIC_KEY,
   ADR_PARTS,
   adrPartKey,
   DEBT_TIERS,
+  epicNameKey,
   tierBlurbKey,
   tierNameKey,
 } from '../model/tier.model';
@@ -54,6 +56,13 @@ const BUILT: readonly { readonly owns: RegExp; readonly keys: string[] }[] = [
       tierNameKey(tier.index),
       tierBlurbKey(tier.index),
     ]),
+  },
+  {
+    owns: /^epic\./,
+    keys: [
+      ...[0, ...DEBT_TIERS.map((tier) => tier.index)].map(epicNameKey),
+      ACCEPTANCE_EPIC_KEY,
+    ],
   },
   {
     owns: /^adr\.\d+\./,

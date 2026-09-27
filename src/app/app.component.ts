@@ -29,13 +29,13 @@ import { PostMortemComponent } from './console/feature/post-mortem/post-mortem.c
 import { HelpModalComponent } from './console/feature/help-modal/help-modal.component';
 import { SettingsModalComponent } from './console/feature/settings-modal/settings-modal.component';
 import { TitleScreenComponent } from './console/feature/title-screen/title-screen.component';
-import { HelpUiService } from './console/data/help-ui.service';
 import { SettingsUiService } from './console/data/settings-ui.service';
 import { CLIENT_NAME, ENGAGEMENT_KEY } from './console/model/client.model';
 import { FinaleService } from './@shared/data/finale.service';
 import { AudioService } from './audio/data/audio.service';
 import { StageModeService } from './stage/data/stage-mode.service';
 import { GameStore } from './game/data/game.store';
+import { epicKey } from './game/model/tier.model';
 
 /** Billing measured over this much game time for the €/s readout. */
 const RATE_WINDOW_MS = 10_000;
@@ -70,7 +70,6 @@ export class AppComponent {
   #audio = inject(AudioService);
   #stage = inject(StageModeService);
   #settings = inject(SettingsUiService);
-  #help = inject(HelpUiService);
   #translate = inject(TranslateService);
   #finale = inject(FinaleService);
 
@@ -122,6 +121,10 @@ export class AppComponent {
     Math.max(0, this.sprintCount() - this.sprintSlots())
   );
 
+  readonly epic = computed(() =>
+    epicKey(this.#store.tier(), this.#store.inAcceptance())
+  );
+
   readonly roundSeq = this.#store.roundSeq;
   readonly running = this.#store.running;
   readonly canFull = this.#store.canFull;
@@ -146,10 +149,6 @@ export class AppComponent {
 
   openSettings(): void {
     this.#settings.open();
-  }
-
-  openHelp(): void {
-    this.#help.open();
   }
 
   constructor() {

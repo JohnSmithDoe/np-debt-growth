@@ -563,7 +563,9 @@ What the player sees, and where it lives. Paths are relative to `src/app/`.
   lane's newest ticket; a lane that is away shows its train between two portals
   (`stage/scene/sprint-strip.ts`).
 - **Masthead.** Budget and SP roll to their value and glow as they climb
-  (`console/ui/rolling/`); Budget shows €/s over the last 10 s of game time.
+  (`console/ui/rolling/`); Budget shows €/s over the last 10 s of game time. The Sprint label
+  names the current tier's epic, a sequel title (`epicKey` in `game/model/tier.model.ts`), and the
+  acceptance push has its own.
 - **Awards** stack in the board's bottom-left corner, three at a time, the rest behind a count
   (`console/feature/award-banner/`).
 - **Rail.** Debt rows show their line's walker, Rates rows the card they bill; the next two

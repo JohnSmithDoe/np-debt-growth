@@ -9,6 +9,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { SettingsService } from '../../../@shared/data/settings.service';
 import { FullscreenService } from '../../data/fullscreen.service';
+import { HelpUiService } from '../../data/help-ui.service';
 import {
   bootLanguage,
   rememberBootLanguage,
@@ -30,6 +31,7 @@ export class SettingsModalComponent {
   #settings = inject(SettingsService);
   #ui = inject(SettingsUiService);
   #screen = inject(FullscreenService);
+  #help = inject(HelpUiService);
 
   readonly muted = input(false);
   readonly mutedChange = output<boolean>();
@@ -62,6 +64,11 @@ export class SettingsModalComponent {
     if (language === this.language) return;
     rememberBootLanguage(language);
     globalThis.location.reload();
+  }
+
+  openHelp(): void {
+    this.#ui.close();
+    this.#help.open();
   }
 
   dismiss(): void {

@@ -158,6 +158,8 @@ export const EN: Readonly<Record<string, string>> = {
   'settings.fullscreen.blurb':
     'Fills the screen. The board takes the extra room.',
   'settings.fullscreen.label': 'Fullscreen',
+  'settings.help.blurb': 'Every card on the board, and how the run works.',
+  'settings.help.label': 'Field guide',
   'settings.heading': 'Settings',
   'settings.language.blurb': 'Switching reloads the game. Your run is saved.',
   'settings.language.label': 'Language',
@@ -184,6 +186,7 @@ export const EN: Readonly<Record<string, string>> = {
   'hud.points': 'Story Points',
   'hud.points.exact': '{{points}} Story Points',
   'hud.rate': '{{rate}}/s',
+  'hud.epic': 'Epic: {{name}}',
   'hud.round': 'Round',
   'hud.round.open': 'open',
   'hud.round.release': 'release {{seconds}}s',
@@ -744,7 +747,6 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.batch.many': '+{{count}} tickets per sweep',
   'skill.effect.batch.slower':
     '+{{count}} ticket per close, {{slower}} close time',
-  'hud.help': 'Field guide',
   'help.heading': 'Field Guide',
   'help.subheading':
     'Every card on the board, and what it does. The game waits while you read.',
@@ -802,7 +804,7 @@ export const EN: Readonly<Record<string, string>> = {
   'help.loop.3':
     'Euros buy the shop on the right: more developers, better rates, and a crew who pick up work for you.',
   'help.loop.4':
-    'Story points buy the skill tree. Approve ADRs there to open new lines of ever dearer debt.',
+    'Story points buy the skill tree. Approve ADRs there to open new lines of ever dearer debt. Drag to pan, wheel to zoom, hover a square to read it; a black box says only that something is there.',
   'help.loop.5':
     'Last on the tree, Sign the Closeout starts the acceptance push. The engagement is done when the budget reaches €1 Qa.',
   'award.m-first-close.label': 'First ticket triaged',
@@ -1063,15 +1065,14 @@ export const EN: Readonly<Record<string, string>> = {
   'crew.tally.juniors': '{{count}} juniors on the floor',
   'crew.tally.seniors': '{{count}} seniors on the floor',
   'crew.tally.managers': '{{count}} managers on the floor',
-  'stage.board.title': 'Sprint Board',
-  'stage.board.blurb':
-    'Sweep the pointer over work to clear it — you are paid on the spot. When the sprint fills, nothing closes until it ships. Rare tickets are yours alone — juniors will not touch them.',
-  'stage.board.chip': 'Active sprint',
-  'stage.skills.title': 'Engineering Excellence Programme',
-  'stage.skills.blurb':
-    'Drag to pan, wheel to zoom, hover a square to read it. A square is a skill, its pips are how far in you are, and a black box says only that something is there.',
-  'stage.skills.chip': 'Story Points',
-  'stage.finale.title': 'Wrap Party',
-  'stage.finale.blurb': 'The engagement is closed. The crew stayed for cake.',
-  'stage.finale.chip': 'Engagement closed',
+  'epic.0.name': 'A New Backlog',
+  'epic.1.name': 'The Legacy Strikes Back',
+  'epic.2.name': 'Return of the Clipboard',
+  'epic.3.name': 'The Merge Awakens',
+  'epic.4.name': 'Attack of the AI',
+  'epic.5.name': 'Revenge of the Force Push',
+  'epic.6.name': 'Night of the Living Service',
+  'epic.7.name': 'The Phantom Rewrite',
+  'epic.8.name': 'Rise of the Machines',
+  'epic.acceptance.name': 'The Last Sign-Off',
 };

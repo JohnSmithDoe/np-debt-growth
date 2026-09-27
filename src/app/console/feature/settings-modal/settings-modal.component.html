@@ -90,6 +90,18 @@
           </li>
         }
 
+        <li>
+          <button type="button" class="line" (click)="openHelp()">
+            <span class="what">
+              <span class="label">{{ 'settings.help.label' | translate }}</span>
+              <span class="muted small">{{
+                'settings.help.blurb' | translate
+              }}</span>
+            </span>
+            <span class="state" aria-hidden="true">→</span>
+          </button>
+        </li>
+
         <li class="row">
           <div class="what">
             <span class="label">{{

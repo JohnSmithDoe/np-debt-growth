@@ -158,6 +158,9 @@ export const DE: Readonly<Record<string, string>> = {
   'settings.fullscreen.blurb':
     'Füllt den Bildschirm. Den Platz bekommt das Board.',
   'settings.fullscreen.label': 'Vollbild',
+  'settings.help.blurb':
+    'Jede Karte auf dem Board und wie der Lauf funktioniert.',
+  'settings.help.label': 'Handbuch',
   'settings.heading': 'Einstellungen',
   'settings.language.blurb':
     'Beim Wechsel lädt das Spiel neu. Dein Run ist gespeichert.',
@@ -187,6 +190,7 @@ export const DE: Readonly<Record<string, string>> = {
   'hud.points': 'Story Points',
   'hud.points.exact': '{{points}} Story Points',
   'hud.rate': '{{rate}}/s',
+  'hud.epic': 'Epic: {{name}}',
   'hud.round': 'Runde',
   'hud.round.open': 'offen',
   'hud.round.release': 'Release in {{seconds}} s',
@@ -760,7 +764,6 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.batch.many': '+{{count}} Tickets pro Durchgang',
   'skill.effect.batch.slower':
     '+{{count}} Ticket pro Abschluss, {{slower}} Bearbeitungszeit',
-  'hud.help': 'Handbuch',
   'help.heading': 'Handbuch',
   'help.subheading':
     'Jede Karte auf dem Board und was sie tut. Das Spiel wartet, solange du liest.',
@@ -819,7 +822,7 @@ export const DE: Readonly<Record<string, string>> = {
   'help.loop.3':
     'Mit Euro kaufst du rechts im Shop: mehr Entwickler, bessere Sätze und ein Team, das Arbeit für dich aufnimmt.',
   'help.loop.4':
-    'Mit Story Points kaufst du den Skill-Baum. Gib dort ADRs frei, um neue Linien immer teurerer Schulden zu öffnen.',
+    'Mit Story Points kaufst du den Skill-Baum. Gib dort ADRs frei, um neue Linien immer teurerer Schulden zu öffnen. Ziehen verschiebt, das Mausrad zoomt, über ein Feld fahren liest es; ein schwarzer Kasten sagt nur, dass dort etwas ist.',
   'help.loop.5':
     'Ganz oben im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt. Das Mandat ist erfüllt, wenn das Budget 1 Brd. € erreicht.',
   'award.m-first-close.label': 'Erstes Ticket triagiert',
@@ -1081,16 +1084,14 @@ export const DE: Readonly<Record<string, string>> = {
   'crew.tally.juniors': '{{count}} Juniors auf der Etage',
   'crew.tally.seniors': '{{count}} Seniors auf der Etage',
   'crew.tally.managers': '{{count}} Manager auf der Etage',
-  'stage.board.title': 'Sprint-Board',
-  'stage.board.blurb':
-    'Fahr mit dem Zeiger über die Arbeit, um sie abzuräumen – bezahlt wird sofort. Ist der Sprint voll, schließt nichts mehr, bis er ausgeliefert ist. Seltene Tickets gehören dir allein – die Juniors fassen sie nicht an.',
-  'stage.board.chip': 'Aktiver Sprint',
-  'stage.skills.title': 'Programm für Engineering-Exzellenz',
-  'stage.skills.blurb':
-    'Ziehen zum Verschieben, Mausrad zum Zoomen, über ein Feld fahren, um es zu lesen. Ein Feld ist eine Fähigkeit, seine Punkte zeigen, wie weit du bist, und ein schwarzer Kasten sagt nur, dass dort etwas ist.',
-  'stage.skills.chip': 'Story Points',
-  'stage.finale.title': 'Abschlussparty',
-  'stage.finale.blurb':
-    'Das Mandat ist abgeschlossen. Das Team ist für den Kuchen geblieben.',
-  'stage.finale.chip': 'Mandat abgeschlossen',
+  'epic.0.name': 'Ein neues Backlog',
+  'epic.1.name': 'Das Legacy schlägt zurück',
+  'epic.2.name': 'Die Rückkehr der Zwischenablage',
+  'epic.3.name': 'Das Erwachen der Konflikte',
+  'epic.4.name': 'Angriff der KI',
+  'epic.5.name': 'Die Rache des Force-Push',
+  'epic.6.name': 'Die Nacht des lebenden Service',
+  'epic.7.name': 'Der Phantom-Rewrite',
+  'epic.8.name': 'Rebellion der Maschinen',
+  'epic.acceptance.name': 'Die letzte Abnahme',
 };

@@ -13,6 +13,11 @@ export interface DebtTier {
 export const tierNameKey = (index: number): string => `tier.${index}.name`;
 export const tierBlurbKey = (index: number): string => `tier.${index}.blurb`;
 
+export const ACCEPTANCE_EPIC_KEY = 'epic.acceptance.name';
+export const epicNameKey = (index: number): string => `epic.${index}.name`;
+export const epicKey = (tier: number, accepting: boolean): string =>
+  accepting ? ACCEPTANCE_EPIC_KEY : epicNameKey(tier);
+
 export type AdrPart = 'context' | 'decision' | 'consequences';
 export const ADR_PARTS: readonly AdrPart[] = [
   'context',
