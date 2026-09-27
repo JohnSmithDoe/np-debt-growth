@@ -1196,6 +1196,10 @@ export class GameStore {
     return purchase.skillAvailable(this.#state(), id);
   }
 
+  readonly skillAffordable = computed(() =>
+    purchase.anySkillAffordable(this.#state())
+  );
+
   skillLockReason(id: string): SkillLock | null {
     return purchase.skillLockReason(this.#state(), id);
   }

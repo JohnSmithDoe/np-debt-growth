@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
+import { BoardIcons } from '../../../@shared/data/board-icons.service';
 import { formatCompactMoney } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import type { PurchaseId } from '../../../game/model/balance/progression';
@@ -49,7 +50,14 @@ interface Row {
   readonly cost: string;
   readonly maxed: boolean;
   readonly affordable: boolean;
+  readonly icon?: { readonly url: string; readonly kind: 'card' | 'crew' };
 }
+
+const LINE_CREW: Partial<Record<PurchaseId, string>> = {
+  junior: 'juniors',
+  senior: 'seniors',
+  manager: 'managers',
+};
 
 @Component({
   selector: 'cb-supply-panel',
@@ -61,6 +69,7 @@ interface Row {
 export class SupplyPanelComponent {
   #store = inject(GameStore);
   #text = inject(TranslateService);
+  #icons = inject(BoardIcons);
 
   readonly tab = signal<Tab>('supply');
 
@@ -72,9 +81,20 @@ export class SupplyPanelComponent {
 
   // Resolved per render: the catalogue is lazily imported, so a field
   // initialiser would read the keys back raw.
-  readonly tabs = computed<readonly { id: Tab; label: string }[]>(() => {
+  readonly tabs = computed<
+    readonly { id: Tab; label: string; buyable: boolean }[]
+  >(() => {
     this.#store.state();
-    return TABS.map((id) => ({ id, label: this.#say(`rail.tab.${id}`) }));
+    const rows: Record<Tab, readonly Row[]> = {
+      supply: this.supply(),
+      income: this.income(),
+      crew: this.crew(),
+    };
+    return TABS.map((id) => ({
+      id,
+      label: this.#say(`rail.tab.${id}`),
+      buyable: rows[id].some((row) => row.affordable),
+    }));
   });
 
   readonly supply = computed<readonly Row[]>(() => {
@@ -149,6 +169,7 @@ export class SupplyPanelComponent {
         cost: maxed ? MAXED : formatCompactMoney(this.#store.incomeCost(id)),
         maxed,
         affordable: this.#store.canBuyIncome(id),
+        icon: this.#icon('card', this.#icons.icons().tickets.get(id)),
       };
     });
   });
@@ -182,6 +203,10 @@ export class SupplyPanelComponent {
             : formatCompactMoney(this.#store.lineCost(line)),
         maxed,
         affordable: this.#store.canBuyLine(line),
+        icon: this.#icon(
+          'crew',
+          this.#icons.icons().crew.get(LINE_CREW[line] ?? '')
+        ),
       };
     });
   });
@@ -246,6 +271,13 @@ export class SupplyPanelComponent {
       pct: formatCompactMoney(this.#store.incomeStep(id)),
       ticket: this.#say(ticketLabelKey(id)),
     });
+  }
+
+  #icon(
+    kind: 'card' | 'crew',
+    url: string | undefined
+  ): Row['icon'] | undefined {
+    return url === undefined ? undefined : { url, kind };
   }
 
   #say(key: string, params?: Record<string, string | number>): string {

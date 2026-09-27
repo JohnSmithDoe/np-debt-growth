@@ -78,6 +78,7 @@ export class AppComponent {
 
   readonly budget = this.#store.budget;
   readonly storyPoints = this.#store.storyPoints;
+  readonly skillAffordable = this.#store.skillAffordable;
   readonly sprintCount = this.#store.sprintCount;
   readonly sprintSlots = this.#store.sprintSlots;
   readonly sprintValue = this.#store.sprintValue;

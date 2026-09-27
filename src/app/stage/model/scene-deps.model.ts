@@ -50,6 +50,11 @@ export interface SceneDeps {
   takeCloseFloats(): readonly CloseFloat[];
   takeWontFix(): readonly number[];
   unlockSecret(): void;
+  /** Hands the board's card and crew frames to the DOM rail. */
+  publishIcons(icons: {
+    readonly tickets: ReadonlyMap<TicketTypeId, string>;
+    readonly crew: ReadonlyMap<CrewKind, string>;
+  }): void;
 
   skillView(): SkillView;
   buySkill(id: string): boolean;

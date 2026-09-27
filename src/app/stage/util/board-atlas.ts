@@ -6,9 +6,12 @@ import {
   TICKET_TYPES,
   TICKET_TYPE_IDS,
 } from '../../game/model/ticket.model';
+import type { CrewKind } from '../../game/model/crew.model';
 import type { SceneDeps } from '../model/scene-deps.model';
+import { CREW_ATLAS, packedFrames } from '../model/lpc-sheet.model';
 import {
   BOARD_INK,
+  crewSkin,
   CARD_HEIGHT,
   CARD_WIDTH,
   CLAIM_SLOTS,
@@ -132,6 +135,30 @@ export function buildBoardAtlas(
 
   texture.refresh();
   return texture;
+}
+
+const ICON_CREW: readonly CrewKind[] = ['juniors', 'seniors', 'managers'];
+
+/** Each plain card and each crew line's first face, as data URLs. */
+export function boardIconUrls(scene: Phaser.Scene): {
+  tickets: Map<TicketTypeId, string>;
+  crew: Map<CrewKind, string>;
+} {
+  const tickets = new Map<TicketTypeId, string>();
+  const crew = new Map<CrewKind, string>();
+  for (const id of TICKET_TYPE_IDS) {
+    if (TICKET_TYPES[id].handOnly) continue;
+    tickets.set(id, scene.textures.getBase64(ATLAS_KEY, cardFrame(id)));
+  }
+  if (scene.textures.exists(CREW_ATLAS.key)) {
+    for (const kind of ICON_CREW) {
+      const skin = crewSkin(kind, 0, false);
+      if (!skin) continue;
+      const frame = packedFrames(skin, 'idle down').start;
+      crew.set(kind, scene.textures.getBase64(CREW_ATLAS.key, frame));
+    }
+  }
+  return { tickets, crew };
 }
 
 export function paintClaimCard(

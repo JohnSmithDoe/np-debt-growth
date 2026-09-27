@@ -2,6 +2,7 @@ import { computed, effect, inject, Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import type * as Phaser from 'phaser';
 
+import { BoardIcons } from '../../@shared/data/board-icons.service';
 import { SettingsService } from '../../@shared/data/settings.service';
 import { GameClock } from '../../game/data/game-clock.service';
 import { GameStore } from '../../game/data/game.store';
@@ -39,6 +40,7 @@ export class StageService {
   #translate = inject(TranslateService);
   #modes = inject(StageModeService);
   #settings = inject(SettingsService);
+  #icons = inject(BoardIcons);
 
   #showing: StageMode = 'board';
   #switching = false;
@@ -234,6 +236,7 @@ export class StageService {
       takeCloseFloats: () => store.takeCloseFloats(),
       takeWontFix: () => store.takeWontFix(),
       unlockSecret: () => void store.unlockSecret(),
+      publishIcons: (icons) => this.#icons.publish(icons),
       skillView: () => this.#skillView(),
       buySkill: (id: string) => store.buySkill(id),
     };

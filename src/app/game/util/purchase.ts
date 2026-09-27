@@ -3,6 +3,7 @@ import type { SkillLock } from '../model/skill.model';
 import {
   FINAL_SKILL_ID,
   SKILL_BY_ID,
+  SKILL_NODES,
   skillLabelKey,
   skillParent,
 } from '../model/skill.model';
@@ -93,6 +94,15 @@ export function buySkill(state: Consultancy, id: string): Consultancy | null {
     skills: { ...state.skills, [id]: rank + 1 },
     endedAt: id === FINAL_SKILL_ID ? state.lastTick : state.endedAt,
   };
+}
+
+/** Whether any tree node could be bought right now. */
+export function anySkillAffordable(state: Consultancy): boolean {
+  return SKILL_NODES.some((node) => {
+    if (!skillAvailable(state, node.id)) return false;
+    const held = node.currency === 'eur' ? state.budget : state.storyPoints;
+    return held >= economy.skillRankCost(state, node.id);
+  });
 }
 
 /** The next ADR's tree node, or `null` past the last rung. */

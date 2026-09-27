@@ -329,4 +329,28 @@ cb-debug-bar {
   flex-direction: row;
   align-items: center;
   gap: 0.5rem;
+
+  .buyable {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--np-cb-surface-2);
+    border-radius: 50%;
+    background: var(--np-cb-points);
+    animation: buyable 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes buyable {
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .controls .tree .buyable {
+    animation: none;
+  }
 }

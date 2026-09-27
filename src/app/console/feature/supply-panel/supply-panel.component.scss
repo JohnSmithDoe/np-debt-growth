@@ -11,6 +11,7 @@
   margin: 0 0 8px;
 
   button {
+    position: relative;
     flex: 1;
     padding: 5px 8px;
     border: 1px solid var(--np-cb-line, #232a34);
@@ -27,6 +28,17 @@
       opacity: 1;
     }
   }
+}
+
+.buyable {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--np-cb-gold, #d8a53a);
+  box-shadow: 0 0 6px var(--np-cb-gold, #d8a53a);
 }
 
 .lines {
@@ -58,6 +70,22 @@
   touch-action: manipulation;
   user-select: none;
 
+  &.iconed {
+    grid-template-columns: auto 1fr auto;
+
+    .head {
+      grid-column: 2 / -1;
+    }
+
+    .blurb {
+      grid-column: 2;
+    }
+
+    .held {
+      grid-column: 3;
+    }
+  }
+
   &:disabled {
     cursor: default;
     opacity: 0.55;
@@ -65,6 +93,21 @@
 
   &:not(:disabled):hover {
     border-color: var(--np-cb-gold, #d8a53a);
+  }
+}
+
+.icon {
+  grid-row: 1 / span 2;
+  align-self: center;
+  width: 42px;
+  height: 24px;
+  image-rendering: pixelated;
+
+  &.crew {
+    width: 42px;
+    height: 44px;
+    object-fit: none;
+    object-position: center 70%;
   }
 }
 

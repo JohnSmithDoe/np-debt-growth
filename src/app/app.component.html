@@ -48,6 +48,9 @@
         @if (storyPoints() > 0) {
           <span class="chip points">{{ points(storyPoints()) }}</span>
         }
+        @if (skillAffordable()) {
+          <span class="buyable" aria-label="something to buy"></span>
+        }
       </button>
     }
     <button

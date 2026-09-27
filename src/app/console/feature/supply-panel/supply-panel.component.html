@@ -12,6 +12,9 @@
           (click)="show(one.id)"
         >
           {{ one.label }}
+          @if (one.buyable && tab() !== one.id) {
+            <span class="buyable" aria-label="something to buy"></span>
+          }
         </button>
       }
     </div>
@@ -27,6 +30,7 @@
             type="button"
             class="line"
             [class.maxed]="row.maxed || row.locked"
+            [class.iconed]="row.icon"
             [disabled]="!row.affordable"
             (click)="pick($event, row.key)"
             (pointerdown)="press($event, row.key)"
@@ -34,6 +38,14 @@
             (pointerleave)="release()"
             (pointercancel)="release()"
           >
+            @if (row.icon; as icon) {
+              <img
+                class="icon"
+                [class.crew]="icon.kind === 'crew'"
+                [src]="icon.url"
+                alt=""
+              />
+            }
             <span class="head">
               <span class="name">{{ row.name }}</span>
               <span class="cost" [class.max]="row.maxed || row.locked">{{

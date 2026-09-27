@@ -50,7 +50,12 @@ import {
   WONT_FIX_FADE,
 } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
-import { cardFrame, buildBoardAtlas, voteFrame } from '../util/board-atlas';
+import {
+  boardIconUrls,
+  buildBoardAtlas,
+  cardFrame,
+  voteFrame,
+} from '../util/board-atlas';
 import { loadCrewAtlas, registerCrewAnimations } from '../util/lpc-sprite';
 import { FLIGHT, FlyerPool } from '../util/flyer-pool';
 import { NONE, TicketHeap } from '../util/ticket-heap';
@@ -230,6 +235,7 @@ export class BoardScene extends CbScene {
   create(): void {
     buildBoardAtlas(this, this.deps.text);
     registerCrewAnimations(this);
+    this.deps.publishIcons(boardIconUrls(this));
 
     this.#floorLine = this.add
       .rectangle(0, 0, 10, 1, BOARD_INK.floorLine)
