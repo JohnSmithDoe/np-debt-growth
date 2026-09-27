@@ -1,12 +1,14 @@
 import type { Consultancy } from './consultancy.model';
 import { OFFICE_NODE_IDS } from './skill.model';
 
+export type AwardWeight = 'small' | 'medium' | 'large';
+
 export interface Award {
   readonly id: string;
   readonly kind: 'milestone' | 'achievement';
   readonly label: string;
   readonly blurb: string;
-  readonly sp: number;
+  readonly weight: AwardWeight;
   readonly when: (state: Consultancy) => boolean;
 }
 
@@ -16,7 +18,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'First ticket triaged',
     blurb: 'Somebody had to.',
-    sp: 1,
+    weight: 'small',
     when: (s) => s.lifetimeClosed >= 1,
   },
   {
@@ -24,7 +26,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'First invoice raised',
     blurb: 'The engagement is now revenue-generating.',
-    sp: 2,
+    weight: 'small',
     when: (s) => s.lifetimeRounds >= 1,
   },
   {
@@ -32,7 +34,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'Headcount approved',
     blurb: 'One junior. The requisition took four weeks.',
-    sp: 3,
+    weight: 'small',
     when: (s) => s.levels.junior >= 1,
   },
   {
@@ -40,7 +42,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'One hundred tickets closed',
     blurb: 'Velocity is trending in the right direction.',
-    sp: 5,
+    weight: 'small',
     when: (s) => s.lifetimeClosed >= 100,
   },
   {
@@ -48,7 +50,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'ADR-1 approved',
     blurb: 'The framework is now load-bearing and unmaintained.',
-    sp: 8,
+    weight: 'small',
     when: (s) => s.tier >= 1,
   },
   {
@@ -56,7 +58,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'ADR-2 approved',
     blurb: 'The duplication is now a pattern, and patterns are best practice.',
-    sp: 20,
+    weight: 'medium',
     when: (s) => s.tier >= 2,
   },
   {
@@ -64,7 +66,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'ADR-3 approved',
     blurb: 'Delivery is now distributed across every timezone at once.',
-    sp: 60,
+    weight: 'medium',
     when: (s) => s.tier >= 3,
   },
   {
@@ -72,7 +74,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'ADR-4 approved',
     blurb: 'Nobody on the engagement can say which lines a person wrote.',
-    sp: 150,
+    weight: 'medium',
     when: (s) => s.tier >= 4,
   },
   {
@@ -80,7 +82,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'ADR-5 approved',
     blurb: 'Throughput per head has never been higher. Bus factor: one.',
-    sp: 400,
+    weight: 'medium',
     when: (s) => s.tier >= 5,
   },
   {
@@ -88,7 +90,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'ADR-6 approved',
     blurb: 'The services are load-bearing and nobody knows what they bear.',
-    sp: 3_000,
+    weight: 'large',
     when: (s) => s.tier >= 6,
   },
   {
@@ -96,7 +98,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'ADR-7 approved',
     blurb: 'Two systems, one truth, and we are paid to reconcile them.',
-    sp: 20_000,
+    weight: 'large',
     when: (s) => s.tier >= 7,
   },
   {
@@ -104,7 +106,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'milestone',
     label: 'ADR-8 approved',
     blurb: 'There is no tier after this one.',
-    sp: 100_000,
+    weight: 'large',
     when: (s) => s.tier >= 8,
   },
 
@@ -113,7 +115,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Two hundred and fifty',
     blurb: 'Close 250 work items. The board does not look any emptier.',
-    sp: 1,
+    weight: 'small',
     when: (s) => s.lifetimeClosed >= 250,
   },
   {
@@ -121,7 +123,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Four figures billed',
     blurb: 'Bill €1,000. The engagement is now worth having.',
-    sp: 1,
+    weight: 'small',
     when: (s) => s.lifetimeBilled >= 1_000,
   },
   {
@@ -129,7 +131,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Five hundred',
     blurb: 'Close 500 work items. Two hundred and fifty of them came back.',
-    sp: 2,
+    weight: 'small',
     when: (s) => s.lifetimeClosed >= 500,
   },
   {
@@ -137,7 +139,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Five figures billed',
     blurb: 'Bill €10,000. Somebody upstairs has noticed the account.',
-    sp: 3,
+    weight: 'small',
     when: (s) => s.lifetimeBilled >= 10_000,
   },
   {
@@ -145,7 +147,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Fifty sprints',
     blurb: 'Fifty ceremonies. Fifty burndown charts. One codebase, worse.',
-    sp: 4,
+    weight: 'small',
     when: (s) => s.lifetimeRounds >= 50,
   },
   {
@@ -153,7 +155,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Thousand-ticket engagement',
     blurb: 'Close 1,000 work items.',
-    sp: 15,
+    weight: 'medium',
     when: (s) => s.lifetimeClosed >= 1_000,
   },
   {
@@ -161,7 +163,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Standing war room',
     blurb: 'Put a senior on the escalations and leave the rest to the crew.',
-    sp: 12,
+    weight: 'medium',
     when: (s) => s.levels.senior > 0 && (s.skills['escalation'] ?? 0) > 0,
   },
   {
@@ -169,7 +171,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Bench of twenty',
     blurb: 'Twenty developers on the floor at once.',
-    sp: 12,
+    weight: 'medium',
     when: (s) => s.levels.junior + s.levels.senior >= 20,
   },
   {
@@ -177,7 +179,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Creative accounting',
     blurb: 'Book billed revenue as Story Points. Finance signed off.',
-    sp: 15,
+    weight: 'medium',
     when: (s) => s.levels.velocity >= 1,
   },
   {
@@ -185,7 +187,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Seven figures billed',
     blurb: 'Bill €1,000,000 across the engagement.',
-    sp: 30,
+    weight: 'medium',
     when: (s) => s.lifetimeBilled >= 1_000_000,
   },
   {
@@ -193,7 +195,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Five figures of tickets',
     blurb: 'Close 10,000 work items. None of them are fixed.',
-    sp: 20,
+    weight: 'medium',
     when: (s) => s.lifetimeClosed >= 10_000,
   },
   {
@@ -201,7 +203,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'The whole floor',
     blurb: 'Fit out every plate. There is nowhere left to put anyone.',
-    sp: 40,
+    weight: 'medium',
     when: (s) => OFFICE_NODE_IDS.every((id) => (s.skills[id] ?? 0) > 0),
   },
   {
@@ -209,7 +211,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Six figures of tickets',
     blurb: 'Close 100,000 work items. The backlog has never been longer.',
-    sp: 150,
+    weight: 'medium',
     when: (s) => s.lifetimeClosed >= 100_000,
   },
   {
@@ -217,7 +219,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Ten figures billed',
     blurb: 'Bill €1,000,000,000. The engagement is now the client.',
-    sp: 2_000,
+    weight: 'large',
     when: (s) => s.lifetimeBilled >= 1_000_000_000,
   },
   {
@@ -225,7 +227,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Every decision approved',
     blurb: 'All eight ADRs. There was never a cleanup path.',
-    sp: 120_000,
+    weight: 'large',
     when: (s) => s.tier >= 8,
   },
   {
@@ -233,7 +235,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'Seven figures of tickets',
     blurb: 'Close 1,000,000 work items. The client has stopped reading them.',
-    sp: 150_000,
+    weight: 'large',
     when: (s) => s.lifetimeClosed >= 1_000_000,
   },
   {
@@ -241,7 +243,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'The rate card, revised',
     blurb: 'Five revisions. It has still never gone down.',
-    sp: 200_000,
+    weight: 'large',
     when: (s) => (s.skills['incomeLint'] ?? 0) >= 5,
   },
   {
@@ -249,7 +251,7 @@ export const AWARDS: readonly Award[] = [
     kind: 'achievement',
     label: 'You read the code',
     blurb: 'Nobody has opened that file since 2011.',
-    sp: 20,
+    weight: 'medium',
     when: (s) => (s.skills['secret'] ?? 0) > 0,
   },
 ];

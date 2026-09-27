@@ -14,7 +14,6 @@ interface AchievementRow {
   readonly id: string;
   readonly label: string;
   readonly blurb: string;
-  readonly sp: number;
   readonly unlocked: boolean;
 }
 
@@ -36,7 +35,6 @@ export class AchievementsPanelComponent {
       id: award.id,
       label: award.label,
       blurb: award.blurb,
-      sp: award.sp,
       unlocked: owned.has(award.id),
     }));
   });

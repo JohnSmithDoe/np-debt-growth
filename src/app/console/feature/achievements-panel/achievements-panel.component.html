@@ -1,6 +1,6 @@
 <cb-panel
   heading="Achievements"
-  subheading="Recognition register — Story Points awarded on confirmation, not on effort."
+  subheading="Recognition register — confirmed on outcome, never on effort, and never paid."
 >
   <span panel-meta class="chip points"
     >{{ confirmed().length }}/{{ total }} confirmed</span
@@ -10,7 +10,7 @@
     <thead>
       <tr>
         <th scope="col">Achievement</th>
-        <th scope="col" class="right">Grants</th>
+        <th scope="col" class="right">Status</th>
       </tr>
     </thead>
 
@@ -37,7 +37,7 @@
               <span class="label">{{ row.label }}</span>
             </td>
             <td class="right">
-              <span class="chip">+{{ row.sp }} SP</span>
+              <span class="chip">Confirmed</span>
             </td>
           </tr>
         }

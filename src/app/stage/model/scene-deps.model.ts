@@ -54,5 +54,4 @@ export interface SceneDeps {
 
   skillView(): SkillView;
   buySkill(id: string): boolean;
-  takeFocus(): string | null;
 }

@@ -155,7 +155,7 @@ describe('a full sprint and the rares (D23, D31)', () => {
 });
 
 describe('awards (D19, D29)', () => {
-  it('pays a milestone once and never again', () => {
+  it('grants a milestone once and never again', () => {
     const store = storeWith({ lifetimeClosed: 1, lifetimeRounds: 1 });
     store.advanceTo(200);
 
@@ -167,21 +167,14 @@ describe('awards (D19, D29)', () => {
     expect(store.snapshot().storyPoints).toBe(first.storyPoints);
   });
 
-  it('grants exactly the Story Points the table says', () => {
+  it('pays no Story Points', () => {
     const store = storeWith({ tier: 3, lifetimeClosed: 100 });
+    const before = store.snapshot().storyPoints;
     store.advanceTo(200);
 
     const state = store.snapshot();
-    expect(economy.grantedStoryPoints(state)).toBeCloseTo(
-      state.achievements.reduce(
-        (sum, id) => sum + (AWARDS.find((a) => a.id === id)?.sp ?? 0),
-        0
-      ),
-      6
-    );
-    expect(state.storyPoints).toBeGreaterThanOrEqual(
-      economy.grantedStoryPoints(state)
-    );
+    expect(state.achievements.length).toBeGreaterThan(0);
+    expect(state.storyPoints).toBe(before);
   });
 
   it('has no duplicate ids', () => {

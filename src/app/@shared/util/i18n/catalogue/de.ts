@@ -11,6 +11,7 @@ export const DE: Readonly<Record<string, string>> = {
     'Nimmt das nächstgelegene Ticket, nicht irgendeins',
   'skill.effect.juniorBand': 'Juniors reichen {{count}} Stufe höher',
   'skill.effect.none': 'Eröffnet das Programm',
+  'skill.effect.floorPlate': 'Wirkt nicht selbst: öffnet den nächsten Raum',
   'skill.effect.topOfBand': 'Seniors nehmen zuerst das größte Ticket',
   'strip.collecting': 'SAMMELN',
   'strip.releasing': 'ZUG {{seconds}}s',
@@ -27,34 +28,6 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.lock.unknown': 'Unbekannt',
   'skill.status.maxed': 'Max',
   'skill.status.ready': 'Bereit',
-  'step.adr.bank.detail':
-    '{{name}} — die nächste Sprosse. {{money}} fehlen; alles andere hat Zeit.',
-  'step.adr.bank.title': 'Budget für ADR-{{index}} ansparen',
-  'step.adr.detail':
-    '{{name}} — die Leiter ist der Run, und das hier ist die nächste Sprosse.',
-  'step.adr.title': 'ADR-{{index}} genehmigen',
-  'step.start.detail': 'Sprint {{round}} ist geplant. Das Board wartet.',
-  'step.start.title': 'Sprint starten',
-  'step.earn.detail':
-    'Noch ist nichts bezahlbar. Das Geld liegt in den Tickets.',
-  'step.earn.title': 'Zurück aufs Board',
-  'step.room.detail':
-    'Jeder Platz ist besetzt, also verkauft die Leiste nichts mehr. Fünf Plätze mehr öffnen sie.',
-  'step.room.title': 'Platz schaffen: {{room}}',
-  'step.heading': 'Als Nächstes',
-  'step.rank.detail':
-    'Der billigste Rang, den deine Story Points erreichen. Als Nächstes Rang {{rank}}.',
-  'step.rank.title': 'Rang rauf: {{skill}}',
-  'step.skill.detail':
-    'Ein Knoten im Baum ist offen, und die Story Points liegen längst bereit.',
-  'step.skill.title': 'Freigeschaltet: {{skill}}',
-  'step.skills.detail':
-    'Jedes geschlossene Ticket bringt welche. Im Baum gibst du sie aus.',
-  'step.skills.title': 'Story Points ausgeben',
-  'step.subheading': 'Der kürzeste Weg nach vorn',
-  'step.triage.detail':
-    'Auf dem Board stapelt sich die Arbeit. Klick eins an — es wandert in den Sprint.',
-  'step.triage.title': 'Ticket triagieren',
   'crew.takes.nothing': 'Schließt nichts — schreibt um',
   'crew.takes.upTo': 'Nimmt bis {{ticket}}',
   'hazard.all-hands.label': 'All-Hands',
@@ -168,6 +141,8 @@ export const DE: Readonly<Record<string, string>> = {
   'agent.buy.title': '{{name}} kaufen',
   'agent.buy.detail': '{{cost}}. Gerade das meiste Wachstum für den Preis.',
   'agent.buy.opens': '{{cost}}. Öffnet {{then}}, und dort liegt das Wachstum.',
+  'agent.buy.spare':
+    '{{cost}}. Nichts anderes zahlt sich aus, und Story Points kaufen sonst nichts.',
   'agent.save.idle': 'Noch {{short}}, und noch verdient nichts daran.',
   'agent.save.title': 'Auf {{name}} sparen',
   'agent.save.detail':

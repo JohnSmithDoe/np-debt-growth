@@ -8,8 +8,6 @@ export const SP_PER_PICKUP = 1;
 /** Crew closes pay this much more SP once `timesheets` is bought. */
 export const CREW_SP_MULT = 2;
 
-export const PURCHASE_REVEAL_FRACTION = 0.6;
-
 /**
  * Per-ticket income lines — the rail's third tab. Each rank adds a flat amount
  * before any multiplier: decisive on the cheapest work, nothing on dear work,

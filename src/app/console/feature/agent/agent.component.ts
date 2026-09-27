@@ -44,8 +44,8 @@ export class AgentComponent {
   #door = inject(DoorService);
   #settings = inject(SettingsService);
 
-  /** The advice the player waved away; the bubble returns when it changes. */
-  readonly #dismissed = signal<string | null>(null);
+  readonly #open = signal(false);
+  readonly open = this.#open.asReadonly();
 
   readonly shown = computed(
     () =>
@@ -53,13 +53,6 @@ export class AgentComponent {
       this.#door.opened() &&
       this.#store.state().endedAt === 0
   );
-
-  readonly #key = computed(() => {
-    const { eur, sp } = this.#agent.advice();
-    return [sp, eur].map((p) => (p ? buyKey(p.buy) : '-')).join('|');
-  });
-
-  readonly open = computed(() => this.#dismissed() !== this.#key());
 
   readonly headline = computed(() =>
     this.#translate.instant(goalKey(this.#agent.advice()))
@@ -88,7 +81,11 @@ export class AgentComponent {
           ),
           detail: affordable
             ? this.#translate.instant(
-                then ? 'agent.buy.opens' : 'agent.buy.detail',
+                pick.spare
+                  ? 'agent.buy.spare'
+                  : then
+                    ? 'agent.buy.opens'
+                    : 'agent.buy.detail',
                 { cost, then }
               )
             : this.#translate.instant(
@@ -103,7 +100,7 @@ export class AgentComponent {
   });
 
   toggle(): void {
-    this.#dismissed.set(this.open() ? this.#key() : null);
+    this.#open.update((open) => !open);
   }
 
   buy(row: TipRow): void {

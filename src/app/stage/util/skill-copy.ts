@@ -21,7 +21,11 @@ function percent(mult: number): string {
 function describe(effect: SkillEffect): EffectText {
   switch (effect.kind) {
     case 'none':
-      return { key: 'skill.effect.none' };
+      return {
+        key: effect.floorPlate
+          ? 'skill.effect.floorPlate'
+          : 'skill.effect.none',
+      };
     case 'goldenChance':
       return {
         key: 'skill.effect.goldenChance',

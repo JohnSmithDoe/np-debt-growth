@@ -29,7 +29,9 @@ describe('the floor plan (D36)', () => {
 
   it('leaves the first bought plate mechanically inert', () => {
     const o1 = SKILL_BY_ID.get(OFFICE_NODE_IDS[0]!);
-    expect(o1?.levels[0]?.effects).toEqual([{ kind: 'none' }]);
+    expect(o1?.levels[0]?.effects).toEqual([
+      { kind: 'none', floorPlate: true },
+    ]);
   });
 
   it('never promises more plates than the plan draws', () => {

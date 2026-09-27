@@ -53,14 +53,6 @@ cb-confetti {
   color: var(--np-cb-ink-2);
 }
 
-.sp {
-  margin-top: 0.15rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--np-cb-points);
-  font-variant-numeric: tabular-nums;
-}
-
 .award.medium {
   padding: 1.1rem 1.8rem;
   border-width: 2px;
@@ -86,10 +78,6 @@ cb-confetti {
 
 .award.large .label {
   font-size: 1.45rem;
-}
-
-.award.large .sp {
-  font-size: 1rem;
 }
 
 .award.large .pokal {

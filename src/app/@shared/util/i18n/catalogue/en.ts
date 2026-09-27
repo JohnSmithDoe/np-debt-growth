@@ -10,6 +10,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.nearestClaim': 'Claims the nearest ticket, not just any one',
   'skill.effect.juniorBand': 'Juniors reach {{count}} rung higher',
   'skill.effect.none': 'Opens the programme',
+  'skill.effect.floorPlate': 'No effect of its own: opens the next room',
   'skill.effect.topOfBand': 'Seniors take the biggest ticket first',
   'strip.collecting': 'COLLECTING',
   'strip.releasing': 'TRAIN {{seconds}}s',
@@ -26,34 +27,6 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.lock.unknown': 'Unknown',
   'skill.status.maxed': 'Maxed',
   'skill.status.ready': 'Ready',
-  'step.adr.bank.detail':
-    '{{name}} — the next rung. {{money}} short; everything else can wait.',
-  'step.adr.bank.title': 'Bank the ADR-{{index}} fee',
-  'step.adr.detail':
-    '{{name}} — the ladder is the run, and this is the next rung.',
-  'step.adr.title': 'Approve ADR-{{index}}',
-  'step.start.title': 'Start the sprint',
-  'step.start.detail': 'Sprint {{round}} is planned. The board is waiting.',
-  'step.earn.detail':
-    'Nothing is affordable yet. Tickets are where the money is.',
-  'step.earn.title': 'Back to the board',
-  'step.room.detail':
-    'Every seat is taken, so the rail stops selling. Five more seats open it.',
-  'step.room.title': 'Make room: {{room}}',
-  'step.heading': 'Next',
-  'step.rank.detail':
-    'The cheapest rank your Story Points reach. Rank {{rank}} is next.',
-  'step.rank.title': 'Rank up: {{skill}}',
-  'step.skill.detail':
-    'A node on the tree just opened, and the Story Points are already there.',
-  'step.skill.title': 'Unlocked: {{skill}}',
-  'step.skills.detail':
-    'Every ticket closed pays them. The tree is where they go.',
-  'step.skills.title': 'Spend your Story Points',
-  'step.subheading': 'The shortest way forward',
-  'step.triage.detail':
-    'Work piles up on the board. Click one to take it — it goes into the sprint.',
-  'step.triage.title': 'Triage a ticket',
   'crew.takes.nothing': 'Closes nothing — re-files',
   'crew.takes.upTo': 'Takes up to {{ticket}}',
   'hazard.all-hands.label': 'All-Hands',
@@ -166,6 +139,8 @@ export const EN: Readonly<Record<string, string>> = {
   'agent.name': 'Synergy Analyser (AI Powered)',
   'agent.buy.title': 'Buy {{name}}',
   'agent.buy.detail': '{{cost}}. The most growth for what it costs, right now.',
+  'agent.buy.spare':
+    '{{cost}}. Nothing else pays back, and Story Points buy nothing else.',
   'agent.buy.opens':
     '{{cost}}. It opens {{then}}, which is where the growth is.',
   'agent.save.idle': '{{short}} to go, and nothing earns it yet.',

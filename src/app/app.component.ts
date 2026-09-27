@@ -22,18 +22,15 @@ import { AdrModalComponent } from './console/feature/adr-modal/adr-modal.compone
 import { AwardBannerComponent } from './console/feature/award-banner/award-banner.component';
 import { MomentModalComponent } from './console/feature/moment-modal/moment-modal.component';
 import { DebugBarComponent } from './console/feature/debug-bar/debug-bar.component';
-import { NextStepsComponent } from './console/feature/next-steps/next-steps.component';
 import { AchievementsPanelComponent } from './console/feature/achievements-panel/achievements-panel.component';
 import { SupplyPanelComponent } from './console/feature/supply-panel/supply-panel.component';
 import { PostMortemComponent } from './console/feature/post-mortem/post-mortem.component';
 import { SettingsModalComponent } from './console/feature/settings-modal/settings-modal.component';
 import { TitleScreenComponent } from './console/feature/title-screen/title-screen.component';
 import { SettingsUiService } from './console/data/settings-ui.service';
-import type { NextStep, NoticeTarget } from './console/model/step.model';
 import { CLIENT_NAME, ENGAGEMENT_NAME } from './console/model/client.model';
 import { AudioService } from './audio/data/audio.service';
 import { StageModeService } from './stage/data/stage-mode.service';
-import type { StageMode } from './stage/model/stage-mode.model';
 import { GameClock } from './game/data/game-clock.service';
 import { GameStore } from './game/data/game.store';
 import { TICK_MS } from './game/model/game.consts';
@@ -41,10 +38,6 @@ import { TICK_MS } from './game/model/game.consts';
 function formatCountdown(remainingMs: number): string {
   return `${Math.ceil(remainingMs / 1000)}s`;
 }
-
-const STEP_MODE: Partial<Record<NoticeTarget, StageMode>> = {
-  skills: 'skills',
-};
 
 @Component({
   selector: 'cb-root',
@@ -63,7 +56,6 @@ const STEP_MODE: Partial<Record<NoticeTarget, StageMode>> = {
     MomentModalComponent,
     TitleScreenComponent,
     PostMortemComponent,
-    NextStepsComponent,
     SettingsModalComponent,
   ],
 })
@@ -81,23 +73,12 @@ export class AppComponent {
   /** The tree opens with the SP unlock, as the reference's gum row does. */
   readonly treeOpen = computed(() => this.#store.levels().velocity > 0);
 
-  goTo(step: NextStep): void {
-    if (step.act === 'startRound') return this.startNextRound();
-    const mode = STEP_MODE[step.target];
-    if (mode) this.#stage.request(mode, step.focus ?? null);
-  }
-
   toTree(): void {
     this.#stage.request('skills');
   }
 
   toReview(): void {
     this.#stage.toBoard();
-  }
-
-  startNextRound(): void {
-    this.#stage.toBoard();
-    this.#store.startRound(this.#clock.now());
   }
 
   readonly budget = this.#store.budget;
@@ -131,7 +112,6 @@ export class AppComponent {
 
   readonly roundSeq = this.#store.roundSeq;
   readonly running = this.#store.running;
-  readonly nextRound = computed(() => this.roundSeq() + 1);
   readonly canFull = this.#store.canFull;
   readonly roundLabel = computed(() =>
     this.running()

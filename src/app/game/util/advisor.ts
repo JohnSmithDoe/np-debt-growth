@@ -45,12 +45,17 @@ export interface Pick {
   readonly score: number;
   /** The purchase this one opens, when it was scored as a gate. */
   readonly then: Buy | null;
+  /** Nothing scores: the cheapest SP buy, because SP buys nothing else. */
+  readonly spare?: true;
 }
 
 export interface Advice {
   readonly eur: Pick | null;
   readonly sp: Pick | null;
 }
+
+/** Below this a score is rounding noise, not growth. */
+const SCORE_FLOOR = 1e-9;
 
 /** Keeps a rate that is still zero from making every first purchase infinite. */
 const RATE_FLOOR = 0.1;
@@ -203,7 +208,7 @@ export function rank(state: Consultancy, policy: SimPolicy): Candidate[] {
         );
       if (score > best.score) best = { ...best, then: next, score };
     }
-    if (best.score > 0) out.push(best);
+    if (best.score > SCORE_FLOOR) out.push(best);
   }
   return out.sort((a, b) => b.score - a.score);
 }
@@ -296,6 +301,17 @@ function toPick(state: Consultancy, policy: SimPolicy, c: Candidate): Pick {
   };
 }
 
+function spare(state: Consultancy, policy: SimPolicy): Pick | null {
+  let cheapest: Candidate | null = null;
+  for (const buy of offers(state)) {
+    const { currency, cost } = costOf(state, buy);
+    if (currency !== 'sp' || !Number.isFinite(cost)) continue;
+    if (!cheapest || cost < cheapest.cost)
+      cheapest = { buy, then: null, currency, cost, score: 0 };
+  }
+  return cheapest ? { ...toPick(state, policy, cheapest), spare: true } : null;
+}
+
 export function advise(state: Consultancy, policy: SimPolicy): Advice {
   if (state.endedAt > 0) return { eur: null, sp: null };
   const ranked = rank(state, policy);
@@ -307,7 +323,7 @@ export function advise(state: Consultancy, policy: SimPolicy): Advice {
   const sp =
     adr !== null && purchase.skillAvailable(state, adr)
       ? towards(state, policy, ranked, goalOf(state, adr), ADR_SLACK)
-      : top('sp');
+      : (top('sp') ?? spare(state, policy));
   const eur = purchase.skillAvailable(state, FINAL_SKILL_ID)
     ? towards(state, policy, ranked, goalOf(state, FINAL_SKILL_ID), null)
     : top('eur');

@@ -154,7 +154,6 @@ export class SkillScene extends PanZoomScene {
       this.reframe();
       this.redraw();
     }
-    this.#applyFocus();
   }
 
   protected override reframe(): void {
@@ -195,15 +194,6 @@ export class SkillScene extends PanZoomScene {
 
   #centreOnRoot(): void {
     this.#centreOn(skillSquare(SKILL_ROOT_ID));
-  }
-
-  #applyFocus(): void {
-    const focus = this.deps.takeFocus();
-    if (focus === null) return;
-    const square = skillSquare(focus);
-    if (!square) return;
-    this.resetZoom();
-    this.#centreOn(square);
   }
 
   #centreOn(square: HitRect | undefined): void {

@@ -180,9 +180,10 @@ density, crew walk, hand sweep, lanes), and `game/util/autoplay.ts` plays a whol
 about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.5 of a real board — if you
 change how the board collects, change the sim with it.
 
-`game/data/balance.spec.ts` runs the autoplayer and **fails** if it does not reach sign-off in
-25–45 minutes (target 30), space the last five ADR rungs more than two minutes apart, or finish with the tree
-bought out. After any economy change, re-run it with the reports on:
+`game/data/balance.spec.ts` runs the autoplayer on the Synergy Analyser's advice (`advisedSpend`)
+and **fails** if it does not reach sign-off in 25–45 minutes (target 30) or space the last five ADR
+rungs more than two minutes apart; a second, cheapest-first run must walk every track and buy the
+tree out. After any economy change, re-run it with the reports on:
 
 ```bash
 CB_CLOCK=1 CB_LADDER=1 CB_SHARE=1 CB_INCOME=1 pnpm vitest run src/app/game/data/balance.spec.ts

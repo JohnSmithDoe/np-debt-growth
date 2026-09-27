@@ -233,7 +233,7 @@ export class GameStore {
   #filledAt = -1;
   #cycleBilled = 0;
   #opened = { closed: 0, crewBilled: 0 };
-  #roundSp = { velocity: 0, awards: 0 };
+  #roundSp = { velocity: 0 };
   #outcome = signal<RoundOutcome | null>(null);
   #previous = signal<RoundOutcome | null>(null);
   #lastTarget = signal<number | null>(null);
@@ -427,7 +427,6 @@ export class GameStore {
       unbilled: this.#board.tickets.length,
       durationMs: state.roundMs,
       spVelocity: this.#roundSp.velocity,
-      spAwards: this.#roundSp.awards,
     };
 
     this.#state.set({ ...this.#state(), lastOutcome: outcome, lastTick: now });
@@ -446,7 +445,7 @@ export class GameStore {
       closed: state.lifetimeClosed,
       crewBilled: state.lifetimeCrewBilled,
     };
-    this.#roundSp = { velocity: 0, awards: 0 };
+    this.#roundSp = { velocity: 0 };
     this.#roundFrom.set(this.#seq);
     this.#cycleBilled = 0;
     this.#state.set({
@@ -797,11 +796,8 @@ export class GameStore {
     const due = economy.pendingAwards(state);
     if (due.length === 0) return;
 
-    const lump = due.reduce((sum, award) => sum + award.sp, 0);
-    this.#roundSp.awards += lump;
     this.#state.set({
       ...state,
-      storyPoints: state.storyPoints + lump,
       achievements: [...state.achievements, ...due.map((award) => award.id)],
     });
     for (const award of due) this.#write({ kind: 'award', award: award.id });

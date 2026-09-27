@@ -20,7 +20,14 @@
       subheading="Architecture Decision Record"
     >
       @if (adr.signed) {
-        <span panel-meta class="chip accent">Approved</span>
+        <button
+          panel-meta
+          type="button"
+          class="btn primary small"
+          (click)="back()"
+        >
+          Acknowledge
+        </button>
       } @else {
         <span panel-meta class="chip warn">In refinement</span>
       }
@@ -64,17 +71,13 @@
         <dd>—</dd>
       </dl>
 
-      <div class="doc-actions">
-        @if (adr.signed) {
-          <button type="button" class="btn primary" (click)="back()">
-            Acknowledge
-          </button>
-        } @else {
+      @if (!adr.signed) {
+        <div class="doc-actions">
           <button type="button" class="btn ghost" (click)="back()">
             Not yet
           </button>
-        }
-      </div>
+        </div>
+      }
     </cb-panel>
   </div>
 }

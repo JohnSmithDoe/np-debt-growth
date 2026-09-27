@@ -2,7 +2,7 @@ import type { Consultancy } from '../model/consultancy.model';
 import type { TicketMix } from '../model/board.model';
 import { voteBeamY } from '../model/board.model';
 import type { Award } from '../model/award.model';
-import { AWARDS, AWARD_BY_ID } from '../model/award.model';
+import { AWARDS } from '../model/award.model';
 import type { OfficePlate } from '../model/office.model';
 import { nextPlate, platesAt } from '../model/office.model';
 import { castPoolSize } from '../model/cast.model';
@@ -915,13 +915,6 @@ function awardGranted(state: Consultancy, id: string): boolean {
 export function pendingAwards(state: Consultancy): readonly Award[] {
   return AWARDS.filter(
     (award) => !awardGranted(state, award.id) && award.when(state)
-  );
-}
-
-export function grantedStoryPoints(state: Consultancy): number {
-  return state.achievements.reduce(
-    (total, id) => total + (AWARD_BY_ID.get(id)?.sp ?? 0),
-    0
   );
 }
 

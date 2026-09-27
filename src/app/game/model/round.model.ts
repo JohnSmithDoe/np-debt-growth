@@ -26,5 +26,4 @@ export interface RoundOutcome {
   readonly unbilled: number;
   readonly durationMs: number;
   readonly spVelocity: number;
-  readonly spAwards: number;
 }

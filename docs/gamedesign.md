@@ -89,10 +89,10 @@ Player-facing copy never says "truck" or "can": lanes, sprint scope, release tra
 
 ## 3. Currencies
 
-|                     | Earned from                                                          | Spent on                                       |
-| ------------------- | -------------------------------------------------------------------- | ---------------------------------------------- |
-| **€ Budget**        | Every pickup, `quarter` board bills                                  | The rail: spawner heads, rate rows, crew lines |
-| **SP Story Points** | Every pickup once `velocity` is bought, planning-poker votes, awards | The tree, all of it, ADRs included             |
+|                     | Earned from                                                  | Spent on                                       |
+| ------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
+| **€ Budget**        | Every pickup, `quarter` board bills                          | The rail: spawner heads, rate rows, crew lines |
+| **SP Story Points** | Every pickup once `velocity` is bought, planning-poker votes | The tree, all of it, ADRs included             |
 
 **The tree unlocks, the rail buys.** No node costs euros and no rail row costs SP.
 
@@ -106,8 +106,8 @@ plus:
 - `voteBonus`: SP for every live planning-poker vote the ticket fell through, decided at spawn
   (§6).
 
-Value nodes and rate rows lift euros only. The only other SP source is one-off awards
-(`model/award.model.ts`). The run opens with one developer and nothing else.
+Value nodes and rate rows lift euros only. Awards (`model/award.model.ts`) pay nothing; their
+`weight` only sizes the banner. The run opens with one developer and nothing else.
 
 ---
 
@@ -410,8 +410,8 @@ paperclip (`console/feature/agent/`, on by default, switchable in settings) show
 
 - `data/balance-invariants.spec.ts` guards the **shape**: monotone ladders, tiers numbered by
   position, every rung on the tree and chained, no dominated retype rung.
-- `data/balance.spec.ts` guards the **pacing** on the autoplayer: sign-off in 25–45 min, the
-  last five ADR gaps over two minutes, the tree bought out, and the crew's share — at least 5 %
+- `data/balance.spec.ts` guards the **pacing** on the advised autoplayer (`advisedSpend`):
+  sign-off in 25–45 min, the last five ADR gaps over two minutes, and the crew's share — at least 5 %
   of the closes before `goldenCrew`, judged from three minutes after the first junior (the hand's
   gold outweighs their euros until then, as in the reference), and 4 % of the euros after it. Run with the
   reports:
@@ -420,15 +420,20 @@ paperclip (`console/feature/agent/`, on by default, switchable in settings) show
   CB_CLOCK=1 CB_LADDER=1 CB_SHARE=1 CB_INCOME=1 pnpm vitest run src/app/game/data/balance.spec.ts
   ```
 
+  A second, cheapest-first run (`spend`) guards **reachability**: every track entered, the tree
+  bought out before it signs off.
+
 - `data/sim.spec.ts` guards the **sim** against a real board.
 
-**Measured run** (26 Sep 2026, autoplayer, 3.5 s card life):
+**Measured run** (27 Sep 2026, advised autoplayer, 3.5 s card life, awards paying no SP):
 
 ```
-ADR-1 5.2    first junior 7.1    ADR-2 11.0   ADR-3 16.0   ADR-4 19.6
-ADR-5 22.2   ADR-6 26.5          ADR-7 30.4   ADR-8 34.9   signed off 42.4   tree bought out
-golden crew 33.9 · crew: 4–66 % of closes, 3–8 % of euros before golden crew, ~16 % after
+first junior 3.9    ADR-1 2.9    ADR-2 5.3    ADR-3 9.3    ADR-4 11.0
+ADR-5 13.1   ADR-6 17.9   ADR-7 21.1   ADR-8 25.0   signed off 35.0   ~3.7 M SP of tree unbought
+golden crew 26.9 · crew: 12–65 % of closes, 2–25 % of euros before golden crew, 24–32 % after
 ```
+
+Cheapest-first signs off at 45.9 and buys the tree out.
 
 The advisor on the same sim, 1 sweep/s: ADR-2 4.5 · ADR-3 6.9 · ADR-8 21.9 · signed off 31.8, tree
 not bought out.

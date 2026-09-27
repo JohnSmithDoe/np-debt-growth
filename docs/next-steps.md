@@ -21,15 +21,12 @@ What is open, ranked. The design as it stands is `gamedesign.md`. Checked agains
 
 ## 1. Playtest feedback, 27 Sep 2026
 
-Found while playing. Not started.
+Found while playing.
 
 ### Layout
 
-- **The masthead wraps its buttons on narrow screens.** "Open the tree" breaks onto two lines
-  and the button grows to fill the masthead's height. "Back to the floor" does the same. Stop
-  the label wrapping (or shorten it) so the button keeps one row.
-- **The collecting / train box on the sprint bar reads oddly.** Redesign it.
-- **ADR modal:** move the acknowledge button into the header, where "approved" sits now.
+- **The collecting / train box on the sprint bar reads oddly.** Redesign it. Below ~1300 px wide
+  it also covers the sprint total (`PENDING_X` in `sprint-strip.ts` sits under it).
 
 ### Board signals
 
@@ -55,42 +52,81 @@ Found while playing. Not started.
   ticket that isn't on the board yet. Proposal: drop the reveal gate and let bugs arrive from
   tier 0 at a lower rate than lint. They already share the ADR-0 line. Changing the reveal
   changes the opening, so the sim and the balance spec need re-running afterwards.
-- **Start with a smaller mouse radius**, about 5 px.
-
-### Achievements
-
-- **Achievements pay no bonus.** All 31 awards in `model/award.model.ts` carry an `sp` bonus
-  (1 … 200 000), and it neither matches what the award is for nor fits the progress at the point
-  it lands. Remove the bonus. It touches:
-  - the `sp` field and every row in `AWARDS`;
-  - the payout: `GameStore` sums it into `storyPoints` (`game.store.ts`, `pendingAwards` →
-    `lump`), the autoplayer does the same in `earn` (`util/autoplay.ts`), and
-    `economy.grantedStoryPoints` exists only to count it;
-  - the copy: `+N SP` on `award-banner` and the SP column of `achievements-panel`;
-  - `award-banner`'s `bandFor(award.sp)`, which sizes the celebration (small / medium / large) by
-    the bonus and needs another measure, e.g. milestone vs achievement;
-  - `gamedesign.md` §3, which lists awards as the only other SP source.
-
-  The late awards pay 120 000–200 000 SP, so removing them slows the SP side of the run. Re-run
-  the balance spec and `data/advisor.spec.ts` afterwards.
+- **Start with a smaller mouse radius**, about 5 screen px (today `CLICK_RADIUS_BASE` 34 logical,
+  23–51 screen px by viewport). The ring is the hit test: `pickWithin` takes cards whose
+  **centre** is inside it, and a card is 58 × 16. At 5 px a sweep would have to cross each
+  card's centre, and the pointer is sampled per move event, so fast sweeps skip. Decide first
+  whether a small ring should hit any card it _touches_ (box overlap); `util/sim.ts` `cellsInReach` must follow. Do it in the balance pass.
 
 ### Tree copy
 
-- **Nodes with no effect say "Opens the programme"** (`skill.effect.none`). `o1` Bullpen
-  Extension and `o4` Server Room are pure floor plates; they only exist to open their
-  children. Say that in the copy (e.g. "Opens the next room"), or give them a small effect so
-  they aren't dead purchases.
 - **Triage Policy leaves lint with nobody but the hand.** `triagePolicy` rank 1 removes lint
   from the juniors' claims (`economy.crewClaims` → `triageSkips`). No other crew kind takes
   tier 0, so from then on lint is collected by the hand or expires as "won't fix". That's by
   design (juniors stop filling the sprint with 1 € cards), but the effect text ("Juniors leave
   lint alone") doesn't say what happens to the lint. Make the consequence visible. Rank 2
-  (seniors leave bugs) still does nothing, because seniors never take tier 0.
+  (seniors leave bugs) still does nothing, because seniors never take tier 0. Candidate answer,
+  undecided: rank 1 starts a lint-only auto-close pipeline (see _Parked: the CI auto-close
+  pipeline_); whether it bills, takes lane slots, or only clears is open.
 
-## 2. Hold the 30-minute run
+## 2. The late game runs out of decisions
 
-The target is a 30-minute run, half the reference's full game (57–70). The autoplayer signs off
-at 31.1 min; ADR-1 at 5.2, ADR-2 at 11.6, ADR-3 at 16.5. Cards live 3.5 s (reference ~15 s),
+Not started. Measured 27 Sep 2026 on the greedy autoplayer (`spend`, 1 sweep/s) with the award
+SP already removed. Purchases per five minutes:
+
+| min   | tree buys | rail buys | tier | SP held |
+| ----- | --------- | --------- | ---- | ------- |
+| 10–15 | 50        | 79        | 2    | 17k     |
+| 15–20 | 43        | 131       | 3    | 94k     |
+| 25–30 | 30        | 115       | 6    | 160k    |
+| 35–40 | 17        | 58        | 8    | 360k    |
+| 40–45 | 8         | 3         | 8    | 779k    |
+
+Choice peaks around ADR-3 and drains away; the last five minutes offer one purchase every
+~27 s while the player sweeps a full board.
+
+### What is wrong
+
+- **The ending is a counter, not a moment.** After ADR-8 the only goal is `signoff` €100 T: the
+  rail is nearly bought out, the tree is done, SP piles up unspent. 7–10 minutes of sweeping
+  while one number climbs; the climax is the flattest stretch of the run.
+- **ADR-4…8 are the same rung again.** Each adds a card worth ×10 at the same 0.25/s with the
+  same five `LINE_NODES`; prices scale with it, so relative power never moves, only the digits.
+  The early rungs changed how the board plays (crew, beams, golden, seniors); the late extras are
+  mostly passive percentages (`debtInterest`, `timesheets`, `spawnIncident`, `stretch`). The board
+  is full at 600 cards from mid-run, so a new tier only recolours the heap.
+- **SP stops meaning anything.** SP income plateaus from ADR-3, so every late rung is "wait 3–4
+  minutes". Once the tree is bought out, every SP source (poker beams, `estimates<T>`) pays into
+  nothing — the purple board §1 wants as a late-game sight is worthless exactly then.
+- **The hand learns no new verb.** Hand-only cards arrive at flat rates whatever the tier;
+  `escalation` (×5 for 6 s, the best moment in the game) comes about once every 11 minutes
+  (0.0015/s). Pizza is the only late toy.
+
+### What to do, most fun per effort first
+
+1. **Late tiers get a behaviour, not just a value.** `flaky` and `zombie` already respawn. Give
+   `rewrite` and `swarm` their own: a swarm card splits into several when closed, a rewrite takes
+   two sweeps. Ticket data plus a step in `util/board.ts`; each new rung then changes the board.
+   The sim must price it (`sim.spec` ×1.5).
+2. **Hand-only cards scale with tier.** More escalations and hotfixes as the run climbs gives the
+   hand targets worth aiming for and puts spikes into the late curve.
+3. **SP stays alive to the end.** An infinite SP sink that pays euros, e.g. an "Overtime" node:
+   unlimited ranks, +euro % each, price ×2 a rank. The harvest then has an SP decision, and the
+   beams pay off late.
+4. **Sign-off is an event.** Shorten the harvest to ~3 min (price `signoff` off ADR-8 income),
+   or make it a short final phase: an acceptance push where the board speeds up and something
+   specific must be cleared.
+
+Every one of these moves the balance: re-run the balance spec with the reports on, and hold the
+late ADR gaps above the two-minute floor.
+
+## 3. Hold the 30-minute run
+
+The target is a 30-minute run, half the reference's full game (57–70). `balance.spec` paces the
+run on the advised player (`advisedSpend`): sign-off at 35.0 min; ADR-1 at 2.9, ADR-2 at 5.3,
+ADR-3 at 9.3, ADR-8 at 25.0. Cheapest-first (`spend`) takes 45.9 and still guards that the whole
+tree is reachable. The advised player reaches the €100 T final with ~3.7 M SP of tree unbought
+(the manager line, pizza, `o7`, …), so for it sign-off is euro-bound, not tree-bound. Cards live 3.5 s (reference ~15 s),
 chosen by feel, and these departures from the reference pay for it: `estimates<T>` +20 SP a
 rank (reference +2), `VOTE_BONUS_BASE` 45 (reference 30), ADR-3 400 000 (reference 600 000), the
 ADR-4…8 ladder reshaped for even late gaps, `signoff` 800k, and the poker ladders at ×0.3. The run
@@ -103,7 +139,7 @@ ends when the tree is bought out, so run length tracks total tree cost ÷ SP inc
 - The crew's close share before golden crew is 4–10 % early (floor 5 %): sparse cards fill
   their batches thinly.
 
-## 3. Copy and art
+## 4. Copy and art
 
 - The per-line `income<T>` / `double<T>` labels and the `spawn<T>` rank 2–5 labels are
   placeholders ("Lint Warning Uplift II", "Skip the Review III"). Write real names, both
@@ -112,7 +148,7 @@ ends when the tree is bought out, so run length tracks total tree cost ÷ SP inc
   lane actors (`stage/util/board-atlas.ts`). Pipeline: `tools/art-batch.mjs` →
   `pixelate.mjs` / `icon-knockout.mjs`.
 
-## 4. Measure the stage
+## 5. Measure the stage
 
 No profile exists. The board now sits at 600 cards for most of the run (displacement keeps it
 full), so the heap leads matter again:
@@ -130,7 +166,7 @@ full), so the heap leads matter again:
 
 Capture: reach ADR-5+ with a full board, 20 s of Chrome DevTools → Performance while sweeping.
 
-## 5. Render the canvas at device pixel ratio
+## 6. Render the canvas at device pixel ratio
 
 All Phaser text is soft on a HiDPI screen; the DOM text beside it is sharp. `phaser.service.ts`
 sizes the canvas in CSS pixels (`Scale.RESIZE`, `parent.clientWidth`), so on a DPR-2 display the
@@ -140,16 +176,16 @@ for anti-aliased glyphs. The payout floats show it worst.
 The fix is a backing store of `clientWidth × devicePixelRatio` shown at CSS size, then every scene
 scaling its literal pixel sizes by the same factor — font sizes (`'11px'`, `CLOSE_FLOAT`,
 `BIG_FLOAT`), `HOVER_*`, rise distances, the board fit. Fill cost goes ×4 at DPR 2, so do it after
-§4 has a profile, and measure both.
+§5 has a profile, and measure both.
 
-## 6. Unstash the weather
+## 7. Unstash the weather
 
 This is more than flipping `HAZARDS_ENABLED`: `meeting` was tuned against a 10 s round;
 `CREW_EURO_WINDOW_FLOOR` needs re-measuring; `grooming` is a no-op; `migration`'s `supply: 0`
 has no counterplay; the two 120 s cadences coincide by accident. Offshore contractors, which
 only weather ever staffed, were removed with `3524a98`; the `offshore` hazard went with them.
 
-## 7. Needs a design call
+## 8. Needs a design call
 
 - **The hidden node.** The reference hides a "Wow you found me!" node at the zoomed-out corner of
   its tree. Ours: _the undocumented endpoint_.

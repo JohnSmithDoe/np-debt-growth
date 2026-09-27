@@ -116,10 +116,7 @@ function earn(
   return {
     ...state,
     budget: state.budget + euros,
-    storyPoints:
-      state.storyPoints +
-      f.spPerSec * seconds +
-      awards.reduce((sum, award) => sum + award.sp, 0),
+    storyPoints: state.storyPoints + f.spPerSec * seconds,
     achievements: [...state.achievements, ...awards.map((award) => award.id)],
     lifetimeBilled: state.lifetimeBilled + euros,
     lifetimeWorkBilled: state.lifetimeWorkBilled + euros,

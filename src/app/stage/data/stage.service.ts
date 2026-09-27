@@ -237,7 +237,6 @@ export class StageService {
       unlockSecret: () => void store.unlockSecret(),
       skillView: () => this.#skillView(),
       buySkill: (id: string) => store.buySkill(id),
-      takeFocus: () => this.#modes.takeFocus(),
     };
   }
 

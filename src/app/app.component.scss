@@ -29,6 +29,11 @@
   justify-content: flex-end;
 }
 
+.controls .btn,
+.interval-bar .btn {
+  white-space: nowrap;
+}
+
 .brand {
   display: flex;
   flex-direction: column;

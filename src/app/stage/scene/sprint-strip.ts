@@ -65,7 +65,7 @@ export class SprintStrip {
     this.#cooldown = scene.add.graphics().setDepth(depth + 1);
 
     this.#slotsLabel = this.#text(scene, depth, '11px', BOARD_TEXT.dim);
-    this.#pendingLabel = this.#text(scene, depth, '20px', BOARD_TEXT.bright);
+    this.#pendingLabel = this.#text(scene, depth, '20px', BOARD_TEXT.gold);
     this.#escalationLabel = this.#text(scene, depth, '12px', BOARD_TEXT.gold);
     this.#escalationLabel.setOrigin(1, 0);
     this.#escalationName = deps

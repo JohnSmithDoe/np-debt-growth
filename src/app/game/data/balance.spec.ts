@@ -23,7 +23,7 @@ import { HAUL_MIN_MS, HAUL_MS } from '../model/balance/round';
 import { pickWithin } from '../util/board';
 import * as economy from '../util/economy';
 import type { LedgerMark } from '../util/autoplay';
-import { DEFAULT_POLICY, autoplay } from '../util/autoplay';
+import { DEFAULT_POLICY, advisedSpend, autoplay } from '../util/autoplay';
 
 const CREW_EURO_FLOOR = 0.15;
 const CREW_EURO_CAP = 0.95;
@@ -134,15 +134,27 @@ function fullyLevelled(
   };
 }
 
+const SESSION_POLICY = {
+  ...DEFAULT_POLICY,
+  clicksPerSec: CLICKS_PER_SEC,
+  saveForAdrSec: SAVE_FOR_ADR_SEC,
+};
+
+/** Paced as the Synergy Analyser plays it. */
 const run = autoplay(
   freshConsultancy(0, SAVE_VERSION),
   [...MILESTONES, ...UNORDERED_MILESTONES],
   MAX_SESSION_MS,
-  {
-    ...DEFAULT_POLICY,
-    clicksPerSec: CLICKS_PER_SEC,
-    saveForAdrSec: SAVE_FOR_ADR_SEC,
-  }
+  SESSION_POLICY,
+  advisedSpend
+);
+
+/** Buys everything it can reach, cheapest first: proves the tree is reachable. */
+const cheapest = autoplay(
+  freshConsultancy(0, SAVE_VERSION),
+  [...MILESTONES, ...UNORDERED_MILESTONES],
+  MAX_SESSION_MS,
+  SESSION_POLICY
 );
 
 describe('the crew earns its keep, and never all of it', () => {
@@ -413,7 +425,7 @@ describe('the session arc', () => {
   });
 
   it('walks every branch of the tree at least once', () => {
-    const end = run.end;
+    const end = cheapest.end;
     const tracks = new Map<string, boolean>();
     for (const node of SKILL_NODES) {
       if (node.id === SECRET_SKILL_ID || node.id === 'root') continue;
@@ -453,7 +465,7 @@ describe('the session arc', () => {
   });
 
   it('leaves nothing on the tree unbought by the time it signs off', () => {
-    const end = run.end;
+    const end = cheapest.end;
     const unbought = SKILL_NODES.filter(
       (node) =>
         node.id !== SECRET_SKILL_ID &&
