@@ -64,12 +64,14 @@ import { SpeechBubbles } from './speech-bubbles';
 import { BuffBanners } from './buff-banners';
 import { CbScene } from './cb-scene';
 import { GroundLayer } from './ground-layer';
+import { TierBackdrop } from './tier-backdrop';
 import { SprintStrip } from './sprint-strip';
 import { TierSpawners } from './tier-spawners';
 import { VoteBeams } from './vote-beams';
 
 interface BoardParts {
   readonly ground: GroundLayer;
+  readonly backdrop: TierBackdrop;
   readonly heap: TicketHeap;
   readonly flyers: FlyerPool;
   readonly crew: CrewLayer;
@@ -230,6 +232,7 @@ export class BoardScene extends CbScene {
 
   preload(): void {
     loadCrewAtlas(this);
+    TierBackdrop.preload(this);
   }
 
   create(): void {
@@ -245,6 +248,7 @@ export class BoardScene extends CbScene {
     const strip = new SprintStrip(this, this.deps, DEPTH.strip);
     const parts: BoardParts = {
       ground: new GroundLayer(this, DEPTH.floor - 1),
+      backdrop: new TierBackdrop(this, DEPTH.floor - 0.5),
       heap: new TicketHeap(this, (key) => this.deps.text(key)),
       flyers: new FlyerPool(this, DEPTH.flyer),
       crew: new CrewLayer(this, DEPTH.crew, 'juniors', 0),
@@ -322,6 +326,7 @@ export class BoardScene extends CbScene {
     const board = this.deps.board();
 
     parts.ground.tier(this.deps.tier());
+    parts.backdrop.tier(this.deps.tier());
     parts.spawners.sync((adr) => this.deps.spawnerCount(adr));
     this.#openSlots();
     this.#wontFix = new Set(this.deps.takeWontFix());
@@ -818,6 +823,7 @@ export class BoardScene extends CbScene {
       width,
       this.#boardHeight
     );
+    parts.backdrop.layout(width, this.#boardHeight);
     parts.strip.layout(width, height);
     parts.heap.layout(this.#scaleX, this.#scaleY, this.#offX, this.#offY);
     parts.spawners.layout(0, 0, width);
@@ -854,5 +860,6 @@ export class BoardScene extends CbScene {
     parts.flyers.destroy();
     parts.heap.destroy();
     parts.ground.destroy();
+    parts.backdrop.destroy();
   }
 }

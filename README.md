@@ -107,6 +107,8 @@ art, the office floor plates and the seventy-one skill node icons — is generat
 with **FLUX.2 Klein (Apache-2.0) via [mflux](https://github.com/filipstrand/mflux)**
 and then forced onto the game's own palette by `tools/pixelate.mjs`, or by
 `tools/icon-knockout.mjs` for the icons, which remaps against the same palette.
+The board backdrops in `src/assets/board/backdrop/` are the one exception: the same title
+and tier takes, left un-pixelated and converted to WebP by `tools/backdrop.mjs`.
 
 **The icons carry no third-party licence**, which is the whole reason they are
 generated rather than sourced: an icon set bought or borrowed would have been a

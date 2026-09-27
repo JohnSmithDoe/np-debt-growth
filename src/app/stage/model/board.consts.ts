@@ -103,6 +103,20 @@ export const GROUND_TIER_INK = [
 
 export const GROUND_FADE_MS = 1400;
 
+export const TIER_BACKDROP = {
+  tiers: 8,
+  alpha: 0.4,
+  fadeMs: 1400,
+  swapMs: 30_000,
+  swapFadeMs: 4000,
+} as const;
+
+export const BACKDROP_KINDS = ['office', 'tier'] as const;
+export type BackdropKind = (typeof BACKDROP_KINDS)[number];
+
+export const tierBackdropUrl = (tier: number, kind: BackdropKind): string =>
+  `assets/board/backdrop/${tier}-${kind}.webp`;
+
 export const officePlateUrl = (id: string): string =>
   `assets/board/office/${id}.png`;
 
