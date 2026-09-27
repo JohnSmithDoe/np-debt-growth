@@ -1,27 +1,39 @@
 .perch {
   position: fixed;
-  inset-block-start: 4.5rem;
-  inset-inline: 0;
+  inset-block-end: 5.5rem;
+  inset-inline-start: 2rem;
   z-index: 60;
 
   display: flex;
-  justify-content: center;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+
+.waiting {
   pointer-events: none;
 }
 
 .award {
   pointer-events: auto;
   cursor: pointer;
-  text-align: center;
+  text-align: start;
 
   position: relative;
   overflow: hidden;
   display: grid;
-  justify-items: center;
-  gap: 0.25rem;
-  max-width: 26rem;
-  padding: 0.85rem 1.4rem;
-  --confetti-distance: 150px;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'pokal kind'
+    'pokal label'
+    'pokal blurb';
+  column-gap: 0.7rem;
+  row-gap: 0.1rem;
+  align-items: center;
+  width: 19rem;
+  padding: 0.5rem 0.8rem;
+  --confetti-distance: 110px;
 
   background: var(--np-cb-surface);
   border: 1px solid var(--np-cb-points);
@@ -30,7 +42,24 @@
 
   isolation: isolate;
 
-  animation: award-land 260ms ease-out;
+  animation: award-land 220ms ease-out;
+}
+
+.pokal {
+  grid-area: pokal;
+}
+
+.kind {
+  grid-area: kind;
+  justify-self: start;
+}
+
+.label {
+  grid-area: label;
+}
+
+.blurb {
+  grid-area: blurb;
 }
 
 cb-confetti {
@@ -38,50 +67,43 @@ cb-confetti {
 }
 
 .pokal {
-  font-size: 1.7rem;
+  font-size: 1.4rem;
 }
 
 .label {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--np-cb-ink);
 }
 
 .blurb {
-  font-size: 0.78rem;
-  line-height: 1.4;
+  font-size: 0.72rem;
+  line-height: 1.35;
   color: var(--np-cb-ink-2);
 }
 
 .award.medium {
-  padding: 1.1rem 1.8rem;
   border-width: 2px;
-  --confetti-distance: 190px;
-}
-
-.award.medium .label {
-  font-size: 1.15rem;
 }
 
 .award.medium .pokal {
-  font-size: 2.3rem;
+  font-size: 1.7rem;
 }
 
 .award.large {
-  padding: 1.4rem 2.2rem;
   border-width: 2px;
   box-shadow:
     var(--np-cb-lift),
-    0 0 2.5rem -0.5rem var(--np-cb-points);
-  --confetti-distance: 240px;
+    0 0 1.6rem -0.5rem var(--np-cb-points);
+  --confetti-distance: 150px;
 }
 
 .award.large .label {
-  font-size: 1.45rem;
+  font-size: 1rem;
 }
 
 .award.large .pokal {
-  font-size: 3.1rem;
+  font-size: 2rem;
   filter: drop-shadow(
     0 0 0.5rem color-mix(in srgb, var(--np-cb-money) 55%, transparent)
   );
@@ -90,7 +112,7 @@ cb-confetti {
 @keyframes award-land {
   from {
     opacity: 0;
-    transform: translateY(-0.6rem) scale(0.96);
+    transform: translateX(-0.8rem);
   }
 }
 

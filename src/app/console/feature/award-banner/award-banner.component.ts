@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { GameStore } from '../../../game/data/game.store';
 import type { Award, AwardWeight } from '../../../game/model/award.model';
@@ -20,10 +21,15 @@ interface AwardBand {
 }
 
 const BANDS: Readonly<Record<AwardWeight, AwardBand>> = {
-  small: { ms: 3200, pieces: 8 },
-  medium: { ms: 4600, pieces: 14 },
-  large: { ms: 6000, pieces: 22 },
+  small: { ms: 2400, pieces: 0 },
+  medium: { ms: 3400, pieces: 8 },
+  large: { ms: 4600, pieces: 14 },
 };
+
+/** Cards on screen at once; the rest wait behind a count. */
+const STACK = 3;
+/** Share of its time a card keeps while others are waiting. */
+const HURRY = 0.55;
 
 function continues(
   granted: readonly string[],
@@ -48,24 +54,27 @@ interface AwardShow {
   templateUrl: './award-banner.component.html',
   styleUrl: './award-banner.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ConfettiComponent, TrophyComponent],
+  imports: [ConfettiComponent, TrophyComponent, TranslatePipe],
 })
 export class AwardBannerComponent {
   #store = inject(GameStore);
   #seen: readonly string[] = [];
   #queue = signal<readonly string[]>([]);
-  #timer?: ReturnType<typeof setTimeout>;
+  readonly #timers = new Map<string, ReturnType<typeof setTimeout>>();
 
-  readonly #head = computed<string | null>(() => this.#queue()[0] ?? null);
+  readonly stack = computed<readonly AwardShow[]>(() =>
+    this.#queue()
+      .slice(0, STACK)
+      .flatMap((id) => {
+        const award = AWARD_BY_ID.get(id);
+        return award ? [this.#show(award)] : [];
+      })
+  );
 
-  readonly showing = computed<AwardShow | null>(() => {
-    const id = this.#head();
-    const award = id === null ? undefined : AWARD_BY_ID.get(id);
-    return award ? this.#show(award) : null;
-  });
+  readonly waiting = computed(() => Math.max(0, this.#queue().length - STACK));
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.#timer));
+    inject(DestroyRef).onDestroy(() => this.#clearTimers());
 
     effect(() => {
       const granted = this.#store.awarded();
@@ -73,6 +82,7 @@ export class AwardBannerComponent {
       this.#seen = granted;
 
       if (!continues(granted, seen)) {
+        this.#clearTimers();
         this.#queue.set([...granted]);
         return;
       }
@@ -81,16 +91,34 @@ export class AwardBannerComponent {
     });
 
     effect(() => {
-      const id = this.#head();
-      clearTimeout(this.#timer);
-      if (id === null) return;
-      const { ms } = BANDS[AWARD_BY_ID.get(id)?.weight ?? 'small'];
-      this.#timer = setTimeout(() => this.dismiss(), ms);
+      const shown = this.#queue().slice(0, STACK);
+      const hurry = this.waiting() > 0 ? HURRY : 1;
+      for (const [id, timer] of this.#timers) {
+        if (shown.includes(id)) continue;
+        clearTimeout(timer);
+        this.#timers.delete(id);
+      }
+      for (const id of shown) {
+        if (this.#timers.has(id)) continue;
+        const { ms } = BANDS[AWARD_BY_ID.get(id)?.weight ?? 'small'];
+        this.#timers.set(
+          id,
+          setTimeout(() => this.dismiss(id), ms * hurry)
+        );
+      }
     });
   }
 
-  dismiss(): void {
-    this.#queue.update((queue) => queue.slice(1));
+  dismiss(id: string): void {
+    const timer = this.#timers.get(id);
+    if (timer !== undefined) clearTimeout(timer);
+    this.#timers.delete(id);
+    this.#queue.update((queue) => queue.filter((queued) => queued !== id));
+  }
+
+  #clearTimers(): void {
+    for (const timer of this.#timers.values()) clearTimeout(timer);
+    this.#timers.clear();
   }
 
   #show(award: Award): AwardShow {

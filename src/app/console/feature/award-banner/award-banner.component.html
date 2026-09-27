@@ -1,19 +1,26 @@
 <div class="perch" role="status" aria-live="polite">
-  @if (showing(); as award) {
+  @if (waiting() > 0) {
+    <span class="waiting chip">{{
+      'award.waiting' | translate: { count: waiting() }
+    }}</span>
+  }
+  @for (award of stack(); track award.id) {
     <button
       type="button"
       class="award"
       [class]="award.weight"
-      (click)="dismiss()"
+      (click)="dismiss(award.id)"
     >
-      <cb-confetti [pieces]="award.pieces" />
+      @if (award.pieces > 0) {
+        <cb-confetti [pieces]="award.pieces" />
+      }
       <cb-trophy class="pokal" />
       <span class="kind chip">{{
-        award.milestone ? 'Milestone' : 'Achievement'
+        (award.milestone ? 'award.milestone' : 'award.achievement') | translate
       }}</span>
       <span class="label">{{ award.label }}</span>
       <span class="blurb">{{ award.blurb }}</span>
-      <span class="offscreen">Dismiss</span>
+      <span class="offscreen">{{ 'award.dismiss' | translate }}</span>
     </button>
   }
 </div>
