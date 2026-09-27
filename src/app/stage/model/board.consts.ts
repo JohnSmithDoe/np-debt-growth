@@ -17,6 +17,8 @@ export const CLAIM_TINT_STEPS = 8;
 export const CLAIM_SLOTS = 16;
 
 export const FLYER_CAPACITY = 320;
+/** The pool doubles up to this; past it a card lands without its flight. */
+export const FLYER_CEILING = 2_560;
 export const RARE_CAPACITY = 24;
 
 /** Room for every golden card a full board can hold at the chance cap. */

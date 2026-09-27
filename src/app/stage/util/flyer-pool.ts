@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 
-import { FLYER_CAPACITY, VOTES } from '../model/board.consts';
+import { FLYER_CAPACITY, FLYER_CEILING, VOTES } from '../model/board.consts';
 import { ATLAS_KEY, VOTE_RING_FRAME } from './board-atlas';
 
 export const FLIGHT = {
@@ -68,10 +68,10 @@ export class FlyerPool {
     for (let slot = to - 1; slot >= from; slot--) this.#free.push(slot);
   }
 
-  /** Doubles the pool: no card is ever denied its flight. */
   #grow(): void {
     const from = this.#images.length;
-    const to = from * 2;
+    const to = Math.min(from * 2, FLYER_CEILING);
+    if (to <= from) return;
     this.#kind = widen(this.#kind, new Int32Array(to));
     this.#ticket = widen(this.#ticket, new Int32Array(to));
     this.#fromX = widen(this.#fromX, new Float32Array(to));
