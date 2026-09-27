@@ -3,9 +3,9 @@ import * as Phaser from 'phaser';
 import {
   BACKDROP_KINDS,
   type BackdropKind,
-  TIER_BACKDROP,
-  tierBackdropUrl,
-} from '../model/board.consts';
+  backdropUrl,
+} from '../../@shared/util/backdrop-art';
+import { TIER_BACKDROP } from '../model/board.consts';
 
 const keyOf = (tier: number, kind: BackdropKind): string =>
   `cb-backdrop-${tier}-${kind}`;
@@ -39,7 +39,7 @@ export class TierBackdrop {
   static preload(scene: Phaser.Scene): void {
     for (let tier = 0; tier <= TIER_BACKDROP.tiers; tier++) {
       for (const kind of BACKDROP_KINDS) {
-        scene.load.image(keyOf(tier, kind), tierBackdropUrl(tier, kind));
+        scene.load.image(keyOf(tier, kind), backdropUrl(tier, kind));
       }
     }
   }

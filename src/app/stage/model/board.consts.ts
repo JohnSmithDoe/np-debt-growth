@@ -114,12 +114,6 @@ export const TIER_BACKDROP = {
   swapFadeMs: 4000,
 } as const;
 
-export const BACKDROP_KINDS = ['office', 'tier'] as const;
-export type BackdropKind = (typeof BACKDROP_KINDS)[number];
-
-export const tierBackdropUrl = (tier: number, kind: BackdropKind): string =>
-  `assets/board/backdrop/${tier}-${kind}.webp`;
-
 export const officePlateUrl = (id: string): string =>
   `assets/board/office/${id}.png`;
 

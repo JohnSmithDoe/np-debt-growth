@@ -101,14 +101,15 @@ per-character `*.credits.txt` in `art/characters/` records what each one used.
 
 ### Generated art
 
-Everything in `src/assets/art/`, `src/assets/board/office/` and
-`src/assets/skills/` — the title screens, the tier and event plates, the screen
-art, the office floor plates and the seventy-one skill node icons — is generated
-with **FLUX.2 Klein (Apache-2.0) via [mflux](https://github.com/filipstrand/mflux)**
-and then forced onto the game's own palette by `tools/pixelate.mjs`, or by
-`tools/icon-knockout.mjs` for the icons, which remaps against the same palette.
-The board backdrops in `src/assets/board/backdrop/` are the one exception: the same title
-and tier takes, left un-pixelated and converted to WebP by `tools/backdrop.mjs`.
+Everything in `src/assets/art/`, `src/assets/board/` and `src/assets/skills/` —
+the title screens, the tier plates, the screen art, the office floor plates and
+the seventy-one skill node icons — is generated with **FLUX.2 Klein
+(Apache-2.0) via [mflux](https://github.com/filipstrand/mflux)**. The
+illustrations ship un-pixelated as WebP, converted by `tools/backdrop.mjs`; the
+board's tier backdrops and the modals share those files. The icons, the office
+floor plates and the 2011 easter egg are forced onto the game's own palette by
+`tools/pixelate.mjs`, or by `tools/icon-knockout.mjs` for the icons, which
+remaps against the same palette.
 
 **The icons carry no third-party licence**, which is the whole reason they are
 generated rather than sourced: an icon set bought or borrowed would have been a

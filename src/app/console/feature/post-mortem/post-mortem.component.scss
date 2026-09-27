@@ -190,7 +190,14 @@ li {
   width: 100%;
   aspect-ratio: 2 / 1;
   object-fit: cover;
-  image-rendering: pixelated;
   border-radius: var(--np-cb-radius);
   margin-bottom: 1rem;
+}
+
+.closing {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--np-cb-rule);
 }

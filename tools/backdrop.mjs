@@ -26,6 +26,12 @@ const TIERS = [
   { office: 'title-flood', tier: 'tier8-agent-swarm' },
 ];
 
+/** Other screens shipped the same way, beside the art they replace. */
+const SCREENS = [
+  { take: 'title-tower', out: 'src/assets/art/office/tower.webp' },
+  { take: 'screen-post-mortem', out: 'src/assets/art/screen/post-mortem.webp' },
+];
+
 const quality = process.argv.find((a) => a.startsWith('--quality='));
 const staged = await readdir(STAGING);
 await mkdir(OUT, { recursive: true });
@@ -50,4 +56,24 @@ for (const [tier, takes] of TIERS.entries()) {
     ]);
     console.log(`${take} → ${out}`);
   }
+}
+
+for (const { take: name, out } of SCREENS) {
+  const take = staged.find(
+    (file) => file.startsWith(`${name}.`) && file.endsWith('.png')
+  );
+  if (!take) {
+    console.error(`missing take: ${name}.*.png in image-staging/`);
+    process.exit(1);
+  }
+  const target = new URL(`../${out}`, import.meta.url).pathname;
+  await run('cwebp', [
+    '-quiet',
+    '-q',
+    quality?.split('=')[1] ?? '82',
+    join(STAGING, take),
+    '-o',
+    target,
+  ]);
+  console.log(`${take} → ${target}`);
 }

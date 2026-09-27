@@ -18,6 +18,7 @@ import { approvalAt, CLIENT_NAME } from '../../model/client.model';
 import { AdrUiService } from '../../data/adr-ui.service';
 import { BackdropDirective } from '../../ui/backdrop/backdrop.directive';
 import { PanelComponent } from '../../ui/panel/panel.component';
+import { backdropUrl } from '../../../@shared/util/backdrop-art';
 import { officeArtFor } from '../../util/office-art';
 import type { AdrCopy } from './adr-copy';
 import { ADR_COPY } from './adr-copy';
@@ -80,7 +81,7 @@ export class AdrModalComponent {
       tier: debtTier,
       copy,
       approval: signed ? approvalAt(tier) : undefined,
-      art: `assets/art/tier/${tier}.png`,
+      art: backdropUrl(tier, 'tier'),
       office: officeArtFor(tier),
       signed,
       cost: `${formatWhole(adrPrice(tier))} SP`,

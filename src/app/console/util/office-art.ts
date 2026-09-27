@@ -1,24 +1,14 @@
 import { MAX_TIER } from '../../game/model/tier.model';
 
+import { backdropUrl } from '../../@shared/util/backdrop-art';
+
 import { TITLE_ART_URL } from './title-art';
 
-const OFFICE = 'assets/art/office';
-
-const TIER_OFFICE: Readonly<Record<number, string>> = {
-  1: `${OFFICE}/3am.png`,
-  2: `${OFFICE}/printer.png`,
-  3: `${OFFICE}/kanban.png`,
-  4: `${OFFICE}/spaghetti.png`,
-  5: `${OFFICE}/burndown.png`,
-  6: `${OFFICE}/serverroom.png`,
-  7: `${OFFICE}/heap.png`,
-  8: `${OFFICE}/flood.png`,
-};
-
+/** A rung's title screen; the lift before the first ADR and past the last. */
 export const officeArtFor = (tier: number): string =>
-  TIER_OFFICE[tier] ?? TITLE_ART_URL;
+  tier >= 1 && tier <= MAX_TIER ? backdropUrl(tier, 'office') : TITLE_ART_URL;
 
-export const CLOSING_OFFICE_ART = `${OFFICE}/tower.png`;
+export const CLOSING_OFFICE_ART = 'assets/art/office/tower.webp';
 
 export interface OfficeFrame {
   readonly index: number;
