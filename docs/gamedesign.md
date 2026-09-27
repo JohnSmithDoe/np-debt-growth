@@ -48,8 +48,9 @@ Three mechanisms make that the economy rather than flavour:
 
 There is no round timer and no wall clock. `GameClock` ticks `store.advanceTo(clock.now())` every
 `TICK_MS` 100 ms; a gap longer than `MAX_CATCHUP_MS` 5 s (a hidden tab, a closed app) is simply
-not played. The game is frozen while the skill tree is open: `StageService` pauses the clock as the
-board fades out and resumes it as the board fades back in. `clock.now()` is wall time minus every
+not played. The game is frozen while the skill tree is open (`StageService` pauses the clock with
+reason `'tree'` as the board fades out and resumes it as the board fades back in) and while the tab
+is hidden (`GameClock` listens for `visibilitychange`, reason `'hidden'`). `clock.now()` is wall time minus every
 pause, so hotfix, escalation and pizza deadlines hold still with it. This matches the autoplayer,
 which spends no time in the tree.
 
