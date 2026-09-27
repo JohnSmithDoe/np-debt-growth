@@ -19,22 +19,14 @@ What is open, ranked. The design as it stands is `gamedesign.md`. Checked agains
 
 ---
 
-## 1. Measure the stage
+## 1. The stage has headroom
 
-No profile exists. The board now sits at 600 cards for most of the run (displacement keeps it
-full), so the heap leads matter again:
-
-1. `stage/scene/tier-spawners.ts` moves up to 450 lane `Image`s a frame (9 × `LANE.perLine` 50,
-   one per head bought) and calls `setFlipX` unconditionally. This is the only cost that scales
-   with purchases.
-2. `supply-panel`: all three tab `computed`s read `store.state()` and recompute at 10 Hz.
-3. `ticket-heap.ts`: `sync` diffs the whole board twice a frame; 48 `repeat: -1` tweens run for
-   mostly hidden rare cards; `HEAP_CAPACITY` 4096 against at most 600 live cards.
-4. `sprint-strip.ts` makes 8 store reads a frame before its redraw guards.
-5. `util/board.ts` `displaceOldest` scans the board once per displaced arrival — up to a few
-   hundred scans a second late in the run.
-
-Capture: reach ADR-5+ with a full board, 20 s of Chrome DevTools → Performance while sweeping.
+Profiled 27 Sep 2026 (Chrome, M-series Mac, 1280 × 800, dev build): ADR-6, every line at 50
+heads (350 walkers on the path), a full, purple 600-card board, sweeping for 10 s. 60 fps flat
+(median and p95 16.7 ms), the main thread 80–84 % idle; the largest single cost is a one-off
+shader compile. None of the old leads (spawner walkers, sprint-strip reads, `displaceOldest`,
+the heap's rare tweens, the rail's 10 Hz `computed`s) reaches the top 30 self-time entries.
+Re-profile on a slower machine before optimising any of them.
 
 ## 2. Render the canvas at device pixel ratio
 
@@ -46,7 +38,7 @@ for anti-aliased glyphs. The payout floats show it worst.
 The fix is a backing store of `clientWidth × devicePixelRatio` shown at CSS size, then every scene
 scaling its literal pixel sizes by the same factor — font sizes (`'11px'`, `CLOSE_FLOAT`,
 `BIG_FLOAT`), `HOVER_*`, rise distances, the board fit. Fill cost goes ×4 at DPR 2, so do it after
-§1 has a profile, and measure both.
+§1 has a profile, and measure both. (§1 has one now.)
 
 ## 3. Art
 

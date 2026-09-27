@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 
-import { formatMoney } from '../../@shared/util/format-quantity';
+import { formatCompactMoney } from '../../@shared/util/format-quantity';
 import { TICKET_TYPES } from '../../game/model/ticket.model';
 import {
   BOARD_INK,
@@ -318,7 +318,7 @@ export class SprintStrip {
   }
 
   #refreshPending(): void {
-    const pending = formatMoney(this.#deps.pending());
+    const pending = formatCompactMoney(this.#deps.pending());
     if (pending === this.#drawnPending) return;
     this.#drawnPending = pending;
     this.#pendingLabel.setText(pending);
