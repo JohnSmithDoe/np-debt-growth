@@ -106,7 +106,10 @@ never inline in logic.
 
 Scenes are constructed with a plain `SceneDeps` object (`stage/model/scene-deps.model.ts`) that
 `StageService` builds from the store, translations and settings. No scene injects anything; that
-boundary is what keeps the simulation testable under jsdom. `StageService` also owns mode switching
+boundary is what keeps the simulation testable under jsdom. Scenes lay out in CSS pixels: `PhaserService` sizes the game in backing pixels (device pixel
+ratio, whole steps, at most 2×) shown at 1 / that zoom, and `CbScene.sharpen` gives every `Text`
+that resolution and zooms a fixed scene's camera back up. Use `viewWidth` / `viewHeight`, never
+`this.scale.width`, for layout. `StageService` also owns mode switching
 (`board` ↔ `skills`) with a fade, sleeping the board and disposing the skill tree.
 
 ### Boot order

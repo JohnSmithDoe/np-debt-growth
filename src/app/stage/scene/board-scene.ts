@@ -241,6 +241,7 @@ export class BoardScene extends CbScene {
   }
 
   create(): void {
+    this.sharpen(true);
     buildBoardAtlas(this, this.deps.text);
     registerCrewAnimations(this);
     this.deps.publishIcons(boardIconUrls(this));
@@ -814,8 +815,8 @@ export class BoardScene extends CbScene {
     const parts = this.#parts;
     if (!parts) return;
 
-    const width = Math.max(1, this.scale.width);
-    const height = Math.max(1, this.scale.height);
+    const width = Math.max(1, this.viewWidth);
+    const height = Math.max(1, this.viewHeight);
     if (width === this.#width && height === this.#height) return;
     this.#width = width;
     this.#height = height;

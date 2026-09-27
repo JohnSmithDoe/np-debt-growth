@@ -1,6 +1,15 @@
 import { Injectable, signal } from '@angular/core';
 import * as Phaser from 'phaser';
 
+/** Backing pixels per CSS pixel: whole steps, so pixel art stays even; capped for fill cost. */
+function backingScale(): number {
+  return Math.min(2, Math.max(1, Math.round(globalThis.devicePixelRatio || 1)));
+}
+
+/**
+ * The game is sized in backing pixels and shown at CSS size (`zoom` 1/scale);
+ * every scene's camera zooms back up, so scenes lay out in CSS pixels.
+ */
 @Injectable({ providedIn: 'root' })
 export class PhaserService {
   #game?: Phaser.Game;
@@ -17,16 +26,18 @@ export class PhaserService {
 
   init(parent: HTMLElement): void {
     if (this.#game) return;
+    const scale = backingScale();
     this.#game = new Phaser.Game({
       type: Phaser.AUTO,
       parent,
       backgroundColor: '#0f1216',
       pixelArt: true,
       scale: {
-        mode: Phaser.Scale.RESIZE,
+        mode: Phaser.Scale.NONE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: parent.clientWidth,
-        height: parent.clientHeight,
+        width: parent.clientWidth * scale,
+        height: parent.clientHeight * scale,
+        zoom: 1 / scale,
       },
       scene: [],
     });
@@ -34,7 +45,12 @@ export class PhaserService {
   }
 
   resize(width: number, height: number): void {
-    this.#game?.scale.resize(width, height);
+    const game = this.#game;
+    if (!game) return;
+    const scale = backingScale();
+    game.scale.resize(width * scale, height * scale);
+    // NONE mode restyles the canvas only on a zoom refresh.
+    game.scale.setZoom(1 / scale);
   }
 
   destroy(): void {

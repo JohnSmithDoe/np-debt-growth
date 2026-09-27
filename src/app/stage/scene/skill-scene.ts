@@ -144,6 +144,7 @@ export class SkillScene extends PanZoomScene {
   }
 
   create(): void {
+    this.sharpen(false);
     this.frame();
     this.#measureGlyph();
 
@@ -247,8 +248,8 @@ export class SkillScene extends PanZoomScene {
       ),
     };
 
-    const width = Math.max((half.x + PAD) * 2, this.scale.width);
-    const height = Math.max((half.y + PAD) * 2, this.scale.height);
+    const width = Math.max((half.x + PAD) * 2, this.viewWidth);
+    const height = Math.max((half.y + PAD) * 2, this.viewHeight);
     this.cameras.main.setBounds(
       centre.x - width / 2,
       centre.y - height / 2,

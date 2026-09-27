@@ -28,25 +28,13 @@ shader compile. None of the old leads (spawner walkers, sprint-strip reads, `dis
 the heap's rare tweens, the rail's 10 Hz `computed`s) reaches the top 30 self-time entries.
 Re-profile on a slower machine before optimising any of them.
 
-## 2. Render the canvas at device pixel ratio
-
-All Phaser text is soft on a HiDPI screen; the DOM text beside it is sharp. `phaser.service.ts`
-sizes the canvas in CSS pixels (`Scale.RESIZE`, `parent.clientWidth`), so on a DPR-2 display the
-browser upscales a half-resolution buffer. `pixelArt: true` makes that harmless for sprites, not
-for anti-aliased glyphs. The payout floats show it worst.
-
-The fix is a backing store of `clientWidth × devicePixelRatio` shown at CSS size, then every scene
-scaling its literal pixel sizes by the same factor — font sizes (`'11px'`, `CLOSE_FLOAT`,
-`BIG_FLOAT`), `HOVER_*`, rise distances, the board fit. Fill cost goes ×4 at DPR 2, so do it after
-§1 has a profile, and measure both. (§1 has one now.)
-
-## 3. Art
+## 2. Art
 
 Canvas-drawn placeholders: the planning-poker coaches, the release train, the pizza circle, the
 lane actors (`stage/util/board-atlas.ts`). Pipeline: `tools/art-batch.mjs` →
 `pixelate.mjs` / `icon-knockout.mjs`.
 
-## 4. Balance to watch
+## 3. Balance to watch
 
 Measured on the advised autoplayer (see `gamedesign.md` §10): accepted at 31.6 min, the push
 3.3 min, every guard green. What the sim does not see:

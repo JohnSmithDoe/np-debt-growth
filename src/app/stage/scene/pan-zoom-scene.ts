@@ -63,20 +63,21 @@ export abstract class PanZoomScene extends CbScene {
     if (this.#zoom === ZOOM.native) return;
     const was = this.#legible();
     this.#zoom = ZOOM.native;
-    this.cameras.main.setZoom(ZOOM.native);
+    this.cameras.main.setZoom(ZOOM.native * this.backing);
     if (was !== this.#legible()) this.redraw();
   }
 
   /** Zooms to fit `rect` without dropping below legible labels, and centres it. */
   protected fitTo(rect: HitRect, margin: number): void {
     const camera = this.cameras.main;
-    const fit = Math.min(
-      camera.width / (rect.width + margin * 2),
-      camera.height / (rect.height + margin * 2)
-    );
+    const fit =
+      Math.min(
+        camera.width / (rect.width + margin * 2),
+        camera.height / (rect.height + margin * 2)
+      ) / this.backing;
     const was = this.#legible();
     this.#zoom = Phaser.Math.Clamp(fit, ZOOM_LABELS, ZOOM.native);
-    camera.setZoom(this.#zoom);
+    camera.setZoom(this.#zoom * this.backing);
     camera.centerOn(rect.x + rect.width / 2, rect.y + rect.height / 2);
     if (was !== this.#legible()) this.redraw();
   }
@@ -86,6 +87,7 @@ export abstract class PanZoomScene extends CbScene {
     this.#canvas = this.game.canvas;
     this.#labels = new LabelPool(this, LABEL_DEPTH);
     this.cameras.main.setBackgroundColor(SCREEN_INK.ground);
+    this.cameras.main.setZoom(this.#zoom * this.backing);
     this.reframe();
     this.cameras.main.setScroll(
       this.cameras.main.getBounds().x,
@@ -99,8 +101,8 @@ export abstract class PanZoomScene extends CbScene {
 
   protected reframe(): void {
     const camera = this.cameras.main;
-    const width = Math.max(this.content.width + PAD * 2, this.scale.width);
-    const height = Math.max(this.content.height + PAD * 2, this.scale.height);
+    const width = Math.max(this.content.width + PAD * 2, this.viewWidth);
+    const height = Math.max(this.content.height + PAD * 2, this.viewHeight);
     camera.setBounds(
       (this.content.width - width) / 2,
       (this.content.height - height) / 2,
@@ -111,6 +113,7 @@ export abstract class PanZoomScene extends CbScene {
 
   #onResize = (): void => {
     if (!this.cameras?.main) return;
+    this.cameras.main.setZoom(this.#zoom * this.backing);
     this.reframe();
   };
 
@@ -173,12 +176,12 @@ export abstract class PanZoomScene extends CbScene {
     this.#zoom = zoom;
 
     const camera = this.cameras.main;
-    camera.setZoom(zoom);
+    camera.setZoom(zoom * this.backing);
     const halfWidth = camera.width / 2;
     const halfHeight = camera.height / 2;
     camera.setScroll(
-      pointer.worldX - halfWidth - (pointer.x - halfWidth) / zoom,
-      pointer.worldY - halfHeight - (pointer.y - halfHeight) / zoom
+      pointer.worldX - halfWidth - (pointer.x - halfWidth) / camera.zoom,
+      pointer.worldY - halfHeight - (pointer.y - halfHeight) / camera.zoom
     );
     if (was !== this.#legible()) this.redraw();
   }

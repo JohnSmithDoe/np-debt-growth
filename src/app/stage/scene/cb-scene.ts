@@ -22,6 +22,45 @@ export abstract class CbScene extends Phaser.Scene {
     super(key);
   }
 
+  /** Backing pixels per CSS pixel; `PhaserService` shows the game at 1 / this. */
+  protected get backing(): number {
+    return 1 / (this.scale.zoom || 1);
+  }
+
+  /** The view in CSS pixels, which is what every scene lays out in. */
+  protected get viewWidth(): number {
+    return this.scale.width / this.backing;
+  }
+
+  protected get viewHeight(): number {
+    return this.scale.height / this.backing;
+  }
+
+  /**
+   * Call first in `create`: text renders at backing resolution, and unless
+   * the scene pans and zooms itself, the camera maps CSS pixels onto it.
+   */
+  protected sharpen(fixedCamera: boolean): void {
+    const onAdded = (object: Phaser.GameObjects.GameObject): void => {
+      if (object instanceof Phaser.GameObjects.Text) {
+        object.setResolution(this.backing);
+      }
+    };
+    this.events.on(Phaser.Scenes.Events.ADDED_TO_SCENE, onAdded);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+      this.events.off(Phaser.Scenes.Events.ADDED_TO_SCENE, onAdded)
+    );
+    if (!fixedCamera) return;
+    const fit = (): void => {
+      this.cameras.main.setOrigin(0, 0).setZoom(this.backing);
+    };
+    fit();
+    this.scale.on(Phaser.Scale.Events.RESIZE, fit);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+      this.scale.off(Phaser.Scale.Events.RESIZE, fit)
+    );
+  }
+
   protected get floats(): FloatPool {
     if (!this.#floats) {
       const pool = new FloatPool(this, 50, FLOAT_CAP.small);
@@ -129,7 +168,7 @@ export abstract class CbScene extends Phaser.Scene {
     const x = Phaser.Math.Clamp(
       amount.x,
       half + BIG_FLOAT_CAPTION.edge,
-      this.scale.width - half - BIG_FLOAT_CAPTION.edge
+      this.viewWidth - half - BIG_FLOAT_CAPTION.edge
     );
     amount.setX(x);
     return line.setX(x);

@@ -83,6 +83,7 @@ export class DemoScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.cameras.main.setOrigin(0, 0).setZoom(1 / (this.scale.zoom || 1));
     registerCrewAnimations(this);
     this.#floor = new FloorLayer(this, 0);
     this.#readout = this.add
@@ -236,8 +237,8 @@ export class DemoScene extends Phaser.Scene {
   }
 
   #layout(): void {
-    const width = Math.max(1, this.scale.width);
-    const height = Math.max(1, this.scale.height);
+    const width = Math.max(1, this.scale.width * this.scale.zoom);
+    const height = Math.max(1, this.scale.height * this.scale.zoom);
     if (width === this.#width && height === this.#height) return;
     this.#width = width;
     this.#height = height;
