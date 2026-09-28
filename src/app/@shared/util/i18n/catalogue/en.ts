@@ -30,9 +30,12 @@ export const EN: Readonly<Record<string, string>> = {
   'release.phase.retro.short': 'Retro',
   'release.phase.refinement': 'Refinement',
   'release.phase.refinement.short': 'Refine',
-  'board.buff.acceptance':
-    'ACCEPTANCE · OVERTIME ×{{mult}} · {{have}} / {{goal}}',
+  'board.buff.acceptance': 'ACCEPTANCE · OVERTIME ×{{mult}}',
+  'board.buff.quarter':
+    'QUARTER END ON THE BOARD · HOLD IT FOR HOTFIX + ESCALATION',
   'board.buff.escalation': 'ESCALATION ×{{mult}} · {{seconds}}s',
+  'board.buff.storm':
+    'PERFECT STORM READY · SWEEP THE QUARTER END · ×{{mult}} · {{seconds}}s',
   'board.buff.hotfix': 'HOTFIX WINDOW ×{{mult}} · {{seconds}}s',
   'skill.effect.slots': 'Sprint scope +{{count}} per team',
   'skill.effect.cutCeremony': 'Cuts the {{phase}} from every release train',
@@ -56,7 +59,7 @@ export const EN: Readonly<Record<string, string>> = {
   'hazard.page.label': 'Pager Duty',
   'hazard.reorg.label': 'Reorganisation Briefing',
   'hazard.retro.label': 'Sprint Retrospective',
-  'hazard.storm.label': 'Incident Storm',
+  'hazard.storm.label': 'Incident Surge',
   'ticket.type.bug': 'Bug Report',
   'ticket.type.conflict': 'Merge Conflict',
   'ticket.type.escalation': 'Enterprise Escalation',
@@ -101,7 +104,7 @@ export const EN: Readonly<Record<string, string>> = {
   'purchase.manager.effect': 'crew closes within reach bill ×{{aura}}',
   'purchase.manager.label': 'Account Manager',
   'purchase.senior.effect':
-    'clears the whole patch every {{seconds}}s, and is the only hire that touches a P0',
+    'clears the whole patch every {{seconds}}s, from the merge conflicts up; P0s stay yours',
   'skill.effect.managerAura': '{{pct}} on crew closes a manager oversees',
   'office.archive.blurb':
     'Seven years of timesheets. Every hour on the invoice is defensible.',
@@ -167,6 +170,7 @@ export const EN: Readonly<Record<string, string>> = {
   'agent.save.title': 'Save for {{name}}',
   'agent.save.detail':
     '{{short}} to go, about {{time}}. Buying anything else first is slower.',
+  'agent.credit': '{{adr}}, on credit',
   'agent.income': '{{ticket}} rate',
   'agent.auto.label': 'Auto-buy',
   'agent.auto.blurb': 'Buys every suggestion the moment it is affordable.',
@@ -203,6 +207,7 @@ export const EN: Readonly<Record<string, string>> = {
   'award.waiting': '+{{count}} more',
   'hud.budget': 'Budget',
   'hud.goal.adr': '{{pct}} % to ADR-{{adr}}',
+  'hud.goal.signoff.credit': '{{pct}} % to sign-off · signable on credit',
   'hud.goal.signoff': '{{pct}} % to sign-off',
   'hud.points': 'Story Points',
   'hud.points.exact': '{{points}} Story Points',
@@ -258,7 +263,7 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'None approved',
   'skill.golden.1.label': 'Partner-Only Work',
   'skill.signoff.blurb':
-    'The closeout starts the acceptance push: work pours in, every ticket bills overtime, and the client signs when the budget reaches €20 Qa.',
+    'The closeout starts the acceptance push: work pours in, every ticket bills overtime, and the client tests one line of work at a time. It signs when every criterion has been signed, clean or with findings.',
   'skill.signoff.1.label': 'Sign the Closeout',
   'skill.golden.blurb':
     'Some work arrives flagged partner-only. It pays a fortune, and the crew will not go near it.',
@@ -856,7 +861,7 @@ export const EN: Readonly<Record<string, string>> = {
   'help.loop.4':
     'Story points buy the skill tree. Approve ADRs there to open new lines of ever dearer debt. Drag to pan, wheel to zoom, hover a square to read it; a black box says only that something is there.',
   'help.loop.5':
-    'Last on the tree, Sign the Closeout starts the acceptance push. The engagement is done when the budget reaches €20 Qa.',
+    'Last on the tree, Sign the Closeout starts the acceptance push. The client tests one line at a time; the engagement is done when every criterion is signed.',
   'award.m-first-close.label': 'First ticket triaged',
   'award.m-first-close.blurb': 'Somebody had to.',
   'award.m-first-invoice.label': 'First invoice raised',
@@ -890,7 +895,7 @@ export const EN: Readonly<Record<string, string>> = {
   'award.a-250.label': 'Two hundred and fifty',
   'award.a-250.blurb':
     'Close 250 work items. The board does not look any emptier.',
-  'award.a-first-thousand-billed.label': 'Four figures billed',
+  'award.a-first-thousand-billed.label': 'Billable',
   'award.a-first-thousand-billed.blurb':
     'Bill €1,000. The engagement is now worth having.',
   'award.a-works-on-my-machine.label': 'Works on my machine',
@@ -899,7 +904,7 @@ export const EN: Readonly<Record<string, string>> = {
   'award.a-500.label': 'Five hundred',
   'award.a-500.blurb':
     'Close 500 work items. Two hundred and fifty of them came back.',
-  'award.a-ten-thousand-billed.label': 'Five figures billed',
+  'award.a-ten-thousand-billed.label': 'Somebody upstairs noticed',
   'award.a-ten-thousand-billed.blurb':
     'Bill €10,000. Somebody upstairs has noticed the account.',
   'award.a-sprints-fifty.label': 'Fifty sprints',
@@ -915,25 +920,25 @@ export const EN: Readonly<Record<string, string>> = {
   'award.a-skimmer.label': 'Creative accounting',
   'award.a-skimmer.blurb':
     'Book billed revenue as Story Points. Finance signed off.',
-  'award.a-million.label': 'Seven figures billed',
+  'award.a-million.label': 'Key account',
   'award.a-million.blurb': 'Bill €1,000,000 across the engagement.',
-  'award.a-ten-thousand.label': 'Five figures of tickets',
+  'award.a-ten-thousand.label': 'Industrial grooming',
   'award.a-ten-thousand.blurb':
     'Close 10,000 work items. None of them are fixed.',
   'award.a-office.label': 'The whole floor',
   'award.a-office.blurb':
     'Fit out every plate. There is nowhere left to put anyone.',
-  'award.a-hundred-thousand.label': 'Six figures of tickets',
+  'award.a-hundred-thousand.label': 'The backlog has a backlog',
   'award.a-hundred-thousand.blurb':
     'Close 100,000 work items. The backlog has never been longer.',
-  'award.a-billion.label': 'Ten figures billed',
+  'award.a-billion.label': 'The client is a subsidiary now',
   'award.a-billion.blurb':
     'Bill €1,000,000,000. The engagement is now the client.',
   'award.a-ladder.label': 'Every decision approved',
   'award.a-ladder.blurb': 'All eight ADRs. There was never a cleanup path.',
-  'award.a-million-tickets.label': 'Seven figures of tickets',
+  'award.a-million-tickets.label': 'Half a million tickets',
   'award.a-million-tickets.blurb':
-    'Close 1,000,000 work items. The client has stopped reading them.',
+    'Close 500,000 work items. The client has stopped reading them.',
   'award.a-rate-card.label': 'The rate card, revised',
   'award.a-rate-card.blurb': 'Five revisions. It has still never gone down.',
   'award.a-secret.label': 'You read the code',
@@ -995,6 +1000,14 @@ export const EN: Readonly<Record<string, string>> = {
   'approval.role.interim': 'Interim Head of Delivery',
   'approval.role.quorum-two': 'quorum of two',
   'approval.role.quorum-none': 'quorum not recorded',
+  'approval.by.agent': 'Meridian Procurement Agent',
+  'approval.role.procurement': 'automated, quorum not required',
+  'postmortem.closeout': 'Closeout — Engagement Acceptance',
+  'postmortem.signed.closeout': '{{by}}, {{role}} — {{date}}. Comments: LGTM.',
+  'postmortem.badly.changes.one':
+    'One change request was accepted after the closeout was signed. It was not small.',
+  'postmortem.badly.changes':
+    '{{count}} change requests were accepted after the closeout was signed. Phase Two has been scheduled.',
   'adr.epic': 'Epic',
   'adr.subheading': 'Architecture Decision Record',
   'adr.acknowledge': 'Acknowledge',
@@ -1082,4 +1095,193 @@ export const EN: Readonly<Record<string, string>> = {
   'epic.7.name': 'The Phantom Rewrite',
   'epic.8.name': 'Rise of the Machines',
   'epic.acceptance.name': 'The Last Sign-Off',
+  'skill.effect.overtime':
+    '{{pct}} overtime during acceptance, and {{count}} more criterion to test',
+  'skill.status.credit':
+    'Approve on credit: {{owed}} SP owed, repaid from half of every later pickup',
+  'hud.debt': 'repaying {{owed}} SP',
+  'hud.goal.credit': '{{pct}} % to ADR-{{adr}} · approvable on credit',
+  'board.buff.criterion':
+    '▶ {{n}}/{{of}} {{name}} · {{ticket}} · {{pct}} % · {{seconds}}s · OVERTIME ×{{mult}}',
+  'board.jackpot':
+    'PERFECT STORM — the whole board billed under escalation and hotfix',
+  'release.phase.incident': 'Incident Review',
+  'release.phase.incident.short': 'P0 Review',
+  'skill.changeRequest.blurb':
+    'The client has a few small asks before they sign. Each one multiplies the overtime every ticket bills, and adds one more criterion to test. Early ones pay for themselves. Late ones are scope creep.',
+  'skill.changeRequest.1.label': 'Small Change Request',
+  'skill.changeRequest.2.label': 'Minor Scope Adjustment',
+  'skill.changeRequest.3.label': 'Clarification of Scope',
+  'skill.changeRequest.4.label': 'Stakeholder Feedback',
+  'skill.changeRequest.5.label': 'Scope Creep',
+  'skill.changeRequest.6.label': 'Late-Breaking Requirement',
+  'skill.changeRequest.7.label': 'Out-of-Band Request',
+  'skill.changeRequest.8.label': 'Executive Ask',
+  'skill.changeRequest.9.label': 'Board-Level Priority',
+  'skill.changeRequest.10.label': 'Phase Two, Scoped',
+  'acceptance.criterion.retest': ' (RE-TEST)',
+  'acceptance.criterion.0.label': 'CODE STYLE',
+  'acceptance.criterion.1.label': 'BACKWARDS COMPATIBILITY',
+  'acceptance.criterion.2.label': 'TEST SUITE',
+  'acceptance.criterion.3.label': 'MERGE STRATEGY',
+  'acceptance.criterion.4.label': 'DOCUMENTATION',
+  'acceptance.criterion.5.label': 'KNOWLEDGE TRANSFER',
+  'acceptance.criterion.6.label': 'DECOMMISSIONING',
+  'acceptance.criterion.7.label': 'ARCHITECTURE',
+  'acceptance.criterion.8.label': 'PERFORMANCE',
+  'award.c-criterion-0.label': 'Accepted: code style consistent',
+  'award.c-criterion-0.blurb': 'Every file now fails the same linter rules.',
+  'award.c-criterion-1.label': 'Accepted: backwards compatible',
+  'award.c-criterion-1.blurb':
+    'Everything that was broken before is broken in exactly the same way.',
+  'award.c-criterion-2.label': 'Accepted: test suite green',
+  'award.c-criterion-2.blurb': 'Green on the third retry counts as green.',
+  'award.c-criterion-3.label': 'Accepted: merge strategy agreed',
+  'award.c-criterion-3.blurb': 'Both sides of every conflict were kept.',
+  'award.c-criterion-4.label': 'Accepted: documentation complete',
+  'award.c-criterion-4.blurb':
+    'The screenshot of the whiteboard has been attached to the ticket.',
+  'award.c-criterion-5.label': 'Accepted: knowledge transferred',
+  'award.c-criterion-5.blurb':
+    'He sent a Loom. It is forty minutes long. Nobody has watched it.',
+  'award.c-criterion-6.label': 'Accepted: decommissioning scheduled',
+  'award.c-criterion-6.blurb':
+    'The zombie service has a sunset date. It had one last year too.',
+  'award.c-criterion-7.label': 'Accepted: architecture future-proof',
+  'award.c-criterion-7.blurb':
+    'The rewrite of the rewrite has its kickoff on Monday.',
+  'award.c-criterion-8.label': 'Accepted: performance acceptable',
+  'award.c-criterion-8.blurb':
+    'Nobody measured. The agents report no regressions observed.',
+  'award.a-hundred-billion.label': 'A second client',
+  'award.a-hundred-billion.blurb':
+    'Bill €100 billion. The client has started a second client to pay for the first.',
+  'award.a-trillion.label': 'Line item',
+  'award.a-trillion.blurb':
+    'The engagement is now a line item in the client’s annual report. Its own section, actually.',
+  'award.a-ten-trillion.label': 'Macroeconomic indicator',
+  'award.a-ten-trillion.blurb':
+    'Bill €10 trillion. Economists have begun citing the burndown chart.',
+  'award.a-hundred-trillion.label': 'Invoice inception',
+  'award.a-hundred-trillion.blurb':
+    'Bill €100 trillion. The invoice has its own invoice.',
+  'award.a-quadrillion.label': 'Weather system',
+  'award.a-quadrillion.blurb':
+    'Finance has stopped using the word “budget”. It now says “weather”.',
+  'award.a-ten-quadrillion.label': 'Small engagement',
+  'award.a-ten-quadrillion.blurb':
+    'Bill €10 quadrillion. The client still calls it a “small engagement”.',
+  'award.a-perfect-storm.label': 'Perfect storm',
+  'award.a-perfect-storm.blurb':
+    'Hotfix, escalation, then quarter end: the whole board billed at once, under both.',
+  'award.a-incident-review.label': 'Blameless post-mortem',
+  'award.a-incident-review.blurb':
+    'A P0 was still open when the train left, so the release waited for the incident review. The review blamed the train.',
+  'award.a-on-credit.label': 'Approved on credit',
+  'award.a-on-credit.blurb':
+    'Signed an ADR before it was paid for. Technical debt, but literal.',
+  'award.a-change-request.label': 'Just one small thing',
+  'award.a-change-request.blurb':
+    'Accept a change request during acceptance. It will not be the last.',
+  'award.a-scope-creep.label': 'Scope creep',
+  'award.a-scope-creep.blurb':
+    'Five change requests after the closeout was signed. The closeout has been re-signed.',
+  'moment.closeout.heading': 'Closeout Record — Engagement Acceptance',
+  'moment.closeout.subheading': 'Final decision of record',
+  'moment.closeout.chip': 'Signed',
+  'moment.closeout.action': 'Start the acceptance push',
+  'moment.closeout.context':
+    'Eight Architecture Decision Records have been approved and none reverted. The backlog is at an all-time high. The client has asked for the engagement to be closed out before the next budget cycle.',
+  'moment.closeout.decision':
+    'Enter formal acceptance. The client tests the delivery one criterion at a time, one line of work per criterion; a criterion is signed once its line has billed its share. Every ticket bills overtime until the last one is signed.',
+  'moment.closeout.consequences':
+    'Work pours in at three times the rate. The line under test bills as if it were the newest work; a criterion billed in time signs clean and raises the overtime, one still open after fifty-five seconds of billing signs with findings. Open hotfixes, escalations and quarter ends are void. Change requests will arrive: each multiplies the overtime and adds a re-test of the weakest line.',
+  'moment.closeout.approved':
+    'Meridian Procurement Agent (automated), on behalf of the Programme Board, quorum not required.',
+  'moment.closeout.comments': 'LGTM.',
+  'postmortem.stamp': 'ACCEPTED',
+  'postmortem.stamp.by': 'Meridian Financial Group · signed without reading',
+  'postmortem.well.criteria.all':
+    'All {{total}} acceptance criteria verified. None of them by a human.',
+  'award.c-retest-0.label': 'Re-tested: code style',
+  'award.c-retest-0.blurb': 'Still consistently wrong.',
+  'award.c-retest-1.label': 'Re-tested: backwards compatibility',
+  'award.c-retest-1.blurb': 'Broken in exactly the same way, twice.',
+  'award.c-retest-2.label': 'Re-tested: test suite',
+  'award.c-retest-2.blurb': 'Green again, on the fourth retry.',
+  'award.c-retest-3.label': 'Re-tested: merge strategy',
+  'award.c-retest-3.blurb': 'Both sides kept, again. There are now four sides.',
+  'award.c-retest-4.label': 'Re-tested: documentation',
+  'award.c-retest-4.blurb':
+    'The whiteboard was wiped. The screenshot is canonical now.',
+  'award.c-retest-5.label': 'Re-tested: knowledge transfer',
+  'award.c-retest-5.blurb': 'The Loom now has a Loom explaining it.',
+  'award.c-retest-6.label': 'Re-tested: decommissioning',
+  'award.c-retest-6.blurb': 'The sunset date has been moved to next sunset.',
+  'award.c-retest-7.label': 'Re-tested: architecture',
+  'award.c-retest-7.blurb': 'The kickoff has been moved to the Monday after.',
+  'award.c-retest-8.label': 'Re-tested: performance',
+  'award.c-retest-8.blurb':
+    'The agents re-measured nothing and found no change.',
+  'award.a-findings.label': 'Signed with findings',
+  'award.a-findings.blurb':
+    'A criterion ran out of time and was signed anyway. The findings were filed under Phase Two.',
+  'award.a-over-budget.label': 'Over budget',
+  'award.a-over-budget.blurb':
+    'The budget passed €20 Qa before the last criterion was signed. The client approved an increase to match.',
+  'board.buff.escalation.held':
+    'ESCALATION ON THE BOARD · HOLD IT FOR A QUARTER END',
+  'board.buff.combo':
+    'HOTFIX ON THE BOARD · SWEEP IT, THEN THE ESCALATION, THEN THE QUARTER END',
+  'board.buff.combo.live':
+    'HOTFIX LIVE · SWEEP THE ESCALATION, THEN THE QUARTER END',
+  'postmortem.well.criteria.findings':
+    '{{clean}} of {{total}} acceptance criteria verified. The other {{findings}} were signed with findings and moved to Phase Two.',
+  'award.c-findings-0.label': 'With findings: code style',
+  'award.c-findings-1.label': 'With findings: backwards compatibility',
+  'award.c-findings-2.label': 'With findings: test suite',
+  'award.c-findings-3.label': 'With findings: merge strategy',
+  'award.c-findings-4.label': 'With findings: documentation',
+  'award.c-findings-5.label': 'With findings: knowledge transfer',
+  'award.c-findings-6.label': 'With findings: decommissioning',
+  'award.c-findings-7.label': 'With findings: architecture',
+  'award.c-findings-8.label': 'With findings: performance',
+  'award.c-findings-0.blurb': 'The linter has been added to the backlog.',
+  'award.c-findings-1.blurb':
+    'Compatibility will be restored in a future release.',
+  'award.c-findings-2.blurb': 'The flaky test has been marked flaky.',
+  'award.c-findings-3.blurb': 'The conflict has been assigned to both teams.',
+  'award.c-findings-4.blurb': 'The documentation is scheduled for Phase Two.',
+  'award.c-findings-5.blurb':
+    'He left before the handover. The Loom is still forty minutes.',
+  'award.c-findings-6.blurb':
+    'The zombie service outlived its own decommissioning ticket.',
+  'award.c-findings-7.blurb': 'The target architecture has been re-baselined.',
+  'award.c-findings-8.blurb':
+    'Performance will be measured once the agents agree on a metric.',
+  'skill.changeRequest.saves':
+    'Next re-tests {{line}} · the push ends about {{seconds}}s sooner',
+  'skill.changeRequest.costs':
+    'Next re-tests {{line}} · the push runs about {{seconds}}s longer',
+  'award.c-refound-0.label': 'Re-test with findings: code style',
+  'award.c-refound-1.label': 'Re-test with findings: backwards compatibility',
+  'award.c-refound-2.label': 'Re-test with findings: test suite',
+  'award.c-refound-3.label': 'Re-test with findings: merge strategy',
+  'award.c-refound-4.label': 'Re-test with findings: documentation',
+  'award.c-refound-5.label': 'Re-test with findings: knowledge transfer',
+  'award.c-refound-6.label': 'Re-test with findings: decommissioning',
+  'award.c-refound-7.label': 'Re-test with findings: architecture',
+  'award.c-refound-8.label': 'Re-test with findings: performance',
+  'award.c-refound-0.blurb': 'Still inconsistent, now consistently.',
+  'award.c-refound-1.blurb': 'It broke differently this time. Noted.',
+  'award.c-refound-2.blurb': 'Red on the fourth retry. The fifth is scheduled.',
+  'award.c-refound-3.blurb': 'Four sides, no agreement.',
+  'award.c-refound-4.blurb': 'The screenshot was of a different whiteboard.',
+  'award.c-refound-5.blurb':
+    'The Loom now has chapters. Nobody watched those either.',
+  'award.c-refound-6.blurb': 'The sunset date has a sunset date.',
+  'award.c-refound-7.blurb':
+    'The kickoff for the rewrite of the rewrite was rescheduled.',
+  'award.c-refound-8.blurb':
+    'The agents measured and disagreed with the measurement.',
 };

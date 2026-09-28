@@ -7,7 +7,7 @@ import { advise, apply } from './advisor';
 import * as economy from './economy';
 import * as purchase from './purchase';
 import type { SimPolicy } from './sim';
-import { flow } from './sim';
+import { flow, underTestRate } from './sim';
 
 export interface AutoplayPolicy extends SimPolicy {
   readonly spendFraction: number;
@@ -73,7 +73,7 @@ export function autoplay(
       };
     });
     if (at - spentAt >= policy.spendEveryMs) {
-      state = spender(state, policy);
+      state = economy.recalibrate(spender(state, policy), underTestRate);
       spentAt = at;
     }
     for (const [label, holds] of milestones) {
@@ -101,7 +101,7 @@ function earn(
   const next: Consultancy = {
     ...state,
     budget: state.budget + euros,
-    storyPoints: state.storyPoints + f.spPerSec * seconds,
+    ...economy.repaid(state, f.spPerSec * seconds),
     achievements: [...state.achievements, ...awards.map((award) => award.id)],
     lifetimeBilled: state.lifetimeBilled + euros,
     lifetimeClosed:
@@ -109,7 +109,13 @@ function earn(
     runMs: state.runMs + seconds * 1000,
     lastTick: state.lastTick + seconds * 1000,
   };
-  return economy.accepted(next) ? { ...next, endedAt: next.lastTick } : next;
+  const tested = economy.stepCriterion(
+    economy.billUnderTest(next, f.underTestEuroPerSec * seconds),
+    underTestRate
+  );
+  return economy.accepted(tested)
+    ? { ...tested, endedAt: tested.lastTick }
+    : tested;
 }
 
 export function spend(state: Consultancy, policy: AutoplayPolicy): Consultancy {

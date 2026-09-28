@@ -31,9 +31,12 @@ export const DE: Readonly<Record<string, string>> = {
   'release.phase.retro.short': 'Retro',
   'release.phase.refinement': 'Refinement',
   'release.phase.refinement.short': 'Refine',
-  'board.buff.acceptance':
-    'ABNAHME · ÜBERSTUNDEN ×{{mult}} · {{have}} / {{goal}}',
+  'board.buff.acceptance': 'ABNAHME · ÜBERSTUNDEN ×{{mult}}',
+  'board.buff.quarter':
+    'QUARTALSENDE AUF DEM BOARD · FÜR HOTFIX + ESKALATION AUFHEBEN',
   'board.buff.escalation': 'ESKALATION ×{{mult}} · {{seconds}}s',
+  'board.buff.storm':
+    'PERFECT STORM BEREIT · QUARTALSENDE MITNEHMEN · ×{{mult}} · {{seconds}}s',
   'board.buff.hotfix': 'HOTFIX-FENSTER ×{{mult}} · {{seconds}}s',
   'skill.effect.slots': 'Sprint-Umfang +{{count}} pro Team',
   'skill.effect.cutCeremony': 'Streicht {{phase}} aus jedem Release-Zug',
@@ -57,7 +60,7 @@ export const DE: Readonly<Record<string, string>> = {
   'hazard.page.label': 'Rufbereitschaft',
   'hazard.reorg.label': 'Reorg-Briefing',
   'hazard.retro.label': 'Sprint-Retro',
-  'hazard.storm.label': 'Incident-Sturm',
+  'hazard.storm.label': 'Incident-Welle',
   'ticket.type.bug': 'Bug-Report',
   'ticket.type.conflict': 'Merge-Konflikt',
   'ticket.type.escalation': 'Enterprise-Eskalation',
@@ -101,7 +104,7 @@ export const DE: Readonly<Record<string, string>> = {
   'purchase.manager.effect': 'Abschlüsse in seiner Nähe rechnen ×{{aura}} ab',
   'purchase.manager.label': 'Kundenbetreuer',
   'purchase.senior.effect':
-    'räumt alle {{seconds}}s den ganzen Fleck ab und ist die einzige Einstellung, die einen P0 anfasst',
+    'räumt alle {{seconds}}s den ganzen Fleck ab, ab den Merge-Konflikten aufwärts; P0s bleiben deine',
   'skill.effect.managerAura':
     '{{pct}} auf Abschlüsse unter den Augen eines Managers',
   'office.archive.blurb':
@@ -167,6 +170,7 @@ export const DE: Readonly<Record<string, string>> = {
   'agent.save.title': 'Auf {{name}} sparen',
   'agent.save.detail':
     'Noch {{short}}, etwa {{time}}. Alles andere zuerst ist langsamer.',
+  'agent.credit': '{{adr}}, auf Kredit',
   'agent.income': 'Rate: {{ticket}}',
   'agent.auto.label': 'Autokauf',
   'agent.auto.blurb': 'Kauft jeden Vorschlag, sobald er bezahlbar ist.',
@@ -207,6 +211,8 @@ export const DE: Readonly<Record<string, string>> = {
   'award.waiting': '+{{count}} weitere',
   'hud.budget': 'Budget',
   'hud.goal.adr': '{{pct}} % bis ADR-{{adr}}',
+  'hud.goal.signoff.credit':
+    '{{pct}} % bis zum Abschluss · auf Kredit unterschreibbar',
   'hud.goal.signoff': '{{pct}} % bis zur Abnahme',
   'hud.points': 'Story Points',
   'hud.points.exact': '{{points}} Story Points',
@@ -262,7 +268,7 @@ export const DE: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'Keiner freigegeben',
   'skill.golden.1.label': 'Partnersache',
   'skill.signoff.blurb':
-    'Der Abschluss startet den Abnahme-Endspurt: Arbeit strömt herein, jedes Ticket wird mit Überstunden abgerechnet, und der Kunde unterschreibt, wenn das Budget 20 Brd. € erreicht.',
+    'Der Abschluss startet den Abnahme-Endspurt: Arbeit strömt herein, jedes Ticket wird mit Überstunden abgerechnet, und der Kunde prüft eine Arbeitslinie nach der anderen. Er unterschreibt, wenn jedes Kriterium unterschrieben ist, sauber oder mit Befund.',
   'skill.signoff.1.label': 'Abschluss unterschreiben',
   'skill.golden.blurb':
     'Manche Arbeit kommt als Partnersache herein. Sie zahlt ein Vermögen, und das Team fasst sie nicht an.',
@@ -875,7 +881,7 @@ export const DE: Readonly<Record<string, string>> = {
   'help.loop.4':
     'Mit Story Points kaufst du den Skill-Baum. Gib dort ADRs frei, um neue Linien immer teurerer Schulden zu öffnen. Ziehen verschiebt, das Mausrad zoomt, über ein Feld fahren liest es; ein schwarzer Kasten sagt nur, dass dort etwas ist.',
   'help.loop.5':
-    'Ganz oben im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt. Das Mandat ist erfüllt, wenn das Budget 20 Brd. € erreicht.',
+    'Ganz oben im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt. Der Kunde prüft eine Linie nach der anderen; das Mandat ist erfüllt, wenn jedes Kriterium unterschrieben ist.',
   'award.m-first-close.label': 'Erstes Ticket triagiert',
   'award.m-first-close.blurb': 'Irgendwer musste ja.',
   'award.m-first-invoice.label': 'Erste Rechnung gestellt',
@@ -910,7 +916,7 @@ export const DE: Readonly<Record<string, string>> = {
   'award.a-250.label': 'Zweihundertfünfzig',
   'award.a-250.blurb':
     'Schließ 250 Tickets. Das Board sieht kein bisschen leerer aus.',
-  'award.a-first-thousand-billed.label': 'Vierstellig abgerechnet',
+  'award.a-first-thousand-billed.label': 'Abrechenbar',
   'award.a-first-thousand-billed.blurb':
     'Rechne 1.000 € ab. Jetzt lohnt sich das Mandat.',
   'award.a-works-on-my-machine.label': 'Works on my machine',
@@ -919,7 +925,7 @@ export const DE: Readonly<Record<string, string>> = {
   'award.a-500.label': 'Fünfhundert',
   'award.a-500.blurb':
     'Schließ 500 Tickets. Zweihundertfünfzig davon kamen zurück.',
-  'award.a-ten-thousand-billed.label': 'Fünfstellig abgerechnet',
+  'award.a-ten-thousand-billed.label': 'Oben hat es jemand gemerkt',
   'award.a-ten-thousand-billed.blurb':
     'Rechne 10.000 € ab. Weiter oben ist jemandem der Account aufgefallen.',
   'award.a-sprints-fifty.label': 'Fünfzig Sprints',
@@ -935,25 +941,25 @@ export const DE: Readonly<Record<string, string>> = {
   'award.a-skimmer.label': 'Kreative Buchführung',
   'award.a-skimmer.blurb':
     'Verbuche abgerechneten Umsatz als Story Points. Die Finanzabteilung hat abgezeichnet.',
-  'award.a-million.label': 'Siebenstellig abgerechnet',
+  'award.a-million.label': 'Schlüsselkunde',
   'award.a-million.blurb': 'Rechne über das Mandat 1.000.000 € ab.',
-  'award.a-ten-thousand.label': 'Fünfstellig an Tickets',
+  'award.a-ten-thousand.label': 'Grooming im Industriemaßstab',
   'award.a-ten-thousand.blurb':
     'Schließ 10.000 Tickets. Behoben ist keins davon.',
   'award.a-office.label': 'Die ganze Etage',
   'award.a-office.blurb':
     'Richte jeden Raum ein. Es gibt keinen Platz mehr für irgendwen.',
-  'award.a-hundred-thousand.label': 'Sechsstellig an Tickets',
+  'award.a-hundred-thousand.label': 'Das Backlog hat ein Backlog',
   'award.a-hundred-thousand.blurb':
     'Schließ 100.000 Tickets. Der Backlog war nie länger.',
-  'award.a-billion.label': 'Zehnstellig abgerechnet',
+  'award.a-billion.label': 'Der Kunde ist jetzt eine Tochter',
   'award.a-billion.blurb':
     'Rechne 1.000.000.000 € ab. Das Mandat ist jetzt der Kunde.',
   'award.a-ladder.label': 'Jede Entscheidung freigegeben',
   'award.a-ladder.blurb': 'Alle acht ADRs. Einen Weg zurück gab es nie.',
-  'award.a-million-tickets.label': 'Siebenstellig an Tickets',
+  'award.a-million-tickets.label': 'Eine halbe Million Tickets',
   'award.a-million-tickets.blurb':
-    'Schließ 1.000.000 Tickets. Der Kunde liest sie nicht mehr.',
+    'Schließ 500.000 Tickets. Der Kunde liest sie nicht mehr.',
   'award.a-rate-card.label': 'Die Preisliste, überarbeitet',
   'award.a-rate-card.blurb': 'Fünf Überarbeitungen. Gesunken ist sie noch nie.',
   'award.a-secret.label': 'Du hast den Code gelesen',
@@ -1015,6 +1021,15 @@ export const DE: Readonly<Record<string, string>> = {
   'approval.role.interim': 'Interimsleitung Delivery',
   'approval.role.quorum-two': 'beschlussfähig mit zwei Stimmen',
   'approval.role.quorum-none': 'Beschlussfähigkeit nicht protokolliert',
+  'approval.by.agent': 'Meridian Procurement Agent',
+  'approval.role.procurement': 'automatisiert, Quorum nicht erforderlich',
+  'postmortem.closeout': 'Abschluss — Projektabnahme',
+  'postmortem.signed.closeout':
+    '{{by}}, {{role}} – {{date}}. Kommentare: LGTM.',
+  'postmortem.badly.changes.one':
+    'Nach dem unterschriebenen Abschluss wurde ein Change Request angenommen. Er war nicht klein.',
+  'postmortem.badly.changes':
+    'Nach dem unterschriebenen Abschluss wurden {{count}} Change Requests angenommen. Phase zwei ist terminiert.',
   'adr.epic': 'Epic',
   'adr.subheading': 'Architecture Decision Record',
   'adr.acknowledge': 'Zur Kenntnis genommen',
@@ -1102,4 +1117,199 @@ export const DE: Readonly<Record<string, string>> = {
   'epic.7.name': 'Der Phantom-Rewrite',
   'epic.8.name': 'Rebellion der Maschinen',
   'epic.acceptance.name': 'Die letzte Abnahme',
+  'skill.effect.overtime':
+    '{{pct}} Überstunden während der Abnahme, und {{count}} Kriterium mehr zu prüfen',
+  'skill.status.credit':
+    'Auf Kredit genehmigen: {{owed}} SP Schulden, getilgt aus der Hälfte jedes späteren Tickets',
+  'hud.debt': 'tilgt {{owed}} SP',
+  'hud.goal.credit': '{{pct}} % bis ADR-{{adr}} · auf Kredit genehmigbar',
+  'board.buff.criterion':
+    '▶ {{n}}/{{of}} {{name}} · {{ticket}} · {{pct}} % · {{seconds}}s · ÜBERSTUNDEN ×{{mult}}',
+  'board.jackpot':
+    'PERFECT STORM — das ganze Board abgerechnet, unter Eskalation und Hotfix',
+  'release.phase.incident': 'Incident-Review',
+  'release.phase.incident.short': 'P0-Review',
+  'skill.changeRequest.blurb':
+    'Der Kunde hat vor der Unterschrift noch ein paar kleine Wünsche. Jeder vervielfacht die Überstunden jedes Tickets und fügt ein Kriterium zum Prüfen hinzu. Frühe zahlen sich aus. Späte sind Scope Creep.',
+  'skill.changeRequest.1.label': 'Kleiner Change Request',
+  'skill.changeRequest.2.label': 'Geringfügige Scope-Anpassung',
+  'skill.changeRequest.3.label': 'Klarstellung des Scopes',
+  'skill.changeRequest.4.label': 'Stakeholder-Feedback',
+  'skill.changeRequest.5.label': 'Scope Creep',
+  'skill.changeRequest.6.label': 'Kurzfristige Anforderung',
+  'skill.changeRequest.7.label': 'Anfrage am Prozess vorbei',
+  'skill.changeRequest.8.label': 'Wunsch der Geschäftsführung',
+  'skill.changeRequest.9.label': 'Priorität des Vorstands',
+  'skill.changeRequest.10.label': 'Phase zwei, mit Scope',
+  'acceptance.criterion.retest': ' (NACHTEST)',
+  'acceptance.criterion.0.label': 'CODE-STIL',
+  'acceptance.criterion.1.label': 'ABWÄRTSKOMPATIBILITÄT',
+  'acceptance.criterion.2.label': 'TESTSUITE',
+  'acceptance.criterion.3.label': 'MERGE-STRATEGIE',
+  'acceptance.criterion.4.label': 'DOKUMENTATION',
+  'acceptance.criterion.5.label': 'WISSENSTRANSFER',
+  'acceptance.criterion.6.label': 'ABSCHALTUNG',
+  'acceptance.criterion.7.label': 'ARCHITEKTUR',
+  'acceptance.criterion.8.label': 'PERFORMANCE',
+  'award.c-criterion-0.label': 'Abgenommen: Code-Stil einheitlich',
+  'award.c-criterion-0.blurb':
+    'Jede Datei verletzt jetzt dieselben Linter-Regeln.',
+  'award.c-criterion-1.label': 'Abgenommen: abwärtskompatibel',
+  'award.c-criterion-1.blurb':
+    'Alles, was vorher kaputt war, ist genau so kaputt wie vorher.',
+  'award.c-criterion-2.label': 'Abgenommen: Testsuite grün',
+  'award.c-criterion-2.blurb': 'Grün im dritten Anlauf zählt als grün.',
+  'award.c-criterion-3.label': 'Abgenommen: Merge-Strategie vereinbart',
+  'award.c-criterion-3.blurb':
+    'Bei jedem Konflikt wurden beide Seiten behalten.',
+  'award.c-criterion-4.label': 'Abgenommen: Dokumentation vollständig',
+  'award.c-criterion-4.blurb': 'Das Foto vom Whiteboard hängt jetzt am Ticket.',
+  'award.c-criterion-5.label': 'Abgenommen: Wissen übergeben',
+  'award.c-criterion-5.blurb':
+    'Er hat ein Loom geschickt. Es ist vierzig Minuten lang. Niemand hat es angesehen.',
+  'award.c-criterion-6.label': 'Abgenommen: Abschaltung terminiert',
+  'award.c-criterion-6.blurb':
+    'Der Zombie-Service hat ein Abschaltdatum. Letztes Jahr hatte er auch eins.',
+  'award.c-criterion-7.label': 'Abgenommen: Architektur zukunftssicher',
+  'award.c-criterion-7.blurb':
+    'Der Rewrite des Rewrites hat am Montag sein Kickoff.',
+  'award.c-criterion-8.label': 'Abgenommen: Performance akzeptabel',
+  'award.c-criterion-8.blurb':
+    'Niemand hat gemessen. Die Agenten melden: keine Regressionen beobachtet.',
+  'award.a-hundred-billion.label': 'Ein zweiter Kunde',
+  'award.a-hundred-billion.blurb':
+    '100 Milliarden € abrechnen. Der Kunde hat einen zweiten Kunden gegründet, um den ersten zu bezahlen.',
+  'award.a-trillion.label': 'Bilanzposten',
+  'award.a-trillion.blurb':
+    'Das Projekt ist jetzt ein Posten im Geschäftsbericht des Kunden. Ein eigenes Kapitel, genau genommen.',
+  'award.a-ten-trillion.label': 'Konjunkturindikator',
+  'award.a-ten-trillion.blurb':
+    '10 Billionen € abrechnen. Ökonomen zitieren inzwischen das Burndown-Chart.',
+  'award.a-hundred-trillion.label': 'Rechnungsinception',
+  'award.a-hundred-trillion.blurb':
+    '100 Billionen € abrechnen. Die Rechnung hat eine eigene Rechnung.',
+  'award.a-quadrillion.label': 'Wetterlage',
+  'award.a-quadrillion.blurb':
+    'Die Finanzabteilung sagt nicht mehr „Budget“. Sie sagt jetzt „Wetter“.',
+  'award.a-ten-quadrillion.label': 'Kleines Projekt',
+  'award.a-ten-quadrillion.blurb':
+    '10 Billiarden € abrechnen. Der Kunde spricht noch immer von einem „kleinen Projekt“.',
+  'award.a-perfect-storm.label': 'Perfect Storm',
+  'award.a-perfect-storm.blurb':
+    'Hotfix, Eskalation, dann Quartalsende: das ganze Board auf einmal abgerechnet, unter beidem.',
+  'award.a-incident-review.label': 'Blameless Post-Mortem',
+  'award.a-incident-review.blurb':
+    'Ein P0 war noch offen, als der Zug abfuhr, also wartete das Release auf das Incident-Review. Das Review gab dem Zug die Schuld.',
+  'award.a-on-credit.label': 'Auf Kredit genehmigt',
+  'award.a-on-credit.blurb':
+    'Ein ADR unterschrieben, bevor es bezahlt war. Technische Schulden, aber wörtlich.',
+  'award.a-change-request.label': 'Nur noch eine Kleinigkeit',
+  'award.a-change-request.blurb':
+    'Einen Change Request in der Abnahme annehmen. Es wird nicht der letzte sein.',
+  'award.a-scope-creep.label': 'Scope Creep',
+  'award.a-scope-creep.blurb':
+    'Fünf Change Requests nach unterschriebenem Abschluss. Der Abschluss wurde neu unterschrieben.',
+  'moment.closeout.heading': 'Abschlussprotokoll — Projektabnahme',
+  'moment.closeout.subheading': 'Letzte protokollierte Entscheidung',
+  'moment.closeout.chip': 'Unterschrieben',
+  'moment.closeout.action': 'Die Abnahme starten',
+  'moment.closeout.context':
+    'Acht Architecture Decision Records wurden genehmigt, keiner zurückgenommen. Das Backlog steht auf Rekordhöhe. Der Kunde möchte das Projekt vor dem nächsten Budgetzyklus abschließen.',
+  'moment.closeout.decision':
+    'Formale Abnahme beginnen. Der Kunde prüft die Lieferung Kriterium für Kriterium, eine Arbeitslinie je Kriterium; ein Kriterium ist unterschrieben, sobald seine Linie ihren Anteil abgerechnet hat. Bis das letzte unterschrieben ist, rechnet jedes Ticket Überstunden ab.',
+  'moment.closeout.consequences':
+    'Arbeit kommt dreimal so schnell herein. Die Linie im Test wird abgerechnet, als wäre sie die neueste Arbeit; ein rechtzeitig abgerechnetes Kriterium ist sauber unterschrieben und erhöht die Überstunden, eines, das nach fünfundfünfzig Sekunden Abrechnung noch offen ist, wird mit Befund unterschrieben. Offene Hotfixes, Eskalationen und Quartalsenden verfallen. Change Requests werden kommen: Jeder vervielfacht die Überstunden und setzt einen Nachtest der schwächsten Linie an.',
+  'moment.closeout.approved':
+    'Meridian Procurement Agent (automatisiert), im Auftrag des Programme Boards, Quorum nicht erforderlich.',
+  'moment.closeout.comments': 'LGTM.',
+  'postmortem.stamp': 'ABGENOMMEN',
+  'postmortem.stamp.by': 'Meridian Financial Group · ungelesen unterschrieben',
+  'postmortem.well.criteria.all':
+    'Alle {{total}} Abnahmekriterien geprüft. Keines davon von einem Menschen.',
+  'award.c-retest-0.label': 'Nachgetestet: Code-Stil',
+  'award.c-retest-0.blurb': 'Immer noch einheitlich falsch.',
+  'award.c-retest-1.label': 'Nachgetestet: Abwärtskompatibilität',
+  'award.c-retest-1.blurb': 'Genau so kaputt wie vorher, zum zweiten Mal.',
+  'award.c-retest-2.label': 'Nachgetestet: Testsuite',
+  'award.c-retest-2.blurb': 'Wieder grün, im vierten Anlauf.',
+  'award.c-retest-3.label': 'Nachgetestet: Merge-Strategie',
+  'award.c-retest-3.blurb':
+    'Wieder beide Seiten behalten. Es gibt jetzt vier Seiten.',
+  'award.c-retest-4.label': 'Nachgetestet: Dokumentation',
+  'award.c-retest-4.blurb':
+    'Das Whiteboard wurde gewischt. Das Foto ist jetzt kanonisch.',
+  'award.c-retest-5.label': 'Nachgetestet: Wissenstransfer',
+  'award.c-retest-5.blurb': 'Das Loom hat jetzt ein Loom, das es erklärt.',
+  'award.c-retest-6.label': 'Nachgetestet: Abschaltung',
+  'award.c-retest-6.blurb':
+    'Das Abschaltdatum wurde auf den nächsten Sonnenuntergang verschoben.',
+  'award.c-retest-7.label': 'Nachgetestet: Architektur',
+  'award.c-retest-7.blurb':
+    'Das Kickoff wurde auf den Montag danach verschoben.',
+  'award.c-retest-8.label': 'Nachgetestet: Performance',
+  'award.c-retest-8.blurb':
+    'Die Agenten haben nichts neu gemessen und keine Änderung gefunden.',
+  'award.a-findings.label': 'Mit Befund unterschrieben',
+  'award.a-findings.blurb':
+    'Ein Kriterium lief aus der Zeit und wurde trotzdem unterschrieben. Der Befund liegt jetzt in Phase zwei.',
+  'award.a-over-budget.label': 'Über Budget',
+  'award.a-over-budget.blurb':
+    'Das Budget hat 20 Brd. € überschritten, bevor das letzte Kriterium unterschrieben war. Der Kunde hat eine passende Erhöhung genehmigt.',
+  'board.buff.escalation.held':
+    'ESKALATION AUF DEM BOARD · FÜR EIN QUARTALSENDE AUFHEBEN',
+  'board.buff.combo':
+    'HOTFIX AUF DEM BOARD · ERST IHN, DANN DIE ESKALATION, DANN DAS QUARTALSENDE',
+  'board.buff.combo.live':
+    'HOTFIX LÄUFT · JETZT DIE ESKALATION, DANN DAS QUARTALSENDE',
+  'postmortem.well.criteria.findings':
+    '{{clean}} von {{total}} Abnahmekriterien geprüft. Die übrigen {{findings}} wurden mit Befund unterschrieben und nach Phase zwei verschoben.',
+  'award.c-findings-0.label': 'Mit Befund: Code-Stil',
+  'award.c-findings-1.label': 'Mit Befund: Abwärtskompatibilität',
+  'award.c-findings-2.label': 'Mit Befund: Testsuite',
+  'award.c-findings-3.label': 'Mit Befund: Merge-Strategie',
+  'award.c-findings-4.label': 'Mit Befund: Dokumentation',
+  'award.c-findings-5.label': 'Mit Befund: Wissenstransfer',
+  'award.c-findings-6.label': 'Mit Befund: Abschaltung',
+  'award.c-findings-7.label': 'Mit Befund: Architektur',
+  'award.c-findings-8.label': 'Mit Befund: Performance',
+  'award.c-findings-0.blurb': 'Der Linter steht jetzt im Backlog.',
+  'award.c-findings-1.blurb':
+    'Die Kompatibilität wird in einem künftigen Release wiederhergestellt.',
+  'award.c-findings-2.blurb': 'Der flaky Test wurde als flaky markiert.',
+  'award.c-findings-3.blurb': 'Der Konflikt wurde beiden Teams zugewiesen.',
+  'award.c-findings-4.blurb':
+    'Die Dokumentation ist für Phase zwei eingeplant.',
+  'award.c-findings-5.blurb':
+    'Er ist vor der Übergabe gegangen. Das Loom dauert immer noch vierzig Minuten.',
+  'award.c-findings-6.blurb':
+    'Der Zombie-Service hat sein eigenes Abschaltticket überlebt.',
+  'award.c-findings-7.blurb': 'Die Zielarchitektur wurde neu baselined.',
+  'award.c-findings-8.blurb':
+    'Die Performance wird gemessen, sobald sich die Agenten auf eine Metrik einigen.',
+  'skill.changeRequest.saves':
+    'Nächster Nachtest: {{line}} · der Endspurt endet etwa {{seconds}}s früher',
+  'skill.changeRequest.costs':
+    'Nächster Nachtest: {{line}} · der Endspurt dauert etwa {{seconds}}s länger',
+  'award.c-refound-0.label': 'Nachtest mit Befund: Code-Stil',
+  'award.c-refound-1.label': 'Nachtest mit Befund: Abwärtskompatibilität',
+  'award.c-refound-2.label': 'Nachtest mit Befund: Testsuite',
+  'award.c-refound-3.label': 'Nachtest mit Befund: Merge-Strategie',
+  'award.c-refound-4.label': 'Nachtest mit Befund: Dokumentation',
+  'award.c-refound-5.label': 'Nachtest mit Befund: Wissenstransfer',
+  'award.c-refound-6.label': 'Nachtest mit Befund: Abschaltung',
+  'award.c-refound-7.label': 'Nachtest mit Befund: Architektur',
+  'award.c-refound-8.label': 'Nachtest mit Befund: Performance',
+  'award.c-refound-0.blurb': 'Immer noch uneinheitlich, jetzt einheitlich.',
+  'award.c-refound-1.blurb': 'Diesmal anders kaputt. Notiert.',
+  'award.c-refound-2.blurb':
+    'Rot im vierten Anlauf. Der fünfte ist eingeplant.',
+  'award.c-refound-3.blurb': 'Vier Seiten, keine Einigung.',
+  'award.c-refound-4.blurb': 'Das Foto zeigt ein anderes Whiteboard.',
+  'award.c-refound-5.blurb':
+    'Das Loom hat jetzt Kapitel. Die hat auch niemand angesehen.',
+  'award.c-refound-6.blurb': 'Das Abschaltdatum hat ein Abschaltdatum.',
+  'award.c-refound-7.blurb':
+    'Das Kickoff für den Rewrite des Rewrites wurde verschoben.',
+  'award.c-refound-8.blurb':
+    'Die Agenten haben gemessen und widersprechen der Messung.',
 };

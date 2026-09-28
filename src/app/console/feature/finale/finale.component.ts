@@ -19,6 +19,7 @@ import { CAST } from '../../../game/model/cast.model';
 import { DEBT_TIERS, tierNameKey } from '../../../game/model/tier.model';
 import {
   APPROVALS,
+  CLOSEOUT_APPROVAL,
   CLIENT_NAME,
   roleKey,
   signatoryKey,
@@ -77,7 +78,7 @@ export class FinaleComponent {
 
   readonly approvers = computed(() => [
     ...new Set(
-      Object.values(APPROVALS).map(
+      [...Object.values(APPROVALS), CLOSEOUT_APPROVAL].map(
         (approval) =>
           `${this.#translate.instant(signatoryKey(approval.by))}, ${this.#translate.instant(roleKey(approval.role))}`
       )

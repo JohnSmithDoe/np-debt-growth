@@ -4,11 +4,13 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   inject,
   signal,
 } from '@angular/core';
 
 import { formatLongDate } from '../../../@shared/util/format-quantity';
+import { GameClock } from '../../../game/data/game-clock.service';
 import { GameStore } from '../../../game/data/game.store';
 import type { DebtTier } from '../../../game/model/tier.model';
 import {
@@ -65,8 +67,17 @@ export class AdrModalComponent {
   readonly leaving = signal(false);
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.#leaveTimer));
+    const clock = inject(GameClock);
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this.#leaveTimer);
+      clock.resume('record');
+    });
     onRise(this.#store.tier, (tier) => this.#shownTier.set(tier));
+    effect(() =>
+      this.#shownTier() === null
+        ? clock.resume('record')
+        : clock.pause('record')
+    );
   }
 
   readonly record = computed<AdrData | null>(() => {

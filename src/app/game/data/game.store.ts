@@ -17,7 +17,7 @@ import {
 } from '../model/board.model';
 import type { CrewKind } from '../model/crew.model';
 import type { Consultancy } from '../model/consultancy.model';
-import { freshConsultancy } from '../model/consultancy.model';
+import { criteriaTotal, freshConsultancy } from '../model/consultancy.model';
 import {
   BURNDOWN_SAMPLES,
   BURNDOWN_SAMPLE_MS,
@@ -39,14 +39,20 @@ import {
 } from '../model/hazard.model';
 import type { BuffNotice, RoundOutcome } from '../model/round.model';
 import type { SkillLock } from '../model/skill.model';
-import { SECRET_SKILL_ID } from '../model/skill.model';
+import { FINAL_SKILL_ID, SECRET_SKILL_ID } from '../model/skill.model';
 import { tierAt } from '../model/tier.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
+
+const QUARTER_FROM_TIER = TICKET_TYPES.quarter.tier;
+const VOIDED_AT_SIGNOFF: ReadonlySet<TicketTypeId> = new Set([
+  'hotfix',
+  'escalation',
+  'quarter',
+]);
 import type { KitItem } from '../model/kit.model';
 import type { PurchaseId } from '../model/balance/progression';
 import type { ReleasePhase } from '../model/balance/round';
-import { ACCEPTANCE } from '../model/balance/progression';
 import {
   PIZZA_MS,
   PROD_INCIDENT_LIVE_CAP,
@@ -54,6 +60,8 @@ import {
   ticketLifeMs,
 } from '../model/balance/flow';
 import {
+  COMBO_EXTEND_MS,
+  JACKPOT_BONUS,
   FACT_COUNTDOWN_MS,
   FACT_EVERY_MS,
   FACT_OFFSET_MS,
@@ -73,6 +81,7 @@ import {
 } from '../util/board';
 import { crewRules } from '../util/crew-rules';
 import { spawnInto } from '../util/supply';
+import { underTestRate } from '../util/sim';
 import * as economy from '../util/economy';
 import * as purchase from '../util/purchase';
 import { SpawnBudget } from '../util/spawn-budget';
@@ -112,16 +121,30 @@ function armBuffs(state: Consultancy, closed: Closed, now: number): Buffs {
   };
 
   for (const { type, x, y } of closed) {
+    const escalated = buffs.escalated && buffs.escalationFiresAt > now;
+    const hotfixed = buffs.hotfixUntil > now;
     switch (TICKET_TYPES[type].effect) {
       case 'sprintMultiplier':
         buffs = {
           ...buffs,
           escalated: true,
-          escalationFiresAt: now + economy.escalationHoldMs(state),
+          escalationFiresAt: Math.max(
+            buffs.escalationFiresAt,
+            now + economy.escalationHoldMs(state)
+          ),
+          hotfixUntil: hotfixed
+            ? buffs.hotfixUntil + COMBO_EXTEND_MS
+            : buffs.hotfixUntil,
         };
         break;
       case 'hotfixBuff':
-        buffs = { ...buffs, hotfixUntil: now + HOTFIX_MS };
+        buffs = {
+          ...buffs,
+          hotfixUntil: Math.max(buffs.hotfixUntil, now + HOTFIX_MS),
+          escalationFiresAt: escalated
+            ? buffs.escalationFiresAt + COMBO_EXTEND_MS
+            : buffs.escalationFiresAt,
+        };
         break;
       case 'crewRush':
         buffs = { ...buffs, pizza: { x, y, until: now + PIZZA_MS } };
@@ -256,6 +279,7 @@ export class GameStore {
   #wontFix: number[] = [];
   #prodIncidents = 0;
   readonly #prodLive = new Set<number>();
+  readonly #freshProd = new Set<number>();
   #billed = 0;
   #board = emptyBoard();
   #budget = new SpawnBudget();
@@ -271,6 +295,8 @@ export class GameStore {
   #sampleEvery = BURNDOWN_SAMPLE_MS;
 
   #cycleBilled = 0;
+  #review = signal(0);
+  readonly incidentReview = this.#review.asReadonly();
   #outcome = signal<RoundOutcome | null>(null);
   #previous = signal<RoundOutcome | null>(null);
 
@@ -324,6 +350,9 @@ export class GameStore {
   readonly lifetimeClosedByWomen = computed(
     () => this.#state().lifetimeClosedByWomen
   );
+  readonly lifetimeClosedByCrew = computed(
+    () => this.#state().lifetimeClosedByCrew
+  );
 
   readonly awarded = this.#awarded.asReadonly();
   readonly awardCount = computed(() => this.#awarded().length);
@@ -368,7 +397,11 @@ export class GameStore {
   }
 
   readonly #releasePhases = computed(
-    () => economy.releasePhases(this.#state()),
+    () => {
+      const phases = economy.releasePhases(this.#state());
+      const open = this.#review();
+      return open > 0 ? economy.withReview(phases, open) : phases;
+    },
     { equal: samePhases }
   );
   readonly #haulMs = computed(() =>
@@ -491,6 +524,7 @@ export class GameStore {
           : null;
       if (!card) continue;
       this.#prodLive.add(card.id);
+      this.#freshProd.add(card.id);
       this.#prodIncidents += 1;
     }
   }
@@ -508,6 +542,7 @@ export class GameStore {
   }
 
   #advance(seconds: number, now: number): void {
+    this.#freshProd.clear();
     const state = this.#state();
     const dtMs = seconds * 1000;
     const runMs = state.runMs + dtMs;
@@ -537,6 +572,7 @@ export class GameStore {
     if (next.escalationFiresAt > 0 && now >= next.escalationFiresAt) {
       next = { ...next, escalated: false, escalationFiresAt: 0 };
     }
+    next = economy.stepCriterion(next, underTestRate);
     next = this.#grantAwards(next);
     next = this.#stepTrain(next, dtMs);
     return economy.accepted(next) ? { ...next, endedAt: now } : next;
@@ -544,24 +580,38 @@ export class GameStore {
 
   #stepTrain(state: Consultancy, dtMs: number): Consultancy {
     if (state.phase === 'hauling') {
-      const left = state.haulLeftMs - dtMs;
-      return left > 0 ? { ...state, haulLeftMs: left } : this.#trainBack(state);
+      const held = economy.holdCriterion(state, dtMs);
+      const left = held.haulLeftMs - dtMs;
+      return left > 0 ? { ...held, haulLeftMs: left } : this.#trainBack(held);
     }
     const slots = economy.sprintSlots(state, this.#sky());
     return state.sprintCount >= slots ? this.#sendTrain(state, slots) : state;
   }
 
   #sendTrain(state: Consultancy, cap: number): Consultancy {
+    const open = economy.reviewsIncidents(state) ? this.#openIncidents() : 0;
+    this.#review.set(open);
     return {
       ...state,
       lastOutcome: this.#trainLeaves(state),
       phase: 'hauling',
-      haulLeftMs: economy.haulMs(state),
+      haulLeftMs: this.#haulMs(),
+      lifetimeReviews: state.lifetimeReviews + (open > 0 ? 1 : 0),
     };
+  }
+
+  #openIncidents(): number {
+    let open = 0;
+    for (const ticket of this.#board.rares) {
+      if (ticket.type === 'incident' && !this.#freshProd.has(ticket.id))
+        open += 1;
+    }
+    return open;
   }
 
   #trainBack(state: Consultancy): Consultancy {
     this.#sprint.set([]);
+    this.#review.set(0);
     this.#cycleBilled = 0;
     return {
       ...state,
@@ -709,14 +759,21 @@ export class GameStore {
 
   buffNotices(): readonly BuffNotice[] {
     const state = this.#state();
+    if (state.endedAt > 0) return [];
     const now = state.lastTick;
     const live: BuffNotice[] = [];
+    const criterion = economy.criterionNow(state);
     if (economy.inAcceptance(state)) {
       live.push({
         id: 'acceptance',
-        mult: ACCEPTANCE.value,
-        budget: state.budget,
-        goal: ACCEPTANCE.goal,
+        mult: economy.overtime(state),
+        criterion: criterion && {
+          index: criterion.index,
+          line: criterion.line,
+          of: criteriaTotal(state),
+          done: criterion.done,
+          msLeft: economy.criterionMsLeft(state),
+        },
       });
     }
     if (state.escalated && state.escalationFiresAt > now) {
@@ -733,6 +790,36 @@ export class GameStore {
         msLeft: state.hotfixUntil - now,
       });
     }
+    const held = (type: TicketTypeId): boolean =>
+      this.#board.rares.some((ticket) => ticket.type === type);
+    const quarter = held('quarter');
+    const storm =
+      quarter &&
+      state.escalated &&
+      state.escalationFiresAt > now &&
+      state.hotfixUntil > now;
+    if (storm) {
+      live.push({
+        id: 'storm',
+        mult: HOTFIX_MULTIPLIER * economy.escalationMultiplier(state),
+        msLeft: Math.min(state.escalationFiresAt, state.hotfixUntil) - now,
+      });
+    } else if (quarter && held('escalation') && state.hotfixUntil > now) {
+      live.push({ id: 'comboLive' });
+    } else if (quarter && held('escalation') && held('hotfix')) {
+      live.push({ id: 'combo' });
+    } else if (quarter && held('escalation')) {
+      return live;
+    } else if (quarter && (state.hotfixUntil > now || state.escalated)) {
+      live.push({ id: 'quarter' });
+    } else if (
+      held('escalation') &&
+      !quarter &&
+      state.hotfixUntil > now &&
+      state.tier >= QUARTER_FROM_TIER
+    ) {
+      live.push({ id: 'escalationHeld' });
+    }
     return live;
   }
 
@@ -741,6 +828,7 @@ export class GameStore {
     readonly landed: boolean;
     readonly msLeft: number;
   } | null {
+    if (this.#state().endedAt > 0) return null;
     const runMs = this.#state().runMs;
     let best: LiveHazard | null = null;
     for (const live of this.#live) {
@@ -798,13 +886,16 @@ export class GameStore {
 
     return {
       next: {
-        ...state,
+        ...economy.billUnderTest(state, banked.tested),
         ...buffs,
         budget: state.budget + payout,
         sprintCount: count,
-        storyPoints: state.storyPoints + velocitySp,
+        ...economy.repaid(state, velocitySp),
         lifetimeClosed: state.lifetimeClosed + closed.length,
         lifetimeClosedByWomen: state.lifetimeClosedByWomen + byWomen,
+        lifetimeClosedByCrew:
+          state.lifetimeClosedByCrew +
+          closed.filter((close) => crewed(close.by)).length,
         lifetimeBilled: state.lifetimeBilled + payout,
       },
       value: banked.value,
@@ -825,8 +916,10 @@ export class GameStore {
     headline: string | null;
     took: SprintSlot[];
     worths: number[];
+    tested: number;
   } {
     let value = 0;
+    let tested = 0;
     let sp = 0;
     let big = false;
     let headline: string | null = null;
@@ -851,6 +944,7 @@ export class GameStore {
       big ||= loud;
       if (loud) headline ??= titleKey;
       value += worth;
+      if (economy.underTest(state, type)) tested += worth;
       sp +=
         economy.pickupStoryPoints(state, type, byCrew) +
         (economy.pickupsPaySp(state) ? spBonus : 0);
@@ -860,29 +954,40 @@ export class GameStore {
         this.#addCloseFloat(x, y, worth, loud ? titleKey : null);
       }
     }
-    return { value, sp, big, headline, took, worths };
+    return { value, sp, big, headline, took, worths, tested };
   }
 
-  #billWholeBoard(now: number): number {
+  #billWholeBoard(now: number, bonus = 1): number {
     const state = this.#state();
     const resting = this.#board.tickets.filter(
       (ticket) => TICKET_TYPES[ticket.type].effect === 'value' && !ticket.golden
     );
     if (resting.length === 0) return 0;
 
-    const payout = economy.boardPayout(
-      state,
-      resting.map((ticket) => ticket.type),
-      now
-    );
+    const types = resting.map((ticket) => ticket.type);
+    const payout = economy.boardPayout(state, types, now) * bonus;
+    const tested =
+      economy.boardPayout(
+        state,
+        types.filter((type) => economy.underTest(state, type)),
+        now
+      ) * bonus;
     for (const ticket of resting) {
       comeBack(this.#board, ticket);
       removeTicket(this.#board, ticket);
     }
 
     this.#bill(payout);
+    const sp =
+      bonus > 1
+        ? types.reduce(
+            (sum, type) => sum + economy.pickupStoryPoints(state, type, false),
+            0
+          ) * bonus
+        : 0;
     this.#state.set({
-      ...state,
+      ...economy.billUnderTest(state, tested),
+      ...economy.repaid(state, sp),
       budget: state.budget + payout,
       lifetimeClosed: state.lifetimeClosed + resting.length,
       lifetimeBilled: state.lifetimeBilled + payout,
@@ -953,8 +1058,24 @@ export class GameStore {
       economy.sprintSlots(state, this.#sky())
     );
     this.#state.set(next);
-    if (reached.quarterEnd) this.#billWholeBoard(now);
-    return { taken, refused, value, sp, big, headline };
+    if (!reached.quarterEnd)
+      return { taken, refused, value, sp, big, headline };
+    const jackpot =
+      next.escalated && next.escalationFiresAt > now && next.hotfixUntil > now;
+    const billed = this.#billWholeBoard(now, jackpot ? JACKPOT_BONUS : 1);
+    if (!jackpot || billed <= 0) {
+      return { taken, refused, value, sp, big, headline };
+    }
+    const after = this.#state();
+    this.#state.set({ ...after, lifetimeJackpots: after.lifetimeJackpots + 1 });
+    return {
+      taken,
+      refused,
+      value: value + billed,
+      sp,
+      big: true,
+      headline: 'board.jackpot',
+    };
   }
 
   takePayouts(): number {
@@ -1081,7 +1202,7 @@ export class GameStore {
 
   #commit(next: Consultancy | null): boolean {
     if (next === null) return false;
-    this.#state.set(next);
+    this.#state.set(economy.recalibrate(next, underTestRate));
     return true;
   }
 
@@ -1116,9 +1237,33 @@ export class GameStore {
   buySkill(id: string): boolean {
     const before = this.#state().tier;
     if (!this.#commit(purchase.buySkill(this.#state(), id))) return false;
+    if (id === FINAL_SKILL_ID) this.#voidVouchers();
     const tier = this.#state().tier;
     if (tier > before) this.#approve(tier);
     return true;
+  }
+
+  creditOffer(id: string): number | null {
+    return purchase.creditOffer(this.#state(), id);
+  }
+
+  readonly spDebt = computed(() => this.#state().spDebt);
+
+  approveOnCredit(id: string): boolean {
+    const before = this.#state().tier;
+    if (!this.#commit(purchase.approveOnCredit(this.#state(), id)))
+      return false;
+    if (id === FINAL_SKILL_ID) this.#voidVouchers();
+    const tier = this.#state().tier;
+    if (tier > before) this.#approve(tier);
+    return true;
+  }
+
+  /** The closeout voids the hotfixes, escalations and quarter ends held on the board. */
+  #voidVouchers(): void {
+    for (const ticket of [...this.#board.rares]) {
+      if (VOIDED_AT_SIGNOFF.has(ticket.type)) removeTicket(this.#board, ticket);
+    }
   }
 
   buyOut(): void {
@@ -1167,6 +1312,7 @@ export class GameStore {
     this.#outcome.set(null);
     this.#previous.set(null);
     this.#closeFloats = [];
+    this.#review.set(0);
     this.#state.set(freshConsultancy(now, SAVE_VERSION));
   }
 

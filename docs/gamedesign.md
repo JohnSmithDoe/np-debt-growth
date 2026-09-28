@@ -16,8 +16,8 @@ The design as the code has it. Every number names the file it lives in; paths ar
 4. **The sprint caps the pace.** A full sprint ships on the release train and the board waits
    until it is back.
 5. **€ buys supply, SP buys the tree.** The rail sells heads, rate rows and crew; the tree
-   sells everything else, the ADRs included. `signoff` starts the acceptance push; the run
-   ends at €20 Qa.
+   sells everything else, the ADRs included. `signoff` starts the acceptance push, which tests
+   one line at a time; the run ends at €20 Qa.
 6. **Income = collected tickets/s × their worth**, where collected is the least of what the
    lines throw, what the hand and crew reach, and what the sprint takes. `util/sim.ts` computes
    exactly this without a board (§9).
@@ -97,6 +97,12 @@ each, one per rung: `cutRetro` (tier 0), `cutRefinement` (ADR-1), `cutReview` (A
 (ADR-3), `cutFreeze` (ADR-4); Ship to Production is never cut. While the train is out, `ReleaseBanner` spells the phase across
 the board's upper third in the big-payout gold, with the whole ceremony under it.
 
+From ADR-5 (`INCIDENT_REVIEW_FROM_TIER`) every P0 still on the board when the train leaves adds
+`INCIDENT_REVIEW` 900 ms to an **Incident Review** after Ship to Production, up to
+`INCIDENT_REVIEW_CAP` 10 of them (`economy.withReview`, the store's `#sendTrain`; a P0 sent to
+prod on the departing tick is not counted, no hand could have reached it); the first earns
+_Blameless post-mortem_. Crew never take P0s, so keeping prod clean is the hand's job.
+
 Player-facing copy never says "truck", "can" or "lane": sprint, sprint scope, release train.
 
 ---
@@ -155,14 +161,26 @@ No purchase makes these arrive faster (`economy.spec.ts`), but the run does: eac
 adds `HAND_ONLY_RATE_PER_TIER` +50 % to their rate (×5 at ADR-8), so the hand's targets grow
 with the run. They never expire and are never displaced.
 
-| Type         | Rate/s | Effect                                                                                          |
-| ------------ | ------ | ----------------------------------------------------------------------------------------------- |
-| `incident`   | 0.008  | 150 € × tier (`scalesWithTier`). First one placed at 75 s (`revealAtMs`)                        |
-| `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 6 s, +4 s with Observability |
-| `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                                            |
-| `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2)                                   |
-| `pizza`      | —      | The pizza-party voucher (§5), from the `pizza` node                                             |
-| `invite`     | —      | Hazard invitation (§8): sweep it to decline the meeting                                         |
+| Type         | Rate/s | Effect                                                                                            |
+| ------------ | ------ | ------------------------------------------------------------------------------------------------- |
+| `incident`   | 0.008  | 150 € × tier; from ADR-5, 5 newest-line tickets in € and SP (`INCIDENT_TOP_SHARE`). First at 75 s |
+| `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 9 s, +4 s with Observability   |
+| `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                                              |
+| `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2), under hotfix and escalation        |
+| `pizza`      | —      | The pizza-party voucher (§5), from the `pizza` node                                               |
+| `invite`     | —      | Hazard invitation (§8): sweep it to decline the meeting                                           |
+
+**Combos** (`armBuffs` in `data/game.store.ts`): a hotfix swept inside a live escalation
+extends the escalation by `COMBO_EXTEND_MS` 3 s, and an escalation swept inside a live hotfix
+extends the hotfix. A quarter end billed under both is a **jackpot**: the board bills ×2 and
+×escalation at once, the sweep floats _Perfect storm_, and `lifetimeJackpots` counts it. The
+order is the skill: hotfix, escalation, then the quarter end on a full board, and it bills the
+board `JACKPOT_BONUS` 10 times over, story points included. The call line in `buffNotices` teaches it while a buff is
+live: an escalation held with no quarter end (`escalationHeld`), a quarter end held (`quarter`),
+both held with a hotfix on the board (`combo`) or live (`comboLive`), and both buffs live over a
+held quarter end (`storm`). The
+quarter-end card is cyan so it never reads as the orange pizza voucher, and hand-only cards draw
+above falling work. The board shows at most three banner lines, two while a hazard is announced.
 
 The opening's reveal order is ticket data: a row's `revealAtMs` / `revealAtTier` holds it back,
 and `util/first-act.ts` places the first card on its beat.
@@ -373,11 +391,60 @@ The prices grow with the rung because SP income does; the late ones stay low so 
 not the ADR, take most of the tier.
 
 **`signoff`** (16 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced so tier 8 is a short last act. Buying it
-starts the **acceptance push** (`ACCEPTANCE` in `balance/progression.ts`, `economy.inAcceptance`):
-spawns run ×3, everything bills ×12 overtime (in `globalMultiplier`), and a pink banner on the
-board counts the budget up to €20 Qa. Reaching it sets `endedAt` (`economy.accepted`, checked each
-store step and in the autoplayer) and the post-mortem opens. No prestige. About three and a half
-minutes after ADR-8 to sign-off, and three for the push.
+opens the **Closeout Record** (`console/feature/moment-modal/`, the ADR format, signed by the
+client's procurement agent, comments "LGTM"), records the budget and billing it was signed at
+(`signedBudget`, `signedBilled`), and starts the **acceptance push** (`ACCEPTANCE` in
+`balance/progression.ts`, `economy.inAcceptance`): spawns run ×3 and everything bills
+`economy.overtime` (in `globalMultiplier`). Modals pause the clock (`GameClock` reasons `record`,
+`moment`), so reading the record costs no push.
+
+- **Acceptance criteria** (`CriterionRun` on the state, `economy.criterionNow`,
+  `economy.stepCriterion`): nine, one per line, lint first. The line under test bills as the
+  newest rung's ticket ×`CRITERION_BONUS` 2 before its own multipliers, so a maxed old line hits
+  hardest; its cards pulse pink (`UNDER_TEST`). Only what **that line** bills counts
+  (`billUnderTest`, from the store's `#bank` and quarter bills, and the sim's
+  `underTestEuroPerSec`). A first test's target (`economy.criterionTarget`) is
+  `CRITERION_FIRST_TEST_MS` 40 s of what the sim says its line bills at a steady sweep and the
+  opening overtime (`underTestRate` in `util/sim.ts`, handed in by the store, the autoplayer and
+  the sign-off purchase, so the economy stays unpriced; the sim prices it without any live buff
+  window, and counts auto-close at a third since a full real board lets few auto-closed cards
+  live out their life): every build can sign it clean, a better hand signs it sooner, and the
+  overtime earned since makes it quicker. Buying into the line under test raises its target
+  (`economy.recalibrate`), and the clock stands still while the train is out
+  (`economy.holdCriterion`). A criterion **signs
+  clean** once billed and at least `CRITERION_MIN_MS` 8 s old: it confirms its award
+  (`c-criterion-<line>`) and adds `CRITERION_OVERTIME` 0.5 to the base ×2 overtime, so the push
+  builds. At `CRITERION_MAX_MS` 55 s it **signs with findings**: no overtime, no clean award, a
+  `c-findings-<line>` toast instead (`c-refound-<line>` for a re-test; the first also earns
+  _Signed with findings_). The banner line
+  counts the criterion, its multiplier, how far it is billed and the seconds left. Measured on
+  the advised run: 177 / 149 / 134 s at 0.5 / 1 / 2 sweeps a second, every criterion clean.
+- **Change requests** (`changeRequest`, `CHANGE_REQUEST`: 10 ranks off `signoff`, 3 M SP doubling):
+  each multiplies overtime ×1.5 **and adds a criterion**, a re-test of the weakest line not yet
+  re-tested (`criterionLine`), which asks an absolute `CRITERION_RETEST_SHARE` 0.35 of a ninth of
+  the way to €20 Qa: quick for a strong line, findings for a thin one. Its award
+  (`c-retest-<line>`) needs a clean pass. The tree square says which line comes next and how many
+  seconds the request saves or costs (`changeRequestEstimate` in `util/advisor.ts`, which walks the
+  remaining criteria within their clamps); the advisor takes one the moment it saves time.
+- **The closeout voids** the hotfixes, escalations and quarter ends held on the board
+  (`#voidVouchers` in the store), so buffs cannot be banked into the push.
+- **Buffs** keep their own rate in the push: `ACCEPTANCE.spawn` multiplies work, not hand-only
+  cards, so hotfix and escalation are windows to time rather than a constant.
+
+The run is accepted once every criterion is signed (`economy.accepted`, checked each store step
+and in the autoplayer); the budget passing €20 Qa on the way earns _Over budget_. An ACCEPTED
+stamp holds for 2.8 s before the post-mortem, which counts criteria verified and signed with
+findings, lists the closeout among the decisions of record and the change requests among what did
+not go well. No prestige.
+
+**Approval on credit** (`purchase.creditOffer` / `approveOnCredit`): from ADR-4
+(`CREDIT_FROM_ADR`), the next ADR, or the closeout after ADR-8, can be approved holding
+`CREDIT_SHARE` 60 % of its price. The player pays what they hold; the rest (`CREDIT_INTEREST` 1,
+no interest) becomes `spDebt`, repaid out of `CREDIT_GARNISH` half of every later SP pickup
+(`economy.repaid`, in the store and the autoplayer), so the new rung's extras stay buyable. One
+loan at a time. The tree frames the square in gold, the HUD shows the debt, and the advisor
+recommends it (`Buy` kind `credit`): it shortens the late waits for the next ADR from 80–105 s to
+about a minute.
 
 Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buySpawner`,
 `buyIncome`); `GameStore` commits the result and handles the side effects.
@@ -389,8 +456,9 @@ Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buy
 ```
 ticketValue = (type.value + rate-row bonus)
             × per-line value / income / double nodes
-            × tier (incident only)
-            × global (secret, assurance, o6; ×12 during acceptance)
+            (incident: × tier; from ADR-5 five of the newest line's tickets, fully multiplied;
+             the line under acceptance test: the newest rung's value × 2)
+            × global (secret, assurance, o6; overtime during acceptance)
             × hotfix ×2 (inside the window)
 
 closeValue  = ticketValue × escalation ×5 (inside the window) × golden multiplier (if golden)
@@ -448,8 +516,10 @@ game uses:
 - **Sprint**: nothing is collected while the train is away, so what is reached is collected at
   reached / (1 + reached / `ceilingPerSec`); € and SP priced as at pickup.
 
-Not counted: hotfix, escalation, quarter bills, pizza, prod incidents and
-weather; each moves a real board's euros by 10 % at most. `data/sim.spec.ts` plays the same
+Not counted: quarter bills and jackpots, pizza, prod incidents and their reviews, and
+weather; outside the push each moves a real board's euros by 10 % at most. In the push a sweeping
+hand bills most of its euros under hotfix and escalation, so a real push runs up to twice as fast
+as the sim's; the criterion clamps (8–40 s) bound it either way. `data/sim.spec.ts` plays the same
 states on a real board (four seeds, averaged) and holds the sim within ×1.5, and plays a whole advised run on a real
 board and holds its acceptance within ×1.1 of the sim's, because per-tier error compounds
 over a run.
@@ -487,7 +557,9 @@ kept in settings) buys each pick the moment it is affordable.
 | Rate row                            | `INCOME_ROWS` in `balance/progression.ts`                                                                  |
 | Crew line                           | one row in `LINE_PLAN`                                                                                     |
 | Skill                               | one node in `SKILL_NODES`                                                                                  |
-| Sprint, train, hotfix, escalation   | `balance/round.ts`                                                                                         |
+| Sprint, train, hotfix, escalation   | `balance/round.ts`, `balance/weather.ts` (`COMBO_EXTEND_MS`)                                               |
+| Acceptance, criteria, credit        | `ACCEPTANCE`, `CRITERION_*`, `CREDIT_*` in `balance/progression.ts`                                        |
+| Incident review                     | `INCIDENT_REVIEW*` in `balance/round.ts`, `INCIDENT_TOP_SHARE` in `balance/flow.ts`                        |
 | Spawn, golden, votes, pizza, expiry | `balance/flow.ts`                                                                                          |
 | Board cap                           | `BOARD_CAPACITY` in `model/geometry.ts`                                                                    |
 | Hazard                              | one row in `HAZARDS`                                                                                       |
@@ -514,18 +586,19 @@ kept in settings) buys each pick the moment it is affordable.
 
 - `data/sim.spec.ts` guards the **sim** against a real board.
 
-**Measured run** (27 Sep 2026, advised autoplayer, auto-close, box-overlap ring, poker ×3 a rank):
+**Measured run** (27 Sep 2026, advised autoplayer, credit from ADR-4, criteria by billing):
 
 ```
-ADR-1 3.9    ADR-2 7.2    ADR-3 9.8    ADR-4 10.8   ADR-5 13.6   ADR-6 16.7
-ADR-7 19.7   ADR-8 24.0   signed off 28.3   accepted 31.6
+ADR-1 3.0    ADR-2 7.0    ADR-3 11.7   ADR-4 15.8   ADR-5 20.9   ADR-6 26.1
+ADR-7 30.1   ADR-8 34.0   signed off 37.3   accepted 39.8
 ```
 
 What that run cannot see, because the sim does not price it:
 
 - **Prod incidents.** A real board sends 3–5 auto-closed cards a second to prod from ADR-1 to
   ADR-3 (lint arrives at 9–25/s and the trains are often away); the live cap of 3 keeps that
-  from flooding. Incidents bill 150 € × tier, so they matter early and not at all late.
+  from flooding. Incidents bill 150 € × tier until ADR-5 and five of the newest rung's tickets after
+  it, when an open P0 also holds the train for an incident review.
 - **Weather** is on and unpriced; `storm` and `page` stack with the hand-only tier climb.
 - **Triage Policy** costs 500 / 1 600 SP for what is the biggest single SP source of the opening
   (every lint card bills); tier-0 estimates were cut to +4 to hold the pace instead.

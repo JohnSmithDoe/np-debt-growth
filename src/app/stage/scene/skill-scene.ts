@@ -10,7 +10,7 @@ import type { SceneDeps } from '../model/scene-deps.model';
 import type { SkillNodeView, SkillView } from '../model/skill-view.model';
 import { IconPool } from '../util/icon-pool';
 import { LabelPool } from '../util/label-pool';
-import { GLYPH_CELL, PIXEL_FONT } from '../util/pixel-font';
+import { GLYPH_CELL, GLYPH_SIZE, PIXEL_FONT } from '../util/pixel-font';
 import {
   SKILL_ICON_FILES,
   SKILL_ICON_SIZE,
@@ -57,6 +57,7 @@ const TIP = {
   pad: 8,
   leading: 14,
   offset: 10,
+  minGlyphPx: 13,
 } as const;
 
 const PULSE = {
@@ -77,8 +78,8 @@ const TEXT_DEPTH = 31;
 const INK = {
   code: 0xe6e9ef,
   codeDim: 0x8d97a6,
-  effect: 0x9aa3b2,
-  blurb: 0x6b7482,
+  effect: 0xc9d0dc,
+  blurb: 0xaab3c2,
   band: 0x8d97a6,
   box: 0x3d4450,
 } as const;
@@ -513,7 +514,8 @@ export class SkillScene extends PanZoomScene {
     if (state === 'owned') {
       return node.maxed ? SCREEN_INK.maxed : SCREEN_INK.owned;
     }
-    return node.buyable ? SCREEN_INK.ready : SCREEN_INK.frame;
+    if (!node.buyable) return SCREEN_INK.frame;
+    return node.credit ? SCREEN_INK.maxed : SCREEN_INK.ready;
   }
 
   #drawTip(byId: ReadonlyMap<string, SkillNodeView>): void {
@@ -525,7 +527,10 @@ export class SkillScene extends PanZoomScene {
     const id = this.hovered;
     if (id === null) return;
 
-    const scale = Math.max(1, Math.round(1 / this.zoom));
+    const scale = Math.max(
+      1,
+      Math.ceil(TIP.minGlyphPx / (GLYPH_SIZE * this.zoom))
+    );
     const lines = this.#tipLines(id, byId);
     if (lines.length === 0) return;
 
@@ -574,6 +579,7 @@ export class SkillScene extends PanZoomScene {
         INK.effect
       ),
       ...lines(this.#tipStatus(node), this.#statusInk(node)),
+      ...(node.note ? lines(node.note, SCREEN_INK.maxed) : []),
       ...lines(node.blurb, INK.blurb),
       ...(secret
         ? [
@@ -587,13 +593,13 @@ export class SkillScene extends PanZoomScene {
   #tipStatus(node: SkillNodeView): string {
     if (node.maxed) return node.status;
     const price = `${formatWhole(node.cost)} SP`;
-    return node.buyable ? price : `${price} — ${node.status}`;
+    return node.buyable && !node.credit ? price : `${price} — ${node.status}`;
   }
 
   #statusInk(node: SkillNodeView): number {
     if (node.maxed) return SCREEN_INK.maxed;
     if (!node.buyable) return SCREEN_INK.ink3;
-    return SCREEN_INK.points;
+    return node.credit ? SCREEN_INK.maxed : SCREEN_INK.points;
   }
 
   #tipAnchor(

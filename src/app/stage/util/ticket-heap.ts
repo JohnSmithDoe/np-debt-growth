@@ -15,8 +15,11 @@ import {
   RARE_LIFT,
   RARE_TITLE_OFFSET,
   RARE_TITLE_WIDTH,
+  UNDER_TEST,
   WONT_FIX_FADE,
 } from '../model/board.consts';
+import { spawnerFor } from '../../game/model/spawner.model';
+import { LOGICAL_BOARD } from '../../game/model/geometry';
 import {
   ATLAS_KEY,
   cardFrame,
@@ -36,7 +39,12 @@ function sinkOf(fade: number): number {
   return (1 - fade) * WONT_FIX_FADE.sink;
 }
 
-const DEPTH = { goldGlow: 9, layer: 10, glow: 11, rare: 12 } as const;
+/** Hand-only cards sit above falling work (the board's flyers are at 20) so a called card is never buried. */
+const DEPTH = { goldGlow: 9, layer: 10, glow: 20.5, rare: 21 } as const;
+const RARE_PULSE = 1.09;
+
+/** SpriteGPULayer's vertex shader scales the stored tint mode by 255. */
+const GPU_TINT_MODE = (mode: number): number => mode / 255;
 
 type MemberAnimation = Phaser.Types.GameObjects.SpriteGPULayer.MemberAnimation;
 
@@ -61,6 +69,10 @@ export class TicketHeap {
   readonly #glowScaleX = glowPulse(GOLD_GLOW.scaleX, GOLD_GLOW.swell);
   readonly #glowScaleY = glowPulse(GOLD_GLOW.scaleY, GOLD_GLOW.swell);
   readonly #glowAlpha = glowPulse(0, 0);
+  readonly #underTestPulse = {
+    ...glowPulse(UNDER_TEST.blend, UNDER_TEST.pulse),
+    duration: UNDER_TEST.pulseMs,
+  };
   readonly #autoCloseRamp: MemberAnimation = {
     base: 0,
     amplitude: AUTO_CLOSE_RAMP.peak,
@@ -87,6 +99,7 @@ export class TicketHeap {
   readonly #rareFree: number[] = [];
 
   #autoClosed: ReadonlySet<TicketTypeId> = new Set();
+  #underTest: number | null = null;
 
   #scaleX = 1;
   #scaleY = 1;
@@ -126,6 +139,12 @@ export class TicketHeap {
 
   autoCloses(types: ReadonlySet<TicketTypeId>): void {
     this.#autoClosed = types;
+  }
+
+  underTest(line: number | null): void {
+    if (line === this.#underTest) return;
+    this.#underTest = line;
+    this.redraw();
   }
 
   layout(scaleX: number, scaleY: number, offX: number, offY: number): void {
@@ -281,16 +300,27 @@ export class TicketHeap {
     if (TICKET_TYPES[ticket.type].handOnly) {
       const held = this.#rareSlot.get(ticket.id) ?? this.#rareFree.pop();
       if (held !== undefined) {
+        const half = Math.max(
+          ((this.#rareCards[held]?.width ?? 0) * RARE_PULSE) / 2,
+          RARE_TITLE_WIDTH / 2
+        );
+        const inside = Math.min(
+          Math.max(x, this.px(0) + half),
+          this.px(LOGICAL_BOARD.width) - half
+        );
         this.#rareSlot.set(ticket.id, held);
         this.#rareCards[held]
           ?.setFrame(cardFrame(ticket.type))
-          .setPosition(x, y - RARE_LIFT)
+          .setPosition(inside, y - RARE_LIFT)
           .setVisible(true);
-        this.#rareGlows[held]?.setPosition(x, y - RARE_LIFT).setVisible(true);
-        this.#rareTitles[held]
+        this.#rareGlows[held]
+          ?.setPosition(inside, y - RARE_LIFT)
+          .setVisible(true);
+        const title = this.#rareTitles[held];
+        title
           ?.setText(this.#text(ticket.titleKey))
-          .setPosition(x, y - RARE_LIFT + RARE_TITLE_OFFSET)
-          .setVisible(true);
+          .setPosition(inside, y - RARE_LIFT + RARE_TITLE_OFFSET);
+        title?.setVisible(!this.#titleClashes(held));
         return;
       }
     }
@@ -311,8 +341,34 @@ export class TicketHeap {
     if (ticket.golden) this.#glowUnder(ticket.id, x, y, fade);
   }
 
+  /** A caption that would print over another visible one stays hidden. */
+  #titleClashes(slot: number): boolean {
+    const title = this.#rareTitles[slot];
+    if (!title) return false;
+    return this.#rareTitles.some(
+      (other, at) =>
+        at !== slot &&
+        other.visible &&
+        Math.abs(other.x - title.x) < RARE_TITLE_WIDTH &&
+        Math.abs(other.y - title.y) < Math.max(other.height, title.height)
+    );
+  }
+
   #tintRamp(ticket: BoardTicket): void {
     const member = this.#member;
+    if (
+      this.#underTest !== null &&
+      spawnerFor(ticket.type)?.adr === this.#underTest
+    ) {
+      member.tintTopLeft = UNDER_TEST.ink;
+      member.tintTopRight = UNDER_TEST.ink;
+      member.tintBottomLeft = UNDER_TEST.ink;
+      member.tintBottomRight = UNDER_TEST.ink;
+      member.tintBlend = this.#underTestPulse;
+      member.tintMode = GPU_TINT_MODE(Phaser.TintModes.SCREEN);
+      return;
+    }
+    member.tintMode = Phaser.TintModes.MULTIPLY;
     if (!this.#autoClosed.has(ticket.type) || ticket.lifeLeftMs <= 0) {
       member.tintBlend = 0;
       return;
@@ -421,7 +477,7 @@ export class TicketHeap {
       .setVisible(false);
     this.#scene.tweens.add({
       targets: card,
-      scale: { from: 1, to: 1.09 },
+      scale: { from: 1, to: RARE_PULSE },
       duration: 480,
       yoyo: true,
       repeat: -1,

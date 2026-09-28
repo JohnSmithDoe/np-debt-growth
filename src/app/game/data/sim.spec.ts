@@ -128,6 +128,8 @@ function buy(store: GameStore, pick: Buy): boolean {
   switch (pick.kind) {
     case 'skill':
       return store.buySkill(pick.id);
+    case 'credit':
+      return store.approveOnCredit(pick.id);
     case 'line':
       return store.buyLine(pick.line);
     case 'spawner':

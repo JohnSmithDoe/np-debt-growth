@@ -155,6 +155,11 @@ function describe(effect: SkillEffect): EffectText {
       };
     case 'global':
       return { key: 'skill.effect.global', params: pct(effect.mult) };
+    case 'overtime':
+      return {
+        key: 'skill.effect.overtime',
+        params: { ...pct(effect.mult), count: effect.criteria },
+      };
     case 'line':
       return {
         key: `purchase.${effect.line}.effect`,

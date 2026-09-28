@@ -1,40 +1,46 @@
 import * as Phaser from 'phaser';
 
-import {
-  formatCompactMoney,
-  formatQuantity,
-} from '../../@shared/util/format-quantity';
+import { formatQuantity } from '../../@shared/util/format-quantity';
 import type { BuffNotice } from '../../game/model/round.model';
+import { SPAWNERS } from '../../game/model/spawner.model';
+import { ticketLabelKey } from '../../game/model/ticket.model';
 import { BUFF_BANNER, HOVER_GROUND } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
 
-const IDS: readonly BuffNotice['id'][] = ['acceptance', 'escalation', 'hotfix'];
+type LineId = 'acceptance' | 'buffs' | 'call';
 
-interface Drawn {
-  shown: boolean;
-  mult: number;
-  a: number;
-  b: number;
-}
+/** Bottom up; when the board's hazard banner is up the last line gives way. */
+const IDS: readonly LineId[] = ['acceptance', 'call', 'buffs'];
 
-function noticeOf(
+const CALLS = ['comboLive', 'combo', 'quarter', 'escalationHeld'] as const;
+const CALL_KEYS: Readonly<Record<(typeof CALLS)[number], string>> = {
+  comboLive: 'board.buff.combo.live',
+  combo: 'board.buff.combo',
+  quarter: 'board.buff.quarter',
+  escalationHeld: 'board.buff.escalation.held',
+};
+
+type Acceptance = Extract<BuffNotice, { id: 'acceptance' }>;
+type Timed = Extract<BuffNotice, { msLeft: number }>;
+
+const multOf = (mult: number): string | number =>
+  Number.isInteger(mult) ? mult : formatQuantity(mult);
+
+const timed = (
   notices: readonly BuffNotice[],
-  id: BuffNotice['id']
-): BuffNotice | undefined {
-  for (const notice of notices) if (notice.id === id) return notice;
-  return undefined;
-}
+  id: Timed['id']
+): Timed | undefined =>
+  notices.find((notice): notice is Timed => notice.id === id);
 
 export class BuffBanners {
   readonly #deps: SceneDeps;
-  readonly #lines = new Map<BuffNotice['id'], Phaser.GameObjects.Text>();
-  readonly #drawn = new Map<BuffNotice['id'], Drawn>();
+  readonly #lines = new Map<LineId, Phaser.GameObjects.Text>();
+  readonly #drawn = new Map<LineId, string>();
   #clock = 0;
 
   constructor(scene: Phaser.Scene, deps: SceneDeps, depth: number) {
     this.#deps = deps;
     for (const id of IDS) {
-      this.#drawn.set(id, { shown: false, mult: 0, a: 0, b: 0 });
       this.#lines.set(
         id,
         scene.add
@@ -52,7 +58,13 @@ export class BuffBanners {
     }
   }
 
-  update(deltaMs: number, centreX: number, bottom: number): void {
+  update(
+    deltaMs: number,
+    centreX: number,
+    bottom: number,
+    width: number,
+    lines = IDS.length
+  ): void {
     this.#clock = (this.#clock + deltaMs) % BUFF_BANNER.pulseMs;
     const wave = Math.sin((this.#clock / BUFF_BANNER.pulseMs) * Math.PI * 2);
     const scale = 1 + BUFF_BANNER.swell * wave;
@@ -60,53 +72,80 @@ export class BuffBanners {
 
     const notices = this.#deps.buffNotices();
     let y = bottom;
+    let shown = 0;
     for (const id of IDS) {
       const line = this.#lines.get(id)!;
-      const drawn = this.#drawn.get(id)!;
-      const notice = noticeOf(notices, id);
-      if (!notice) {
+      const text = shown < lines ? this.#format(id, notices) : '';
+      if (text === '') {
         if (line.visible) line.setVisible(false);
-        drawn.shown = false;
+        this.#drawn.delete(id);
         continue;
       }
-      const acceptance = notice.id === 'acceptance';
-      const a = acceptance ? notice.budget : Math.ceil(notice.msLeft / 1000);
-      const b = acceptance ? notice.goal : 0;
-      if (
-        !drawn.shown ||
-        drawn.mult !== notice.mult ||
-        drawn.a !== a ||
-        drawn.b !== b
-      ) {
-        drawn.shown = true;
-        drawn.mult = notice.mult;
-        drawn.a = a;
-        drawn.b = b;
-        line.setText(this.#format(notice));
+      if (this.#drawn.get(id) !== text) {
+        this.#drawn.set(id, text);
+        line.setText(text);
       }
+      const pulses = id !== 'acceptance';
+      const fit = Math.min(1, width / Math.max(1, line.width));
       line
         .setVisible(true)
         .setPosition(centreX, y)
-        .setScale(scale)
-        .setAlpha(alpha);
-      y -= line.height + BUFF_BANNER.gap;
+        .setScale((pulses ? scale : 1) * fit)
+        .setAlpha(pulses ? alpha : 1);
+      y -= line.height * fit + BUFF_BANNER.gap;
+      shown += 1;
     }
   }
 
-  #format(notice: BuffNotice): string {
-    const mult = Number.isInteger(notice.mult)
-      ? notice.mult
-      : formatQuantity(notice.mult);
-    return notice.id === 'acceptance'
-      ? this.#deps.text('board.buff.acceptance', {
-          mult,
-          have: formatCompactMoney(notice.budget),
-          goal: formatCompactMoney(notice.goal),
-        })
-      : this.#deps.text(`board.buff.${notice.id}`, {
-          mult,
-          seconds: Math.ceil(notice.msLeft / 1000),
-        });
+  #format(id: LineId, notices: readonly BuffNotice[]): string {
+    switch (id) {
+      case 'acceptance': {
+        const notice = notices.find(
+          (one): one is Acceptance => one.id === 'acceptance'
+        );
+        return notice ? this.#acceptance(notice) : '';
+      }
+      case 'buffs':
+        return [timed(notices, 'escalation'), timed(notices, 'hotfix')]
+          .filter((notice): notice is Timed => notice !== undefined)
+          .map((notice) => this.#timed(notice))
+          .join('   ');
+      case 'call': {
+        const storm = timed(notices, 'storm');
+        if (storm) return this.#timed(storm);
+        const call = CALLS.find((id) => notices.some((one) => one.id === id));
+        return call ? this.#deps.text(CALL_KEYS[call]) : '';
+      }
+    }
+  }
+
+  #timed(notice: Timed): string {
+    return this.#deps.text(`board.buff.${notice.id}`, {
+      mult: multOf(notice.mult),
+      seconds: Math.ceil(notice.msLeft / 1000),
+    });
+  }
+
+  #acceptance(notice: Acceptance): string {
+    const text = this.#deps.text;
+    const criterion = notice.criterion;
+    const mult = multOf(notice.mult);
+    if (!criterion) return text('board.buff.acceptance', { mult });
+    const ticket = SPAWNERS[criterion.line]?.produces[0];
+    if (!ticket) return text('board.buff.acceptance', { mult });
+    return text('board.buff.criterion', {
+      n: criterion.index + 1,
+      of: criterion.of,
+      name:
+        text(`acceptance.criterion.${criterion.line}.label`) +
+        (criterion.index >= SPAWNERS.length
+          ? text('acceptance.criterion.retest')
+          : ''),
+      ticket: text(ticketLabelKey(ticket)).toUpperCase(),
+      pct: Math.floor(criterion.done * 100),
+      seconds: Math.ceil(criterion.msLeft / 1000),
+      mult,
+    });
   }
 
   destroy(): void {

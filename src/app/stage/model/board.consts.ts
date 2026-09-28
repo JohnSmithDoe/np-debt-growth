@@ -40,10 +40,22 @@ export const RARE_LIFT = 14;
 export const SPRINT_STRIP_HEIGHT = 48;
 
 export const AUTO_CLOSE_RAMP = { ink: 0x5cff9d, peak: 1 } as const;
+export const UNDER_TEST = {
+  ink: 0xa3226a,
+  blend: 0.6,
+  pulse: 0.4,
+  pulseMs: 700,
+} as const;
 
 export const BUFF_BANNER = {
   size: '16px',
-  colour: { acceptance: '#e06c9f', escalation: '#d8b34a', hotfix: '#4ade80' },
+  colour: {
+    acceptance: '#ff9ccb',
+    buffs: '#d8b34a',
+    call: '#67e8f9',
+  },
+  /** The award stack's width and inset: banners centre in the board beside it. */
+  awardClearance: 336,
   pulseMs: 900,
   swell: 0.06,
   fade: 0.12,

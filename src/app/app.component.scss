@@ -109,6 +109,10 @@
     color: var(--np-cb-ink-3);
   }
 
+  .rate .owed {
+    color: var(--np-cb-warn);
+  }
+
   .points.paid {
     animation: paid 700ms ease-out;
     transform-origin: left center;

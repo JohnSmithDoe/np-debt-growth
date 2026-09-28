@@ -1,3 +1,11 @@
+@if (stamping()) {
+  <div class="stamp-scrim" aria-live="polite">
+    <div class="stamp">
+      <span class="stamp-word">{{ 'postmortem.stamp' | translate }}</span>
+      <span class="stamp-by">{{ 'postmortem.stamp.by' | translate }}</span>
+    </div>
+  </div>
+}
 @if (shown()) {
   <div class="scrim">
     <article class="doc">
@@ -83,7 +91,7 @@
           <ul class="record">
             @for (rung of authorisations(); track rung.index) {
               <li>
-                ADR-{{ rung.index }} — {{ rung.name }}<br />
+                {{ rung.title }}<br />
                 <span class="muted small">{{ rung.signed }}</span>
               </li>
             }

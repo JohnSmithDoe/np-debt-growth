@@ -110,7 +110,7 @@ const ORDER = [
   ['icons', 'skill-adr3', EMBLEM_SIZE, 2, EMBLEM('Two thick blunt arrows pointing straight at each other and meeting head-on in the middle.')],
   ['icons', 'skill-adr5', EMBLEM_SIZE, 2, EMBLEM('One bold chunky lightning bolt.')],
   ['icons', 'skill-line-estimates', EMBLEM_SIZE, 2, EMBLEM('A thick chunky hourglass with a heavy frame top and bottom.')],
-  ['icons', 'skill-spare-document-plus', EMBLEM_SIZE, 2, EMBLEM('A thick document sheet with a big folded-over corner and one bold fat plus sign in its middle.')],
+  ['icons', 'skill-changeRequest', EMBLEM_SIZE, 2, EMBLEM('A thick document sheet with a big folded-over corner and one bold fat plus sign in its middle.')],
 
   ['icons', 'skill-signoff', EMBLEM_SIZE, 2, EMBLEM('A chunky wooden rubber stamp pressing down, with a bold tick mark on its face.')],
   ['icons', 'skill-adr2', EMBLEM_SIZE, 2, EMBLEM('A thick rounded test tube with one bold heavy diagonal bar struck straight through it.')],

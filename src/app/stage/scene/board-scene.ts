@@ -4,8 +4,8 @@
 import * as Phaser from 'phaser';
 
 import {
+  formatCompactMoney,
   formatCompactWhole,
-  formatMoney,
 } from '../../@shared/util/format-quantity';
 import type { Board, SprintSlot } from '../../game/model/board.model';
 import { pickTouching, pickWithin } from '../../game/util/board';
@@ -355,6 +355,7 @@ export class BoardScene extends CbScene {
     this.#carryingFresh = false;
     parts.heap.sync(board, this.#onLand, this.#onGone);
     parts.heap.autoCloses(this.deps.autoClosed());
+    parts.heap.underTest(this.deps.underTest());
     parts.crew.sync(board, board.juniors, this.deps.womanEvery('juniors'));
     parts.managers.sync(
       board,
@@ -541,7 +542,14 @@ export class BoardScene extends CbScene {
     const bottom = banner?.visible
       ? banner.y - BUFF_BANNER.gap
       : this.#boardHeight - HAZARD_BANNER_LIFT;
-    parts.buffs.update(step, this.#width / 2, bottom);
+    const clear = Math.min(BUFF_BANNER.awardClearance, this.#width / 3);
+    parts.buffs.update(
+      step,
+      (clear + this.#width) / 2,
+      bottom,
+      this.#width - clear - BUFF_BANNER.gap * 2,
+      banner?.visible ? 2 : 3
+    );
   }
 
   #placeBanner(): void {
@@ -718,11 +726,11 @@ export class BoardScene extends CbScene {
       this.floatBig(
         px,
         py - 22,
-        `+${formatMoney(value)}`,
+        `+${formatCompactMoney(value)}`,
         this.#caption(headline)
       );
     } else if (value > 0)
-      this.floatPayout(px, py - 14, `+${formatMoney(value)}`);
+      this.floatPayout(px, py - 14, `+${formatCompactMoney(value)}`);
     if (sp > 0) {
       this.floatPayout(px, py + 8, `+${formatCompactWhole(sp)} SP`, {
         colour: BOARD_TEXT.points,
@@ -758,12 +766,12 @@ export class BoardScene extends CbScene {
         this.floatBig(
           x,
           y,
-          formatMoney(close.value),
+          formatCompactMoney(close.value),
           this.#caption(close.headline)
         );
         continue;
       }
-      this.floatPayout(x, y, formatMoney(close.value), {
+      this.floatPayout(x, y, formatCompactMoney(close.value), {
         colour: BOARD_TEXT.bright,
         size: CLOSE_FLOAT.size,
         rise: CLOSE_FLOAT.rise,
@@ -783,11 +791,11 @@ export class BoardScene extends CbScene {
     const live = this.#billing;
     if (live && live.text.visible && live.text.text === live.label) {
       live.value += payout;
-      live.label = `+${formatMoney(live.value)}`;
+      live.label = `+${formatCompactMoney(live.value)}`;
       live.text.setText(live.label);
       return;
     }
-    const label = `+${formatMoney(payout)}`;
+    const label = `+${formatCompactMoney(payout)}`;
     const text = this.floatPayout(parts.strip.barX, parts.strip.dropY, label);
     this.#billing = { text, value: payout, label };
   }

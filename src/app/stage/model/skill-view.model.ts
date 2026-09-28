@@ -15,7 +15,9 @@ export interface SkillNodeView {
   readonly maxed: boolean;
   readonly available: boolean;
   readonly buyable: boolean;
+  readonly credit: boolean;
   readonly status: string;
+  readonly note: string | null;
 }
 
 export interface SkillHeadingView {

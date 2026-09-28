@@ -12,8 +12,9 @@ import { SPAWNER_FREE_HEADS, SPAWNERS } from '../model/spawner.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPE_IDS } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
-import { PURCHASE_IDS } from '../model/balance/progression';
+import { CREDIT_FROM_ADR, PURCHASE_IDS } from '../model/balance/progression';
 import * as economy from './economy';
+import { underTestRate } from './sim';
 
 function unmaxed(state: Consultancy, id: string): readonly string[] {
   return (SKILL_BY_ID.get(id)?.maxed ?? []).filter(
@@ -64,9 +65,35 @@ export function skillLockReason(
 
 export function buySkill(state: Consultancy, id: string): Consultancy | null {
   if (!skillAvailable(state, id)) return null;
-  const node = SKILL_BY_ID.get(id)!;
   const cost = economy.skillRankCost(state, id);
   if (state.storyPoints < cost) return null;
+  return bought(state, id, cost);
+}
+
+export function creditOffer(state: Consultancy, id: string): number | null {
+  if (state.tier + 1 < CREDIT_FROM_ADR) return null;
+  const next = nextAdrNodeId(state) ?? FINAL_SKILL_ID;
+  if (id !== next || !skillAvailable(state, id)) return null;
+  const cost = economy.skillRankCost(state, id);
+  return economy.onCredit(state, cost) ? economy.creditOwed(state, cost) : null;
+}
+
+export function approveOnCredit(
+  state: Consultancy,
+  id: string
+): Consultancy | null {
+  const owed = creditOffer(state, id);
+  if (owed === null) return null;
+  const next = bought(
+    { ...state, storyPoints: economy.skillRankCost(state, id) },
+    id,
+    economy.skillRankCost(state, id)
+  );
+  return { ...next, storyPoints: 0, spDebt: owed };
+}
+
+function bought(state: Consultancy, id: string, cost: number): Consultancy {
+  const node = SKILL_BY_ID.get(id)!;
 
   const rank = economy.skillRank(state, id);
   const levels = { ...state.levels };
@@ -93,6 +120,21 @@ export function buySkill(state: Consultancy, id: string): Consultancy | null {
     tier,
     spawners,
     skills: { ...state.skills, [id]: rank + 1 },
+    ...(id === FINAL_SKILL_ID
+      ? {
+          signedBudget: state.budget,
+          criterion: economy.openCriterion(
+            {
+              ...state,
+              signedBudget: state.budget,
+              skills: { ...state.skills, [FINAL_SKILL_ID]: 1 },
+            },
+            0,
+            undefined,
+            underTestRate
+          ),
+        }
+      : {}),
   };
 }
 

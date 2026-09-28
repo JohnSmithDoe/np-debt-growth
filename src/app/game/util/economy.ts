@@ -1,4 +1,11 @@
 import type { Consultancy } from '../model/consultancy.model';
+import type { CriterionRun } from '../model/consultancy.model';
+import {
+  CRITERIA_COUNT,
+  criteriaPassed,
+  criteriaTotal,
+  criterionSlice,
+} from '../model/consultancy.model';
 import type { TicketMix } from '../model/board.model';
 import { voteBeamY, voteCount } from '../model/board.model';
 import type { Award } from '../model/award.model';
@@ -25,10 +32,25 @@ import {
   SKILL_BY_ID,
 } from '../model/skill.model';
 import type { TicketType, TicketTypeId } from '../model/ticket.model';
-import { ladderUp, TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
+import {
+  ladderUp,
+  RETYPE_LADDER,
+  TICKET_TYPES,
+  TICKET_TYPE_IDS,
+} from '../model/ticket.model';
 import { approachCap } from '../model/balance/curve';
 import type { PurchaseId } from '../model/balance/progression';
-import { ACCEPTANCE } from '../model/balance/progression';
+import {
+  ACCEPTANCE,
+  CREDIT_GARNISH,
+  CREDIT_INTEREST,
+  CREDIT_SHARE,
+  CRITERION_BONUS,
+  CRITERION_MAX_MS,
+  CRITERION_MIN_MS,
+  CRITERION_FIRST_TEST_MS,
+  CRITERION_OVERTIME,
+} from '../model/balance/progression';
 import type { ClaimPick, CrewKind, HirePace, Rush } from '../model/crew.model';
 import type { CrewBand } from '../model/balance/crew';
 import {
@@ -49,6 +71,7 @@ import {
   GOLDEN_CHANCE_CAP,
   GOLDEN_CREW_CONVERSION,
   GOLDEN_VALUE_BASE,
+  INCIDENT_TOP_SHARE,
   MANAGER_AURA_BASE,
 } from '../model/balance/flow';
 import {
@@ -63,6 +86,9 @@ import {
   LINE_PLAN,
 } from '../model/balance/progression';
 import {
+  INCIDENT_REVIEW,
+  INCIDENT_REVIEW_CAP,
+  INCIDENT_REVIEW_FROM_TIER,
   RELEASE_PHASES,
   SPRINT_SLOTS_BASE,
   type ReleasePhase,
@@ -235,9 +261,245 @@ function holds(state: Consultancy, kind: SkillEffect['kind']): boolean {
   return on;
 }
 
+export function overtime(state: Consultancy): number {
+  return (
+    (ACCEPTANCE.value + CRITERION_OVERTIME * criteriaVerified(state)) *
+    multOf(state, 'overtime')
+  );
+}
+
 function globalMultiplier(state: Consultancy): number {
-  const overtime = inAcceptance(state) ? ACCEPTANCE.value : 1;
-  return multOf(state, 'global') * overtime;
+  return multOf(state, 'global') * (inAcceptance(state) ? overtime(state) : 1);
+}
+
+export const CRITERIA = CRITERIA_COUNT;
+
+export interface Criterion {
+  readonly index: number;
+  readonly line: number;
+  /** Share of this criterion's billing the line under test has done. */
+  readonly done: number;
+}
+
+export function criterionNow(state: Consultancy): Criterion | null {
+  const run = state.criterion;
+  if (!inAcceptance(state) || !run || run.index >= criteriaTotal(state))
+    return null;
+  return {
+    index: run.index,
+    line: run.line,
+    done: Math.min(1, run.billed / run.target),
+  };
+}
+
+/** How much one line bills per second before acceptance: what a criterion on it rides on. */
+export function lineStrength(state: Consultancy, adr: number): number {
+  const row = SPAWNER_BY_ADR.get(adr);
+  if (!row) return 0;
+  return row.produces.reduce(
+    (sum, id) =>
+      sum +
+      spawnRate(state, id) *
+        productOf(state, `value:${id}`, (e) =>
+          e.kind === 'ticketValue' && e.target === id ? e.mult : null
+        ),
+    0
+  );
+}
+
+/** Nine lines in order, then each change request re-tests the weakest line not yet re-tested. */
+export function criterionLine(
+  state: Consultancy,
+  index: number,
+  retested: readonly number[]
+): number {
+  if (index < CRITERIA) return index;
+  const lines = Array.from({ length: CRITERIA }, (_, line) => line);
+  const fresh = lines.filter((line) => !retested.includes(line));
+  const pool = fresh.length > 0 ? fresh : lines;
+  return pool.reduce((weakest, line) =>
+    lineStrength(state, line) < lineStrength(state, weakest) ? line : weakest
+  );
+}
+
+/**
+ * A first test asks each line for its share of a ninth, weighted by how strongly it bills, so a
+ * thin line is reachable; a re-test asks the full ninth, which is what scope creep costs a weak build.
+ */
+/** What the line under test bills per second: the sim's answer, handed in so the economy stays unpriced. */
+export type LineRate = (probe: Consultancy) => number;
+
+/**
+ * A first test asks for CRITERION_FIRST_TEST_MS of what its line bills at a steady sweep and the
+ * opening overtime, so every build can sign it clean, a better hand signs it sooner, and the
+ * overtime earned since makes it quicker; a re-test asks the absolute share, which is what scope
+ * creep costs a weak build.
+ */
+export function criterionTarget(
+  state: Consultancy,
+  index: number,
+  line: number,
+  rate?: LineRate
+): number {
+  if (index >= CRITERIA || !rate) return criterionSlice(state);
+  const run = state.criterion;
+  const probe: Consultancy = {
+    ...state,
+    criterion: run
+      ? { ...run, index, line }
+      : {
+          index,
+          line,
+          sinceMs: state.runMs,
+          billed: 0,
+          target: 0,
+          clean: [],
+          retested: [],
+          passed: [],
+          flagged: [],
+          reflagged: [],
+          findings: 0,
+        },
+  };
+  const ramp = ACCEPTANCE.value / Math.max(1e-9, overtime(probe));
+  return rate(probe) * ramp * (CRITERION_FIRST_TEST_MS / 1000);
+}
+
+export function openCriterion(
+  state: Consultancy,
+  index: number,
+  from?: CriterionRun,
+  rate?: LineRate
+): CriterionRun {
+  const retested = from?.retested ?? [];
+  const line = criterionLine(state, index, retested);
+  return {
+    index,
+    line,
+    sinceMs: state.runMs,
+    billed: 0,
+    target: criterionTarget(state, index, line, rate),
+    clean: from?.clean ?? [],
+    retested,
+    passed: from?.passed ?? [],
+    flagged: from?.flagged ?? [],
+    reflagged: from?.reflagged ?? [],
+    findings: from?.findings ?? 0,
+  };
+}
+
+/**
+ * Signs the criterion under test clean once its line has billed its target and it has run
+ * CRITERION_MIN_MS; at CRITERION_MAX_MS it signs anyway, with findings: no overtime, no award.
+ */
+export function stepCriterion(
+  state: Consultancy,
+  rate?: LineRate
+): Consultancy {
+  const run = state.criterion;
+  if (!inAcceptance(state) || !run || run.index >= criteriaTotal(state))
+    return state;
+  const ran = state.runMs - run.sinceMs;
+  const clean = run.billed >= run.target;
+  if (!(ran >= CRITERION_MAX_MS || (clean && ran >= CRITERION_MIN_MS)))
+    return state;
+  const retest = run.index >= CRITERIA;
+  const signed: CriterionRun = {
+    ...run,
+    index: run.index + 1,
+    clean: clean && !retest ? [...run.clean, run.line] : run.clean,
+    retested: retest ? [...run.retested, run.line] : run.retested,
+    passed: clean && retest ? [...run.passed, run.line] : run.passed,
+    flagged: clean || retest ? run.flagged : [...run.flagged, run.line],
+    reflagged: clean || !retest ? run.reflagged : [...run.reflagged, run.line],
+    findings: run.findings + (clean ? 0 : 1),
+  };
+  return {
+    ...state,
+    criterion:
+      signed.index < criteriaTotal(state)
+        ? openCriterion(state, signed.index, signed, rate)
+        : signed,
+  };
+}
+
+export function criterionMsLeft(state: Consultancy): number {
+  const run = state.criterion;
+  return run ? Math.max(0, CRITERION_MAX_MS - (state.runMs - run.sinceMs)) : 0;
+}
+
+/** Buying into the line under test raises what its first test asks, never lowers it. */
+export function recalibrate(state: Consultancy, rate: LineRate): Consultancy {
+  const run = state.criterion;
+  if (!inAcceptance(state) || !run || run.index >= CRITERIA) return state;
+  const target = criterionTarget(state, run.index, run.line, rate);
+  return target > run.target
+    ? { ...state, criterion: { ...run, target } }
+    : state;
+}
+
+/** The criterion clock stands still while the train is out: nothing can be billed then. */
+export function holdCriterion(state: Consultancy, ms: number): Consultancy {
+  const run = state.criterion;
+  if (!run || !inAcceptance(state)) return state;
+  return { ...state, criterion: { ...run, sinceMs: run.sinceMs + ms } };
+}
+
+export function billUnderTest(state: Consultancy, euros: number): Consultancy {
+  const run = state.criterion;
+  if (!run || euros <= 0 || !inAcceptance(state)) return state;
+  return { ...state, criterion: { ...run, billed: run.billed + euros } };
+}
+
+/** Criteria signed clean: the ones that raise overtime. */
+export function criteriaVerified(state: Consultancy): number {
+  if (skillRank(state, FINAL_SKILL_ID) === 0) return 0;
+  return criteriaPassed(state) - (state.criterion?.findings ?? 0);
+}
+
+const RUNG_VALUE: readonly number[] = TICKET_TYPE_IDS.reduce<number[]>(
+  (top, id) => {
+    const type = TICKET_TYPES[id];
+    if (type.handOnly || type.effect !== 'value') return top;
+    top[type.tier] = Math.max(top[type.tier] ?? 0, type.value);
+    return top;
+  },
+  []
+);
+
+export function rungValue(tier: number): number {
+  return RUNG_VALUE[Math.min(tier, RUNG_VALUE.length - 1)] ?? 0;
+}
+
+export function underTest(state: Consultancy, id: TicketTypeId): boolean {
+  const run = state.criterion;
+  return (
+    run !== null &&
+    run.index < criteriaTotal(state) &&
+    inAcceptance(state) &&
+    spawnerFor(id)?.adr === run.line
+  );
+}
+
+function baseValue(state: Consultancy, type: TicketType): number {
+  if (type.scalesWithTier) return type.value * Math.max(1, state.tier);
+  return underTest(state, type.id)
+    ? rungValue(state.tier) * CRITERION_BONUS
+    : type.value;
+}
+
+/** From INCIDENT_REVIEW_FROM_TIER a P0 is worth a handful of the newest line's tickets. */
+export function newestTicket(state: Consultancy): TicketTypeId | null {
+  return (
+    RETYPE_LADDER.filter((id) => TICKET_TYPES[id].tier === state.tier).at(-1) ??
+    null
+  );
+}
+
+function incidentFromTop(state: Consultancy, id: TicketTypeId): boolean {
+  return (
+    TICKET_TYPES[id].scalesWithTier && state.tier >= INCIDENT_REVIEW_FROM_TIER
+  );
 }
 
 export function sprintSlots(
@@ -270,6 +532,22 @@ export function releasePhases(state: Consultancy): readonly ReleasePhase[] {
   return table.phases;
 }
 
+export function withReview(
+  phases: readonly ReleasePhase[],
+  open: number
+): readonly ReleasePhase[] {
+  const at = phases.findIndex((phase) => phase.id === 'ship') + 1;
+  const review: ReleasePhase = {
+    ...INCIDENT_REVIEW,
+    ms: INCIDENT_REVIEW.ms * Math.min(open, INCIDENT_REVIEW_CAP),
+  };
+  return [...phases.slice(0, at), review, ...phases.slice(at)];
+}
+
+export function reviewsIncidents(state: Consultancy): boolean {
+  return state.tier >= INCIDENT_REVIEW_FROM_TIER;
+}
+
 export function haulMs(state: Consultancy): number {
   return memo(state, 'haul', () =>
     releasePhases(state).reduce((sum, phase) => sum + phase.ms, 0)
@@ -293,7 +571,10 @@ export function inAcceptance(state: Consultancy): boolean {
 }
 
 export function accepted(state: Consultancy): boolean {
-  return inAcceptance(state) && state.budget >= ACCEPTANCE.goal;
+  if (!inAcceptance(state)) return false;
+  return state.criterion === null
+    ? state.budget >= ACCEPTANCE.goal
+    : criteriaPassed(state) >= criteriaTotal(state);
 }
 
 export function goldenChance(state: Consultancy): number {
@@ -344,15 +625,15 @@ export function ticketValue(
   id: TicketTypeId,
   now = 0
 ): number {
+  const top = incidentFromTop(state, id) ? newestTicket(state) : null;
+  if (top) return INCIDENT_TOP_SHARE * ticketValue(state, top, now);
   const type = TICKET_TYPES[id];
   const fromSkills = productOf(state, `value:${id}`, (e) =>
     e.kind === 'ticketValue' && e.target === id ? e.mult : null
   );
-  const tierScale = type.scalesWithTier ? Math.max(1, state.tier) : 1;
   return (
-    (type.value + incomeBonus(state, id)) *
+    (baseValue(state, type) + incomeBonus(state, id)) *
     fromSkills *
-    tierScale *
     globalMultiplier(state) *
     hotfixMultiplier(state, now)
   );
@@ -462,7 +743,7 @@ export function spawnRate(state: Consultancy, id: TicketTypeId): number {
       : null
   );
   const climb = type.handOnly ? 1 + HAND_ONLY_RATE_PER_TIER * state.tier : 1;
-  const push = inAcceptance(state) ? ACCEPTANCE.spawn : 1;
+  const push = inAcceptance(state) && !type.handOnly ? ACCEPTANCE.spawn : 1;
   return (
     type.ratePerSec * sourceMultiplier(state, type) * fromSkills * climb * push
   );
@@ -877,6 +1158,8 @@ export function pickupStoryPoints(
   byCrew: boolean
 ): number {
   if (!pickupsPaySp(state)) return 0;
+  const top = incidentFromTop(state, id) ? newestTicket(state) : null;
+  if (top) return INCIDENT_TOP_SHARE * pickupStoryPoints(state, top, false);
   const bonus = sumOf(state, `sp:${id}`, (e) =>
     e.kind === 'spPerClose' && (e.target === undefined || e.target === id)
       ? e.add
@@ -965,7 +1248,34 @@ export function boardPayout(
   return types.reduce(
     (total, id) =>
       total +
-      (TICKET_TYPES[id].effect === 'value' ? ticketValue(state, id, now) : 0),
+      (TICKET_TYPES[id].effect === 'value' ? closeValue(state, id, now) : 0),
     0
   );
+}
+
+export function creditShort(state: Consultancy, cost: number): number {
+  return Math.max(0, cost - state.storyPoints);
+}
+
+export function onCredit(state: Consultancy, cost: number): boolean {
+  return (
+    state.spDebt === 0 &&
+    state.storyPoints < cost &&
+    state.storyPoints >= cost * CREDIT_SHARE
+  );
+}
+
+export function creditOwed(state: Consultancy, cost: number): number {
+  return Math.ceil(creditShort(state, cost) * CREDIT_INTEREST);
+}
+
+export function repaid(
+  state: Consultancy,
+  earned: number
+): Pick<Consultancy, 'storyPoints' | 'spDebt'> {
+  const repay = Math.min(state.spDebt, earned * CREDIT_GARNISH);
+  return {
+    storyPoints: state.storyPoints + earned - repay,
+    spDebt: state.spDebt - repay,
+  };
 }

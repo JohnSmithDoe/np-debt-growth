@@ -1,5 +1,7 @@
 import type { Consultancy } from './consultancy.model';
-import { OFFICE_NODE_IDS } from './skill.model';
+import { ACCEPTANCE } from './balance/progression';
+import { FINAL_SKILL_ID, OFFICE_NODE_IDS } from './skill.model';
+import { SPAWNERS } from './spawner.model';
 
 export type AwardWeight = 'small' | 'medium' | 'large';
 
@@ -178,6 +180,87 @@ export const AWARDS: readonly Award[] = [
     when: (s) => s.lifetimeBilled >= 1_000_000_000,
   },
   {
+    id: 'a-hundred-billion',
+    kind: 'achievement',
+    weight: 'large',
+    when: (s) => s.lifetimeBilled >= 1e11,
+  },
+  {
+    id: 'a-trillion',
+    kind: 'achievement',
+    weight: 'large',
+    when: (s) => s.lifetimeBilled >= 1e12,
+  },
+  {
+    id: 'a-ten-trillion',
+    kind: 'achievement',
+    weight: 'large',
+    when: (s) => s.lifetimeBilled >= 1e13,
+  },
+  {
+    id: 'a-hundred-trillion',
+    kind: 'achievement',
+    weight: 'large',
+    when: (s) => s.lifetimeBilled >= 1e14,
+  },
+  {
+    id: 'a-quadrillion',
+    kind: 'achievement',
+    weight: 'large',
+    when: (s) => s.lifetimeBilled >= 1e15,
+  },
+  {
+    id: 'a-ten-quadrillion',
+    kind: 'achievement',
+    weight: 'large',
+    when: (s) => s.lifetimeBilled >= 1e16,
+  },
+  {
+    id: 'a-perfect-storm',
+    kind: 'achievement',
+    weight: 'large',
+    when: (s) => s.lifetimeJackpots >= 1,
+  },
+  {
+    id: 'a-incident-review',
+    kind: 'achievement',
+    weight: 'medium',
+    when: (s) => s.lifetimeReviews >= 1,
+  },
+  {
+    id: 'a-on-credit',
+    kind: 'achievement',
+    weight: 'medium',
+    when: (s) => s.spDebt > 0,
+  },
+  {
+    id: 'a-change-request',
+    kind: 'achievement',
+    weight: 'medium',
+    when: (s) => (s.skills['changeRequest'] ?? 0) > 0,
+  },
+  {
+    id: 'a-scope-creep',
+    kind: 'achievement',
+    weight: 'large',
+    when: (s) => (s.skills['changeRequest'] ?? 0) >= 5,
+  },
+  {
+    id: 'a-findings',
+    kind: 'achievement',
+    weight: 'medium',
+    when: (s) => (s.criterion?.findings ?? 0) > 0,
+  },
+  {
+    id: 'a-over-budget',
+    kind: 'achievement',
+    weight: 'large',
+    when: (s) =>
+      (s.skills[FINAL_SKILL_ID] ?? 0) > 0 &&
+      s.criterion !== null &&
+      s.budget >= ACCEPTANCE.goal,
+  },
+  {
     id: 'a-ladder',
     kind: 'achievement',
     weight: 'large',
@@ -187,7 +270,7 @@ export const AWARDS: readonly Award[] = [
     id: 'a-million-tickets',
     kind: 'achievement',
     weight: 'large',
-    when: (s) => s.lifetimeClosed >= 1_000_000,
+    when: (s) => s.lifetimeClosed >= 500_000,
   },
   {
     id: 'a-rate-card',
@@ -201,7 +284,47 @@ export const AWARDS: readonly Award[] = [
     weight: 'medium',
     when: (s) => (s.skills['secret'] ?? 0) > 0,
   },
+  ...SPAWNERS.map((_, line): Award => ({
+    id: refoundAwardId(line),
+    kind: 'milestone',
+    weight: 'small',
+    when: (s) => s.criterion?.reflagged.includes(line) === true,
+  })),
+  ...SPAWNERS.map((_, line): Award => ({
+    id: findingsAwardId(line),
+    kind: 'milestone',
+    weight: 'small',
+    when: (s) => s.criterion?.flagged.includes(line) === true,
+  })),
+  ...SPAWNERS.map((_, line): Award => ({
+    id: retestAwardId(line),
+    kind: 'milestone',
+    weight: 'medium',
+    when: (s) => s.criterion?.passed.includes(line) === true,
+  })),
+  ...SPAWNERS.map((_, line): Award => ({
+    id: criterionAwardId(line),
+    kind: 'milestone',
+    weight: line === SPAWNERS.length - 1 ? 'large' : 'medium',
+    when: (s) => s.criterion?.clean.includes(line) === true,
+  })),
 ];
+
+export function retestAwardId(line: number): string {
+  return `c-retest-${line}`;
+}
+
+export function refoundAwardId(line: number): string {
+  return `c-refound-${line}`;
+}
+
+export function findingsAwardId(line: number): string {
+  return `c-findings-${line}`;
+}
+
+export function criterionAwardId(line: number): string {
+  return `c-criterion-${line}`;
+}
 
 export const AWARD_BY_ID: ReadonlyMap<string, Award> = new Map(
   AWARDS.map((award) => [award.id, award])

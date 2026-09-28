@@ -14,13 +14,21 @@ export interface RoundOutcome {
 
 export type BuffNotice =
   | {
-      readonly id: 'escalation' | 'hotfix';
+      readonly id: 'escalation' | 'hotfix' | 'storm';
       readonly mult: number;
       readonly msLeft: number;
     }
   | {
+      readonly id: 'quarter' | 'combo' | 'comboLive' | 'escalationHeld';
+    }
+  | {
       readonly id: 'acceptance';
       readonly mult: number;
-      readonly budget: number;
-      readonly goal: number;
+      readonly criterion: {
+        readonly index: number;
+        readonly line: number;
+        readonly of: number;
+        readonly done: number;
+        readonly msLeft: number;
+      } | null;
     };

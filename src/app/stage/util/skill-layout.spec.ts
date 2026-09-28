@@ -135,7 +135,9 @@ describe('skill layout', () => {
     const rung = skillSquare(final.parent!)!;
     expect(final.width).toBeGreaterThan(SQUARE);
     expect(final.y + final.height / 2).toBe(rung.y + rung.height / 2);
-    const others = SKILL_GRAPH.squares.filter((one) => one !== final);
+    const others = SKILL_GRAPH.squares.filter(
+      (one) => one !== final && one.parent !== FINAL_SKILL_ID
+    );
     const east = Math.max(...others.map((one) => one.x + one.width));
     expect(final.x - east).toBeGreaterThan(SQUARE * 2);
   });

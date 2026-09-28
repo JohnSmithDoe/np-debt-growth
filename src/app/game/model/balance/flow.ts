@@ -49,6 +49,9 @@ export const HAND_ONLY_RATE_PER_TIER = 0.5;
 
 export const PROD_INCIDENT_LIVE_CAP = 3;
 
+/** From INCIDENT_REVIEW_FROM_TIER a P0 bills this many of the newest rung's tickets. */
+export const INCIDENT_TOP_SHARE = 5;
+
 /** Tier 1's; each tier above doubles it. */
 export const ESTIMATE_SP_PER_RANK = 20;
 export const ESTIMATE_SP_TIER_GROWTH = 2;

@@ -209,7 +209,7 @@ export const TICKET_TYPES: Readonly<Record<TicketTypeId, TicketType>> = {
     respawns: false,
     effect: 'billBoard',
     scalesWithTier: false,
-    colour: 0xf59e0b,
+    colour: 0x67e8f9,
   },
   invite: {
     id: 'invite',

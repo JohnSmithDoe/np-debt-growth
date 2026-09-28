@@ -123,10 +123,17 @@ export class AppComponent {
     );
     if (!Number.isFinite(cost)) return null;
     const pct = Math.min(100, Math.floor((this.storyPoints() / cost) * 100));
-    return { adr, pct };
+    const credit =
+      this.#store.creditOffer(adr ? adrNodeId(adr) : FINAL_SKILL_ID) !== null;
+    return { adr, pct, credit };
+  });
+
+  readonly debt = computed(() => {
+    const owed = this.#store.spDebt();
+    return owed > 0 ? { owed: formatPoints(owed) } : null;
   });
   readonly epic = computed(() =>
-    epicKey(this.#store.tier(), this.#store.inAcceptance())
+    epicKey(this.#store.tier(), this.#store.skillRank(FINAL_SKILL_ID) > 0)
   );
 
   readonly roundSeq = this.#store.roundSeq;

@@ -3,7 +3,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
+  signal,
 } from '@angular/core';
 
 import { FinaleService } from '../../../@shared/data/finale.service';
@@ -15,15 +17,23 @@ import {
 } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import { ACHIEVEMENTS } from '../../../game/model/award.model';
+import {
+  CHANGE_REQUEST_ID,
+  FINAL_SKILL_ID,
+} from '../../../game/model/skill.model';
 import { tierNameKey } from '../../../game/model/tier.model';
 import {
   APPROVALS,
   CLIENT_NAME,
+  CLOSEOUT_APPROVAL,
   ENGAGEMENT_KEY,
   roleKey,
   signatoryKey,
 } from '../../model/client.model';
+import { criteriaTotal } from '../../../game/model/consultancy.model';
+import { DoorService } from '../../data/door.service';
 import { burndownChart, CHART_BOX } from '../../util/burndown-chart';
+import { onRise } from '../../util/on-rise';
 import type { OfficeFrame } from '../../util/office-art';
 import { officeFilmstrip } from '../../util/office-art';
 
@@ -35,9 +45,11 @@ interface HeadRate {
 
 interface Authorisation {
   readonly index: number;
-  readonly name: string;
+  readonly title: string;
   readonly signed: string;
 }
+
+const STAMP_MS = 2_800;
 
 @Component({
   selector: 'cb-post-mortem',
@@ -50,11 +62,30 @@ export class PostMortemComponent {
   #store = inject(GameStore);
   #translate = inject(TranslateService);
   #finale = inject(FinaleService);
+  #door = inject(DoorService);
 
   readonly final = this.#store.ended;
+  readonly #stamped = signal(this.final());
+  readonly stamping = computed(() => this.final() && !this.#stamped());
   readonly shown = computed(
-    () => this.final() && this.#finale.act() === 'closed'
+    () =>
+      this.final() &&
+      this.#stamped() &&
+      this.#door.opened() &&
+      this.#finale.act() === 'closed'
   );
+
+  constructor() {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    inject(DestroyRef).onDestroy(() => clearTimeout(timer));
+    onRise(
+      () => Number(this.final()),
+      () => {
+        this.#stamped.set(false);
+        timer = setTimeout(() => this.#stamped.set(true), STAMP_MS);
+      }
+    );
+  }
 
   readonly client = CLIENT_NAME;
   readonly engagement = ENGAGEMENT_KEY;
@@ -74,11 +105,22 @@ export class PostMortemComponent {
       if (!approval) continue;
       rungs.push({
         index,
-        name: this.#translate.instant(tierNameKey(index)),
+        title: `ADR-${index} — ${this.#say(tierNameKey(index))}`,
         signed: this.#say('postmortem.signed', {
           by: this.#say(signatoryKey(approval.by)),
           role: this.#say(roleKey(approval.role)),
           date: formatLongDate(approval.date),
+        }),
+      });
+    }
+    if (this.#store.skillRank(FINAL_SKILL_ID) > 0) {
+      rungs.push({
+        index: rungs.length + 1,
+        title: this.#say('postmortem.closeout'),
+        signed: this.#say('postmortem.signed.closeout', {
+          by: this.#say(signatoryKey(CLOSEOUT_APPROVAL.by)),
+          role: this.#say(roleKey(CLOSEOUT_APPROVAL.role)),
+          date: formatLongDate(CLOSEOUT_APPROVAL.date),
         }),
       });
     }
@@ -122,28 +164,44 @@ export class PostMortemComponent {
         unlocked,
         total: ACHIEVEMENTS.length,
       }),
+      this.#criteriaLine(),
     ];
   });
 
-  readonly wentBadly = computed<readonly string[]>(() => [
-    this.#say('postmortem.badly.adrs', { client: CLIENT_NAME }),
-    this.#say('postmortem.badly.backlog'),
-    this.#say('postmortem.badly.headcount'),
-  ]);
+  readonly wentBadly = computed<readonly string[]>(() => {
+    const changes = this.#store.skillRank(CHANGE_REQUEST_ID);
+    return [
+      this.#say('postmortem.badly.adrs', { client: CLIENT_NAME }),
+      this.#say('postmortem.badly.backlog'),
+      this.#say('postmortem.badly.headcount'),
+      ...(changes === 0
+        ? []
+        : [
+            this.#say(
+              changes === 1
+                ? 'postmortem.badly.changes.one'
+                : 'postmortem.badly.changes',
+              { count: changes }
+            ),
+          ]),
+    ];
+  });
 
   readonly genderSplit = computed<{
     readonly women: HeadRate;
     readonly men: HeadRate;
   }>(() => {
     const levels = this.#store.levels();
-    const women = this.#store.crewWomen();
+    const women =
+      Math.floor(levels.junior / this.#store.womanEvery('juniors')) +
+      Math.floor(levels.senior / this.#store.womanEvery('seniors'));
     const heads = levels.junior + levels.senior;
     const men = heads - women;
 
     const closedByWomen = this.#store.lifetimeClosedByWomen();
     const closedByMen = Math.max(
       0,
-      this.#store.lifetimeClosed() - closedByWomen
+      this.#store.lifetimeClosedByCrew() - closedByWomen
     );
 
     const rate = (closed: number, count: number): HeadRate => ({
@@ -171,6 +229,19 @@ export class PostMortemComponent {
     items.push(this.#say('postmortem.action.retro'));
     return items;
   });
+
+  #criteriaLine(): string {
+    const state = this.#store.state();
+    const total = criteriaTotal(state);
+    const findings = state.criterion?.findings ?? 0;
+    return findings === 0
+      ? this.#say('postmortem.well.criteria.all', { total })
+      : this.#say('postmortem.well.criteria.findings', {
+          clean: total - findings,
+          total,
+          findings,
+        });
+  }
 
   #say(key: string, params?: Record<string, string | number>): string {
     return this.#translate.instant(key, params);

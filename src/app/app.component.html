@@ -30,9 +30,16 @@
         [cbRolling]="storyPoints()"
         [rollingFormat]="points"
       ></dd>
-      <span class="rate" [attr.aria-hidden]="goal() ? null : true">
-        @if (goal(); as goal) {
-          @if (goal.adr) {
+      <span class="rate" [attr.aria-hidden]="goal() || debt() ? null : true">
+        @if (debt(); as debt) {
+          <span class="owed">{{ 'hud.debt' | translate: debt }}</span>
+        } @else if (goal(); as goal) {
+          @if (goal.credit) {
+            <span class="owed">{{
+              (goal.adr ? 'hud.goal.credit' : 'hud.goal.signoff.credit')
+                | translate: goal
+            }}</span>
+          } @else if (goal.adr) {
             {{ 'hud.goal.adr' | translate: goal }}
           } @else {
             {{ 'hud.goal.signoff' | translate: goal }}
@@ -71,9 +78,6 @@
     @if (treeOpen() && !onTree()) {
       <button type="button" class="btn primary small tree" (click)="toTree()">
         {{ 'hud.tree.open' | translate }}
-        @if (storyPoints() > 0) {
-          <span class="chip points">{{ points(storyPoints()) }}</span>
-        }
         @if (skillAffordable()) {
           <span
             class="buyable"

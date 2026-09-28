@@ -3,18 +3,21 @@ import { TranslateService } from '@ngx-translate/core';
 import type * as Phaser from 'phaser';
 
 import { BoardIcons } from '../../@shared/data/board-icons.service';
+import { formatWhole } from '../../@shared/util/format-quantity';
 import { FinaleService } from '../../@shared/data/finale.service';
 import { SettingsService } from '../../@shared/data/settings.service';
 import { GameClock } from '../../game/data/game-clock.service';
 import { GameStore } from '../../game/data/game.store';
 import type { SkillLock } from '../../game/model/skill.model';
 import {
+  CHANGE_REQUEST_ID,
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_HEADING_IDS,
   skillBlurbKey,
   skillLabelKey,
 } from '../../game/model/skill.model';
+import { changeRequestEstimate } from '../../game/util/advisor';
 import * as economy from '../../game/util/economy';
 import { MODE_FADE_MS } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
@@ -172,6 +175,7 @@ export class StageService {
       const rank = store.skillRank(node.id);
       const maxed = rank >= node.levels.length;
       const lock = maxed ? null : store.skillLockReason(node.id);
+      const owed = lock === null ? null : store.creditOffer(node.id);
       nodes.push({
         id: node.id,
         label: translate.instant(skillLabelKey(node.id)),
@@ -188,12 +192,21 @@ export class StageService {
         cost: maxed ? 0 : store.skillRankCost(node.id),
         maxed,
         available: store.skillAvailable(node.id),
-        buyable: !maxed && lock === null,
+        buyable: !maxed && (lock === null || owed !== null),
+        credit: owed !== null,
+        note:
+          node.id === CHANGE_REQUEST_ID && !maxed
+            ? this.#changeRequestNote()
+            : null,
         status: maxed
           ? translate.instant('skill.status.maxed')
           : lock === null
             ? translate.instant('skill.status.ready')
-            : this.#lockText(lock),
+            : owed !== null
+              ? translate.instant('skill.status.credit', {
+                  owed: formatWhole(owed),
+                })
+              : this.#lockText(lock),
       });
     }
 
@@ -242,6 +255,7 @@ export class StageService {
       releasePhases: () => store.releasePhases(),
       buffNotices: () => store.buffNotices(),
       autoClosed: () => store.autoClosed(),
+      underTest: () => economy.criterionNow(store.state())?.line ?? null,
       womanEvery: (crew) => store.womanEvery(crew),
       takePayouts: () => store.takePayouts(),
       takeCloseFloats: () => store.takeCloseFloats(),
@@ -249,9 +263,26 @@ export class StageService {
       unlockSecret: () => void store.unlockSecret(),
       publishIcons: (icons) => this.#icons.publish(icons),
       skillView: () => this.#skillView(),
-      buySkill: (id: string) => store.buySkill(id),
+      buySkill: (id: string) => store.buySkill(id) || store.approveOnCredit(id),
       finaleAct: () => this.#finale.act(),
     };
+  }
+
+  #changeRequestNote(): string | null {
+    const estimate = changeRequestEstimate(this.#store.state());
+    if (!estimate) return null;
+    const seconds = Math.round(Math.abs(estimate.saves));
+    return this.#translate.instant(
+      estimate.saves >= 0
+        ? 'skill.changeRequest.saves'
+        : 'skill.changeRequest.costs',
+      {
+        line: this.#translate.instant(
+          `acceptance.criterion.${estimate.line}.label`
+        ),
+        seconds,
+      }
+    );
   }
 
   #lockText(lock: SkillLock): string {

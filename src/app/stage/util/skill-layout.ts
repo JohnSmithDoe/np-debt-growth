@@ -219,9 +219,10 @@ function seed(): Map<string, Vec> {
   const last = split.at(-1);
   if (last && BY_NODE.has(FINAL_SKILL_ID)) {
     const [up, down] = half(last);
-    out.set(FINAL_SKILL_ID, {
-      x: x + Math.max(up, down) + FINAL_RUN + FINAL_SIDE / 2,
-      y: 0,
+    const finalX = x + Math.max(up, down) + FINAL_RUN + FINAL_SIDE / 2;
+    out.set(FINAL_SKILL_ID, { x: finalX, y: 0 });
+    kidsOf(FINAL_SKILL_ID).forEach((kid, at) => {
+      out.set(kid, { x: finalX + FINAL_SIDE / 2 + LAYER * (at + 1), y: 0 });
     });
   }
 

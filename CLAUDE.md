@@ -70,8 +70,13 @@ income that doesn't come from a close, and no offline progress.
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
 row costs euros. The last node, `signoff` (16 M SP, off ADR-8), does not end the run: it
-starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: spawns ×3, billing ×12)
-and the run ends when the budget reaches €20 Qa (`economy.accepted` sets `endedAt`). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
+starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: spawns ×3, billing
+`economy.overtime`), nine criteria, one line under test at a time (`economy.criterionNow`: it bills
+as the newest rung, and only its billing counts toward a target calibrated on the sim's
+`underTestRate`; each criterion signs clean after 8 s once billed, or with findings at 55 s);
+each `changeRequest` rank multiplies overtime and re-tests the weakest line, and the run ends when
+every criterion is signed (`economy.accepted` sets `endedAt`). From ADR-4 the next ADR (or the closeout) can be approved on credit
+(`purchase.approveOnCredit`, `spDebt` repaid from half of later SP). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
 bills**, once the €25 `velocity` row is bought, plus the per-ticket `estimates` nodes and planning-poker
 votes a ticket fell through (`voteBonus`, decided at spawn). Euro upgrades never touch SP. There are no euro nodes and no SP rail rows.
 

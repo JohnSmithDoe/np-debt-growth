@@ -41,6 +41,7 @@ export interface SceneDeps {
 
   harvest(ids: readonly number[]): Harvest;
   autoClosed(): ReadonlySet<TicketTypeId>;
+  underTest(): number | null;
   running(): boolean;
   roundLeftMs(): number;
   haulMs(): number;

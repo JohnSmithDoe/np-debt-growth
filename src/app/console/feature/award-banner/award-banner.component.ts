@@ -32,6 +32,9 @@ const BANDS: Readonly<Record<AwardWeight, AwardBand>> = {
 
 const STACK = 3;
 const HURRY = 0.55;
+/** Acceptance criteria carry the finale's jokes: never hurried off. */
+const CRITERION_PREFIX = 'c-';
+const CRITERION_HOLD_MS = 7_000;
 
 function continues(
   granted: readonly string[],
@@ -103,9 +106,12 @@ export class AwardBannerComponent {
       for (const id of shown) {
         if (this.#timers.has(id)) continue;
         const { ms } = BANDS[AWARD_BY_ID.get(id)?.weight ?? 'small'];
+        const hold = id.startsWith(CRITERION_PREFIX)
+          ? CRITERION_HOLD_MS
+          : ms * hurry;
         this.#timers.set(
           id,
-          setTimeout(() => this.dismiss(id), ms * hurry)
+          setTimeout(() => this.dismiss(id), hold)
         );
       }
     });

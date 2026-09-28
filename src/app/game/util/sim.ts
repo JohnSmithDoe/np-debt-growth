@@ -1,6 +1,6 @@
 /*
- * Not modelled: quarter bills, pizza, prod incidents, weather; each moves a
- * real board's euros by 10 % at most.
+ * Not modelled: quarter bills, pizza, prod incidents and their reviews,
+ * weather; each moves a real board's euros by 10 % at most.
  */
 import type { Consultancy } from '../model/consultancy.model';
 import type { CrewKind } from '../model/crew.model';
@@ -42,6 +42,8 @@ export interface Flow {
   readonly handEuroPerSec: number;
   readonly crewEuroPerSec: number;
   readonly wontFixPerSec: number;
+  readonly underTestEuroPerSec: number;
+  readonly underTestAutoEuroPerSec: number;
 }
 
 interface Stream {
@@ -375,7 +377,32 @@ function comebacks(all: readonly Stream[], arrivals: number[]): void {
   });
 }
 
-export function flow(state: Consultancy, policy: SimPolicy): Flow {
+/** Buffs are priced as the chance a window is open (`buffs`); a live one must not count twice. */
+function steady(state: Consultancy): Consultancy {
+  return state.hotfixUntil === 0 && !state.escalated
+    ? state
+    : { ...state, hotfixUntil: 0, escalated: false, escalationFiresAt: 0 };
+}
+
+/**
+ * The line under test's billing at a steady sweep: what a first test is calibrated on. A real
+ * board at the card cap lets far less of an auto-closed line live out its life than the sim's
+ * displacement model does, so auto-close counts at AUTO_CLOSE_ON_A_FULL_BOARD.
+ */
+export const underTestRate = (probe: Consultancy): number => {
+  const f = flow(probe, STEADY);
+  return (
+    f.underTestEuroPerSec -
+    f.underTestAutoEuroPerSec * (1 - AUTO_CLOSE_ON_A_FULL_BOARD)
+  );
+};
+
+const AUTO_CLOSE_ON_A_FULL_BOARD = 0.35;
+
+const STEADY: SimPolicy = { clicksPerSec: 1 };
+
+export function flow(live: Consultancy, policy: SimPolicy): Flow {
+  const state = steady(live);
   const all = streams(state);
   const arrivals = all.map((s) => s.left);
   const lifeMs = ticketLifeMs(state.tier);
@@ -424,6 +451,8 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
 
   let handEuro = 0;
   let crewEuro = 0;
+  let tested = 0;
+  let testedAuto = 0;
   let sp = 0;
   let hand = 0;
   let crew = 0;
@@ -434,8 +463,14 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
     const crewWorth = s.golden
       ? s.worth
       : s.worth * (1 - conversion) + s.worth * goldMult * conversion;
-    handEuro += byHand * s.worth * buff;
-    crewEuro += (byCrew * crewWorth * aura + byAuto * s.worth) * buff;
+    const euros = byHand * s.worth * buff;
+    const crewed = (byCrew * crewWorth * aura + byAuto * s.worth) * buff;
+    handEuro += euros;
+    crewEuro += crewed;
+    if (economy.underTest(state, s.type)) {
+      tested += euros + crewed;
+      testedAuto += byAuto * s.worth * buff;
+    }
     hand += byHand;
     crew += byCrew + byAuto;
     sp +=
@@ -453,5 +488,7 @@ export function flow(state: Consultancy, policy: SimPolicy): Flow {
     handEuroPerSec: handEuro,
     crewEuroPerSec: crewEuro,
     wontFixPerSec: Math.max(0, supplyPerSec - hand - crew),
+    underTestEuroPerSec: tested,
+    underTestAutoEuroPerSec: testedAuto,
   };
 }

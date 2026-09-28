@@ -64,6 +64,8 @@ export class AgentService {
 
   buy(buy: Buy): boolean {
     switch (buy.kind) {
+      case 'credit':
+        return this.#store.approveOnCredit(buy.id);
       case 'skill':
         return this.#store.buySkill(buy.id);
       case 'line':
