@@ -443,7 +443,7 @@ stamp holds for 2.8 s before the post-mortem, which counts criteria verified and
 findings and the change requests among what did not go well, and ends on the office filmstrip.
 Closing the engagement plays the story (`console/feature/story/`, finale act `story`): each office
 the run reached, full-frame, with one narrator line (`story.<adr>`, `story.outside` with the run's
-totals), `STORY_FRAME_MS` 9 s each or a click; then the closing credits over the leaving party.
+totals), `STORY_FRAME_MS` 14 s each or a click; then the closing credits over the leaving party.
 No prestige.
 
 **Approval on credit** (`purchase.creditOffer` / `approveOnCredit`): from ADR-4

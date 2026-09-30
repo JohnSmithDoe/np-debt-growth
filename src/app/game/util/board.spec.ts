@@ -403,7 +403,7 @@ describe('a senior closing a patch', () => {
       levels: { ...BARE, senior: 1 },
       sprintCount: SPRINT_SLOTS_BASE - 1,
     });
-    for (let n = 0; n < 40; n++) addTicket(board, 'conflict');
+    fill(board, 'conflict', 40, cycling());
 
     const closed = run(board, state, seniorCloseMs(state) + SENIOR_WALK_MS);
     expect(closed.length).toBeGreaterThanOrEqual(seniorBatch(state));
