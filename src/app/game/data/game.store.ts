@@ -1317,6 +1317,13 @@ export class GameStore {
     });
     return true;
   }
+  /** Debug: accepts the engagement as it stands, which opens the post-mortem. */
+  acceptNow(now: number): void {
+    const state = this.#state();
+    if (state.endedAt > 0) return;
+    this.#state.set({ ...state, assisted: true, endedAt: now });
+  }
+
 
   readonly assisted = computed(() => this.#state().assisted);
 

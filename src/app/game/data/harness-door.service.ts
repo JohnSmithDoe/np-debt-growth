@@ -21,6 +21,7 @@ export interface HarnessDoors {
   buyOut(): void;
   place(type: TicketTypeId, golden?: boolean): number;
   finale(curtain?: boolean): void;
+  postMortem(): void;
 }
 
 interface HarnessGlobal {
@@ -57,6 +58,7 @@ export class HarnessDoor {
         );
         return ticket ? ticket.id : NO_TICKET;
       },
+      postMortem: () => this.#store.acceptNow(this.#clock.now()),
       finale: (curtain = false) => {
         this.#finale.open();
         if (curtain) this.#finale.curtain();

@@ -56,6 +56,10 @@ export class DebugBarComponent {
     this.#store.buyOut();
   }
 
+  postMortem(): void {
+    this.#store.acceptNow(this.#clock.now());
+  }
+
   finale(): void {
     this.#finale.open();
   }
