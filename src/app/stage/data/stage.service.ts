@@ -10,14 +10,12 @@ import { GameClock } from '../../game/data/game-clock.service';
 import { GameStore } from '../../game/data/game.store';
 import type { SkillLock } from '../../game/model/skill.model';
 import {
-  CHANGE_REQUEST_ID,
   SECRET_SKILL_ID,
   SKILL_BY_ID,
   SKILL_HEADING_IDS,
   skillBlurbKey,
   skillLabelKey,
 } from '../../game/model/skill.model';
-import { changeRequestEstimate } from '../../game/util/advisor';
 import * as economy from '../../game/util/economy';
 import { MODE_FADE_MS } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
@@ -196,10 +194,6 @@ export class StageService {
         available: store.skillAvailable(node.id),
         buyable: !maxed && (lock === null || owed !== null),
         credit: owed !== null,
-        note:
-          node.id === CHANGE_REQUEST_ID && !maxed
-            ? this.#changeRequestNote()
-            : null,
         status: maxed
           ? translate.instant('skill.status.maxed')
           : lock === null
@@ -269,26 +263,6 @@ export class StageService {
       buySkill: (id: string) => store.buySkill(id) || store.approveOnCredit(id),
       finaleAct: () => this.#finale.act(),
     };
-  }
-
-  #changeRequestNote(): string | null {
-    const estimate = changeRequestEstimate(
-      this.#store.state(),
-      this.#store.sweepsPerSec()
-    );
-    if (!estimate) return null;
-    const seconds = Math.round(Math.abs(estimate.saves));
-    return this.#translate.instant(
-      estimate.saves >= 0
-        ? 'skill.changeRequest.saves'
-        : 'skill.changeRequest.costs',
-      {
-        line: this.#translate.instant(
-          `acceptance.criterion.${estimate.line}.label`
-        ),
-        seconds,
-      }
-    );
   }
 
   #lockText(lock: SkillLock): string {

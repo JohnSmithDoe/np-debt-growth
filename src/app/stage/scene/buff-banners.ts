@@ -136,11 +136,7 @@ export class BuffBanners {
     return text('board.buff.criterion', {
       n: criterion.index + 1,
       of: criterion.of,
-      name:
-        text(`acceptance.criterion.${criterion.line}.label`) +
-        (criterion.index >= SPAWNERS.length
-          ? text('acceptance.criterion.retest')
-          : ''),
+      name: text(`acceptance.criterion.${criterion.line}.label`),
       ticket: text(ticketLabelKey(ticket)).toUpperCase(),
       pct: Math.floor(criterion.done * 100),
       seconds: Math.ceil(criterion.msLeft / 1000),

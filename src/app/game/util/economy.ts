@@ -3,7 +3,6 @@ import type { CriterionRun } from '../model/consultancy.model';
 import {
   CRITERIA_COUNT,
   criteriaPassed,
-  criteriaTotal,
   criterionSlice,
 } from '../model/consultancy.model';
 import type { TicketMix } from '../model/board.model';
@@ -262,10 +261,7 @@ function holds(state: Consultancy, kind: SkillEffect['kind']): boolean {
 }
 
 export function overtime(state: Consultancy): number {
-  return (
-    (ACCEPTANCE.value + CRITERION_OVERTIME * criteriaVerified(state)) *
-    multOf(state, 'overtime')
-  );
+  return ACCEPTANCE.value + CRITERION_OVERTIME * criteriaVerified(state);
 }
 
 function globalMultiplier(state: Consultancy): number {
@@ -283,8 +279,7 @@ export interface Criterion {
 
 export function criterionNow(state: Consultancy): Criterion | null {
   const run = state.criterion;
-  if (!inAcceptance(state) || !run || run.index >= criteriaTotal(state))
-    return null;
+  if (!inAcceptance(state) || !run || run.index >= CRITERIA) return null;
   return {
     index: run.index,
     line: run.line,
@@ -307,33 +302,13 @@ export function lineStrength(state: Consultancy, adr: number): number {
   );
 }
 
-/** Nine lines in order, then each change request re-tests the weakest line not yet re-tested. */
-export function criterionLine(
-  state: Consultancy,
-  index: number,
-  retested: readonly number[]
-): number {
-  if (index < CRITERIA) return index;
-  const lines = Array.from({ length: CRITERIA }, (_, line) => line);
-  const fresh = lines.filter((line) => !retested.includes(line));
-  const pool = fresh.length > 0 ? fresh : lines;
-  return pool.reduce((weakest, line) =>
-    lineStrength(state, line) < lineStrength(state, weakest) ? line : weakest
-  );
-}
-
-/**
- * A first test asks each line for its share of a ninth, weighted by how strongly it bills, so a
- * thin line is reachable; a re-test asks the full ninth, which is what scope creep costs a weak build.
- */
 /** What the line under test bills per second: the sim's answer, handed in so the economy stays unpriced. */
 export type LineRate = (probe: Consultancy) => number;
 
 /**
- * A first test asks for CRITERION_FIRST_TEST_MS of what its line bills at a steady sweep and the
+ * A criterion asks for CRITERION_FIRST_TEST_MS of what its line bills at a steady sweep and the
  * opening overtime, so every build can sign it clean, a better hand signs it sooner, and the
- * overtime earned since makes it quicker; a re-test asks the absolute share, which is what scope
- * creep costs a weak build.
+ * overtime earned since makes it quicker.
  */
 export function criterionTarget(
   state: Consultancy,
@@ -341,7 +316,7 @@ export function criterionTarget(
   line: number,
   rate?: LineRate
 ): number {
-  if (index >= CRITERIA || !rate) return criterionSlice(state);
+  if (!rate) return criterionSlice(state);
   const run = state.criterion;
   const probe: Consultancy = {
     ...state,
@@ -354,10 +329,7 @@ export function criterionTarget(
           billed: 0,
           target: 0,
           clean: [],
-          retested: [],
-          passed: [],
           flagged: [],
-          reflagged: [],
           findings: 0,
         },
   };
@@ -371,19 +343,14 @@ export function openCriterion(
   from?: CriterionRun,
   rate?: LineRate
 ): CriterionRun {
-  const retested = from?.retested ?? [];
-  const line = criterionLine(state, index, retested);
   return {
     index,
-    line,
+    line: index,
     sinceMs: state.runMs,
     billed: 0,
-    target: criterionTarget(state, index, line, rate),
+    target: criterionTarget(state, index, index, rate),
     clean: from?.clean ?? [],
-    retested,
-    passed: from?.passed ?? [],
     flagged: from?.flagged ?? [],
-    reflagged: from?.reflagged ?? [],
     findings: from?.findings ?? 0,
   };
 }
@@ -397,27 +364,22 @@ export function stepCriterion(
   rate?: LineRate
 ): Consultancy {
   const run = state.criterion;
-  if (!inAcceptance(state) || !run || run.index >= criteriaTotal(state))
-    return state;
+  if (!inAcceptance(state) || !run || run.index >= CRITERIA) return state;
   const ran = state.runMs - run.sinceMs;
   const clean = run.billed >= run.target;
   if (!(ran >= CRITERION_MAX_MS || (clean && ran >= CRITERION_MIN_MS)))
     return state;
-  const retest = run.index >= CRITERIA;
   const signed: CriterionRun = {
     ...run,
     index: run.index + 1,
-    clean: clean && !retest ? [...run.clean, run.line] : run.clean,
-    retested: retest ? [...run.retested, run.line] : run.retested,
-    passed: clean && retest ? [...run.passed, run.line] : run.passed,
-    flagged: clean || retest ? run.flagged : [...run.flagged, run.line],
-    reflagged: clean || !retest ? run.reflagged : [...run.reflagged, run.line],
+    clean: clean ? [...run.clean, run.line] : run.clean,
+    flagged: clean ? run.flagged : [...run.flagged, run.line],
     findings: run.findings + (clean ? 0 : 1),
   };
   return {
     ...state,
     criterion:
-      signed.index < criteriaTotal(state)
+      signed.index < CRITERIA
         ? openCriterion(state, signed.index, signed, rate)
         : signed,
   };
@@ -469,7 +431,7 @@ export function underTest(state: Consultancy, id: TicketTypeId): boolean {
   const run = state.criterion;
   return (
     run !== null &&
-    run.index < criteriaTotal(state) &&
+    run.index < CRITERIA &&
     inAcceptance(state) &&
     spawnerFor(id)?.adr === run.line
   );
@@ -574,7 +536,7 @@ export function accepted(state: Consultancy): boolean {
   if (!inAcceptance(state)) return false;
   return state.criterion === null
     ? state.budget >= ACCEPTANCE.goal
-    : criteriaPassed(state) >= criteriaTotal(state);
+    : criteriaPassed(state) >= CRITERIA;
 }
 
 export function goldenChance(state: Consultancy): number {

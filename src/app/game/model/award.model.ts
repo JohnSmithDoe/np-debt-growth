@@ -234,18 +234,6 @@ export const AWARDS: readonly Award[] = [
     when: (s) => s.spDebt > 0,
   },
   {
-    id: 'a-change-request',
-    kind: 'achievement',
-    weight: 'medium',
-    when: (s) => (s.skills['changeRequest'] ?? 0) > 0,
-  },
-  {
-    id: 'a-scope-creep',
-    kind: 'achievement',
-    weight: 'large',
-    when: (s) => (s.skills['changeRequest'] ?? 0) >= 5,
-  },
-  {
     id: 'a-findings',
     kind: 'achievement',
     weight: 'medium',
@@ -285,22 +273,10 @@ export const AWARDS: readonly Award[] = [
     when: (s) => (s.skills['secret'] ?? 0) > 0,
   },
   ...SPAWNERS.map((_, line): Award => ({
-    id: refoundAwardId(line),
-    kind: 'milestone',
-    weight: 'small',
-    when: (s) => s.criterion?.reflagged.includes(line) === true,
-  })),
-  ...SPAWNERS.map((_, line): Award => ({
     id: findingsAwardId(line),
     kind: 'milestone',
     weight: 'small',
     when: (s) => s.criterion?.flagged.includes(line) === true,
-  })),
-  ...SPAWNERS.map((_, line): Award => ({
-    id: retestAwardId(line),
-    kind: 'milestone',
-    weight: 'medium',
-    when: (s) => s.criterion?.passed.includes(line) === true,
   })),
   ...SPAWNERS.map((_, line): Award => ({
     id: criterionAwardId(line),
@@ -309,14 +285,6 @@ export const AWARDS: readonly Award[] = [
     when: (s) => s.criterion?.clean.includes(line) === true,
   })),
 ];
-
-export function retestAwardId(line: number): string {
-  return `c-retest-${line}`;
-}
-
-export function refoundAwardId(line: number): string {
-  return `c-refound-${line}`;
-}
 
 export function findingsAwardId(line: number): string {
   return `c-findings-${line}`;

@@ -73,9 +73,8 @@ row costs euros. The last node, `signoff` (16 M SP, off ADR-8), does not end the
 starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: spawns ×3, billing
 `economy.overtime`; no sprint cap, no train, no meetings — `economy.trainRuns`), nine criteria, one line under test at a time (`economy.criterionNow`: it bills
 as the newest rung, and only its billing counts toward a target calibrated on the sim's
-`underTestRate`; each criterion signs clean after 8 s once billed, or with findings at 55 s);
-each `changeRequest` rank multiplies overtime and re-tests the weakest line, and the run ends when
-every criterion is signed (`economy.accepted` sets `endedAt`). From ADR-4 the next ADR (or the closeout) can be approved on credit
+`underTestRate`; each criterion signs clean after 8 s once billed, or with findings at 55 s),
+and the run ends when every criterion is signed (`economy.accepted` sets `endedAt`). From ADR-4 the next ADR (or the closeout) can be approved on credit
 (`purchase.approveOnCredit`, `spDebt` repaid from half of later SP). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
 bills**, once the €25 `velocity` row is bought, plus the per-ticket `estimates` nodes and planning-poker
 votes a ticket fell through (`voteBonus`, decided at spawn). Euro upgrades never touch SP. There are no euro nodes and no SP rail rows.

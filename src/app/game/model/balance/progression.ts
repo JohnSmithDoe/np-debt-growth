@@ -47,16 +47,8 @@ export const CRITERION_MIN_MS = 8_000;
 export const CRITERION_MAX_MS = 55_000;
 /** A first test asks this long of what its line bills at a steady sweep when it opens. */
 export const CRITERION_FIRST_TEST_MS = 30_000;
-/** A re-test asks this share of a ninth of the way to the goal, whatever the line bills. */
-export const CRITERION_RETEST_SHARE = 0.35;
-
-/** Each change request multiplies overtime and adds one criterion to test. */
-export const CHANGE_REQUEST = {
-  overtime: 1.5,
-  first: 3_000_000,
-  step: 2,
-  ranks: 10,
-} as const;
+/** Priced without a line rate, a criterion asks this share of a ninth of the way to the goal. */
+export const CRITERION_SHARE = 0.35;
 
 export const CREDIT_FROM_ADR = 4;
 export const CREDIT_SHARE = 0.6;

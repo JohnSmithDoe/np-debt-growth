@@ -16,10 +16,9 @@ import {
 } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import { ACHIEVEMENTS } from '../../../game/model/award.model';
-import { CHANGE_REQUEST_ID } from '../../../game/model/skill.model';
 import { tierNameKey } from '../../../game/model/tier.model';
 import { CLIENT_NAME, ENGAGEMENT_KEY } from '../../model/client.model';
-import { criteriaTotal } from '../../../game/model/consultancy.model';
+import { CRITERIA_COUNT } from '../../../game/model/consultancy.model';
 import { DoorService } from '../../data/door.service';
 import { burndownChart, CHART_BOX } from '../../util/burndown-chart';
 import { onRise } from '../../util/on-rise';
@@ -122,24 +121,11 @@ export class PostMortemComponent {
     ];
   });
 
-  readonly wentBadly = computed<readonly string[]>(() => {
-    const changes = this.#store.skillRank(CHANGE_REQUEST_ID);
-    return [
-      this.#say('postmortem.badly.adrs', { client: CLIENT_NAME }),
-      this.#say('postmortem.badly.backlog'),
-      this.#say('postmortem.badly.headcount'),
-      ...(changes === 0
-        ? []
-        : [
-            this.#say(
-              changes === 1
-                ? 'postmortem.badly.changes.one'
-                : 'postmortem.badly.changes',
-              { count: changes }
-            ),
-          ]),
-    ];
-  });
+  readonly wentBadly = computed<readonly string[]>(() => [
+    this.#say('postmortem.badly.adrs', { client: CLIENT_NAME }),
+    this.#say('postmortem.badly.backlog'),
+    this.#say('postmortem.badly.headcount'),
+  ]);
 
   readonly genderSplit = computed<{
     readonly women: HeadRate;
@@ -185,9 +171,8 @@ export class PostMortemComponent {
   });
 
   #criteriaLine(): string {
-    const state = this.#store.state();
-    const total = criteriaTotal(state);
-    const findings = state.criterion?.findings ?? 0;
+    const total = CRITERIA_COUNT;
+    const findings = this.#store.state().criterion?.findings ?? 0;
     return findings === 0
       ? this.#say('postmortem.well.criteria.all', { total })
       : this.#say('postmortem.well.criteria.findings', {

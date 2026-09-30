@@ -1,6 +1,6 @@
 import type { TicketTypeId } from './ticket.model';
 import type { PurchaseId } from './balance/progression';
-import { CHANGE_REQUEST, LINE_PRICE_BY_TIER } from './balance/progression';
+import { LINE_PRICE_BY_TIER } from './balance/progression';
 import type { CrewKind } from './crew.model';
 import {
   DEBT_INTEREST_PER_RANK,
@@ -73,11 +73,6 @@ export type SkillEffect =
     }
   | { readonly kind: 'debtInterest'; readonly approach: number }
   | { readonly kind: 'global'; readonly mult: number }
-  | {
-      readonly kind: 'overtime';
-      readonly mult: number;
-      readonly criteria: number;
-    }
   | { readonly kind: 'goldenChance'; readonly add: number }
   | { readonly kind: 'goldenValue'; readonly add: number }
   | { readonly kind: 'goldenCrew' }
@@ -129,11 +124,6 @@ const ADR_NODES: readonly SkillNode[] = DEBT_TIERS.map((tier) => ({
     { cost: tier.spCost, effects: [{ kind: 'adr' as const, adr: tier.index }] },
   ],
 }));
-
-const CHANGE_REQUEST_COSTS: readonly number[] = Array.from(
-  { length: CHANGE_REQUEST.ranks },
-  (_, rank) => CHANGE_REQUEST.first * CHANGE_REQUEST.step ** rank
-);
 
 const LINE_TICKETS: readonly TicketTypeId[] = [
   'lint',
@@ -803,17 +793,6 @@ export const SKILL_NODES: readonly SkillNode[] = [
     requires: 'adr8',
     levels: [{ cost: 16_000_000, effects: [{ kind: 'none' }] }],
   },
-  {
-    id: 'changeRequest',
-    track: 'G',
-    requires: 'signoff',
-    levels: CHANGE_REQUEST_COSTS.map((cost) => ({
-      cost,
-      effects: [
-        { kind: 'overtime', mult: CHANGE_REQUEST.overtime, criteria: 1 },
-      ],
-    })),
-  },
 
   {
     id: 'secret',
@@ -837,8 +816,6 @@ export function adrPrice(index: number): number {
 export const SECRET_SKILL_ID = 'secret';
 
 export const FINAL_SKILL_ID = 'signoff';
-
-export const CHANGE_REQUEST_ID = 'changeRequest';
 
 export const isSkillHeading = (id: string): boolean =>
   SKILL_BY_ID.get(id)?.heading === true;

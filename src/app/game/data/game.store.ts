@@ -17,7 +17,7 @@ import {
 } from '../model/board.model';
 import type { CrewKind } from '../model/crew.model';
 import type { Consultancy } from '../model/consultancy.model';
-import { criteriaTotal, freshConsultancy } from '../model/consultancy.model';
+import { CRITERIA_COUNT, freshConsultancy } from '../model/consultancy.model';
 import {
   BURNDOWN_SAMPLES,
   BURNDOWN_SAMPLE_MS,
@@ -25,7 +25,6 @@ import {
   WONT_FIX_BUFFER,
   MAX_CATCHUP_MS,
   SAVE_VERSION,
-  SWEEP_RATE_WINDOW_MS,
   TICK_MS,
 } from '../model/game.consts';
 import type { Burndown, BurndownSample } from '../model/burndown.model';
@@ -308,7 +307,6 @@ export class GameStore {
 
   #cycleBilled = 0;
   #rares = signal(0);
-  #sweptAt: number[] = [];
   readonly raresTaken = this.#rares.asReadonly();
   #review = signal(0);
   readonly incidentReview = this.#review.asReadonly();
@@ -792,7 +790,7 @@ export class GameStore {
         criterion: criterion && {
           index: criterion.index,
           line: criterion.line,
-          of: criteriaTotal(state),
+          of: CRITERIA_COUNT,
           done: criterion.done,
           msLeft: economy.criterionMsLeft(state),
         },
@@ -1068,7 +1066,6 @@ export class GameStore {
     if (taken.length === 0) {
       return { ...NO_HARVEST, taken, refused };
     }
-    this.#countSweep(state.runMs);
 
     const rares = reached.tickets.filter(
       (ticket) => TICKET_TYPES[ticket.type].handOnly
@@ -1317,15 +1314,15 @@ export class GameStore {
     });
     return true;
   }
+
+  readonly assisted = computed(() => this.#state().assisted);
+
   /** Debug: accepts the engagement as it stands, which opens the post-mortem. */
   acceptNow(now: number): void {
     const state = this.#state();
     if (state.endedAt > 0) return;
     this.#state.set({ ...state, assisted: true, endedAt: now });
   }
-
-
-  readonly assisted = computed(() => this.#state().assisted);
 
   grant(budget: number, storyPoints: number): void {
     const state = this.#state();
@@ -1355,25 +1352,10 @@ export class GameStore {
     this.#previous.set(null);
     this.#closeFloats = [];
     this.#review.set(0);
-    this.#sweptAt = [];
     this.#state.set(freshConsultancy(now, SAVE_VERSION));
   }
 
-  #countSweep(runMs: number): void {
-    const since = runMs - SWEEP_RATE_WINDOW_MS;
-    this.#sweptAt = this.#sweptAt.filter((at) => at > since);
-    this.#sweptAt.push(runMs);
-  }
-
-  /** Sweeps that took a card, per second of recent game time. */
-  sweepsPerSec(): number {
-    const since = this.#state().runMs - SWEEP_RATE_WINDOW_MS;
-    const recent = this.#sweptAt.filter((at) => at > since).length;
-    return recent / (SWEEP_RATE_WINDOW_MS / 1000);
-  }
-
   hydrate(state: Consultancy, burndown?: Burndown): void {
-    this.#sweptAt = [];
     this.#state.set(state);
     this.#previous.set(state.lastOutcome);
     this.#calm(state.runMs);

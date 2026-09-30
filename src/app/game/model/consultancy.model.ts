@@ -9,7 +9,7 @@ import { SKILL_ROOT_ID } from './skill.model';
 import type { PurchaseId } from './balance/progression';
 import {
   ACCEPTANCE,
-  CRITERION_RETEST_SHARE,
+  CRITERION_SHARE,
   PURCHASE_IDS,
 } from './balance/progression';
 
@@ -71,13 +71,9 @@ export interface CriterionRun {
   readonly billed: number;
   /** What the line under test must bill for this criterion to sign clean. */
   readonly target: number;
-  /** Lines signed clean on their first test, lines re-tested, and criteria that timed out. */
+  /** Lines signed clean, and lines signed with findings. */
   readonly clean: readonly number[];
-  readonly retested: readonly number[];
-  /** Re-tests signed clean, and every line signed with findings. */
-  readonly passed: readonly number[];
   readonly flagged: readonly number[];
-  readonly reflagged: readonly number[];
   readonly findings: number;
 }
 
@@ -87,16 +83,12 @@ export const CRITERIA_COUNT = 9;
 export function criterionSlice(state: Consultancy): number {
   return (
     (Math.max(1, ACCEPTANCE.goal - state.signedBudget) / CRITERIA_COUNT) *
-    CRITERION_RETEST_SHARE
+    CRITERION_SHARE
   );
 }
 
-export function criteriaTotal(state: Consultancy): number {
-  return CRITERIA_COUNT + (state.skills['changeRequest'] ?? 0);
-}
-
 export function criteriaPassed(state: Consultancy): number {
-  return Math.min(criteriaTotal(state), state.criterion?.index ?? 0);
+  return Math.min(CRITERIA_COUNT, state.criterion?.index ?? 0);
 }
 
 export function resumed(state: Consultancy, now: number): Consultancy {

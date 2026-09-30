@@ -1034,10 +1034,6 @@ export const EN: Readonly<Record<string, string>> = {
   'approval.role.quorum-none': 'quorum not recorded',
   'approval.by.agent': 'Meridian Procurement Agent',
   'approval.role.procurement': 'automated, quorum not required',
-  'postmortem.badly.changes.one':
-    'One change request was accepted after the closeout was signed. It was not small.',
-  'postmortem.badly.changes':
-    '{{count}} change requests were accepted after the closeout was signed. Phase Two has been scheduled.',
   'adr.epic': 'Epic',
   'adr.subheading': 'Architecture Decision Record',
   'adr.acknowledge': 'Acknowledge',
@@ -1122,8 +1118,6 @@ export const EN: Readonly<Record<string, string>> = {
   'epic.7.name': 'The Phantom Rewrite',
   'epic.8.name': 'Rise of the Machines',
   'epic.acceptance.name': 'The Last Sign-Off',
-  'skill.effect.overtime':
-    '{{pct}} overtime during acceptance, and {{count}} more criterion to test',
   'skill.status.credit':
     'Approve on credit: {{owed}} SP owed, repaid from half of every later pickup',
   'hud.debt': 'repaying {{owed}} SP',
@@ -1134,19 +1128,6 @@ export const EN: Readonly<Record<string, string>> = {
     'PERFECT STORM — the whole board billed under escalation and hotfix',
   'release.phase.incident': 'Incident Review',
   'release.phase.incident.short': 'P0 Review',
-  'skill.changeRequest.blurb':
-    'The client has a few small asks before they sign. Each one multiplies the overtime every ticket bills, and adds one more criterion to test. Early ones pay for themselves. Late ones are scope creep.',
-  'skill.changeRequest.1.label': 'Small Change Request',
-  'skill.changeRequest.2.label': 'Minor Scope Adjustment',
-  'skill.changeRequest.3.label': 'Clarification of Scope',
-  'skill.changeRequest.4.label': 'Stakeholder Feedback',
-  'skill.changeRequest.5.label': 'Scope Creep',
-  'skill.changeRequest.6.label': 'Late-Breaking Requirement',
-  'skill.changeRequest.7.label': 'Out-of-Band Request',
-  'skill.changeRequest.8.label': 'Executive Ask',
-  'skill.changeRequest.9.label': 'Board-Level Priority',
-  'skill.changeRequest.10.label': 'Phase Two, Scoped',
-  'acceptance.criterion.retest': ' (RE-TEST)',
   'acceptance.criterion.0.label': 'CODE STYLE',
   'acceptance.criterion.1.label': 'BACKWARDS COMPATIBILITY',
   'acceptance.criterion.2.label': 'TEST SUITE',
@@ -1207,12 +1188,6 @@ export const EN: Readonly<Record<string, string>> = {
   'award.a-on-credit.label': 'Approved on credit',
   'award.a-on-credit.blurb':
     'Signed an ADR before it was paid for. Technical debt, but literal.',
-  'award.a-change-request.label': 'Just one small thing',
-  'award.a-change-request.blurb':
-    'Accept a change request during acceptance. It will not be the last.',
-  'award.a-scope-creep.label': 'Scope creep',
-  'award.a-scope-creep.blurb':
-    'Five change requests after the closeout was signed. The closeout has been re-signed.',
   'moment.closeout.heading': 'Closeout Record — Engagement Acceptance',
   'moment.closeout.subheading': 'Final decision of record',
   'moment.closeout.chip': 'Signed',
@@ -1222,7 +1197,7 @@ export const EN: Readonly<Record<string, string>> = {
   'moment.closeout.decision':
     'Enter formal acceptance. The client tests the delivery one criterion at a time, one line of work per criterion; a criterion is signed once its line has billed its share. Every ticket bills overtime until the last one is signed.',
   'moment.closeout.consequences':
-    'Work pours in at three times the rate. The line under test bills as if it were the newest work; a criterion billed in time signs clean and raises the overtime, one still open after fifty-five seconds of billing signs with findings. Open hotfixes, escalations and quarter ends are void. Change requests will arrive: each multiplies the overtime and adds a re-test of the weakest line.',
+    'Work pours in at three times the rate. The line under test bills as if it were the newest work; a criterion billed in time signs clean and raises the overtime, one still open after fifty-five seconds of billing signs with findings. Open hotfixes, escalations and quarter ends are void.',
   'moment.closeout.approved':
     'Meridian Procurement Agent (automated), on behalf of the Programme Board, quorum not required.',
   'moment.closeout.comments': 'LGTM.',
@@ -1230,26 +1205,6 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.stamp.by': 'Meridian Financial Group · signed without reading',
   'postmortem.well.criteria.all':
     'All {{total}} acceptance criteria verified. None of them by a human.',
-  'award.c-retest-0.label': 'Re-tested: code style',
-  'award.c-retest-0.blurb': 'Still consistently wrong.',
-  'award.c-retest-1.label': 'Re-tested: backwards compatibility',
-  'award.c-retest-1.blurb': 'Broken in exactly the same way, twice.',
-  'award.c-retest-2.label': 'Re-tested: test suite',
-  'award.c-retest-2.blurb': 'Green again, on the fourth retry.',
-  'award.c-retest-3.label': 'Re-tested: merge strategy',
-  'award.c-retest-3.blurb': 'Both sides kept, again. There are now four sides.',
-  'award.c-retest-4.label': 'Re-tested: documentation',
-  'award.c-retest-4.blurb':
-    'The whiteboard was wiped. The screenshot is canonical now.',
-  'award.c-retest-5.label': 'Re-tested: knowledge transfer',
-  'award.c-retest-5.blurb': 'The Loom now has a Loom explaining it.',
-  'award.c-retest-6.label': 'Re-tested: decommissioning',
-  'award.c-retest-6.blurb': 'The sunset date has been moved to next sunset.',
-  'award.c-retest-7.label': 'Re-tested: architecture',
-  'award.c-retest-7.blurb': 'The kickoff has been moved to the Monday after.',
-  'award.c-retest-8.label': 'Re-tested: performance',
-  'award.c-retest-8.blurb':
-    'The agents re-measured nothing and found no change.',
   'award.a-findings.label': 'Signed with findings',
   'award.a-findings.blurb':
     'A criterion ran out of time and was signed anyway. The findings were filed under Phase Two.',
@@ -1286,29 +1241,4 @@ export const EN: Readonly<Record<string, string>> = {
   'award.c-findings-7.blurb': 'The target architecture has been re-baselined.',
   'award.c-findings-8.blurb':
     'Performance will be measured once the agents agree on a metric.',
-  'skill.changeRequest.saves':
-    'Next re-tests {{line}} · the push ends about {{seconds}}s sooner',
-  'skill.changeRequest.costs':
-    'Next re-tests {{line}} · the push runs about {{seconds}}s longer',
-  'award.c-refound-0.label': 'Re-test with findings: code style',
-  'award.c-refound-1.label': 'Re-test with findings: backwards compatibility',
-  'award.c-refound-2.label': 'Re-test with findings: test suite',
-  'award.c-refound-3.label': 'Re-test with findings: merge strategy',
-  'award.c-refound-4.label': 'Re-test with findings: documentation',
-  'award.c-refound-5.label': 'Re-test with findings: knowledge transfer',
-  'award.c-refound-6.label': 'Re-test with findings: decommissioning',
-  'award.c-refound-7.label': 'Re-test with findings: architecture',
-  'award.c-refound-8.label': 'Re-test with findings: performance',
-  'award.c-refound-0.blurb': 'Still inconsistent, now consistently.',
-  'award.c-refound-1.blurb': 'It broke differently this time. Noted.',
-  'award.c-refound-2.blurb': 'Red on the fourth retry. The fifth is scheduled.',
-  'award.c-refound-3.blurb': 'Four sides, no agreement.',
-  'award.c-refound-4.blurb': 'The screenshot was of a different whiteboard.',
-  'award.c-refound-5.blurb':
-    'The Loom now has chapters. Nobody watched those either.',
-  'award.c-refound-6.blurb': 'The sunset date has a sunset date.',
-  'award.c-refound-7.blurb':
-    'The kickoff for the rewrite of the rewrite was rescheduled.',
-  'award.c-refound-8.blurb':
-    'The agents measured and disagreed with the measurement.',
 };

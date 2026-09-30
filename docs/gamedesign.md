@@ -407,7 +407,7 @@ client's procurement agent, comments "LGTM"), records the budget and billing it 
   newest rung's ticket ×`CRITERION_BONUS` 2 before its own multipliers, so a maxed old line hits
   hardest; its cards pulse pink (`UNDER_TEST`). Only what **that line** bills counts
   (`billUnderTest`, from the store's `#bank` and quarter bills, and the sim's
-  `underTestEuroPerSec`). A first test's target (`economy.criterionTarget`) is
+  `underTestEuroPerSec`). A criterion's target (`economy.criterionTarget`) is
   `CRITERION_FIRST_TEST_MS` 30 s of what the sim says its line bills at a steady sweep and the
   opening overtime (`underTestRate` in `util/sim.ts`, handed in by the store, the autoplayer and
   the sign-off purchase, so the economy stays unpriced; the sim prices it without any live buff
@@ -418,19 +418,9 @@ client's procurement agent, comments "LGTM"), records the budget and billing it 
   clean** once billed and at least `CRITERION_MIN_MS` 8 s old: it confirms its award
   (`c-criterion-<line>`) and adds `CRITERION_OVERTIME` 0.5 to the base ×2 overtime, so the push
   builds. At `CRITERION_MAX_MS` 55 s it **signs with findings**: no overtime, no clean award, a
-  `c-findings-<line>` toast instead (`c-refound-<line>` for a re-test; the first also earns
-  _Signed with findings_). The banner line
+  `c-findings-<line>` toast instead (the first also earns _Signed with findings_). The banner line
   counts the criterion, its multiplier, how far it is billed and the seconds left. Measured on
-  the advised run (`balance.spec`): 2.1 min.
-- **Change requests** (`changeRequest`, `CHANGE_REQUEST`: 10 ranks off `signoff`, 3 M SP doubling):
-  each multiplies overtime ×1.5 **and adds a criterion**, a re-test of the weakest line not yet
-  re-tested (`criterionLine`), which asks an absolute `CRITERION_RETEST_SHARE` 0.35 of a ninth of
-  the way to €20 Qa: quick for a strong line, findings for a thin one. Its award
-  (`c-retest-<line>`) needs a clean pass. The tree square says which line comes next and how many
-  seconds the request saves or costs (`changeRequestEstimate` in `util/advisor.ts`, which walks the
-  remaining criteria within their clamps, priced at the player's own sweeps a second over the last
-  `SWEEP_RATE_WINDOW_MS` 20 s of game time, `store.sweepsPerSec`); the advisor prices it at 1 sweep/s
-  and takes one the moment it saves time.
+  the advised run (`balance.spec`): 2.6 min.
 - **The closeout voids** the hotfixes, escalations and quarter ends held on the board
   (`#voidVouchers` in the store), so buffs cannot be banked into the push, and cancels every
   meeting; no invitation is sent during the push.
@@ -440,7 +430,7 @@ client's procurement agent, comments "LGTM"), records the budget and billing it 
 The run is accepted once every criterion is signed (`economy.accepted`, checked each store step
 and in the autoplayer); the budget passing €20 Qa on the way earns _Over budget_. An ACCEPTED
 stamp holds for 2.8 s before the post-mortem, which counts criteria verified and signed with
-findings and the change requests among what did not go well, and ends on the office filmstrip.
+findings, and ends on the office filmstrip.
 Closing the engagement plays the story (`console/feature/story/`, finale act `story`): each office
 the run reached, full-frame, with one narrator line (`story.<adr>`, `story.outside` with the run's
 totals), `STORY_FRAME_MS` 14 s each or a click; then the closing credits over the leaving party.

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ACCEPTANCE,
-  CHANGE_REQUEST,
   CREDIT_FROM_ADR,
   CREDIT_INTEREST,
   CRITERION_BONUS,
@@ -10,7 +9,7 @@ import {
   CRITERION_MIN_MS,
   CRITERION_OVERTIME,
   CRITERION_FIRST_TEST_MS,
-  CRITERION_RETEST_SHARE,
+  CRITERION_SHARE,
 } from '../model/balance/progression';
 import { INCIDENT_TOP_SHARE } from '../model/balance/flow';
 import {
@@ -29,8 +28,6 @@ import {
   AWARD_BY_ID,
   criterionAwardId,
   findingsAwardId,
-  refoundAwardId,
-  retestAwardId,
 } from '../model/award.model';
 import { FINAL_SKILL_ID, adrPrice } from '../model/skill.model';
 import { TICKET_TYPES } from '../model/ticket.model';
@@ -50,7 +47,7 @@ function place(
   return ticket!.id;
 }
 
-const SLICE = (ACCEPTANCE.goal / CRITERIA_COUNT) * CRITERION_RETEST_SHARE;
+const SLICE = (ACCEPTANCE.goal / CRITERIA_COUNT) * CRITERION_SHARE;
 
 /** Signed with nothing in the bank; `index` criteria signed, the current one on `line`. */
 const signed = (
@@ -70,10 +67,7 @@ const signed = (
       billed,
       target: SLICE,
       clean: [],
-      retested: [],
-      passed: [],
       flagged: [],
-      reflagged: [],
       findings: 0,
     },
     skills: { root: 1, [FINAL_SKILL_ID]: 1 },
@@ -129,13 +123,10 @@ describe('the acceptance criteria', () => {
     expect(AWARD_BY_ID.get(criterionAwardId(3))?.when(slow)).toBe(false);
   });
 
-  it('asks a first test for a steady sweep of its own line, a re-test the absolute share', () => {
+  it('asks a criterion for a steady sweep of its own line', () => {
     const rate = () => 1e12;
     expect(economy.criterionTarget(signed(0), 0, 2, rate)).toBe(
       1e12 * (CRITERION_FIRST_TEST_MS / 1000)
-    );
-    expect(economy.criterionTarget(signed(0), CRITERIA_COUNT, 2, rate)).toBe(
-      SLICE
     );
   });
 
@@ -190,44 +181,6 @@ describe('the closeout', () => {
     const incident = place(store, 'incident');
     expect(store.buySkill(FINAL_SKILL_ID)).toBe(true);
     expect(store.board.rares.map((ticket) => ticket.id)).toEqual([incident]);
-  });
-});
-
-describe('change requests', () => {
-  const asking = (ranks: number, index = 0, billed = 0, ranMs = 0) => {
-    const base = signed(index, billed, ranMs);
-    return { ...base, skills: { ...base.skills, changeRequest: ranks } };
-  };
-
-  it('multiply the overtime every ticket bills in acceptance', () => {
-    const ratio = CHANGE_REQUEST.overtime ** 3;
-    expect(
-      economy.overtime(asking(3)) / economy.overtime(asking(0))
-    ).toBeCloseTo(ratio, 6);
-  });
-
-  it('add a criterion each, re-testing the weakest line', () => {
-    const last = asking(1, CRITERIA_COUNT - 1, SLICE, CRITERION_MIN_MS);
-    const retest = economy.stepCriterion(last);
-    expect(economy.accepted(retest)).toBe(false);
-    expect(retest.criterion?.index).toBe(CRITERIA_COUNT);
-    const done = economy.stepCriterion({
-      ...retest,
-      runMs: retest.runMs + CRITERION_MAX_MS,
-    });
-    expect(done.criterion?.retested).toEqual([retest.criterion?.line]);
-    expect(economy.accepted(done)).toBe(true);
-    expect(
-      AWARD_BY_ID.get(retestAwardId(retest.criterion!.line))?.when(done)
-    ).toBe(false);
-    const clean = economy.stepCriterion({
-      ...retest,
-      runMs: retest.runMs + CRITERION_MIN_MS,
-      criterion: { ...retest.criterion!, billed: retest.criterion!.target },
-    });
-    expect(
-      AWARD_BY_ID.get(retestAwardId(retest.criterion!.line))?.when(clean)
-    ).toBe(true);
   });
 });
 
@@ -411,14 +364,5 @@ describe('the push calibration', () => {
       () => 1e12
     );
     expect(kept.criterion!.target).toBe(1e30);
-  });
-
-  it('toasts a re-test signed with findings apart from the first test', () => {
-    const base = signed(CRITERIA_COUNT, 0, CRITERION_MAX_MS);
-    const state = { ...base, skills: { ...base.skills, changeRequest: 1 } };
-    const signedOff = economy.stepCriterion(state);
-    const line = state.criterion!.line;
-    expect(AWARD_BY_ID.get(refoundAwardId(line))?.when(signedOff)).toBe(true);
-    expect(AWARD_BY_ID.get(findingsAwardId(line))?.when(signedOff)).toBe(false);
   });
 });

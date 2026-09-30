@@ -1055,10 +1055,6 @@ export const DE: Readonly<Record<string, string>> = {
   'approval.role.quorum-none': 'Beschlussfähigkeit nicht protokolliert',
   'approval.by.agent': 'Meridian Procurement Agent',
   'approval.role.procurement': 'automatisiert, Quorum nicht erforderlich',
-  'postmortem.badly.changes.one':
-    'Nach dem unterschriebenen Abschluss wurde ein Change Request angenommen. Er war nicht klein.',
-  'postmortem.badly.changes':
-    'Nach dem unterschriebenen Abschluss wurden {{count}} Change Requests angenommen. Phase zwei ist terminiert.',
   'adr.epic': 'Epic',
   'adr.subheading': 'Architecture Decision Record',
   'adr.acknowledge': 'Zur Kenntnis genommen',
@@ -1143,8 +1139,6 @@ export const DE: Readonly<Record<string, string>> = {
   'epic.7.name': 'Der Phantom-Rewrite',
   'epic.8.name': 'Rebellion der Maschinen',
   'epic.acceptance.name': 'Die letzte Abnahme',
-  'skill.effect.overtime':
-    '{{pct}} Überstunden während der Abnahme, und {{count}} Kriterium mehr zu prüfen',
   'skill.status.credit':
     'Auf Kredit genehmigen: {{owed}} SP Schulden, getilgt aus der Hälfte jedes späteren Tickets',
   'hud.debt': 'tilgt {{owed}} SP',
@@ -1155,19 +1149,6 @@ export const DE: Readonly<Record<string, string>> = {
     'PERFECT STORM — das ganze Board abgerechnet, unter Eskalation und Hotfix',
   'release.phase.incident': 'Incident-Review',
   'release.phase.incident.short': 'P0-Review',
-  'skill.changeRequest.blurb':
-    'Der Kunde hat vor der Unterschrift noch ein paar kleine Wünsche. Jeder vervielfacht die Überstunden jedes Tickets und fügt ein Kriterium zum Prüfen hinzu. Frühe zahlen sich aus. Späte sind Scope Creep.',
-  'skill.changeRequest.1.label': 'Kleiner Change Request',
-  'skill.changeRequest.2.label': 'Geringfügige Scope-Anpassung',
-  'skill.changeRequest.3.label': 'Klarstellung des Scopes',
-  'skill.changeRequest.4.label': 'Stakeholder-Feedback',
-  'skill.changeRequest.5.label': 'Scope Creep',
-  'skill.changeRequest.6.label': 'Kurzfristige Anforderung',
-  'skill.changeRequest.7.label': 'Anfrage am Prozess vorbei',
-  'skill.changeRequest.8.label': 'Wunsch der Geschäftsführung',
-  'skill.changeRequest.9.label': 'Priorität des Vorstands',
-  'skill.changeRequest.10.label': 'Phase zwei, mit Scope',
-  'acceptance.criterion.retest': ' (NACHTEST)',
   'acceptance.criterion.0.label': 'CODE-STIL',
   'acceptance.criterion.1.label': 'ABWÄRTSKOMPATIBILITÄT',
   'acceptance.criterion.2.label': 'TESTSUITE',
@@ -1229,12 +1210,6 @@ export const DE: Readonly<Record<string, string>> = {
   'award.a-on-credit.label': 'Auf Kredit genehmigt',
   'award.a-on-credit.blurb':
     'Ein ADR unterschrieben, bevor es bezahlt war. Technische Schulden, aber wörtlich.',
-  'award.a-change-request.label': 'Nur noch eine Kleinigkeit',
-  'award.a-change-request.blurb':
-    'Einen Change Request in der Abnahme annehmen. Es wird nicht der letzte sein.',
-  'award.a-scope-creep.label': 'Scope Creep',
-  'award.a-scope-creep.blurb':
-    'Fünf Change Requests nach unterschriebenem Abschluss. Der Abschluss wurde neu unterschrieben.',
   'moment.closeout.heading': 'Abschlussprotokoll — Projektabnahme',
   'moment.closeout.subheading': 'Letzte protokollierte Entscheidung',
   'moment.closeout.chip': 'Unterschrieben',
@@ -1244,7 +1219,7 @@ export const DE: Readonly<Record<string, string>> = {
   'moment.closeout.decision':
     'Formale Abnahme beginnen. Der Kunde prüft die Lieferung Kriterium für Kriterium, eine Arbeitslinie je Kriterium; ein Kriterium ist unterschrieben, sobald seine Linie ihren Anteil abgerechnet hat. Bis das letzte unterschrieben ist, rechnet jedes Ticket Überstunden ab.',
   'moment.closeout.consequences':
-    'Arbeit kommt dreimal so schnell herein. Die Linie im Test wird abgerechnet, als wäre sie die neueste Arbeit; ein rechtzeitig abgerechnetes Kriterium ist sauber unterschrieben und erhöht die Überstunden, eines, das nach fünfundfünfzig Sekunden Abrechnung noch offen ist, wird mit Befund unterschrieben. Offene Hotfixes, Eskalationen und Quartalsenden verfallen. Change Requests werden kommen: Jeder vervielfacht die Überstunden und setzt einen Nachtest der schwächsten Linie an.',
+    'Arbeit kommt dreimal so schnell herein. Die Linie im Test wird abgerechnet, als wäre sie die neueste Arbeit; ein rechtzeitig abgerechnetes Kriterium ist sauber unterschrieben und erhöht die Überstunden, eines, das nach fünfundfünfzig Sekunden Abrechnung noch offen ist, wird mit Befund unterschrieben. Offene Hotfixes, Eskalationen und Quartalsenden verfallen.',
   'moment.closeout.approved':
     'Meridian Procurement Agent (automatisiert), im Auftrag des Programme Boards, Quorum nicht erforderlich.',
   'moment.closeout.comments': 'LGTM.',
@@ -1252,29 +1227,6 @@ export const DE: Readonly<Record<string, string>> = {
   'postmortem.stamp.by': 'Meridian Financial Group · ungelesen unterschrieben',
   'postmortem.well.criteria.all':
     'Alle {{total}} Abnahmekriterien geprüft. Keines davon von einem Menschen.',
-  'award.c-retest-0.label': 'Nachgetestet: Code-Stil',
-  'award.c-retest-0.blurb': 'Immer noch einheitlich falsch.',
-  'award.c-retest-1.label': 'Nachgetestet: Abwärtskompatibilität',
-  'award.c-retest-1.blurb': 'Genau so kaputt wie vorher, zum zweiten Mal.',
-  'award.c-retest-2.label': 'Nachgetestet: Testsuite',
-  'award.c-retest-2.blurb': 'Wieder grün, im vierten Anlauf.',
-  'award.c-retest-3.label': 'Nachgetestet: Merge-Strategie',
-  'award.c-retest-3.blurb':
-    'Wieder beide Seiten behalten. Es gibt jetzt vier Seiten.',
-  'award.c-retest-4.label': 'Nachgetestet: Dokumentation',
-  'award.c-retest-4.blurb':
-    'Das Whiteboard wurde gewischt. Das Foto ist jetzt kanonisch.',
-  'award.c-retest-5.label': 'Nachgetestet: Wissenstransfer',
-  'award.c-retest-5.blurb': 'Das Loom hat jetzt ein Loom, das es erklärt.',
-  'award.c-retest-6.label': 'Nachgetestet: Abschaltung',
-  'award.c-retest-6.blurb':
-    'Das Abschaltdatum wurde auf den nächsten Sonnenuntergang verschoben.',
-  'award.c-retest-7.label': 'Nachgetestet: Architektur',
-  'award.c-retest-7.blurb':
-    'Das Kickoff wurde auf den Montag danach verschoben.',
-  'award.c-retest-8.label': 'Nachgetestet: Performance',
-  'award.c-retest-8.blurb':
-    'Die Agenten haben nichts neu gemessen und keine Änderung gefunden.',
   'award.a-findings.label': 'Mit Befund unterschrieben',
   'award.a-findings.blurb':
     'Ein Kriterium lief aus der Zeit und wurde trotzdem unterschrieben. Der Befund liegt jetzt in Phase zwei.',
@@ -1312,30 +1264,4 @@ export const DE: Readonly<Record<string, string>> = {
   'award.c-findings-7.blurb': 'Die Zielarchitektur wurde neu baselined.',
   'award.c-findings-8.blurb':
     'Die Performance wird gemessen, sobald sich die Agenten auf eine Metrik einigen.',
-  'skill.changeRequest.saves':
-    'Nächster Nachtest: {{line}} · der Endspurt endet etwa {{seconds}}s früher',
-  'skill.changeRequest.costs':
-    'Nächster Nachtest: {{line}} · der Endspurt dauert etwa {{seconds}}s länger',
-  'award.c-refound-0.label': 'Nachtest mit Befund: Code-Stil',
-  'award.c-refound-1.label': 'Nachtest mit Befund: Abwärtskompatibilität',
-  'award.c-refound-2.label': 'Nachtest mit Befund: Testsuite',
-  'award.c-refound-3.label': 'Nachtest mit Befund: Merge-Strategie',
-  'award.c-refound-4.label': 'Nachtest mit Befund: Dokumentation',
-  'award.c-refound-5.label': 'Nachtest mit Befund: Wissenstransfer',
-  'award.c-refound-6.label': 'Nachtest mit Befund: Abschaltung',
-  'award.c-refound-7.label': 'Nachtest mit Befund: Architektur',
-  'award.c-refound-8.label': 'Nachtest mit Befund: Performance',
-  'award.c-refound-0.blurb': 'Immer noch uneinheitlich, jetzt einheitlich.',
-  'award.c-refound-1.blurb': 'Diesmal anders kaputt. Notiert.',
-  'award.c-refound-2.blurb':
-    'Rot im vierten Anlauf. Der fünfte ist eingeplant.',
-  'award.c-refound-3.blurb': 'Vier Seiten, keine Einigung.',
-  'award.c-refound-4.blurb': 'Das Foto zeigt ein anderes Whiteboard.',
-  'award.c-refound-5.blurb':
-    'Das Loom hat jetzt Kapitel. Die hat auch niemand angesehen.',
-  'award.c-refound-6.blurb': 'Das Abschaltdatum hat ein Abschaltdatum.',
-  'award.c-refound-7.blurb':
-    'Das Kickoff für den Rewrite des Rewrites wurde verschoben.',
-  'award.c-refound-8.blurb':
-    'Die Agenten haben gemessen und widersprechen der Messung.',
 };

@@ -579,7 +579,6 @@ export class SkillScene extends PanZoomScene {
         INK.effect
       ),
       ...lines(this.#tipStatus(node), this.#statusInk(node)),
-      ...(node.note ? lines(node.note, SCREEN_INK.maxed) : []),
       ...lines(node.blurb, INK.blurb),
       ...(secret
         ? [

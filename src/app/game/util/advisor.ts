@@ -5,7 +5,6 @@
  */
 import type { Consultancy } from '../model/consultancy.model';
 import {
-  CHANGE_REQUEST_ID,
   FINAL_SKILL_ID,
   SECRET_SKILL_ID,
   SKILL_NODES,
@@ -13,16 +12,7 @@ import {
 import { MAX_TIER } from '../model/tier.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
-import {
-  ACCEPTANCE,
-  CHANGE_REQUEST,
-  CRITERION_FIRST_TEST_MS,
-  CRITERION_MAX_MS,
-  CRITERION_MIN_MS,
-  CRITERION_OVERTIME,
-  PURCHASE_IDS,
-} from '../model/balance/progression';
-import { CRITERIA_COUNT, criteriaTotal } from '../model/consultancy.model';
+import { PURCHASE_IDS } from '../model/balance/progression';
 import { SPAWNED_TICKET_IDS, SPAWNERS } from '../model/spawner.model';
 import * as economy from './economy';
 import * as purchase from './purchase';
@@ -107,108 +97,11 @@ function costOf(
   }
 }
 
-/**
- * Seconds left in the push, criterion by criterion: each line bills at the rate the line under
- * test bills now, scaled by its strength and the overtime by then, clamped to the criterion floor and cap.
- */
-function pushSecondsLeft(
-  state: Consultancy,
-  rate: number,
-  extra: number
-): number {
-  const run = state.criterion;
-  if (!run) return 0;
-  const total = criteriaTotal(state) + extra;
-  const multiplied = economy.overtime(state) / baseOvertime(state);
-  const boost = CHANGE_REQUEST.overtime ** extra;
-  const strengthNow = Math.max(1e-9, economy.lineStrength(state, run.line));
-  let clean = economy.criteriaVerified(state);
-  let retested = run.retested;
-  let seconds = 0;
-  for (let index = run.index; index < total; index += 1) {
-    const line =
-      index === run.index
-        ? run.line
-        : economy.criterionLine(state, index, retested);
-    if (index !== run.index && index < CRITERIA_COUNT) {
-      const opening =
-        (ACCEPTANCE.value + CRITERION_OVERTIME * clean) * multiplied * boost;
-      seconds +=
-        Math.max(
-          CRITERION_MIN_MS,
-          (CRITERION_FIRST_TEST_MS * ACCEPTANCE.value) / opening
-        ) / 1000;
-      clean += 1;
-      continue;
-    }
-    const target =
-      index === run.index
-        ? run.target - run.billed
-        : economy.criterionTarget(state, index, line);
-    const overtime =
-      (ACCEPTANCE.value + CRITERION_OVERTIME * clean) * multiplied * boost;
-    const pace =
-      (rate * (economy.lineStrength(state, line) / strengthNow) * overtime) /
-      economy.overtime(state);
-    const ran = index === run.index ? (state.runMs - run.sinceMs) / 1000 : 0;
-    const needs = pace > 0 ? target / pace : Number.POSITIVE_INFINITY;
-    const took = Math.min(
-      CRITERION_MAX_MS / 1000 - ran,
-      Math.max(CRITERION_MIN_MS / 1000 - ran, needs)
-    );
-    if (needs <= CRITERION_MAX_MS / 1000 - ran) clean += 1;
-    if (index >= CRITERIA_COUNT) retested = [...retested, line];
-    seconds += Math.max(0, took);
-  }
-  return seconds;
-}
-
-function baseOvertime(state: Consultancy): number {
-  return (
-    ACCEPTANCE.value + CRITERION_OVERTIME * economy.criteriaVerified(state)
-  );
-}
-
-export interface ChangeRequestEstimate {
-  /** The line the extra criterion would re-test, and the push seconds it saves (negative: costs). */
-  readonly line: number;
-  readonly saves: number;
-}
-
-export function changeRequestEstimate(
-  state: Consultancy,
-  clicksPerSec = 1
-): ChangeRequestEstimate | null {
-  const run = state.criterion;
-  if (!economy.inAcceptance(state) || !run) return null;
-  const rate = flow(state, { clicksPerSec }).underTestEuroPerSec;
-  if (rate <= 0) return null;
-  let queued = run.retested;
-  for (
-    let index = Math.max(CRITERIA_COUNT, run.index);
-    index < criteriaTotal(state);
-    index += 1
-  ) {
-    queued = [...queued, economy.criterionLine(state, index, queued)];
-  }
-  const line = economy.criterionLine(state, criteriaTotal(state), queued);
-  return {
-    line,
-    saves: pushSecondsLeft(state, rate, 0) - pushSecondsLeft(state, rate, 1),
-  };
-}
-
-/** A change request is worth taking only if the push, one criterion longer at its overtime, ends sooner. */
-function changeRequestSaves(state: Consultancy): boolean {
-  return (changeRequestEstimate(state)?.saves ?? 0) > 0;
-}
-
 function offers(state: Consultancy): Buy[] {
   const rich = { ...state, budget: UNLIMITED, storyPoints: UNLIMITED };
   const out: Buy[] = [];
   for (const node of SKILL_NODES) {
     if (node.id === SECRET_SKILL_ID || node.id === FINAL_SKILL_ID) continue;
-    if (node.id === CHANGE_REQUEST_ID && !changeRequestSaves(state)) continue;
     if (purchase.skillAvailable(state, node.id))
       out.push({ kind: 'skill', id: node.id });
   }
@@ -433,16 +326,6 @@ export function advise(state: Consultancy, policy: SimPolicy): Advice {
       score: 0,
     };
     return { eur: top('eur'), sp: toPick(state, policy, credit) };
-  }
-  if (
-    purchase.skillAvailable(state, CHANGE_REQUEST_ID) &&
-    changeRequestSaves(state)
-  ) {
-    const request = goalOf(state, CHANGE_REQUEST_ID);
-    return {
-      eur: top('eur'),
-      sp: toPick(state, policy, { ...request, then: null, score: 0 }),
-    };
   }
   const target = goalOf(state, goal);
   const sp = purchase.skillAvailable(state, goal)
