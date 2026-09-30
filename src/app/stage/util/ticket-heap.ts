@@ -19,7 +19,7 @@ import {
   WONT_FIX_FADE,
 } from '../model/board.consts';
 import { spawnerFor } from '../../game/model/spawner.model';
-import { LOGICAL_BOARD } from '../../game/model/geometry';
+import { BOARD_CAPACITY, LOGICAL_BOARD } from '../../game/model/geometry';
 import {
   ATLAS_KEY,
   cardFrame,
@@ -40,7 +40,13 @@ function sinkOf(fade: number): number {
 }
 
 /** Hand-only cards sit above falling work (the board's flyers are at 20) so a called card is never buried. */
-const DEPTH = { goldGlow: 9, layer: 10, glow: 20.5, rare: 21 } as const;
+const DEPTH = {
+  goldGlow: 9,
+  layer: 10,
+  tested: 10.5,
+  glow: 20.5,
+  rare: 21,
+} as const;
 const RARE_PULSE = 1.09;
 
 /** SpriteGPULayer's vertex shader scales the stored tint mode by 255. */
@@ -82,6 +88,10 @@ export class TicketHeap {
   };
   readonly #glowFree: number[] = [];
   readonly #glowSlot = new Map<number, number>();
+  /** The line under test draws above the offset overflow layers that would bury it. */
+  readonly #tested: Phaser.GameObjects.SpriteGPULayer;
+  readonly #testedFree: number[] = [];
+  readonly #testedSlot = new Map<number, number>();
 
   readonly #free: number[] = [];
   readonly #slotOf = new Map<number, number>();
@@ -127,6 +137,14 @@ export class TicketHeap {
     for (let i = GOLD_GLOW_CAPACITY - 1; i >= 0; i--) {
       this.#goldGlows.addMember(this.#hiddenGlow());
       this.#glowFree.push(i);
+    }
+
+    this.#tested = scene.add
+      .spriteGPULayer(this.#atlas, BOARD_CAPACITY)
+      .setDepth(DEPTH.tested);
+    for (let i = BOARD_CAPACITY - 1; i >= 0; i--) {
+      this.#tested.addMember(this.#hiddenMember());
+      this.#testedFree.push(i);
     }
 
     for (let slot = 0; slot < RARE_CAPACITY; slot++) {
@@ -262,6 +280,7 @@ export class TicketHeap {
 
   destroy(): void {
     this.#layer.destroy();
+    this.#tested.destroy();
     this.#goldGlows.destroy();
     for (const card of this.#rareCards) card.destroy();
     for (const glow of this.#rareGlows) glow.destroy();
@@ -283,6 +302,7 @@ export class TicketHeap {
       this.#rareSlot.delete(id);
     } else {
       this.#layer.editMember(slot, this.#hiddenMember());
+      this.#untest(id);
     }
     this.#free.push(slot);
     this.#slotOf.delete(id);
@@ -337,7 +357,17 @@ export class TicketHeap {
     this.#member.scaleY = 1;
     this.#member.alpha = fade;
     this.#tintRamp(ticket);
-    this.#layer.editMember(slot, this.#member);
+    const tested = this.#isTested(ticket)
+      ? (this.#testedSlot.get(ticket.id) ?? this.#testedFree.pop())
+      : undefined;
+    if (tested === undefined) {
+      this.#layer.editMember(slot, this.#member);
+      this.#untest(ticket.id);
+    } else {
+      this.#testedSlot.set(ticket.id, tested);
+      this.#tested.editMember(tested, this.#member);
+      this.#layer.editMember(slot, this.#hiddenMember());
+    }
     if (ticket.golden) this.#glowUnder(ticket.id, x, y, fade);
   }
 
@@ -354,12 +384,24 @@ export class TicketHeap {
     );
   }
 
-  #tintRamp(ticket: BoardTicket): void {
-    const member = this.#member;
-    if (
+  #isTested(ticket: BoardTicket): boolean {
+    return (
       this.#underTest !== null &&
       spawnerFor(ticket.type)?.adr === this.#underTest
-    ) {
+    );
+  }
+
+  #untest(id: number): void {
+    const slot = this.#testedSlot.get(id);
+    if (slot === undefined) return;
+    this.#tested.editMember(slot, this.#hiddenMember());
+    this.#testedSlot.delete(id);
+    this.#testedFree.push(slot);
+  }
+
+  #tintRamp(ticket: BoardTicket): void {
+    const member = this.#member;
+    if (this.#isTested(ticket)) {
       member.tintTopLeft = UNDER_TEST.ink;
       member.tintTopRight = UNDER_TEST.ink;
       member.tintBottomLeft = UNDER_TEST.ink;

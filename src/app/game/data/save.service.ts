@@ -1,5 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 
+import type { Burndown } from '../model/burndown.model';
 import type { Consultancy } from '../model/consultancy.model';
 import { freshConsultancy, resumed } from '../model/consultancy.model';
 import { SAVE_VERSION } from '../model/game.consts';
@@ -11,7 +12,19 @@ const AUTOSAVE_MS = 10_000;
 interface SaveFile {
   readonly version: number;
   readonly consultancy: Consultancy;
+  readonly burndown?: Burndown;
 }
+
+const isBurndown = (value: unknown): value is Burndown => {
+  const chart = value as Partial<Burndown> | null;
+  return (
+    typeof chart === 'object' &&
+    chart !== null &&
+    Array.isArray(chart.samples) &&
+    Array.isArray(chart.approvals) &&
+    typeof chart.runMs === 'number'
+  );
+};
 
 @Injectable({ providedIn: 'root' })
 export class SaveService {
@@ -29,7 +42,8 @@ export class SaveService {
     this.#store.hydrate(
       file
         ? resumed(file.consultancy, now)
-        : freshConsultancy(now, SAVE_VERSION)
+        : freshConsultancy(now, SAVE_VERSION),
+      isBurndown(file?.burndown) ? file?.burndown : undefined
     );
   }
 
@@ -51,6 +65,7 @@ export class SaveService {
     const file: SaveFile = {
       version: SAVE_VERSION,
       consultancy: this.#store.snapshot(),
+      burndown: this.#store.burndown(),
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(file));

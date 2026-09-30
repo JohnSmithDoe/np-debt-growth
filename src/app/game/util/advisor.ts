@@ -176,11 +176,12 @@ export interface ChangeRequestEstimate {
 }
 
 export function changeRequestEstimate(
-  state: Consultancy
+  state: Consultancy,
+  clicksPerSec = 1
 ): ChangeRequestEstimate | null {
   const run = state.criterion;
   if (!economy.inAcceptance(state) || !run) return null;
-  const rate = flow(state, { clicksPerSec: 1 }).underTestEuroPerSec;
+  const rate = flow(state, { clicksPerSec }).underTestEuroPerSec;
   if (rate <= 0) return null;
   let queued = run.retested;
   for (

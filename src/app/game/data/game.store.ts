@@ -25,6 +25,7 @@ import {
   WONT_FIX_BUFFER,
   MAX_CATCHUP_MS,
   SAVE_VERSION,
+  SWEEP_RATE_WINDOW_MS,
   TICK_MS,
 } from '../model/game.consts';
 import type { Burndown, BurndownSample } from '../model/burndown.model';
@@ -307,6 +308,7 @@ export class GameStore {
 
   #cycleBilled = 0;
   #rares = signal(0);
+  #sweptAt: number[] = [];
   readonly raresTaken = this.#rares.asReadonly();
   #review = signal(0);
   readonly incidentReview = this.#review.asReadonly();
@@ -1066,6 +1068,7 @@ export class GameStore {
     if (taken.length === 0) {
       return { ...NO_HARVEST, taken, refused };
     }
+    this.#countSweep(state.runMs);
 
     const rares = reached.tickets.filter(
       (ticket) => TICKET_TYPES[ticket.type].handOnly
@@ -1345,13 +1348,39 @@ export class GameStore {
     this.#previous.set(null);
     this.#closeFloats = [];
     this.#review.set(0);
+    this.#sweptAt = [];
     this.#state.set(freshConsultancy(now, SAVE_VERSION));
   }
 
-  hydrate(state: Consultancy): void {
+  #countSweep(runMs: number): void {
+    const since = runMs - SWEEP_RATE_WINDOW_MS;
+    this.#sweptAt = this.#sweptAt.filter((at) => at > since);
+    this.#sweptAt.push(runMs);
+  }
+
+  /** Sweeps that took a card, per second of recent game time. */
+  sweepsPerSec(): number {
+    const since = this.#state().runMs - SWEEP_RATE_WINDOW_MS;
+    const recent = this.#sweptAt.filter((at) => at > since).length;
+    return recent / (SWEEP_RATE_WINDOW_MS / 1000);
+  }
+
+  hydrate(state: Consultancy, burndown?: Burndown): void {
+    this.#sweptAt = [];
     this.#state.set(state);
     this.#previous.set(state.lastOutcome);
     this.#calm(state.runMs);
+    if (burndown) this.#resumeBurndown(burndown);
+  }
+
+  #resumeBurndown(chart: Burndown): void {
+    const { samples } = chart;
+    const last = samples.at(-1);
+    const before = samples.at(-2);
+    this.#sampleEvery =
+      last && before ? last.at - before.at : BURNDOWN_SAMPLE_MS;
+    this.#nextSampleAt = last ? last.at + this.#sampleEvery : 0;
+    this.#burndown.set(chart);
   }
 
   #calm(runMs: number): void {

@@ -272,7 +272,10 @@ export class StageService {
   }
 
   #changeRequestNote(): string | null {
-    const estimate = changeRequestEstimate(this.#store.state());
+    const estimate = changeRequestEstimate(
+      this.#store.state(),
+      this.#store.sweepsPerSec()
+    );
     if (!estimate) return null;
     const seconds = Math.round(Math.abs(estimate.saves));
     return this.#translate.instant(

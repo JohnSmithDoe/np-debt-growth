@@ -428,7 +428,9 @@ client's procurement agent, comments "LGTM"), records the budget and billing it 
   the way to €20 Qa: quick for a strong line, findings for a thin one. Its award
   (`c-retest-<line>`) needs a clean pass. The tree square says which line comes next and how many
   seconds the request saves or costs (`changeRequestEstimate` in `util/advisor.ts`, which walks the
-  remaining criteria within their clamps); the advisor takes one the moment it saves time.
+  remaining criteria within their clamps, priced at the player's own sweeps a second over the last
+  `SWEEP_RATE_WINDOW_MS` 20 s of game time, `store.sweepsPerSec`); the advisor prices it at 1 sweep/s
+  and takes one the moment it saves time.
 - **The closeout voids** the hotfixes, escalations and quarter ends held on the board
   (`#voidVouchers` in the store), so buffs cannot be banked into the push, and cancels every
   meeting; no invitation is sent during the push.
