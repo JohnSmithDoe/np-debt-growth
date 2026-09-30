@@ -408,7 +408,7 @@ client's procurement agent, comments "LGTM"), records the budget and billing it 
   hardest; its cards pulse pink (`UNDER_TEST`). Only what **that line** bills counts
   (`billUnderTest`, from the store's `#bank` and quarter bills, and the sim's
   `underTestEuroPerSec`). A criterion's target (`economy.criterionTarget`) is
-  `CRITERION_FIRST_TEST_MS` 30 s of what the sim says its line bills at a steady sweep and the
+  `CRITERION_FIRST_TEST_MS` 40 s of what the sim says its line bills at a steady sweep and the
   opening overtime (`underTestRate` in `util/sim.ts`, handed in by the store, the autoplayer and
   the sign-off purchase, so the economy stays unpriced; the sim prices it without any live buff
   window, and counts auto-close at a third since a full real board lets few auto-closed cards
@@ -420,7 +420,7 @@ client's procurement agent, comments "LGTM"), records the budget and billing it 
   builds. At `CRITERION_MAX_MS` 55 s it **signs with findings**: no overtime, no clean award, a
   `c-findings-<line>` toast instead (the first also earns _Signed with findings_). The banner line
   counts the criterion, its multiplier, how far it is billed and the seconds left. Measured on
-  the advised run (`balance.spec`): 2.6 min.
+  the advised run: hands-off 472 s with 8 findings; 202 / 173 s at 1 / 2 sweeps a second, every criterion clean.
 - **The closeout voids** the hotfixes, escalations and quarter ends held on the board
   (`#voidVouchers` in the store), so buffs cannot be banked into the push, and cancels every
   meeting; no invitation is sent during the push.

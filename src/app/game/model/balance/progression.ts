@@ -46,7 +46,7 @@ export const CRITERION_OVERTIME = 0.5;
 export const CRITERION_MIN_MS = 8_000;
 export const CRITERION_MAX_MS = 55_000;
 /** A first test asks this long of what its line bills at a steady sweep when it opens. */
-export const CRITERION_FIRST_TEST_MS = 30_000;
+export const CRITERION_FIRST_TEST_MS = 40_000;
 /** Priced without a line rate, a criterion asks this share of a ninth of the way to the goal. */
 export const CRITERION_SHARE = 0.35;
 
