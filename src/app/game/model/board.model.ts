@@ -1,9 +1,9 @@
 import type { TicketTypeId } from './ticket.model';
 import type { CrewKind } from './crew.model';
+import type { HazardId } from './hazard.model';
 import { TICKET_LIFE_MS } from './balance/flow';
 import {
-  HEAP_OVERFLOW_ROWS,
-  HEAP_SPAWN_GAP_ROWS,
+  HEAP_LAYERS,
   LOGICAL_BOARD,
   TICKET_SLOT,
   VOTE_BEAMS,
@@ -95,6 +95,7 @@ export interface Harvest {
   readonly sp: number;
   readonly big: boolean;
   readonly headline: string | null;
+  readonly declined: HazardId | null;
 }
 
 export interface Comeback {
@@ -121,10 +122,11 @@ export interface Board {
 }
 
 export const HEAP_COLS = Math.floor(LOGICAL_BOARD.width / TICKET_SLOT.width);
+/** Rows under the first vote beam; overflow stacks back over them in offset layers. */
 export const HEAP_FIELD_ROWS = Math.floor(
-  LOGICAL_BOARD.height / TICKET_SLOT.height
+  (LOGICAL_BOARD.height - VOTE_BEAMS.top) / TICKET_SLOT.height
 );
-export const HEAP_ROWS = HEAP_FIELD_ROWS + HEAP_OVERFLOW_ROWS;
+export const HEAP_ROWS = HEAP_FIELD_ROWS * HEAP_LAYERS;
 
 const HEAP_LEFT = (LOGICAL_BOARD.width - HEAP_COLS * TICKET_SLOT.width) / 2;
 const HEAP_FLOOR = LOGICAL_BOARD.height - TICKET_SLOT.height / 2;
@@ -134,7 +136,11 @@ export function cellX(col: number): number {
 }
 
 export function cellY(row: number): number {
-  return HEAP_FLOOR - row * TICKET_SLOT.height;
+  const layer = Math.floor(row / HEAP_FIELD_ROWS);
+  const lift = (layer * TICKET_SLOT.height) / HEAP_LAYERS;
+  return (
+    HEAP_FLOOR - (row - layer * HEAP_FIELD_ROWS) * TICKET_SLOT.height - lift
+  );
 }
 
 export function voteBeamY(index: number): number {
@@ -147,7 +153,7 @@ export function voteCount(mask: number): number {
   return count;
 }
 
-export const HEAP_SPAWN_ROWS = HEAP_FIELD_ROWS - HEAP_SPAWN_GAP_ROWS;
+export const HEAP_SPAWN_ROWS = HEAP_FIELD_ROWS;
 
 export function meetingSpot(id: number): { x: number; y: number } {
   const column = id % MEETING_ROOM.columns;

@@ -89,7 +89,11 @@ import { SpawnBudget } from '../util/spawn-budget';
 const crewed = (by: CloseAuthor): boolean => by !== 'you' && by !== 'auto';
 
 const roomIn = (state: Consultancy, slots: number): number =>
-  state.phase === 'hauling' ? 0 : Math.max(0, slots - state.sprintCount);
+  !economy.trainRuns(state)
+    ? Infinity
+    : state.phase === 'hauling'
+      ? 0
+      : Math.max(0, slots - state.sprintCount);
 
 const NO_HARVEST: Harvest = {
   taken: [],
@@ -98,6 +102,7 @@ const NO_HARVEST: Harvest = {
   sp: 0,
   big: false,
   headline: null,
+  declined: null,
 };
 
 const NO_WORK: CrewWork = { closed: [], byWomen: 0 };
@@ -168,6 +173,12 @@ interface LiveHazard {
 }
 
 type HazardKindOf = Hazard['kind'];
+
+/** A pending invitation can still be declined, so it outranks what merely counts down. */
+function noticeRank(live: LiveHazard): number {
+  if (live.kind === 'invitation') return live.landed ? 2 : 3;
+  return live.landed ? 0 : 1;
+}
 
 const hazardsOf = (kind: HazardKindOf): readonly Hazard[] =>
   HAZARDS_ENABLED ? HAZARDS.filter((row) => row.kind === kind) : [];
@@ -295,6 +306,8 @@ export class GameStore {
   #sampleEvery = BURNDOWN_SAMPLE_MS;
 
   #cycleBilled = 0;
+  #rares = signal(0);
+  readonly raresTaken = this.#rares.asReadonly();
   #review = signal(0);
   readonly incidentReview = this.#review.asReadonly();
   #outcome = signal<RoundOutcome | null>(null);
@@ -579,10 +592,12 @@ export class GameStore {
   }
 
   #stepTrain(state: Consultancy, dtMs: number): Consultancy {
+    if (!economy.trainRuns(state)) {
+      return state.phase === 'hauling' ? this.#trainBack(state) : state;
+    }
     if (state.phase === 'hauling') {
-      const held = economy.holdCriterion(state, dtMs);
-      const left = held.haulLeftMs - dtMs;
-      return left > 0 ? { ...held, haulLeftMs: left } : this.#trainBack(held);
+      const left = state.haulLeftMs - dtMs;
+      return left > 0 ? { ...state, haulLeftMs: left } : this.#trainBack(state);
     }
     const slots = economy.sprintSlots(state, this.#sky());
     return state.sprintCount >= slots ? this.#sendTrain(state, slots) : state;
@@ -689,7 +704,11 @@ export class GameStore {
   }
 
   #place(row: Hazard, runMs: number, state: Consultancy): boolean {
-    if (row.kind === 'invitation' && state.levels.manager > 0) return true;
+    if (
+      row.kind === 'invitation' &&
+      (state.levels.manager > 0 || economy.inAcceptance(state))
+    )
+      return true;
 
     if (row.kind === 'fact') {
       this.#live.push({
@@ -739,12 +758,13 @@ export class GameStore {
     }
   }
 
-  #decline(ticketId: number): void {
+  #decline(ticketId: number): HazardId | null {
     const at = this.#live.findIndex((live) => live.ticket === ticketId);
     const live = this.#live[at];
-    if (!live) return;
+    if (!live) return null;
     this.#live.splice(at, 1);
     this.#sky.set(this.#weatherNow());
+    return live.id;
   }
 
   #weatherNow(): Weather {
@@ -825,6 +845,7 @@ export class GameStore {
 
   hazardNotice(): {
     readonly id: HazardId;
+    readonly kind: HazardKindOf;
     readonly landed: boolean;
     readonly msLeft: number;
   } | null {
@@ -832,12 +853,12 @@ export class GameStore {
     const runMs = this.#state().runMs;
     let best: LiveHazard | null = null;
     for (const live of this.#live) {
-      if (live.kind !== 'fact') continue;
-      if (!best || (!live.landed && best.landed)) best = live;
+      if (!best || noticeRank(live) > noticeRank(best)) best = live;
     }
     if (!best) return null;
     return {
       id: best.id,
+      kind: best.kind,
       landed: best.landed,
       msLeft: Math.max(0, (best.landed ? best.until : best.at) - runMs),
     };
@@ -872,7 +893,9 @@ export class GameStore {
     const banked = this.#bankWork(state, closed, now);
     const buffs = armBuffs(state, closed, now);
 
-    const placed = Math.min(banked.took.length, roomIn(state, slots));
+    const placed = economy.trainRuns(state)
+      ? Math.min(banked.took.length, roomIn(state, slots))
+      : 0;
     if (placed > 0) {
       const slots = banked.took.slice(0, placed);
       this.#sprint.update((held) => [...held, ...slots]);
@@ -1044,9 +1067,14 @@ export class GameStore {
       return { ...NO_HARVEST, taken, refused };
     }
 
+    const rares = reached.tickets.filter(
+      (ticket) => TICKET_TYPES[ticket.type].handOnly
+    ).length;
+    if (rares > 0) this.#rares.update((count) => count + rares);
+    let declined: HazardId | null = null;
     for (const ticket of reached.tickets) {
       if (TICKET_TYPES[ticket.type].effect === 'decline') {
-        this.#decline(ticket.id);
+        declined = this.#decline(ticket.id) ?? declined;
       }
       comeBack(this.#board, ticket);
       removeTicket(this.#board, ticket);
@@ -1059,12 +1087,12 @@ export class GameStore {
     );
     this.#state.set(next);
     if (!reached.quarterEnd)
-      return { taken, refused, value, sp, big, headline };
+      return { taken, refused, value, sp, big, headline, declined };
     const jackpot =
       next.escalated && next.escalationFiresAt > now && next.hotfixUntil > now;
     const billed = this.#billWholeBoard(now, jackpot ? JACKPOT_BONUS : 1);
     if (!jackpot || billed <= 0) {
-      return { taken, refused, value, sp, big, headline };
+      return { taken, refused, value, sp, big, headline, declined };
     }
     const after = this.#state();
     this.#state.set({ ...after, lifetimeJackpots: after.lifetimeJackpots + 1 });
@@ -1075,6 +1103,7 @@ export class GameStore {
       sp,
       big: true,
       headline: 'board.jackpot',
+      declined,
     };
   }
 
@@ -1259,11 +1288,14 @@ export class GameStore {
     return true;
   }
 
-  /** The closeout voids the hotfixes, escalations and quarter ends held on the board. */
+  /** The closeout voids the hotfixes, escalations and quarter ends held on the board, and every meeting. */
   #voidVouchers(): void {
     for (const ticket of [...this.#board.rares]) {
-      if (VOIDED_AT_SIGNOFF.has(ticket.type)) removeTicket(this.#board, ticket);
+      if (VOIDED_AT_SIGNOFF.has(ticket.type) || ticket.type === 'invite')
+        removeTicket(this.#board, ticket);
     }
+    this.#live = this.#live.filter((live) => live.kind !== 'invitation');
+    this.#sky.set(this.#weatherNow());
   }
 
   buyOut(): void {

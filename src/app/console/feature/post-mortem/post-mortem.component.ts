@@ -10,26 +10,15 @@ import {
 
 import { FinaleService } from '../../../@shared/data/finale.service';
 import {
-  formatLongDate,
   formatMoney,
   formatQuantity,
   formatWhole,
 } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import { ACHIEVEMENTS } from '../../../game/model/award.model';
-import {
-  CHANGE_REQUEST_ID,
-  FINAL_SKILL_ID,
-} from '../../../game/model/skill.model';
+import { CHANGE_REQUEST_ID } from '../../../game/model/skill.model';
 import { tierNameKey } from '../../../game/model/tier.model';
-import {
-  APPROVALS,
-  CLIENT_NAME,
-  CLOSEOUT_APPROVAL,
-  ENGAGEMENT_KEY,
-  roleKey,
-  signatoryKey,
-} from '../../model/client.model';
+import { CLIENT_NAME, ENGAGEMENT_KEY } from '../../model/client.model';
 import { criteriaTotal } from '../../../game/model/consultancy.model';
 import { DoorService } from '../../data/door.service';
 import { burndownChart, CHART_BOX } from '../../util/burndown-chart';
@@ -41,12 +30,6 @@ interface HeadRate {
   readonly heads: number;
   readonly closed: number;
   readonly perHead: string;
-}
-
-interface Authorisation {
-  readonly index: number;
-  readonly title: string;
-  readonly signed: string;
 }
 
 const STAMP_MS = 2_800;
@@ -97,35 +80,6 @@ export class PostMortemComponent {
   toFinale(): void {
     this.#finale.open();
   }
-
-  readonly authorisations = computed<readonly Authorisation[]>(() => {
-    const rungs: Authorisation[] = [];
-    for (let index = 1; index <= this.#store.tier(); index += 1) {
-      const approval = APPROVALS[index];
-      if (!approval) continue;
-      rungs.push({
-        index,
-        title: `ADR-${index} — ${this.#say(tierNameKey(index))}`,
-        signed: this.#say('postmortem.signed', {
-          by: this.#say(signatoryKey(approval.by)),
-          role: this.#say(roleKey(approval.role)),
-          date: formatLongDate(approval.date),
-        }),
-      });
-    }
-    if (this.#store.skillRank(FINAL_SKILL_ID) > 0) {
-      rungs.push({
-        index: rungs.length + 1,
-        title: this.#say('postmortem.closeout'),
-        signed: this.#say('postmortem.signed.closeout', {
-          by: this.#say(signatoryKey(CLOSEOUT_APPROVAL.by)),
-          role: this.#say(roleKey(CLOSEOUT_APPROVAL.role)),
-          date: formatLongDate(CLOSEOUT_APPROVAL.date),
-        }),
-      });
-    }
-    return rungs;
-  });
 
   readonly filmstrip = computed<readonly OfficeFrame[]>(() =>
     officeFilmstrip(

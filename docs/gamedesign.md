@@ -14,7 +14,7 @@ The design as the code has it. Every number names the file it lives in; paths ar
 3. **You and the crew pick them up**, and with Triage Policy lint and bugs close themselves.
    Every pickup pays its value in €, and SP once the €25 `velocity` row is bought.
 4. **The sprint caps the pace.** A full sprint ships on the release train and the board waits
-   until it is back.
+   until it is back. The acceptance push has neither: every close ships.
 5. **€ buys supply, SP buys the tree.** The rail sells heads, rate rows and crew; the tree
    sells everything else, the ADRs included. `signoff` starts the acceptance push, which tests
    one line at a time; the run ends at €20 Qa.
@@ -79,7 +79,9 @@ which spends no time in the tree.
 6. **One sprint, one release train.** Closed work fills the sprint. A full sprint leaves on the
    train for `haulMs`, and collection is refused until it is back (`phase: 'hauling'`); refused
    cards bounce where they lie (`REFUSAL_BOUNCE`). The wait is the release, and it is meant to
-   be felt; the ceremony cuts shorten it.
+   be felt; the ceremony cuts shorten it. From sign-off (`economy.trainRuns` false) there is no
+   sprint cap and no train: a train out at sign-off comes straight home, closes no longer fill the
+   sprint, `ceilingPerSec` is unbounded, and the strip and HUD read _every close ships_.
 
 ```
 sprintSlots    = (SPRINT_SLOTS_BASE 100 + Σ slots) × (1 + Σ cans)
@@ -361,8 +363,10 @@ ADR-5, priced for that rung's SP income): coaches on the lane edge hold
 votes live for `VOTE_ON_MS` 1.4 s of every `VOTE_CYCLE_MS` 4 s, offset from each other. A
 non-golden ticket that lands below a live vote's beam gains `VOTE_BONUS_BASE` 45 SP + 15 a `deck` rank.
 The beams sit in board units (`VOTE_BEAMS`, `voteBeamY`), so a ticket landing above one is passed over;
-decided at spawn from the landing cell and kept on the ticket as `voteMask`, one bit per beam. New work scatters only below the top `HEAP_SPAWN_GAP_ROWS`
-field rows, so it falls through the beams; a crowded board stacks above them and misses the vote.
+decided at spawn from the landing cell and kept on the ticket as `voteMask`, one bit per beam. The
+heap's `HEAP_FIELD_ROWS` all lie under the first beam, so every card falls through at least one;
+a crowded board stacks `HEAP_LAYERS` 3 offset layers over the same field instead of rising into
+the spawner lane.
 The stage scales the board separately across and down (`board-scene.ts` `#layout`), so y 100 always
 sits `VOTES.belowSpawners` under the fixed spawner path and the floor on the sprint strip; round
 things (sweep ring, pizza) use √(x·y), so the hand covers the board area the sim prices. Drawn by `stage/scene/vote-beams.ts`: the beams rest dim, and a beam
@@ -410,8 +414,7 @@ client's procurement agent, comments "LGTM"), records the budget and billing it 
   window, and counts auto-close at a third since a full real board lets few auto-closed cards
   live out their life): every build can sign it clean, a better hand signs it sooner, and the
   overtime earned since makes it quicker. Buying into the line under test raises its target
-  (`economy.recalibrate`), and the clock stands still while the train is out
-  (`economy.holdCriterion`). A criterion **signs
+  (`economy.recalibrate`). A criterion **signs
   clean** once billed and at least `CRITERION_MIN_MS` 8 s old: it confirms its award
   (`c-criterion-<line>`) and adds `CRITERION_OVERTIME` 0.5 to the base ×2 overtime, so the push
   builds. At `CRITERION_MAX_MS` 55 s it **signs with findings**: no overtime, no clean award, a
@@ -427,15 +430,19 @@ client's procurement agent, comments "LGTM"), records the budget and billing it 
   seconds the request saves or costs (`changeRequestEstimate` in `util/advisor.ts`, which walks the
   remaining criteria within their clamps); the advisor takes one the moment it saves time.
 - **The closeout voids** the hotfixes, escalations and quarter ends held on the board
-  (`#voidVouchers` in the store), so buffs cannot be banked into the push.
+  (`#voidVouchers` in the store), so buffs cannot be banked into the push, and cancels every
+  meeting; no invitation is sent during the push.
 - **Buffs** keep their own rate in the push: `ACCEPTANCE.spawn` multiplies work, not hand-only
   cards, so hotfix and escalation are windows to time rather than a constant.
 
 The run is accepted once every criterion is signed (`economy.accepted`, checked each store step
 and in the autoplayer); the budget passing €20 Qa on the way earns _Over budget_. An ACCEPTED
 stamp holds for 2.8 s before the post-mortem, which counts criteria verified and signed with
-findings, lists the closeout among the decisions of record and the change requests among what did
-not go well. No prestige.
+findings and the change requests among what did not go well, and ends on the office filmstrip.
+Closing the engagement plays the story (`console/feature/story/`, finale act `story`): each office
+the run reached, full-frame, with one narrator line (`story.<adr>`, `story.outside` with the run's
+totals), `STORY_FRAME_MS` 9 s each or a click; then the closing credits over the leaving party.
+No prestige.
 
 **Approval on credit** (`purchase.creditOffer` / `approveOnCredit`): from ADR-4
 (`CREDIT_FROM_ADR`), the next ADR, or the closeout after ADR-8, can be approved holding
@@ -476,7 +483,8 @@ Paid at pickup. There is no invoice; nothing past sprint scope is ever priced.
 
 - **Invitations** (from tier 1): an `invite` card lands; sweep it within `INVITATION_WINDOW_MS`
   4 s to decline, or the crew go to a meeting (all-hands 10 s, compliance 6 s, retro 8 s, reorg
-  10 s). An Account Manager declines them all for you.
+  10 s). The board's banner says so while the card waits and while the meeting runs, and outranks
+  a fact; a decline floats _Declined_. An Account Manager declines them all for you.
 - **Facts** (announced `FACT_COUNTDOWN_MS` 5 s ahead on the board's banner):
   - `freeze` (tier 3): sprint scope ×0.5 for 25 s. Trains leave twice as often, which feeds
     the prod-incident trick.
@@ -523,8 +531,8 @@ as the sim's; the criterion clamps (8–40 s) bound it either way. `data/sim.spe
 states on a real board (four seeds, averaged) and holds the sim within ×1.5, and plays a whole advised run on a real
 board and holds its acceptance within ×1.1 of the sim's, because per-tier error compounds
 over a run.
-Only the 476 field cells are sweepable; the rest of the 600 stack in overflow rows above the
-field, and the sim counts that.
+All 600 cards lie on the 374-cell field (three offset layers), so a click's reach grows with
+density past one layer, and the sim counts that.
 
 `util/autoplay.ts` plays a whole run on the sim: earn for a second, spend like a player
 (`DEFAULT_POLICY`: 1 sweep/s, a quarter of the budget per purchase, cheapest first;

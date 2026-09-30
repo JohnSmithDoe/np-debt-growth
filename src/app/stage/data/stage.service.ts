@@ -52,7 +52,9 @@ export class StageService {
   #switching = false;
 
   #wanted = computed<StageMode>(() =>
-    this.#finale.act() === 'closed' ? this.#modes.mode() : 'finale'
+    this.#finale.act() === 'closed' || this.#finale.act() === 'story'
+      ? this.#modes.mode()
+      : 'finale'
   );
 
   protected readonly follow = effect(() => {
@@ -250,6 +252,7 @@ export class StageService {
       seniorPoolSeat: (seat) => store.seniorPoolSeat(seat),
       harvest: (ids: readonly number[]) => store.harvest(ids),
       running: () => store.running(),
+      trainRuns: () => !store.inAcceptance(),
       roundLeftMs: () => store.roundLeftMs(),
       haulMs: () => store.haulMs(),
       releasePhases: () => store.releasePhases(),

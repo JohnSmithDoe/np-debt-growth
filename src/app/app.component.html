@@ -51,7 +51,13 @@
     </div>
     <div class="round">
       <dt>{{ 'hud.round' | translate }}</dt>
-      <dd>{{ roundSeq() }} · {{ roundLabel() }}</dd>
+      <dd>
+        @if (accepting()) {
+          {{ 'hud.round.acceptance' | translate }}
+        } @else {
+          {{ roundSeq() }} · {{ roundLabel() }}
+        }
+      </dd>
     </div>
     <div class="sprint">
       <dt [title]="'hud.epic' | translate: { name: epic() | translate }">
@@ -59,7 +65,9 @@
         {{ 'hud.epic' | translate: { name: epic() | translate } }}
       </dt>
       <dd>
-        @if (running()) {
+        @if (accepting()) {
+          <span class="muted">{{ 'hud.sprint.uncapped' | translate }}</span>
+        } @else if (running()) {
           {{ sprintCount() }}/{{ sprintSlots() }}
           <span class="pending">{{ money(sprintValue()) }}</span>
           @if (canFull()) {
@@ -69,9 +77,11 @@
           <span class="muted">—</span>
         }
       </dd>
-      <span class="gauge" [class.full]="canFull()" aria-hidden="true">
-        <span class="fill" [style.width.%]="sprintFill()"></span>
-      </span>
+      @if (!accepting()) {
+        <span class="gauge" [class.full]="canFull()" aria-hidden="true">
+          <span class="fill" [style.width.%]="sprintFill()"></span>
+        </span>
+      }
     </div>
   </dl>
   <div class="controls">
@@ -137,5 +147,6 @@
 <cb-help-modal />
 <cb-moment-modal />
 <cb-post-mortem />
+<cb-story />
 <cb-finale />
 <cb-debug-bar />

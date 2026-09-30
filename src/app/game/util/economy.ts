@@ -439,12 +439,6 @@ export function recalibrate(state: Consultancy, rate: LineRate): Consultancy {
 }
 
 /** The criterion clock stands still while the train is out: nothing can be billed then. */
-export function holdCriterion(state: Consultancy, ms: number): Consultancy {
-  const run = state.criterion;
-  if (!run || !inAcceptance(state)) return state;
-  return { ...state, criterion: { ...run, sinceMs: run.sinceMs + ms } };
-}
-
 export function billUnderTest(state: Consultancy, euros: number): Consultancy {
   const run = state.criterion;
   if (!run || euros <= 0 || !inAcceptance(state)) return state;
@@ -516,8 +510,14 @@ export function sprintRoom(
   state: Consultancy,
   weather: Weather = CALM
 ): number {
+  if (!trainRuns(state)) return Infinity;
   if (state.phase === 'hauling') return 0;
   return Math.max(0, sprintSlots(state, weather) - state.sprintCount);
+}
+
+/** The acceptance push ships every close as it lands: no sprint cap, no train. */
+export function trainRuns(state: Consultancy): boolean {
+  return !inAcceptance(state);
 }
 
 export function releasePhases(state: Consultancy): readonly ReleasePhase[] {
@@ -606,6 +606,7 @@ function seniorsPreferTop(state: Consultancy): boolean {
 }
 
 export function ceilingPerSec(state: Consultancy): number {
+  if (!trainRuns(state)) return Infinity;
   return sprintSlots(state) / (haulMs(state) / 1000);
 }
 

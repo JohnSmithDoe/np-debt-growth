@@ -1,4 +1,4 @@
-@if (act() !== 'closed') {
+@if (act() === 'roll' || act() === 'curtain') {
   <div class="finale" [class.curtain]="act() === 'curtain'">
     @if (act() === 'roll') {
       <div class="lane">

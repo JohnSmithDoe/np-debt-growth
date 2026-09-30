@@ -24,6 +24,7 @@ import { DebugBarComponent } from './console/feature/debug-bar/debug-bar.compone
 import { AchievementsPanelComponent } from './console/feature/achievements-panel/achievements-panel.component';
 import { SupplyPanelComponent } from './console/feature/supply-panel/supply-panel.component';
 import { FinaleComponent } from './console/feature/finale/finale.component';
+import { StoryComponent } from './console/feature/story/story.component';
 import { PostMortemComponent } from './console/feature/post-mortem/post-mortem.component';
 import { HelpModalComponent } from './console/feature/help-modal/help-modal.component';
 import { SettingsModalComponent } from './console/feature/settings-modal/settings-modal.component';
@@ -58,6 +59,7 @@ import { adrNodeId, epicKey, MAX_TIER } from './game/model/tier.model';
     TitleScreenComponent,
     PostMortemComponent,
     FinaleComponent,
+    StoryComponent,
     SettingsModalComponent,
     HelpModalComponent,
     RollingNumberDirective,
@@ -112,7 +114,9 @@ export class AppComponent {
     return slots <= 0 ? 0 : Math.min(100, (this.sprintCount() / slots) * 100);
   });
 
-  readonly closes = this.#store.sprint;
+  readonly closes = computed(() =>
+    this.#store.inAcceptance() ? undefined : this.#store.sprint()
+  );
 
   readonly goal = computed(() => {
     if (!this.treeOpen()) return null;
@@ -138,6 +142,7 @@ export class AppComponent {
 
   readonly roundSeq = this.#store.roundSeq;
   readonly running = this.#store.running;
+  readonly accepting = this.#store.inAcceptance;
   readonly canFull = this.#store.canFull;
   readonly roundLabel = computed(() =>
     this.running()

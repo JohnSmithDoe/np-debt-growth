@@ -6,11 +6,7 @@ import type { Consultancy } from '../model/consultancy.model';
 import type { CrewKind } from '../model/crew.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
-import {
-  HEAP_COLS,
-  HEAP_FIELD_ROWS,
-  HEAP_SPAWN_ROWS,
-} from '../model/board.model';
+import { HEAP_COLS, HEAP_FIELD_ROWS } from '../model/board.model';
 import {
   BOARD_CAPACITY,
   CARD_HIT,
@@ -60,8 +56,8 @@ interface Stream {
 const BOARD_AREA = LOGICAL_BOARD.width * LOGICAL_BOARD.height;
 const DENSITY_PASSES = 8;
 const OVERSEER_FOCUS = 1;
+/** One heap layer; cards past it stack over the same area. */
 const FIELD_CELLS = HEAP_COLS * HEAP_FIELD_ROWS;
-const SPAWN_CELLS = HEAP_COLS * HEAP_SPAWN_ROWS;
 
 const CLOSERS: readonly CrewKind[] = ['seniors', 'juniors'];
 
@@ -214,10 +210,6 @@ function cellsTouched(radius: number): number {
   return mean;
 }
 
-function spreadOver(density: number): number {
-  return Math.min(FIELD_CELLS, Math.max(SPAWN_CELLS, density));
-}
-
 function crewCapacity(
   state: Consultancy,
   crew: CrewKind,
@@ -230,7 +222,7 @@ function crewCapacity(
 
   const batch = economy.crewBatch(state, crew);
   const sweep = economy.crewSweepRadius(state, crew);
-  const near = (claimable * cellsInReach(sweep)) / spreadOver(density);
+  const near = (claimable * cellsInReach(sweep)) / FIELD_CELLS;
   const carried = Math.min(batch, 1 + near);
   const speed = economy.crewWalkSpeed(state, crew);
   const every = economy.crewWomanEvery(crew);
@@ -302,10 +294,8 @@ function collect(
     aimed -= take;
   }
   const radius = economy.clickRadius(state);
-  const onField = Math.min(density, FIELD_CELLS);
   const others =
-    (Math.max(0, onField - 1) * cellsTouched(radius)) /
-    (spreadOver(density) - 1);
+    (Math.max(0, density - 1) * cellsTouched(radius)) / (FIELD_CELLS - 1);
   takeMixed(all, policy.clicksPerSec * others, 'hand');
 
   const auto = economy.autoClosed(state);
@@ -430,8 +420,6 @@ export function flow(live: Consultancy, policy: SimPolicy): Flow {
     (sum, s) => sum + s.left + s.hand + s.crew + s.auto,
     0
   );
-  const density = board.density;
-
   const collected = all.reduce((sum, s) => sum + s.hand + s.crew + s.auto, 0);
   const lanes = economy.ceilingPerSec(state);
   const scale = lanes > 0 ? 1 / (1 + collected / lanes) : 0;
@@ -443,7 +431,6 @@ export function flow(live: Consultancy, policy: SimPolicy): Flow {
   const pays = economy.pickupsPaySp(state);
   const votes = pays
     ? (economy.coachCount(state) *
-        Math.min(1, SPAWN_CELLS / Math.max(1, density)) *
         VOTE_ON_MS *
         economy.voteBonusPerCrossing(state)) /
       VOTE_CYCLE_MS

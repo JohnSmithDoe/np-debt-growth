@@ -349,7 +349,11 @@ describe("an unattended run keeps cycling (C1's successor)", () => {
 
   it('hauls again and again for a player who never touches a button', () => {
     const store = new GameStore();
-    store.hydrate(fullyLevelled(40, 4, 5));
+    const levelled = fullyLevelled(40, 4, 5);
+    store.hydrate({
+      ...levelled,
+      skills: { ...levelled.skills, [FINAL_SKILL_ID]: 0 },
+    });
     for (let ms = 100; ms <= IDLE_CYCLE_MS; ms += 100) store.advanceTo(ms);
     expect(store.lifetimeRounds()).toBeGreaterThan(1);
   });

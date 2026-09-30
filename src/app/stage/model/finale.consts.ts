@@ -4,15 +4,13 @@
 export const FINALE_ART = {
   key: 'cb-finale-party',
   url: 'assets/art/screen/finale-party.webp',
-  width: 1024,
-  height: 512,
-  footY: 400,
-  left: 270,
-  right: 770,
-  buffet: { x: 360, y: 430 },
-  decks: { x: 700, y: 400 },
-  heightShare: 0.64,
-  widthShare: 1.3,
+  width: 1216,
+  height: 656,
+  floorY: 420,
+  left: 340,
+  right: 1070,
+  buffet: { x: 600, y: 545 },
+  decks: { x: 960, y: 490 },
 } as const;
 
 export const FINALE_CAST = {

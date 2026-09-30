@@ -85,20 +85,6 @@
         </ul>
       </section>
 
-      @if (authorisations().length > 0) {
-        <section>
-          <h4>{{ 'postmortem.record' | translate }}</h4>
-          <ul class="record">
-            @for (rung of authorisations(); track rung.index) {
-              <li>
-                {{ rung.title }}<br />
-                <span class="muted small">{{ rung.signed }}</span>
-              </li>
-            }
-          </ul>
-        </section>
-      }
-
       <section>
         <h4>{{ 'postmortem.actions' | translate }}</h4>
         <ul>
@@ -109,7 +95,6 @@
       </section>
 
       <section>
-        <h4>{{ 'postmortem.rooms' | translate }}</h4>
         <ol class="filmstrip">
           @for (frame of filmstrip(); track frame.index) {
             <li [class.missed]="frame.missed">

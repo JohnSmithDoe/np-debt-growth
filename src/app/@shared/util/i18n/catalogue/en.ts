@@ -13,8 +13,17 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.none': 'Opens the programme',
   'skill.effect.floorPlate': 'No effect of its own: opens the next room',
   'skill.effect.topOfBand': 'Seniors take the biggest ticket first',
+  'strip.shipping': 'EVERY CLOSE SHIPS',
   'strip.collecting': 'COLLECTING',
   'strip.releasing': 'RELEASING',
+  'board.hazard.fact.due': '{{name}} IN {{seconds}}s',
+  'board.hazard.fact.on': '{{name}} · {{seconds}}s',
+  'board.hazard.invitation.due':
+    '{{name}} IN {{seconds}}s · SWEEP THE INVITATION TO DECLINE',
+  'board.hazard.invitation.on':
+    '{{name}} · EVERYBODY ATTENDS, NOBODY WORKS · {{seconds}}s',
+  'board.declined': 'DECLINED',
+  'board.declined.caption': '{{meeting}} declined · the crew keep working',
   'board.release.title': 'RELEASE TRAIN',
   'board.release.hint':
     'The sprint is shipping. Nothing is picked up until the train is back.',
@@ -215,6 +224,8 @@ export const EN: Readonly<Record<string, string>> = {
   'hud.epic': 'Epic: {{name}}',
   'hud.round': 'Round',
   'hud.round.open': 'open',
+  'hud.round.acceptance': 'continuous',
+  'hud.sprint.uncapped': 'uncapped',
   'hud.round.release': 'release {{seconds}}s',
   'hud.settings': 'Settings',
   'hud.sprint': 'Sprint',
@@ -259,6 +270,27 @@ export const EN: Readonly<Record<string, string>> = {
   'finale.roll.seniors': 'Seniors',
   'finale.skip': 'Skip to the end',
   'finale.stage.cake': 'too much cake',
+  'story.label': 'The story of the engagement',
+  'story.next': 'Next',
+  'story.skip': 'Skip to the credits',
+  'story.1':
+    'It began, as these things do, with a framework nobody was allowed to upgrade. The consultancy looked at it, looked at the rate card, and decided it was perfect.',
+  'story.2':
+    'Soon the team found that the fastest way to write a service was to copy the last one. And the one before that. The wiki called it a pattern. The invoices called it growth.',
+  'story.3':
+    'When the backlog outgrew the building, the work went round the planet. The office never slept again. It simply stopped being in any one time zone.',
+  'story.4':
+    'Then came the tool that wrote the code itself. It was fluent, confident and wrong, which, the partners noted, was also the job description.',
+  'story.5':
+    'One engineer closed more tickets than everyone else combined, so they were given the keys to main. Nobody asked for them back until they had already left.',
+  'story.6':
+    'After the rockstar went, the team found services that nobody owned. They were left running. At three in the morning, they still call.',
+  'story.7':
+    'The only way out was to start again. So a second system rose beside the first, and the consultancy billed for both, and for every argument between them.',
+  'story.8':
+    'At last the work began to do itself. Agents wrote the pull requests, agents approved them, and a human was kept in the diagram, for reassurance.',
+  'story.outside':
+    '{{client}} signed without reading. {{closed}} tickets were closed and {{billed}} was billed, and the backlog is exactly as long as it ever was. From the outside, the tower looks fine.',
   'postmortem.finale': 'Close the engagement',
   'postmortem.no-tier': 'None approved',
   'skill.golden.1.label': 'Partner-Only Work',
@@ -1002,8 +1034,6 @@ export const EN: Readonly<Record<string, string>> = {
   'approval.role.quorum-none': 'quorum not recorded',
   'approval.by.agent': 'Meridian Procurement Agent',
   'approval.role.procurement': 'automated, quorum not required',
-  'postmortem.closeout': 'Closeout — Engagement Acceptance',
-  'postmortem.signed.closeout': '{{by}}, {{role}} — {{date}}. Comments: LGTM.',
   'postmortem.badly.changes.one':
     'One change request was accepted after the closeout was signed. It was not small.',
   'postmortem.badly.changes':
@@ -1030,11 +1060,8 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.legend.adr': 'ADR approved',
   'postmortem.well': 'What went well',
   'postmortem.badly': 'What did not go well',
-  'postmortem.record': 'Decisions of record',
   'postmortem.actions': 'Action items',
-  'postmortem.rooms': 'The engagement, room by room',
   'postmortem.outside': 'The engagement, from outside',
-  'postmortem.signed': '{{by}}, {{role}} — {{date}}. Comments: —',
   'postmortem.well.closed': '{{closed}} tickets closed over the engagement.',
   'postmortem.well.billed':
     '{{billed}} billed to {{client}}, across {{sprints}} sprints.',

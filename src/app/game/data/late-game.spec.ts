@@ -390,12 +390,13 @@ describe('the push calibration', () => {
     expect(underTestRate(live)).toBeCloseTo(underTestRate(state), 6);
   });
 
-  it('stops the criterion clock while the train is out', () => {
+  it('ships every close with no sprint cap and no train', () => {
     const store = storeWith(signed(0));
     store.endRoundNow(0);
-    const before = store.snapshot().criterion!.sinceMs;
     store.advanceTo(500);
-    expect(store.snapshot().criterion!.sinceMs).toBeGreaterThan(before);
+    expect(store.hauling()).toBe(false);
+    expect(store.snapshot().sprintCount).toBe(0);
+    expect(economy.sprintRoom(store.snapshot())).toBe(Infinity);
   });
 
   it('raises a first test when its line is bought into, never lowers it', () => {

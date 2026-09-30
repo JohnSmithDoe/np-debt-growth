@@ -71,7 +71,7 @@ income that doesn't come from a close, and no offline progress.
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
 row costs euros. The last node, `signoff` (16 M SP, off ADR-8), does not end the run: it
 starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: spawns ×3, billing
-`economy.overtime`), nine criteria, one line under test at a time (`economy.criterionNow`: it bills
+`economy.overtime`; no sprint cap, no train, no meetings — `economy.trainRuns`), nine criteria, one line under test at a time (`economy.criterionNow`: it bills
 as the newest rung, and only its billing counts toward a target calibrated on the sim's
 `underTestRate`; each criterion signs clean after 8 s once billed, or with findings at 55 s);
 each `changeRequest` rank multiplies overtime and re-tests the weakest line, and the run ends when

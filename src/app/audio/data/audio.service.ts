@@ -37,8 +37,7 @@ export class AudioService {
   #prevSprints = 0;
   #prevBudget = 0;
   #prevAwarded = 0;
-  #prevEscalated = false;
-  #prevHotfixUntil = 0;
+  #prevRares = 0;
 
   #music: HTMLAudioElement | null = null;
   #track = 0;
@@ -66,22 +65,18 @@ export class AudioService {
       const sprints = this.#store.lifetimeRounds();
       const budget = this.#store.budget();
       const awarded = this.#store.awardCount();
-      const escalated = this.#store.escalated();
-      const hotfixUntil = this.#store.hotfixUntil();
+      const rares = this.#store.raresTaken();
 
       const closedDelta = closed - this.#prevClosed;
       const sprintDelta = sprints - this.#prevSprints;
       const budgetDelta = budget - this.#prevBudget;
-      const rareTaken =
-        (escalated && !this.#prevEscalated) ||
-        hotfixUntil > this.#prevHotfixUntil;
+      const rareTaken = rares > this.#prevRares;
       const awardedGrew = awarded > this.#prevAwarded;
 
       this.#prevClosed = closed;
       this.#prevSprints = sprints;
       this.#prevBudget = budget;
-      this.#prevEscalated = escalated;
-      this.#prevHotfixUntil = hotfixUntil;
+      this.#prevRares = rares;
       this.#prevAwarded = awarded;
 
       if (awardedGrew) this.#play(awardArpeggio);

@@ -183,18 +183,14 @@ export class FinaleScene extends CbScene {
     const rows = [0, 1, 2, 3].map(
       (row) => front - row * FINALE_PHOTO.rowGap * unit
     );
-    const s = Math.min(
-      (height * FINALE_ART.heightShare) / FINALE_ART.height,
-      (width * FINALE_ART.widthShare) / FINALE_ART.width
-    );
-    const back = rows[rows.length - 1]!;
+    const s = Math.max(width / FINALE_ART.width, height / FINALE_ART.height);
     return {
       width,
       height,
       unit,
       art: {
         x: width / 2 - (FINALE_ART.width * s) / 2,
-        y: back - 6 * unit - FINALE_ART.footY * s,
+        y: height - FINALE_ART.height * s,
         s,
       },
       rows,
@@ -319,7 +315,11 @@ export class FinaleScene extends CbScene {
         FINALE_CAST.margin,
         layout.width - FINALE_CAST.margin
       ),
-      y: Phaser.Math.Clamp(point.y, layout.height * 0.35, layout.rows[0]!),
+      y: Phaser.Math.Clamp(
+        point.y,
+        this.#toScreen(0, FINALE_ART.floorY).y,
+        layout.rows[0]!
+      ),
     };
   }
 

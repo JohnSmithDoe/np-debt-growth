@@ -9,11 +9,16 @@ export class FinaleService {
   readonly act = this.#act.asReadonly();
 
   open(): void {
-    this.#act.set('roll');
+    this.#act.set('story');
+  }
+
+  roll(): void {
+    if (this.#act() === 'story') this.#act.set('roll');
   }
 
   curtain(): void {
-    if (this.#act() === 'roll') this.#act.set('curtain');
+    const act = this.#act();
+    if (act === 'story' || act === 'roll') this.#act.set('curtain');
   }
 
   close(): void {

@@ -6,7 +6,7 @@ import type {
   Harvest,
   SprintSlot,
 } from '../../game/model/board.model';
-import type { HazardId } from '../../game/model/hazard.model';
+import type { HazardId, HazardKind } from '../../game/model/hazard.model';
 import type { ReleasePhase } from '../../game/model/balance/round';
 import type { TicketTypeId } from '../../game/model/ticket.model';
 import type { CrewKind } from '../../game/model/crew.model';
@@ -14,6 +14,7 @@ import type { SkillView } from './skill-view.model';
 
 export interface HazardNotice {
   readonly id: HazardId;
+  readonly kind: HazardKind;
   readonly landed: boolean;
   readonly msLeft: number;
 }
@@ -43,6 +44,7 @@ export interface SceneDeps {
   autoClosed(): ReadonlySet<TicketTypeId>;
   underTest(): number | null;
   running(): boolean;
+  trainRuns(): boolean;
   roundLeftMs(): number;
   haulMs(): number;
   releasePhases(): readonly ReleasePhase[];

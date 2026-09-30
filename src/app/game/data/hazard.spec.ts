@@ -103,10 +103,10 @@ describe('the two cadences', () => {
     const store = storeWith({ tier: 3 });
     run(store, 0, INVITATION_EVERY_MS + 500);
     expect(invites(store)).toBe(1);
-    expect(store.hazardNotice()).toBeNull();
+    expect(store.hazardNotice()?.kind).toBe('invitation');
 
     run(store, INVITATION_EVERY_MS + 500, FIRST_FACT_MS + 500);
-    expect(store.hazardNotice()?.landed).toBe(false);
+    expect(store.hazardNotice()).toMatchObject({ kind: 'fact', landed: false });
   });
 });
 

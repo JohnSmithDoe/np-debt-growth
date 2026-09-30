@@ -1,0 +1,37 @@
+@if (shown()) {
+  <div
+    class="story"
+    role="region"
+    [attr.aria-label]="'story.label' | translate"
+  >
+    <button
+      type="button"
+      class="advance"
+      [attr.aria-label]="'story.next' | translate"
+      (click)="next()"
+    ></button>
+    @if (frame(); as frame) {
+      @for (shot of [frame]; track shot.index) {
+        <figure class="shot" [style.--frame-ms.ms]="frameMs">
+          <div class="frame">
+            <img [src]="shot.art" alt="" aria-hidden="true" />
+          </div>
+          <figcaption>
+            <span class="caption">{{ shot.caption }}</span>
+            <p class="line" aria-live="polite">{{ shot.line }}</p>
+          </figcaption>
+        </figure>
+      }
+    }
+
+    <ol class="dots" aria-hidden="true">
+      @for (dot of frames(); track dot.index; let i = $index) {
+        <li [class.on]="i === at()" [class.seen]="i < at()"></li>
+      }
+    </ol>
+
+    <button type="button" class="btn small ghost skip" (click)="skip()">
+      {{ 'story.skip' | translate }}
+    </button>
+  </div>
+}

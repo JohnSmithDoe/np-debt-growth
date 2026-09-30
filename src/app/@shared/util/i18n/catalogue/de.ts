@@ -14,8 +14,17 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.none': 'Eröffnet das Programm',
   'skill.effect.floorPlate': 'Wirkt nicht selbst: öffnet den nächsten Raum',
   'skill.effect.topOfBand': 'Seniors nehmen zuerst das größte Ticket',
+  'strip.shipping': 'DIREKT LIVE',
   'strip.collecting': 'SAMMELN',
   'strip.releasing': 'IM RELEASE',
+  'board.hazard.fact.due': '{{name}} IN {{seconds}}s',
+  'board.hazard.fact.on': '{{name}} · {{seconds}}s',
+  'board.hazard.invitation.due':
+    '{{name}} IN {{seconds}}s · EINLADUNG NEHMEN ZUM ABSAGEN',
+  'board.hazard.invitation.on':
+    '{{name}} · ALLE GEHEN HIN, KEINER ARBEITET · {{seconds}}s',
+  'board.declined': 'ABGESAGT',
+  'board.declined.caption': '{{meeting}} abgesagt · das Team arbeitet weiter',
   'board.release.title': 'RELEASE-ZUG',
   'board.release.hint':
     'Der Sprint wird ausgeliefert. Bis der Zug zurück ist, nimmt niemand etwas an.',
@@ -220,6 +229,8 @@ export const DE: Readonly<Record<string, string>> = {
   'hud.epic': 'Epic: {{name}}',
   'hud.round': 'Runde',
   'hud.round.open': 'offen',
+  'hud.round.acceptance': 'durchgehend',
+  'hud.sprint.uncapped': 'ohne Limit',
   'hud.round.release': 'Release in {{seconds}} s',
   'hud.settings': 'Einstellungen',
   'hud.sprint': 'Sprint',
@@ -264,6 +275,27 @@ export const DE: Readonly<Record<string, string>> = {
   'finale.roll.seniors': 'Seniors',
   'finale.skip': 'Zum Ende springen',
   'finale.stage.cake': 'zu viel Kuchen',
+  'story.label': 'Die Geschichte des Mandats',
+  'story.next': 'Weiter',
+  'story.skip': 'Weiter zum Abspann',
+  'story.1':
+    'Es begann, wie so etwas immer beginnt: mit einem Framework, das niemand aktualisieren durfte. Die Beratung sah es sich an, sah auf den Stundensatz und fand es perfekt.',
+  'story.2':
+    'Bald merkte das Team, dass man einen Service am schnellsten schreibt, indem man den letzten kopiert. Und den davor. Das Wiki nannte es ein Muster. Die Rechnungen nannten es Wachstum.',
+  'story.3':
+    'Als der Backlog dem Gebäude entwachsen war, ging die Arbeit einmal um die Welt. Das Büro schlief nie wieder. Es lag nur nicht mehr in einer einzigen Zeitzone.',
+  'story.4':
+    'Dann kam das Werkzeug, das den Code selbst schrieb. Es war flüssig, selbstsicher und falsch – was, wie die Partner bemerkten, auch der Stellenbeschreibung entsprach.',
+  'story.5':
+    'Eine Person schloss mehr Tickets als alle anderen zusammen und bekam dafür die Schlüssel zu main. Zurückverlangt hat sie erst jemand, als sie schon weg war.',
+  'story.6':
+    'Nach dem Abgang des Rockstars fand das Team Services, die niemandem gehörten. Man ließ sie laufen. Um drei Uhr nachts rufen sie noch immer an.',
+  'story.7':
+    'Der einzige Ausweg war, neu anzufangen. Also wuchs neben dem ersten System ein zweites, und die Beratung rechnete beide ab – und jeden Streit dazwischen.',
+  'story.8':
+    'Am Ende begann die Arbeit, sich selbst zu erledigen. Agenten schrieben die Pull Requests, Agenten gaben sie frei, und ein Mensch blieb im Diagramm, zur Beruhigung.',
+  'story.outside':
+    '{{client}} unterschrieb, ohne zu lesen. {{closed}} Tickets wurden geschlossen, {{billed}} abgerechnet, und der Backlog ist genau so lang wie eh und je. Von außen sieht der Turm gut aus.',
   'postmortem.finale': 'Mandat schließen',
   'postmortem.no-tier': 'Keiner freigegeben',
   'skill.golden.1.label': 'Partnersache',
@@ -1023,9 +1055,6 @@ export const DE: Readonly<Record<string, string>> = {
   'approval.role.quorum-none': 'Beschlussfähigkeit nicht protokolliert',
   'approval.by.agent': 'Meridian Procurement Agent',
   'approval.role.procurement': 'automatisiert, Quorum nicht erforderlich',
-  'postmortem.closeout': 'Abschluss — Projektabnahme',
-  'postmortem.signed.closeout':
-    '{{by}}, {{role}} – {{date}}. Kommentare: LGTM.',
   'postmortem.badly.changes.one':
     'Nach dem unterschriebenen Abschluss wurde ein Change Request angenommen. Er war nicht klein.',
   'postmortem.badly.changes':
@@ -1052,11 +1081,8 @@ export const DE: Readonly<Record<string, string>> = {
   'postmortem.legend.adr': 'ADR freigegeben',
   'postmortem.well': 'Was lief gut',
   'postmortem.badly': 'Was lief nicht gut',
-  'postmortem.record': 'Protokollierte Entscheidungen',
   'postmortem.actions': 'Maßnahmen',
-  'postmortem.rooms': 'Das Mandat, Raum für Raum',
   'postmortem.outside': 'Das Mandat, von außen',
-  'postmortem.signed': '{{by}}, {{role}} – {{date}}. Kommentare: —',
   'postmortem.well.closed': '{{closed}} Tickets über das Mandat geschlossen.',
   'postmortem.well.billed':
     '{{billed}} an {{client}} abgerechnet, über {{sprints}} Sprints.',

@@ -62,6 +62,7 @@ export class SprintStrip {
   #drawnCooldown = -1;
   #drawnPending = '';
   #drawnClock = '';
+  #gated = true;
 
   constructor(scene: Phaser.Scene, deps: SceneDeps, depth: number) {
     this.#scene = scene;
@@ -137,10 +138,24 @@ export class SprintStrip {
     this.#remaining = this.#deps.roundLeftMs();
     this.#haul = this.#deps.haulMs();
 
-    this.#refreshSlots();
-    this.#refreshPending();
+    const gated = this.#deps.trainRuns();
+    if (gated !== this.#gated) this.#gate(gated);
+    if (gated) {
+      this.#refreshSlots();
+      this.#refreshPending();
+    }
     this.#refreshClock();
     this.#drawCooldown();
+  }
+
+  #gate(gated: boolean): void {
+    this.#gated = gated;
+    this.#pips.setVisible(gated);
+    this.#slotsLabel.setVisible(gated);
+    this.#pendingLabel.setVisible(gated);
+    if (!gated) this.#parkTrain();
+    this.#drawnSlots = -1;
+    this.#drawnClock = '';
   }
 
   destroy(): void {
@@ -338,7 +353,11 @@ export class SprintStrip {
   #refreshClock(): void {
     const running = this.#deps.running();
     const label = this.#deps.text(
-      running ? 'strip.collecting' : 'strip.releasing'
+      !this.#gated
+        ? 'strip.shipping'
+        : running
+          ? 'strip.collecting'
+          : 'strip.releasing'
     );
     if (label === this.#drawnClock) return;
     this.#drawnClock = label;

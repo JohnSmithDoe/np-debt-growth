@@ -46,7 +46,7 @@ import {
   VOTES,
   WONT_FIX_FADE,
 } from '../model/board.consts';
-import type { SceneDeps } from '../model/scene-deps.model';
+import type { HazardNotice, SceneDeps } from '../model/scene-deps.model';
 import {
   boardIconUrls,
   buildBoardAtlas,
@@ -115,6 +115,9 @@ const PICK_RADIUS = Math.max(
   Math.hypot(CARD_BOX.width, CARD_BOX.height) / 2,
   Math.hypot(RARE_BOX.width / 2, RARE_BOX.height / 2 + RARE_BOX.lift)
 );
+
+const noticeKey = ({ kind, landed }: HazardNotice): string =>
+  `board.hazard.${kind}.${landed ? 'on' : 'due'}`;
 
 const stripHoverKey = (slot: number, held: SprintSlot): string =>
   `sprint:${slot}:${held.titleKey}`;
@@ -525,9 +528,7 @@ export class BoardScene extends CbScene {
 
     const name = this.deps.text(hazardLabelKey(notice.id)).toUpperCase();
     const seconds = Math.ceil(notice.msLeft / 1000);
-    const text = notice.landed
-      ? `${name} · ${seconds}s`
-      : `${name} IN ${seconds}s`;
+    const text = this.deps.text(noticeKey(notice), { name, seconds });
     if (text === this.#warning) return;
     this.#warning = text;
     banner
@@ -716,12 +717,22 @@ export class BoardScene extends CbScene {
     flyers.fallingWithin(px, py, ring, ids);
     if (ids.length === 0) return;
 
-    const { taken, refused, value, sp, big, headline } = this.deps.harvest(ids);
+    const { taken, refused, value, sp, big, headline, declined } =
+      this.deps.harvest(ids);
     if (refused.length > 0) {
       this.#refusedUntil = this.time.now + REFUSED_MS;
       parts.heap.bounce(refused.filter((id) => !flyers.isFalling(id)));
     }
     if (taken.length === 0) return;
+    if (declined) {
+      const meeting = this.deps.text(hazardLabelKey(declined));
+      this.floatBig(
+        px,
+        py - 22,
+        this.deps.text('board.declined'),
+        this.deps.text('board.declined.caption', { meeting })
+      );
+    }
     if (value > 0 && big) {
       this.floatBig(
         px,
