@@ -244,7 +244,7 @@ export const DE: Readonly<Record<string, string>> = {
     'Und danke an alle Künstlerinnen und Künstler im Abspann. Die Crew gibt es nur, weil ihr sie gezeichnet und verschenkt habt.',
   'finale.curtain.back': 'Zurück zum Post-Mortem',
   'finale.curtain.body':
-    'Ganz ehrlich: danke. Du hast ein ganzes Mandat lang eine Codebasis mit Absicht verschlechtert, und du warst richtig, richtig gut darin.',
+    'Du hast ein ganzes Mandat lang eine Codebasis mit Absicht verschlechtert, und du warst richtig, richtig gut darin.',
   'finale.curtain.stats':
     '{{billed}} abgerechnet · {{closed}} Tickets geschlossen · {{sprints}} Sprints',
   'finale.curtain.title': 'Danke fürs Spielen.',

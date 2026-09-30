@@ -408,7 +408,7 @@ client's procurement agent, comments "LGTM"), records the budget and billing it 
   hardest; its cards pulse pink (`UNDER_TEST`). Only what **that line** bills counts
   (`billUnderTest`, from the store's `#bank` and quarter bills, and the sim's
   `underTestEuroPerSec`). A first test's target (`economy.criterionTarget`) is
-  `CRITERION_FIRST_TEST_MS` 40 s of what the sim says its line bills at a steady sweep and the
+  `CRITERION_FIRST_TEST_MS` 30 s of what the sim says its line bills at a steady sweep and the
   opening overtime (`underTestRate` in `util/sim.ts`, handed in by the store, the autoplayer and
   the sign-off purchase, so the economy stays unpriced; the sim prices it without any live buff
   window, and counts auto-close at a third since a full real board lets few auto-closed cards
@@ -421,7 +421,7 @@ client's procurement agent, comments "LGTM"), records the budget and billing it 
   `c-findings-<line>` toast instead (`c-refound-<line>` for a re-test; the first also earns
   _Signed with findings_). The banner line
   counts the criterion, its multiplier, how far it is billed and the seconds left. Measured on
-  the advised run: 177 / 149 / 134 s at 0.5 / 1 / 2 sweeps a second, every criterion clean.
+  the advised run (`balance.spec`): 2.1 min.
 - **Change requests** (`changeRequest`, `CHANGE_REQUEST`: 10 ranks off `signoff`, 3 M SP doubling):
   each multiplies overtime ×1.5 **and adds a criterion**, a re-test of the weakest line not yet
   re-tested (`criterionLine`), which asks an absolute `CRITERION_RETEST_SHARE` 0.35 of a ninth of

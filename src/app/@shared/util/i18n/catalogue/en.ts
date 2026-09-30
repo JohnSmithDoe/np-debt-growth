@@ -239,7 +239,7 @@ export const EN: Readonly<Record<string, string>> = {
     'And thank you to every artist in the roll. The crew only exists because you drew them and gave them away.',
   'finale.curtain.back': 'Back to the post-mortem',
   'finale.curtain.body':
-    'Honestly, thank you. You spent a whole engagement making a codebase worse on purpose, and you were very, very good at it.',
+    'You spent a whole engagement making a codebase worse on purpose, and you were very, very good at it.',
   'finale.curtain.stats':
     '{{billed}} billed · {{closed}} tickets closed · {{sprints}} sprints',
   'finale.curtain.title': 'Thank you for playing.',
