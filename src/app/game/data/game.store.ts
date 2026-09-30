@@ -81,7 +81,7 @@ import {
 } from '../util/board';
 import { crewRules } from '../util/crew-rules';
 import { spawnInto } from '../util/supply';
-import { underTestRate } from '../util/sim';
+import { incidentPayout, underTestRate } from '../util/sim';
 import * as economy from '../util/economy';
 import * as purchase from '../util/purchase';
 import { SpawnBudget } from '../util/spawn-budget';
@@ -1018,6 +1018,38 @@ export class GameStore {
     return payout;
   }
 
+  #payIncidents<
+    T extends {
+      next: Consultancy;
+      value: number;
+      sp: number;
+      big: boolean;
+    },
+  >(banked: T, tickets: readonly BoardTicket[]): T {
+    const state = banked.next;
+    if (!economy.reviewsIncidents(state)) return banked;
+    const cleared = tickets.filter(
+      (ticket) => ticket.type === 'incident'
+    ).length;
+    if (cleared === 0) return banked;
+    const payout = incidentPayout(state);
+    const euros = payout.euros * cleared;
+    const points = payout.sp * cleared;
+    this.#bill(euros);
+    return {
+      ...banked,
+      next: {
+        ...state,
+        ...economy.repaid(state, points),
+        budget: state.budget + euros,
+        lifetimeBilled: state.lifetimeBilled + euros,
+      },
+      value: banked.value + euros,
+      sp: banked.sp + points,
+      big: true,
+    };
+  }
+
   #probeClick(
     now: number,
     reached: number,
@@ -1079,11 +1111,16 @@ export class GameStore {
       comeBack(this.#board, ticket);
       removeTicket(this.#board, ticket);
     }
-    const { next, value, sp, big, headline } = this.#bank(
+    const banked = this.#bank(
       state,
       { closed, byWomen: 0 },
       now,
       economy.sprintSlots(state, this.#sky())
+    );
+    const { headline } = banked;
+    const { next, value, sp, big } = this.#payIncidents(
+      banked,
+      reached.tickets
     );
     this.#state.set(next);
     if (!reached.quarterEnd)

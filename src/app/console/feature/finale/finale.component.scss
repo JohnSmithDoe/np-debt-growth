@@ -28,6 +28,7 @@
   position: absolute;
   inset: 0 0 auto;
   padding: 0 2rem 4rem;
+  font-size: 1.1rem;
   animation-name: roll;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
@@ -56,7 +57,7 @@ section {
 h2 {
   margin-bottom: 0.8rem;
   font-family: var(--np-cb-font-pixel);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -66,7 +67,7 @@ h2 {
 h3 {
   margin: 1.1rem 0 0.35rem;
   font-family: var(--np-cb-font-util);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   font-weight: 400;
   letter-spacing: 0.06em;
   color: var(--np-cb-ink-3);
@@ -87,7 +88,7 @@ ul {
 }
 
 .name {
-  font-size: 1.05rem;
+  font-size: 1.2rem;
 }
 
 .artists .name {
@@ -100,14 +101,14 @@ p {
 }
 
 .aside {
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-style: italic;
   color: var(--np-cb-ink-2);
 }
 
 .thanks {
   margin-top: 1.2rem;
-  font-size: 1rem;
+  font-size: 1.12rem;
   color: var(--np-cb-points);
 }
 

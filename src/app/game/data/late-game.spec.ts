@@ -34,7 +34,7 @@ import { TICKET_TYPES } from '../model/ticket.model';
 import { addTicket } from '../util/board';
 import * as economy from '../util/economy';
 import * as purchase from '../util/purchase';
-import { underTestRate } from '../util/sim';
+import { incidentPayout, underTestRate } from '../util/sim';
 import type { GameStore } from './game.store';
 import { storeWith } from './store.fixture';
 
@@ -201,6 +201,31 @@ describe('late P0s', () => {
     );
     expect(economy.pickupStoryPoints(late, 'incident', false)).toBe(
       INCIDENT_TOP_SHARE * economy.pickupStoryPoints(late, 'swarm', false)
+    );
+  });
+
+  it('pay seconds of the build income on top, once reviews start', () => {
+    const late = {
+      tier: INCIDENT_REVIEW_FROM_TIER,
+      levels: { velocity: 1 },
+      skills: { root: 1 },
+      spawners: { '1': 3, '5': 2 },
+    };
+    const store = storeWith(late);
+    const payout = incidentPayout(store.state());
+    expect(payout.euros).toBeGreaterThan(0);
+    const before = store.state();
+    const paid = store.harvest([place(store, 'incident')]);
+    const base = economy.ticketValue(before, 'incident');
+    expect(paid.value).toBeCloseTo(base + payout.euros, 3);
+    expect(paid.big).toBe(true);
+    expect(store.state().budget - before.budget).toBeCloseTo(paid.value, 3);
+
+    const early = storeWith({ ...late, tier: INCIDENT_REVIEW_FROM_TIER - 1 });
+    const plain = early.harvest([place(early, 'incident')]);
+    expect(plain.value).toBeCloseTo(
+      economy.ticketValue(early.state(), 'incident'),
+      3
     );
   });
 

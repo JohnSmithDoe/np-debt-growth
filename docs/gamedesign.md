@@ -165,7 +165,7 @@ with the run. They never expire and are never displaced.
 
 | Type         | Rate/s | Effect                                                                                            |
 | ------------ | ------ | ------------------------------------------------------------------------------------------------- |
-| `incident`   | 0.008  | 150 € × tier; from ADR-5, 5 newest-line tickets in € and SP (`INCIDENT_TOP_SHARE`). First at 75 s |
+| `incident`   | 0.008  | 150 € × tier; from ADR-5, 5 newest-line tickets in € and SP (`INCIDENT_TOP_SHARE`) plus `INCIDENT_PAYOUT_SEC` 3 s of the build's € and SP income (`incidentPayout` in `util/sim.ts`, which the sim also credits to a sweeping hand). First at 75 s |
 | `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 9 s, +4 s with Observability   |
 | `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                                              |
 | `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2), under hotfix and escalation        |
@@ -516,7 +516,7 @@ game uses:
 - **Sprint**: nothing is collected while the train is away, so what is reached is collected at
   reached / (1 + reached / `ceilingPerSec`); € and SP priced as at pickup.
 
-Not counted: quarter bills and jackpots, pizza, prod incidents and their reviews, and
+Not counted: quarter bills and jackpots, pizza, incident reviews, and
 weather; outside the push each moves a real board's euros by 10 % at most. In the push a sweeping
 hand bills most of its euros under hotfix and escalation, so a real push runs up to twice as fast
 as the sim's; the criterion clamps (8–40 s) bound it either way. `data/sim.spec.ts` plays the same
@@ -559,7 +559,7 @@ kept in settings) buys each pick the moment it is affordable.
 | Skill                               | one node in `SKILL_NODES`                                                                                  |
 | Sprint, train, hotfix, escalation   | `balance/round.ts`, `balance/weather.ts` (`COMBO_EXTEND_MS`)                                               |
 | Acceptance, criteria, credit        | `ACCEPTANCE`, `CRITERION_*`, `CREDIT_*` in `balance/progression.ts`                                        |
-| Incident review                     | `INCIDENT_REVIEW*` in `balance/round.ts`, `INCIDENT_TOP_SHARE` in `balance/flow.ts`                        |
+| Incident review                     | `INCIDENT_REVIEW*` in `balance/round.ts`, `INCIDENT_TOP_SHARE`, `INCIDENT_PAYOUT_SEC` in `balance/flow.ts`                        |
 | Spawn, golden, votes, pizza, expiry | `balance/flow.ts`                                                                                          |
 | Board cap                           | `BOARD_CAPACITY` in `model/geometry.ts`                                                                    |
 | Hazard                              | one row in `HAZARDS`                                                                                       |

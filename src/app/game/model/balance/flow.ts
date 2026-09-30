@@ -51,6 +51,8 @@ export const PROD_INCIDENT_LIVE_CAP = 3;
 
 /** From INCIDENT_REVIEW_FROM_TIER a P0 bills this many of the newest rung's tickets. */
 export const INCIDENT_TOP_SHARE = 5;
+/** On top, a P0 cleared from INCIDENT_REVIEW_FROM_TIER pays this many seconds of the build's income. */
+export const INCIDENT_PAYOUT_SEC = 3;
 
 /** Tier 1's; each tier above doubles it. */
 export const ESTIMATE_SP_PER_RANK = 20;

@@ -1,6 +1,6 @@
 /*
- * Not modelled: quarter bills, pizza, prod incidents and their reviews,
- * weather; each moves a real board's euros by 10 % at most.
+ * Not modelled: quarter bills, pizza, incident reviews, weather; each moves
+ * a real board's euros by 10 % at most.
  */
 import type { Consultancy } from '../model/consultancy.model';
 import type { CrewKind } from '../model/crew.model';
@@ -15,12 +15,14 @@ import {
 } from '../model/geometry';
 import {
   GOLDEN_LIFE_MS,
+  INCIDENT_PAYOUT_SEC,
   ticketLifeMs,
   VOTE_CYCLE_MS,
   VOTE_ON_MS,
   WONT_FIX_FADE_MS,
 } from '../model/balance/flow';
 import { WOMAN_CLOSE_RATE } from '../model/balance/crew';
+import { INCIDENT_REVIEW_FROM_TIER } from '../model/balance/round';
 import { HOTFIX_MS, HOTFIX_MULTIPLIER } from '../model/balance/weather';
 import * as economy from './economy';
 import { heldBack } from './first-act';
@@ -391,7 +393,33 @@ const AUTO_CLOSE_ON_A_FULL_BOARD = 0.35;
 
 const STEADY: SimPolicy = { clicksPerSec: 1 };
 
+/** A late P0 the hand clears: seconds of the build's income, both currencies. */
+export function incidentPayout(state: Consultancy): {
+  readonly euros: number;
+  readonly sp: number;
+} {
+  const base = baseFlow(state, STEADY);
+  return {
+    euros: INCIDENT_PAYOUT_SEC * base.euroPerSec,
+    sp: INCIDENT_PAYOUT_SEC * base.spPerSec,
+  };
+}
+
 export function flow(live: Consultancy, policy: SimPolicy): Flow {
+  const base = baseFlow(live, policy);
+  if (policy.clicksPerSec <= 0 || live.tier < INCIDENT_REVIEW_FROM_TIER)
+    return base;
+  const share = INCIDENT_PAYOUT_SEC * economy.spawnRate(live, 'incident');
+  const euros = base.euroPerSec * share;
+  return {
+    ...base,
+    euroPerSec: base.euroPerSec + euros,
+    handEuroPerSec: base.handEuroPerSec + euros,
+    spPerSec: base.spPerSec * (1 + share),
+  };
+}
+
+function baseFlow(live: Consultancy, policy: SimPolicy): Flow {
   const state = steady(live);
   const all = streams(state);
   const arrivals = all.map((s) => s.left);
