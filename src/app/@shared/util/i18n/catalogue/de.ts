@@ -197,6 +197,8 @@ export const DE: Readonly<Record<string, string>> = {
   'title.windowed': 'Fenstermodus',
   'award.achievement': 'Erfolg',
   'award.dismiss': 'Schließen',
+  'award.reward.euro': '+{{amount}}',
+  'award.reward.sp': '+{{amount}} SP',
   'award.milestone': 'Meilenstein',
   'award.waiting': '+{{count}} weitere',
   'hud.budget': 'Budget',
@@ -962,6 +964,8 @@ export const DE: Readonly<Record<string, string>> = {
     'ADR-{{adr}} ({{tier}}) hat den vollen Produktivstatus erreicht.',
   'postmortem.well.awards':
     '{{unlocked}} von {{total}} Erfolgen vom Team bestätigt.',
+  'postmortem.well.rewards':
+    'Erfolge zahlten {{euros}} und {{sp}} SP ins Budget ein, der Rest war nur fürs Protokoll.',
   'postmortem.badly.adrs':
     'Jeder Architecture Decision Record hat die Codebasis dauerhaft verschlechtert. Keiner wurde zurückgenommen, keiner stand je zur Debatte, und jeder wurde von {{client}} schriftlich freigegeben.',
   'postmortem.badly.backlog':

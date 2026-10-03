@@ -338,7 +338,10 @@ describe('juniors and the sprint', () => {
 
     expect(store.budget()).toBeGreaterThan(0);
     expect(store.lifetimeRounds()).toBeGreaterThan(0);
-    expect(store.budget()).toBeCloseTo(store.lifetimeBilled(), 6);
+    expect(store.budget()).toBeCloseTo(
+      store.lifetimeBilled() + store.state().lifetimeAwardEuros,
+      6
+    );
   });
 });
 

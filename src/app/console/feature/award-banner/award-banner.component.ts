@@ -6,9 +6,14 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
+import {
+  formatCompactMoney,
+  formatPoints,
+} from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import type { Award, AwardWeight } from '../../../game/model/award.model';
 import {
@@ -52,6 +57,17 @@ interface AwardShow {
   readonly milestone: boolean;
   readonly weight: AwardWeight;
   readonly pieces: number;
+  readonly reward: AwardRewardShow | null;
+}
+
+interface AwardRewardShow {
+  readonly key: 'award.reward.euro' | 'award.reward.sp';
+  readonly amount: string;
+}
+
+interface RewardPop extends AwardRewardShow {
+  readonly id: string;
+  readonly weight: AwardWeight;
 }
 
 @Component({
@@ -78,6 +94,8 @@ export class AwardBannerComponent {
 
   readonly waiting = computed(() => Math.max(0, this.#queue().length - STACK));
 
+  readonly pops = signal<readonly RewardPop[]>([]);
+
   constructor() {
     inject(DestroyRef).onDestroy(() => this.#clearTimers());
 
@@ -92,7 +110,14 @@ export class AwardBannerComponent {
         return;
       }
       const fresh = granted.slice(seen.length);
-      if (fresh.length > 0) this.#queue.update((queue) => [...queue, ...fresh]);
+      if (fresh.length === 0) return;
+      this.#queue.update((queue) => [...queue, ...fresh]);
+      const popped = fresh.flatMap((id): RewardPop[] => {
+        const award = AWARD_BY_ID.get(id);
+        const reward = this.#reward(id);
+        return award && reward ? [{ id, weight: award.weight, ...reward }] : [];
+      });
+      if (popped.length > 0) this.pops.update((pops) => [...pops, ...popped]);
     });
 
     effect(() => {
@@ -124,6 +149,18 @@ export class AwardBannerComponent {
     this.#queue.update((queue) => queue.filter((queued) => queued !== id));
   }
 
+  popped(id: string): void {
+    this.pops.update((pops) => pops.filter((pop) => pop.id !== id));
+  }
+
+  #reward(id: string): AwardRewardShow | null {
+    const reward = untracked(this.#store.rewards).get(id);
+    if (!reward) return null;
+    return reward.currency === 'euro'
+      ? { key: 'award.reward.euro', amount: formatCompactMoney(reward.amount) }
+      : { key: 'award.reward.sp', amount: formatPoints(reward.amount) };
+  }
+
   #clearTimers(): void {
     for (const timer of this.#timers.values()) clearTimeout(timer);
     this.#timers.clear();
@@ -137,6 +174,7 @@ export class AwardBannerComponent {
       milestone: award.kind === 'milestone',
       weight: award.weight,
       pieces: BANDS[award.weight].pieces,
+      reward: this.#reward(award.id),
     };
   }
 }

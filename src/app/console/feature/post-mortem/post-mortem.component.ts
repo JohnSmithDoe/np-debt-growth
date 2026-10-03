@@ -11,6 +11,7 @@ import {
 import { FinaleService } from '../../../@shared/data/finale.service';
 import {
   formatMoney,
+  formatPoints,
   formatQuantity,
   formatWhole,
 } from '../../../@shared/util/format-quantity';
@@ -116,6 +117,10 @@ export class PostMortemComponent {
       this.#say('postmortem.well.awards', {
         unlocked,
         total: ACHIEVEMENTS.length,
+      }),
+      this.#say('postmortem.well.rewards', {
+        euros: formatMoney(this.#store.state().lifetimeAwardEuros),
+        sp: formatPoints(this.#store.state().lifetimeAwardSp),
       }),
       this.#criteriaLine(),
     ];

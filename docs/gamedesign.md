@@ -22,8 +22,8 @@ The design as the code has it. Every number names the file it lives in; paths ar
    lines throw, what the hand and crew reach, and what the sprint takes. `util/sim.ts` computes
    exactly this without a board (§9).
 
-It is an **active game**: there is no offline progress and no income that doesn't come from a
-pickup.
+It is an **active game**: there is no offline progress, and the only income that doesn't come
+from a pickup is an achievement's reward.
 
 ---
 
@@ -112,10 +112,10 @@ Player-facing copy never says "truck", "can" or "lane": sprint, sprint scope, re
 
 ## 3. Currencies
 
-|                     | Earned from                                                  | Spent on                                       |
-| ------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
-| **€ Budget**        | Every pickup, `quarter` board bills                          | The rail: spawner heads, rate rows, crew lines |
-| **SP Story Points** | Every pickup once `velocity` is bought, planning-poker votes | The tree, all of it, ADRs included             |
+|                     | Earned from                                                                           | Spent on                                       |
+| ------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| **€ Budget**        | Every pickup, `quarter` board bills, achievements before ADR-3                        | The rail: spawner heads, rate rows, crew lines |
+| **SP Story Points** | Every pickup once `velocity` is bought, planning-poker votes, achievements from ADR-3 | The tree, all of it, ADRs included             |
 
 **The tree unlocks, the rail buys.** No node costs euros and no rail row costs SP.
 
@@ -130,8 +130,17 @@ plus:
 - `voteBonus`: SP for every live planning-poker vote the ticket fell through, decided at spawn
   (§6).
 
-Value nodes and rate rows lift euros only. Awards (`model/award.model.ts`) pay nothing; their
-`weight` only sizes the banner. The run opens with one developer and nothing else.
+Value nodes and rate rows lift euros only. The run opens with one developer and nothing else.
+
+**Achievement rewards** (`economy.grantAwards`): every `kind: 'achievement'` in
+`model/award.model.ts` pays once, when it fires, `AWARD_UNIT[tier]` × `AWARD_WEIGHT_UNITS[weight]`
+(small 1, medium 2, large 4) from `balance/award.ts`, in euros below `AWARD_SP_FROM_TIER` (ADR-3)
+and in SP from it on. SP rewards go through the credit line like any SP. The units are fixed per
+tier, never lower on a higher one, and sized against that tier's prices: big enough to show, small
+enough that no tier is skipped. Milestones (tiers, first close, criteria) pay nothing, and nothing
+pays once the tree is signed off: those count only in the post-mortem. Rewards are a bonus, so a
+player who earns more of them finishes sooner; the totals are `lifetimeAwardEuros` and
+`lifetimeAwardSp`.
 
 ---
 
@@ -606,6 +615,7 @@ kept in settings) buys each pick the moment it is affordable.
 | Skill                               | one node in `SKILL_NODES`                                                                                  |
 | Sprint, train, hotfix, escalation   | `balance/round.ts`, `balance/weather.ts` (`COMBO_EXTEND_MS`)                                               |
 | Acceptance, criteria, credit        | `ACCEPTANCE`, `CRITERION_*`, `CREDIT_*` in `balance/progression.ts`                                        |
+| Achievement rewards                 | `AWARD_UNIT`, `AWARD_WEIGHT_UNITS`, `AWARD_SP_FROM_TIER` in `balance/award.ts`                             |
 | Incident review                     | `INCIDENT_REVIEW*` in `balance/round.ts`, `INCIDENT_TOP_SHARE`, `INCIDENT_PAYOUT_SEC` in `balance/flow.ts` |
 | Spawn, golden, votes, pizza, expiry | `balance/flow.ts`                                                                                          |
 | Board cap                           | `BOARD_CAPACITY` in `model/geometry.ts`                                                                    |
@@ -617,8 +627,8 @@ kept in settings) buys each pick the moment it is affordable.
 - `data/balance-invariants.spec.ts` guards the **shape**: monotone ladders, tiers numbered by
   position, every rung on the tree and chained, no dominated retype rung.
 - `data/balance.spec.ts` guards the **pacing** on the advised autoplayer (`advisedSpend`):
-  the run accepted in 22–30 min, the acceptance push 2–5 min, every tier's share of the run
-  within ±25 % of `TIER_CURVE` (3 · 4 · 3 · 2.25 · 2 · 1.75 · 1.5 · 1.25 · 1 min, tier 8 ending at
+  the run accepted in 18–22 min, the acceptance push 2–5 min, every tier's share of the run
+  within ±25 % of `TIER_CURVE` (3 · 4 · 3 · 2.25 · 1.75 · 1.5 · 1.25 · 1 · 0.75 min, tier 8 ending at
   sign-off: the opening at its own pace, then quicker every rung), and the crew's share — at least 5 %
   of the closes before `goldenCrew`, judged from three minutes after the first junior (the hand's
   gold outweighs their euros until then), and 4 % of the euros after it. Run with the
@@ -636,12 +646,13 @@ kept in settings) buys each pick the moment it is affordable.
 **Measured run** (3 Oct 2026, advised autoplayer, credit from ADR-4):
 
 ```
-ADR-1 3.4    ADR-2 7.8    ADR-3 10.6   ADR-4 12.8   ADR-5 14.8   ADR-6 16.7
-ADR-7 18.2   ADR-8 19.2   signed off 20.0   accepted 23.0
+ADR-1 3.2    ADR-2 7.3    ADR-3 10.2   ADR-4 12.4   ADR-5 14.1   ADR-6 15.6
+ADR-7 16.7   ADR-8 17.6   signed off 18.3   accepted 21.3
 ```
 
-The cheapest-first run buys the whole tree. Over four seeds a real board accepts at 0.93–0.96 of
-the sim's time.
+The cheapest-first run buys the whole tree. `sim.spec` holds a real board's acceptance within
+×1.1 of the sim's time and compares each stop over eight seeds; it leaves reward SP out of the
+board's SP, since the sim prices closes.
 
 What that run cannot see, because the sim does not price it:
 
@@ -697,7 +708,10 @@ What the player sees, and where it lives. Paths are relative to `src/app/`.
   names the current tier's epic, a sequel title (`epicKey` in `game/model/tier.model.ts`), and the
   acceptance push has its own.
 - **Awards** stack in the board's bottom-left corner, three at a time, the rest behind a count
-  (`console/feature/award-banner/`).
+  (`console/feature/award-banner/`). Achievements have a points-pink border and a chip with what
+  they paid; milestones have an accent-blue border. A paid reward also pops up as a big number
+  above the board's centre (gold for euros, pink for SP, larger by weight) and floats away.
+  Story Points in the HUD flash when an SP reward lands. The post-mortem lists the reward totals.
 - **Rail.** Debt rows show their line's walker, Rates rows the card they bill; the next two
   locked rows are silhouettes. Affordable rows glow on hover and flash when bought.
 - **Tree.** Opens framed on what can be bought; buyable squares pulse, bought paths are lit green,

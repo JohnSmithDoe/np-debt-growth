@@ -9,6 +9,7 @@
       type="button"
       class="award"
       [class]="award.weight"
+      [class.milestone]="award.milestone"
       (click)="dismiss(award.id)"
     >
       @if (award.pieces > 0) {
@@ -20,7 +21,23 @@
       }}</span>
       <span class="label">{{ award.labelKey | translate }}</span>
       <span class="blurb">{{ award.blurbKey | translate }}</span>
+      @if (award.reward; as reward) {
+        <span class="reward chip">{{
+          reward.key | translate: { amount: reward.amount }
+        }}</span>
+      }
       <span class="offscreen">{{ 'award.dismiss' | translate }}</span>
     </button>
+  }
+</div>
+<div class="pops" aria-hidden="true">
+  @for (pop of pops(); track pop.id) {
+    <span
+      class="pop"
+      [class]="pop.weight"
+      [class.sp]="pop.key === 'award.reward.sp'"
+      (animationend)="popped(pop.id)"
+      >{{ pop.key | translate: { amount: pop.amount } }}</span
+    >
   }
 </div>

@@ -97,21 +97,21 @@ function earn(
   const f = flow(state, policy);
   book(f, seconds);
   const euros = f.euroPerSec * seconds;
-  const awards = economy.pendingAwards(state);
   const next: Consultancy = {
     ...state,
     budget: state.budget + euros,
     ...economy.repaid(state, f.spPerSec * seconds),
-    achievements: [...state.achievements, ...awards.map((award) => award.id)],
     lifetimeBilled: state.lifetimeBilled + euros,
     lifetimeClosed:
       state.lifetimeClosed + (f.handPerSec + f.crewPerSec) * seconds,
     runMs: state.runMs + seconds * 1000,
     lastTick: state.lastTick + seconds * 1000,
   };
-  const tested = economy.stepCriterion(
-    economy.pickUnderTest(next, f.underTestHandPerSec * seconds)
-  );
+  const tested = economy.grantAwards(
+    economy.stepCriterion(
+      economy.pickUnderTest(next, f.underTestHandPerSec * seconds)
+    )
+  ).next;
   return economy.accepted(tested)
     ? { ...tested, endedAt: tested.lastTick }
     : tested;

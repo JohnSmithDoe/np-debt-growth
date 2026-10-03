@@ -64,8 +64,9 @@ card nearest expiry (`displaceOldest`) — so the field's mix always matches wha
 make it refuse arrivals instead: spawns run cheapest type first, so refusing starves the late
 lines. The hand and the crew collect, plus Triage Policy's **auto-close**: a type it names
 (lint, then bugs) is claimed by no crew and closes itself when its life runs out, filling the sprint
-like any close; with the train away it goes to prod as a P0 (three live at most). There is no
-income that doesn't come from a close, and no offline progress.
+like any close; with the train away it goes to prod as a P0 (three live at most). Besides
+closes, only **achievements** pay: euros before ADR-3, SP from it, a fixed amount per tier and
+`weight` (`balance/award.ts`), nothing for milestones or after sign-off. No offline progress.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
@@ -191,9 +192,9 @@ about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.5 of a real 
 change how the board collects, change the sim with it.
 
 `game/data/balance.spec.ts` runs the autoplayer on the Synergy Analyser's advice (`advisedSpend`)
-and **fails** if the run is not accepted in 22–30 minutes (target about 23, the acceptance push 2–5 of
+and **fails** if the run is not accepted in 18–22 minutes (the acceptance push 2–5 of
 them) or a tier's share of the run is more than ±25 % off `TIER_CURVE` (the opening at its own
-pace, 3 · 4 min, then quicker every rung down to 1 min at sign-off); a second, cheapest-first run must walk every track and buy the
+pace, 3 · 4 min, then quicker every rung down to 0.75 min at sign-off); a second, cheapest-first run must walk every track and buy the
 tree out. After any economy change, re-run it with the reports on:
 
 ```bash

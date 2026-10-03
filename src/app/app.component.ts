@@ -193,6 +193,6 @@ export class AppComponent {
   }
 
   constructor() {
-    onRise(this.#store.awardCount, () => this.awardPaid.set(true), 0);
+    onRise(this.#store.awardSp, () => this.awardPaid.set(true));
   }
 }

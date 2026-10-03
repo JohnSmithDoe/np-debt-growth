@@ -5,6 +5,11 @@ import type { TicketMix } from '../model/board.model';
 import { voteBeamY, voteCount } from '../model/board.model';
 import type { Award } from '../model/award.model';
 import { AWARDS } from '../model/award.model';
+import {
+  AWARD_SP_FROM_TIER,
+  AWARD_UNIT,
+  AWARD_WEIGHT_UNITS,
+} from '../model/balance/award';
 import { castPoolSize } from '../model/cast.model';
 import type { Weather } from '../model/hazard.model';
 import { CALM } from '../model/hazard.model';
@@ -1134,6 +1139,57 @@ export function pendingAwards(state: Consultancy): readonly Award[] {
   return AWARDS.filter(
     (award) => !awardGranted(state, award.id) && award.when(state)
   );
+}
+
+export interface AwardReward {
+  readonly currency: 'euro' | 'sp';
+  readonly amount: number;
+}
+
+/** Null for milestones and anything earned once the tree is signed off. */
+export function awardReward(
+  state: Consultancy,
+  award: Award
+): AwardReward | null {
+  if (award.kind !== 'achievement' || skillRank(state, FINAL_SKILL_ID) > 0)
+    return null;
+  const tier = Math.min(state.tier, AWARD_UNIT.length - 1);
+  return {
+    currency: tier < AWARD_SP_FROM_TIER ? 'euro' : 'sp',
+    amount: AWARD_UNIT[tier]! * AWARD_WEIGHT_UNITS[award.weight],
+  };
+}
+
+export interface GrantedAward {
+  readonly award: Award;
+  readonly reward: AwardReward | null;
+}
+
+export function grantAwards(state: Consultancy): {
+  readonly next: Consultancy;
+  readonly granted: readonly GrantedAward[];
+} {
+  const due = pendingAwards(state);
+  if (due.length === 0) return { next: state, granted: [] };
+  const granted = due.map((award) => ({
+    award,
+    reward: awardReward(state, award),
+  }));
+  let euros = 0;
+  let sp = 0;
+  for (const { reward } of granted) {
+    if (reward?.currency === 'euro') euros += reward.amount;
+    if (reward?.currency === 'sp') sp += reward.amount;
+  }
+  const next: Consultancy = {
+    ...state,
+    budget: state.budget + euros,
+    ...repaid(state, sp),
+    achievements: [...state.achievements, ...due.map((award) => award.id)],
+    lifetimeAwardEuros: state.lifetimeAwardEuros + euros,
+    lifetimeAwardSp: state.lifetimeAwardSp + sp,
+  };
+  return { next, granted };
 }
 
 export function boardPayout(

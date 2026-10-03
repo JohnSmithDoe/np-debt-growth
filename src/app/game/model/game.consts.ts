@@ -2,7 +2,7 @@ export const TICK_MS = 100;
 
 export const MAX_CATCHUP_MS = 5_000;
 
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 export const BURNDOWN_SAMPLE_MS = 10_000;
 export const BURNDOWN_SAMPLES = 512;

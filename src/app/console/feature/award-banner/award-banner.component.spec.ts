@@ -5,12 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GameStore } from '../../../game/data/game.store';
 import { AWARDS } from '../../../game/model/award.model';
+import type { AwardReward } from '../../../game/util/economy';
 import { AwardBannerComponent } from './award-banner.component';
 
 const [first = '', second = '', third = ''] = AWARDS.map((award) => award.id);
 
 describe('AwardBannerComponent', () => {
   const awarded = signal<readonly string[]>([]);
+  const rewards = signal<ReadonlyMap<string, AwardReward>>(new Map());
 
   function banner(): AwardBannerComponent {
     return TestBed.createComponent(AwardBannerComponent).componentInstance;
@@ -24,11 +26,15 @@ describe('AwardBannerComponent', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     awarded.set([]);
+    rewards.set(new Map());
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         provideTranslateService(),
-        { provide: GameStore, useValue: { awarded } as unknown as GameStore },
+        {
+          provide: GameStore,
+          useValue: { awarded, rewards } as unknown as GameStore,
+        },
       ],
     });
   });
@@ -93,5 +99,24 @@ describe('AwardBannerComponent', () => {
     grant();
 
     expect(component.stack()).toEqual([]);
+  });
+
+  it('pops what an achievement paid, and nothing for a milestone', () => {
+    const component = banner();
+
+    rewards.set(new Map([['a-250', { currency: 'sp', amount: 24_000 }]]));
+    grant('m-first-close', 'a-250');
+
+    expect(component.pops().map((pop) => pop.id)).toEqual(['a-250']);
+    expect(component.pops()[0]).toMatchObject({
+      key: 'award.reward.sp',
+      amount: '24.0k',
+    });
+    expect(component.stack().map((award) => award.reward?.key ?? null)).toEqual(
+      [null, 'award.reward.sp']
+    );
+
+    component.popped('a-250');
+    expect(component.pops()).toEqual([]);
   });
 });

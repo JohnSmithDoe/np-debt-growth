@@ -57,6 +57,8 @@ export interface Consultancy {
   readonly lifetimeProdIncidents: number;
   readonly lifetimeReviews: number;
   readonly lifetimeJackpots: number;
+  readonly lifetimeAwardEuros: number;
+  readonly lifetimeAwardSp: number;
 }
 
 /** The acceptance criterion under test: its line and how many of its tickets the hand picked up. */
@@ -132,5 +134,7 @@ export function freshConsultancy(now: number, version: number): Consultancy {
     lifetimeProdIncidents: 0,
     lifetimeReviews: 0,
     lifetimeJackpots: 0,
+    lifetimeAwardEuros: 0,
+    lifetimeAwardSp: 0,
   };
 }

@@ -297,6 +297,7 @@ const PROBING = ((): boolean => {
 export class GameStore {
   #state = signal<Consultancy>(freshConsultancy(Date.now(), SAVE_VERSION));
   #awarded = signal<readonly string[]>([]);
+  #rewards = signal<ReadonlyMap<string, economy.AwardReward>>(new Map());
   #sprint = signal<readonly SprintSlot[]>([]);
   #mix = computed(() => ticketMix(this.#sprint()));
   #closeFloats: CloseFloat[] = [];
@@ -382,6 +383,9 @@ export class GameStore {
 
   readonly awarded = this.#awarded.asReadonly();
   readonly awardCount = computed(() => this.#awarded().length);
+  /** What each achievement paid this session, keyed by award id. */
+  readonly rewards = this.#rewards.asReadonly();
+  readonly awardSp = computed(() => this.#state().lifetimeAwardSp);
 
   readonly sprint = this.#sprint.asReadonly();
   pizzaParty(): { x: number; y: number; radius: number; left: number } | null {
@@ -886,12 +890,24 @@ export class GameStore {
   }
 
   #grantAwards(state: Consultancy): Consultancy {
-    const due = economy.pendingAwards(state);
-    if (due.length === 0) return state;
+    const { next, granted } = economy.grantAwards(state);
+    if (granted.length === 0) return state;
 
-    const ids = due.map((award) => award.id);
-    this.#awarded.update((held) => [...held, ...ids]);
-    return { ...state, achievements: [...state.achievements, ...ids] };
+    this.#awarded.update((held) => [
+      ...held,
+      ...granted.map(({ award }) => award.id),
+    ]);
+    const paid = granted.filter(({ reward }) => reward !== null);
+    if (paid.length > 0) {
+      this.#rewards.update(
+        (held) =>
+          new Map([
+            ...held,
+            ...paid.map(({ award, reward }) => [award.id, reward!] as const),
+          ])
+      );
+    }
+    return next;
   }
 
   #bank(
@@ -1429,6 +1445,7 @@ export class GameStore {
   }
 
   #calm(runMs: number): void {
+    this.#rewards.set(new Map());
     this.#live = [];
     this.#sky.set(CALM);
     this.#cadence = freshCadence(runMs);

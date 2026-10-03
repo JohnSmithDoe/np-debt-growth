@@ -27,7 +27,8 @@
   grid-template-areas:
     'pokal kind'
     'pokal label'
-    'pokal blurb';
+    'pokal blurb'
+    'pokal reward';
   column-gap: 0.7rem;
   row-gap: 0.1rem;
   align-items: center;
@@ -60,6 +61,12 @@
 
 .blurb {
   grid-area: blurb;
+}
+
+.reward {
+  grid-area: reward;
+  justify-self: start;
+  margin-block-start: 0.2rem;
 }
 
 cb-confetti {
@@ -109,6 +116,85 @@ cb-confetti {
   );
 }
 
+.award.milestone {
+  border-color: var(--np-cb-accent);
+}
+
+.award.large.milestone {
+  box-shadow:
+    var(--np-cb-lift),
+    0 0 1.6rem -0.5rem var(--np-cb-accent);
+}
+
+.pops {
+  position: fixed;
+  inset-block-start: 28%;
+  inset-inline: 0;
+  z-index: 61;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  pointer-events: none;
+}
+
+.pop {
+  font-family: var(--np-cb-font-display);
+  font-size: 3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--np-cb-money);
+  text-shadow:
+    0 2px 0 rgb(0 0 0 / 0.6),
+    0 0 1.4rem color-mix(in srgb, currentColor 45%, transparent);
+
+  animation: reward-pop 1900ms ease-out forwards;
+}
+
+.pop.sp {
+  color: var(--np-cb-points);
+}
+
+.pop.medium {
+  font-size: 3.8rem;
+}
+
+.pop.large {
+  font-size: 4.8rem;
+}
+
+@keyframes reward-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  22% {
+    transform: scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-2.5rem);
+  }
+}
+
+@keyframes reward-fade {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes award-land {
   from {
     opacity: 0;
@@ -119,5 +205,9 @@ cb-confetti {
 @media (prefers-reduced-motion: reduce) {
   .award {
     animation: none;
+  }
+
+  .pop {
+    animation-name: reward-fade;
   }
 }

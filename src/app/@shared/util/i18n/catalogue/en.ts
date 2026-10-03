@@ -193,6 +193,8 @@ export const EN: Readonly<Record<string, string>> = {
   'title.windowed': 'Windowed',
   'award.achievement': 'Achievement',
   'award.dismiss': 'Dismiss',
+  'award.reward.euro': '+{{amount}}',
+  'award.reward.sp': '+{{amount}} SP',
   'award.milestone': 'Milestone',
   'award.waiting': '+{{count}} more',
   'hud.budget': 'Budget',
@@ -945,6 +947,8 @@ export const EN: Readonly<Record<string, string>> = {
     'ADR-{{adr}} ({{tier}}) reached full production status.',
   'postmortem.well.awards':
     '{{unlocked}} of {{total}} achievements confirmed by the crew.',
+  'postmortem.well.rewards':
+    'Achievements paid {{euros}} and {{sp}} SP into the budget; the rest were just for the record.',
   'postmortem.badly.adrs':
     'Every Architecture Decision Record made the codebase permanently worse. None were reverted, none were on the agenda to be, and each was approved in writing by {{client}}.',
   'postmortem.badly.backlog':

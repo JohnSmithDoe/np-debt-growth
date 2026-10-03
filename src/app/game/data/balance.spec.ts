@@ -52,7 +52,7 @@ function everySkill(): Record<string, number> {
 }
 
 /** Minutes per tier 0…8 (tier 8 ends at sign-off): the opening at its own pace, then quicker every rung. */
-const TIER_CURVE = [3, 4, 3, 2.25, 2, 1.75, 1.5, 1.25, 1] as const;
+const TIER_CURVE = [3, 4, 3, 2.25, 1.75, 1.5, 1.25, 1, 0.75] as const;
 const TIER_SLACK = 0.25;
 
 const MILESTONES = [
@@ -439,8 +439,8 @@ describe('the session arc', () => {
   it('finishes inside a sitting, not a coffee break', () => {
     const at = run.reached.get('accepted');
     expect(at, 'the run never finished acceptance').toBeDefined();
-    expect(at! / 60_000).toBeGreaterThan(22);
-    expect(at! / 60_000).toBeLessThan(30);
+    expect(at! / 60_000).toBeGreaterThan(18);
+    expect(at! / 60_000).toBeLessThan(22);
   });
 
   it('plays every tier about as long as its place on the curve', () => {

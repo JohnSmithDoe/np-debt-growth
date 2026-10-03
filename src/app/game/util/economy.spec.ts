@@ -1,10 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
 import { HAND_ONLY_RATE_PER_TIER } from '../model/balance/flow';
+import {
+  AWARD_SP_FROM_TIER,
+  AWARD_UNIT,
+  AWARD_WEIGHT_UNITS,
+} from '../model/balance/award';
+import { AWARD_BY_ID } from '../model/award.model';
 import type { Consultancy } from '../model/consultancy.model';
 import { consultancy, ranksOf } from '../model/consultancy.fixture';
 import { castPoolSize, crewName } from '../model/cast.model';
-import { SKILL_BY_ID, skillFamilyIds } from '../model/skill.model';
+import {
+  FINAL_SKILL_ID,
+  SKILL_BY_ID,
+  skillFamilyIds,
+} from '../model/skill.model';
 import { TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
 import type { CrewKind } from '../model/crew.model';
 import {
@@ -16,6 +26,8 @@ import {
 import { INCOME_CAP } from '../model/balance/progression';
 import { HAUL_MS, RELEASE_PHASES } from '../model/balance/round';
 import {
+  awardReward,
+  grantAwards,
   ceilingPerSec,
   lineCap,
   haulMs,
@@ -515,5 +527,49 @@ describe('the rates tab (parity #25)', () => {
       expect(cost, `rank ${rank}`).toBeGreaterThan(last);
       last = cost;
     }
+  });
+});
+
+describe('achievement rewards', () => {
+  const award = (id: string) => AWARD_BY_ID.get(id)!;
+
+  it('pays euros before ADR-3 and story points from it, by weight', () => {
+    const early = consultancy({ tier: AWARD_SP_FROM_TIER - 1 });
+    const late = consultancy({ tier: AWARD_SP_FROM_TIER });
+    expect(awardReward(early, award('a-250'))).toEqual({
+      currency: 'euro',
+      amount: AWARD_UNIT[AWARD_SP_FROM_TIER - 1]! * AWARD_WEIGHT_UNITS.small,
+    });
+    expect(awardReward(late, award('a-billion'))).toEqual({
+      currency: 'sp',
+      amount: AWARD_UNIT[AWARD_SP_FROM_TIER]! * AWARD_WEIGHT_UNITS.large,
+    });
+  });
+
+  it('never pays a milestone, nor anything once the tree is signed off', () => {
+    expect(awardReward(consultancy({ tier: 5 }), award('m-tier5'))).toBeNull();
+    const signed = consultancy({ tier: 8, skills: { [FINAL_SKILL_ID]: 1 } });
+    expect(awardReward(signed, award('a-trillion'))).toBeNull();
+    expect(
+      awardReward({ ...signed, endedAt: 1 }, award('a-trillion'))
+    ).toBeNull();
+  });
+
+  it('banks the reward and records it, story points through the credit line', () => {
+    const state = consultancy({
+      tier: AWARD_SP_FROM_TIER,
+      lifetimeClosed: 250,
+      spDebt: 1_000_000,
+    });
+    const { next, granted } = grantAwards(state);
+    const paid = granted.reduce((sum, g) => sum + (g.reward?.amount ?? 0), 0);
+
+    expect(next.achievements).toEqual(
+      expect.arrayContaining(['a-250', 'a-on-credit'])
+    );
+    expect(next.lifetimeAwardSp).toBe(paid);
+    expect(next.storyPoints + (state.spDebt - next.spDebt)).toBe(paid);
+    expect(next.budget).toBe(state.budget);
+    expect(grantAwards(next).granted).toEqual([]);
   });
 });

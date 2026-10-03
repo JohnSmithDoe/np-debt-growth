@@ -16,7 +16,7 @@ import { flow } from '../util/sim';
 const SPAN_MS = 5 * 60_000;
 const TOLERANCE = 1.5;
 
-const SEEDS = [11, 23, 57, 91] as const;
+const SEEDS = [11, 23, 57, 91, 3, 41, 77, 99] as const;
 
 const seeded = (start: number = SEEDS[0]): GameStore => {
   const store = new GameStore();
@@ -67,7 +67,10 @@ function onTheBoard(state: Consultancy): {
     }
     const end = store.snapshot();
     euro += end.lifetimeBilled - state.lifetimeBilled;
-    sp += end.storyPoints - state.storyPoints;
+    sp +=
+      end.storyPoints -
+      state.storyPoints -
+      (end.lifetimeAwardSp - state.lifetimeAwardSp);
     closed += end.lifetimeClosed - state.lifetimeClosed;
   }
   const seconds = (SPAN_MS / 1000) * SEEDS.length;
