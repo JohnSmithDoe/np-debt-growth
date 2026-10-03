@@ -51,8 +51,8 @@ function everySkill(): Record<string, number> {
   );
 }
 
-/** Minutes per tier 0…8 (tier 8 ends at sign-off): short open, long middle, a brisk finish. */
-const TIER_CURVE = [3, 3.5, 4, 4.5, 5, 5, 4.5, 4, 3.5] as const;
+/** Minutes per tier 0…8 (tier 8 ends at sign-off): the opening at its own pace, then quicker every rung. */
+const TIER_CURVE = [3, 4, 3, 2.25, 2, 1.75, 1.5, 1.25, 1] as const;
 const TIER_SLACK = 0.25;
 
 const MILESTONES = [
@@ -179,9 +179,12 @@ describe('the crew earns its keep, and never all of it', () => {
     }
   });
 
-  it('holds a floor of the money once it takes gold', () => {
+  it('holds a floor of the money once it takes gold, until the acceptance meeting', () => {
     const cleared = run.reached.get('golden crew')!;
-    const marks = run.ledger.filter((mark) => mark.at >= cleared + WINDOW_MS);
+    const meeting = run.reached.get('signed off')!;
+    const marks = run.ledger.filter(
+      (mark) => mark.at >= cleared + WINDOW_MS && mark.at <= meeting
+    );
     expect(marks.length).toBeGreaterThan(0);
     for (const mark of marks) {
       expect(crewEuroShare(markAt(mark.at - WINDOW_MS), mark)).toBeGreaterThan(
@@ -343,7 +346,7 @@ describe("an unattended run keeps cycling (C1's successor)", () => {
   };
 
   it('keeps earning with nobody pressing anything', () => {
-    const idle = unattended(everySkill());
+    const idle = unattended({ ...everySkill(), [FINAL_SKILL_ID]: 0 });
     expect(idle).toBeGreaterThan(0);
   });
 
@@ -437,8 +440,8 @@ describe('the session arc', () => {
   it('finishes inside a sitting, not a coffee break', () => {
     const at = run.reached.get('accepted');
     expect(at, 'the run never finished acceptance').toBeDefined();
-    expect(at! / 60_000).toBeGreaterThan(25);
-    expect(at! / 60_000).toBeLessThan(45);
+    expect(at! / 60_000).toBeGreaterThan(22);
+    expect(at! / 60_000).toBeLessThan(30);
   });
 
   it('plays every tier about as long as its place on the curve', () => {

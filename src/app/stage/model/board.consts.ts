@@ -50,7 +50,6 @@ export const UNDER_TEST = {
 export const BUFF_BANNER = {
   size: '16px',
   colour: {
-    acceptance: '#ff9ccb',
     buffs: '#d8b34a',
     call: '#67e8f9',
   },

@@ -5,6 +5,7 @@ import {
   DestroyRef,
   effect,
   inject,
+  output,
   signal,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -41,6 +42,8 @@ export class MomentModalComponent {
 
   #showing = signal<MomentId | null>(null);
 
+  readonly closed = output<MomentId>();
+
   readonly moment = computed<MomentCopy | null>(() => {
     const id = this.#showing();
     return id === null ? null : MOMENT_COPY[id];
@@ -63,6 +66,8 @@ export class MomentModalComponent {
   }
 
   dismiss(): void {
+    const id = this.#showing();
     this.#showing.set(null);
+    if (id !== null) this.closed.emit(id);
   }
 }

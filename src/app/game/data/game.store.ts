@@ -11,7 +11,9 @@ import type {
 } from '../model/board.model';
 import {
   emptyBoard,
+  inTest,
   NO_SEAT,
+  NO_TEST,
   NO_TICKET,
   ticketMix,
 } from '../model/board.model';
@@ -37,7 +39,11 @@ import {
   HAZARD_BY_ID,
   hazardDurationMs,
 } from '../model/hazard.model';
-import type { BuffNotice, RoundOutcome } from '../model/round.model';
+import type {
+  AcceptanceView,
+  BuffNotice,
+  RoundOutcome,
+} from '../model/round.model';
 import type { SkillLock } from '../model/skill.model';
 import { FINAL_SKILL_ID, SECRET_SKILL_ID } from '../model/skill.model';
 import { tierAt } from '../model/tier.model';
@@ -52,6 +58,7 @@ const VOIDED_AT_SIGNOFF: ReadonlySet<TicketTypeId> = new Set([
 ]);
 import type { KitItem } from '../model/kit.model';
 import type { PurchaseId } from '../model/balance/progression';
+import { CRITERION_MS } from '../model/balance/progression';
 import type { ReleasePhase } from '../model/balance/round';
 import {
   PIZZA_MS,
@@ -68,6 +75,8 @@ import {
   HOTFIX_MS,
   HOTFIX_MULTIPLIER,
   INVITATION_EVERY_MS,
+  LATE_WEATHER_FROM_TIER,
+  LATE_WEATHER_PACE,
   INVITATION_WINDOW_MS,
 } from '../model/balance/weather';
 import type { Closed, CrewWork } from '../util/board';
@@ -81,7 +90,7 @@ import {
 } from '../util/board';
 import { crewRules } from '../util/crew-rules';
 import { spawnInto } from '../util/supply';
-import { incidentPayout, underTestRate } from '../util/sim';
+import { incidentPayout } from '../util/sim';
 import * as economy from '../util/economy';
 import * as purchase from '../util/purchase';
 import { SpawnBudget } from '../util/spawn-budget';
@@ -208,9 +217,12 @@ interface Cadence {
   seq: number;
 }
 
-function nextBeat(cadence: Cadence, afterMs: number): number {
-  const beats = Math.floor((afterMs - cadence.offset) / cadence.every) + 1;
-  return cadence.offset + beats * cadence.every;
+function nextBeat(cadence: Cadence, afterMs: number, tier = 0): number {
+  const pace = tier >= LATE_WEATHER_FROM_TIER ? LATE_WEATHER_PACE : 1;
+  const every = cadence.every / pace;
+  const offset = cadence.offset / pace;
+  const beats = Math.floor((afterMs - offset) / every) + 1;
+  return offset + beats * every;
 }
 
 function armed(cadence: Cadence, runMs: number): number {
@@ -262,6 +274,7 @@ function reachedBy(board: Board, ids: readonly number[]): Reached {
       golden: ticket.golden,
       spBonus: ticket.spBonus,
       by: 'you',
+      tested: inTest(board, ticket),
       poolSeat: NO_SEAT,
       woman: false,
       x: ticket.x,
@@ -389,6 +402,25 @@ export class GameStore {
   readonly ended = computed(() => this.#state().endedAt > 0);
 
   readonly inAcceptance = computed(() => economy.inAcceptance(this.#state()));
+  readonly acceptance = computed<AcceptanceView | null>(() => {
+    const state = this.#state();
+    const criterion = economy.criterionNow(state);
+    const run = state.criterion;
+    if (!criterion || !run) return null;
+    return {
+      index: criterion.index,
+      of: CRITERIA_COUNT,
+      line: criterion.line,
+      tickets: economy.underTestTypes(state),
+      picked: criterion.picked,
+      goal: criterion.goal,
+      msLeft: economy.criterionMsLeft(state),
+      windowMs: CRITERION_MS,
+      overtime: economy.overtime(state),
+      clean: run.clean,
+      flagged: run.flagged,
+    };
+  });
 
   advanceTo(now: number): void {
     const state = this.#state();
@@ -560,6 +592,9 @@ export class GameStore {
     const dtMs = seconds * 1000;
     const runMs = state.runMs + dtMs;
     this.#board.lifeMs = ticketLifeMs(state.tier);
+    this.#board.kept = economy.underTestTypes(state);
+    this.#board.test =
+      this.#board.kept.length > 0 ? state.criterion!.index : NO_TEST;
     const slots = economy.sprintSlots(state, this.#sky());
     const work = this.#stepBoard(state, dtMs, slots);
     const banked = this.#bank(state, work, now, slots);
@@ -585,7 +620,7 @@ export class GameStore {
     if (next.escalationFiresAt > 0 && now >= next.escalationFiresAt) {
       next = { ...next, escalated: false, escalationFiresAt: 0 };
     }
-    next = economy.stepCriterion(next, underTestRate);
+    next = economy.stepCriterion(next);
     next = this.#grantAwards(next);
     next = this.#stepTrain(next, dtMs);
     return economy.accepted(next) ? { ...next, endedAt: now } : next;
@@ -700,13 +735,13 @@ export class GameStore {
     if (!row || !this.#place(row, runMs, state)) return;
 
     cadence.seq += 1;
-    cadence.due = nextBeat(cadence, runMs);
+    cadence.due = nextBeat(cadence, runMs, state.tier);
   }
 
   #place(row: Hazard, runMs: number, state: Consultancy): boolean {
     if (
-      row.kind === 'invitation' &&
-      (state.levels.manager > 0 || economy.inAcceptance(state))
+      economy.inAcceptance(state) ||
+      (row.kind === 'invitation' && state.levels.manager > 0)
     )
       return true;
 
@@ -782,20 +817,6 @@ export class GameStore {
     if (state.endedAt > 0) return [];
     const now = state.lastTick;
     const live: BuffNotice[] = [];
-    const criterion = economy.criterionNow(state);
-    if (economy.inAcceptance(state)) {
-      live.push({
-        id: 'acceptance',
-        mult: economy.overtime(state),
-        criterion: criterion && {
-          index: criterion.index,
-          line: criterion.line,
-          of: CRITERIA_COUNT,
-          done: criterion.done,
-          msLeft: economy.criterionMsLeft(state),
-        },
-      });
-    }
     if (state.escalated && state.escalationFiresAt > now) {
       live.push({
         id: 'escalation',
@@ -909,7 +930,7 @@ export class GameStore {
 
     return {
       next: {
-        ...economy.billUnderTest(state, banked.tested),
+        ...economy.pickUnderTest(state, banked.picked),
         ...buffs,
         budget: state.budget + payout,
         sprintCount: count,
@@ -939,10 +960,10 @@ export class GameStore {
     headline: string | null;
     took: SprintSlot[];
     worths: number[];
-    tested: number;
+    picked: number;
   } {
     let value = 0;
-    let tested = 0;
+    let picked = 0;
     let sp = 0;
     let big = false;
     let headline: string | null = null;
@@ -953,7 +974,8 @@ export class GameStore {
     const conversion = economy.crewGoldenConversion(state);
     const aura = economy.managerAura(state);
     const reach = economy.managerReach(state);
-    for (const { type, titleKey, by, x, y, golden, spBonus } of closed) {
+    for (const close of closed) {
+      const { type, titleKey, by, x, y, golden, spBonus } = close;
       if (TICKET_TYPES[type].effect !== 'value') continue;
       const byCrew = crewed(by);
       const gilded =
@@ -967,7 +989,7 @@ export class GameStore {
       big ||= loud;
       if (loud) headline ??= titleKey;
       value += worth;
-      if (economy.underTest(state, type)) tested += worth;
+      if (close.tested) picked += 1;
       sp +=
         economy.pickupStoryPoints(state, type, byCrew) +
         (economy.pickupsPaySp(state) ? spBonus : 0);
@@ -977,7 +999,7 @@ export class GameStore {
         this.#addCloseFloat(x, y, worth, loud ? titleKey : null);
       }
     }
-    return { value, sp, big, headline, took, worths, tested };
+    return { value, sp, big, headline, took, worths, picked };
   }
 
   #billWholeBoard(now: number, bonus = 1): number {
@@ -989,12 +1011,9 @@ export class GameStore {
 
     const types = resting.map((ticket) => ticket.type);
     const payout = economy.boardPayout(state, types, now) * bonus;
-    const tested =
-      economy.boardPayout(
-        state,
-        types.filter((type) => economy.underTest(state, type)),
-        now
-      ) * bonus;
+    const picked = resting.filter((ticket) =>
+      inTest(this.#board, ticket)
+    ).length;
     for (const ticket of resting) {
       comeBack(this.#board, ticket);
       removeTicket(this.#board, ticket);
@@ -1009,7 +1028,7 @@ export class GameStore {
           ) * bonus
         : 0;
     this.#state.set({
-      ...economy.billUnderTest(state, tested),
+      ...economy.pickUnderTest(state, picked),
       ...economy.repaid(state, sp),
       budget: state.budget + payout,
       lifetimeClosed: state.lifetimeClosed + resting.length,
@@ -1027,7 +1046,7 @@ export class GameStore {
     },
   >(banked: T, tickets: readonly BoardTicket[]): T {
     const state = banked.next;
-    if (!economy.reviewsIncidents(state)) return banked;
+    if (!economy.paysIncidents(state)) return banked;
     const cleared = tickets.filter(
       (ticket) => ticket.type === 'incident'
     ).length;
@@ -1268,7 +1287,7 @@ export class GameStore {
 
   #commit(next: Consultancy | null): boolean {
     if (next === null) return false;
-    this.#state.set(economy.recalibrate(next, underTestRate));
+    this.#state.set(next);
     return true;
   }
 
@@ -1325,13 +1344,13 @@ export class GameStore {
     return true;
   }
 
-  /** The closeout voids the hotfixes, escalations and quarter ends held on the board, and every meeting. */
+  /** The closeout voids the hotfixes, escalations and quarter ends held on the board, and every hazard. */
   #voidVouchers(): void {
     for (const ticket of [...this.#board.rares]) {
       if (VOIDED_AT_SIGNOFF.has(ticket.type) || ticket.type === 'invite')
         removeTicket(this.#board, ticket);
     }
-    this.#live = this.#live.filter((live) => live.kind !== 'invitation');
+    this.#live = [];
     this.#sky.set(this.#weatherNow());
   }
 

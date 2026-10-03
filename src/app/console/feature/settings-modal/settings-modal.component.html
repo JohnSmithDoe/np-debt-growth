@@ -46,25 +46,64 @@
           </button>
         </li>
 
-        <li>
-          <button
-            type="button"
-            class="line"
-            [attr.aria-pressed]="!muted()"
-            (click)="toggleMuted()"
-          >
-            <span class="what">
-              <span class="label">{{
-                'settings.sound.label' | translate
-              }}</span>
-              <span class="muted small">{{
-                'settings.sound.blurb' | translate
-              }}</span>
-            </span>
-            <span class="state">{{
-              (muted() ? 'settings.off' : 'settings.on') | translate
+        <li class="row channel">
+          <div class="what">
+            <span class="label">{{ 'settings.music.label' | translate }}</span>
+            <span class="muted small">{{
+              'settings.music.blurb' | translate
             }}</span>
-          </button>
+          </div>
+          <div class="mix">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              [value]="percent(musicVolume())"
+              [attr.aria-label]="'settings.music.volume' | translate"
+              [attr.aria-valuetext]="percent(musicVolume()) + ' %'"
+              (input)="setMusicVolume($event)"
+            />
+            <button
+              type="button"
+              class="btn ghost small"
+              [class.on]="music()"
+              [attr.aria-pressed]="music()"
+              (click)="toggleMusic()"
+            >
+              {{ (music() ? 'settings.on' : 'settings.off') | translate }}
+            </button>
+          </div>
+        </li>
+
+        <li class="row channel">
+          <div class="what">
+            <span class="label">{{ 'settings.sfx.label' | translate }}</span>
+            <span class="muted small">{{
+              'settings.sfx.blurb' | translate
+            }}</span>
+          </div>
+          <div class="mix">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              [value]="percent(sfxVolume())"
+              [attr.aria-label]="'settings.sfx.volume' | translate"
+              [attr.aria-valuetext]="percent(sfxVolume()) + ' %'"
+              (input)="setSfxVolume($event)"
+            />
+            <button
+              type="button"
+              class="btn ghost small"
+              [class.on]="sfx()"
+              [attr.aria-pressed]="sfx()"
+              (click)="toggleSfx()"
+            >
+              {{ (sfx() ? 'settings.on' : 'settings.off') | translate }}
+            </button>
+          </div>
         </li>
 
         @if (canFullscreen) {

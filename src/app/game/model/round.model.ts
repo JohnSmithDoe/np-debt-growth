@@ -1,3 +1,4 @@
+import type { TicketTypeId } from './ticket.model';
 import type { ReleasePhaseId } from './balance/round';
 
 export function releasePhaseKey(id: ReleasePhaseId, short = false): string {
@@ -20,15 +21,19 @@ export type BuffNotice =
     }
   | {
       readonly id: 'quarter' | 'combo' | 'comboLive' | 'escalationHeld';
-    }
-  | {
-      readonly id: 'acceptance';
-      readonly mult: number;
-      readonly criterion: {
-        readonly index: number;
-        readonly line: number;
-        readonly of: number;
-        readonly done: number;
-        readonly msLeft: number;
-      } | null;
     };
+
+/** The acceptance criterion under test, as the console shows it. */
+export interface AcceptanceView {
+  readonly index: number;
+  readonly of: number;
+  readonly line: number;
+  readonly tickets: readonly TicketTypeId[];
+  readonly picked: number;
+  readonly goal: number;
+  readonly msLeft: number;
+  readonly windowMs: number;
+  readonly overtime: number;
+  readonly clean: readonly number[];
+  readonly flagged: readonly number[];
+}

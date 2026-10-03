@@ -61,7 +61,9 @@ export function crewRules(
     kind,
     crew: crewOf(board, kind),
     ...rules[at]!,
-    interrupted: CREW_STATS[kind].interruptible && weather.meeting,
+    interrupted:
+      (CREW_STATS[kind].interruptible && weather.meeting) ||
+      economy.inAcceptance(state),
     rush,
   }));
 }

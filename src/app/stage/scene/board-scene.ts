@@ -549,7 +549,7 @@ export class BoardScene extends CbScene {
       (clear + this.#width) / 2,
       bottom,
       this.#width - clear - BUFF_BANNER.gap * 2,
-      banner?.visible ? 2 : 3
+      banner?.visible ? 1 : 2
     );
   }
 

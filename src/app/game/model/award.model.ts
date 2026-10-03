@@ -264,7 +264,7 @@ export const AWARDS: readonly Award[] = [
     id: 'a-rate-card',
     kind: 'achievement',
     weight: 'large',
-    when: (s) => (s.skills['incomeLint'] ?? 0) >= 5,
+    when: (s) => (s.skills['incomeLint2'] ?? 0) > 0,
   },
   {
     id: 'a-secret',

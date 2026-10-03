@@ -14,3 +14,6 @@ export const INVITATION_WINDOW_MS = 4_000;
 export const FACT_EVERY_MS = 120_000;
 export const FACT_COUNTDOWN_MS = 5_000;
 export const FACT_OFFSET_MS = 60_000;
+/** From this rung both cadences run this many times as often, so the short late tiers still see weather. */
+export const LATE_WEATHER_FROM_TIER = 5;
+export const LATE_WEATHER_PACE = 2;

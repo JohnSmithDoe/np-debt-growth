@@ -53,6 +53,12 @@ const OWN_ICONS: readonly string[] = [
 const LINE_KINDS = ['value', 'spawn', 'income', 'estimates', 'double'] as const;
 const LINE_NODE = /^(value|spawn|income|estimates|double)[A-Z]/;
 
+const PACKAGE_NODE = /^(contract|retainer)[A-Z]/;
+const PACKAGE_ICON: Readonly<Record<string, (typeof LINE_KINDS)[number]>> = {
+  contract: 'estimates',
+  retainer: 'income',
+};
+
 const ROOM_ICON = 'headcount';
 const ROOM_NODE = /^(junior|senior|manager)Room$/;
 
@@ -68,7 +74,9 @@ export function skillIconOf(nodeId: string): string | null {
   if (ROOM_NODE.test(family)) return ROOM_ICON;
   if (CUT_NODE.test(nodeId)) return CUT_ICON;
   const kind = LINE_NODE.exec(nodeId)?.[1];
-  return kind === undefined ? null : `line-${kind}`;
+  if (kind !== undefined) return `line-${kind}`;
+  const pack = PACKAGE_NODE.exec(nodeId)?.[1];
+  return pack === undefined ? null : `line-${PACKAGE_ICON[pack]}`;
 }
 
 export const SKILL_ICON_FILES: readonly string[] = [

@@ -5,13 +5,16 @@ import {
   CREDIT_FROM_ADR,
   CREDIT_INTEREST,
   CRITERION_BONUS,
-  CRITERION_MAX_MS,
-  CRITERION_MIN_MS,
+  CRITERION_GOAL,
+  CRITERION_MS,
   CRITERION_OVERTIME,
-  CRITERION_FIRST_TEST_MS,
-  CRITERION_SHARE,
+  CRITERION_PERFECT_MS,
+  CRITERION_SPAWN_PER_SEC,
 } from '../model/balance/progression';
-import { INCIDENT_TOP_SHARE } from '../model/balance/flow';
+import {
+  INCIDENT_PAYOUT_FROM_TIER,
+  INCIDENT_TOP_SHARE,
+} from '../model/balance/flow';
 import {
   INCIDENT_REVIEW,
   INCIDENT_REVIEW_FROM_TIER,
@@ -34,7 +37,10 @@ import { TICKET_TYPES } from '../model/ticket.model';
 import { addTicket } from '../util/board';
 import * as economy from '../util/economy';
 import * as purchase from '../util/purchase';
-import { incidentPayout, underTestRate } from '../util/sim';
+import { crewRules } from '../util/crew-rules';
+import { flow, incidentPayout } from '../util/sim';
+import { CALM } from '../model/hazard.model';
+import { emptyBoard, inTest } from '../model/board.model';
 import type { GameStore } from './game.store';
 import { storeWith } from './store.fixture';
 
@@ -47,12 +53,10 @@ function place(
   return ticket!.id;
 }
 
-const SLICE = (ACCEPTANCE.goal / CRITERIA_COUNT) * CRITERION_SHARE;
-
-/** Signed with nothing in the bank; `index` criteria signed, the current one on `line`. */
+/** Signed with nothing picked; `index` criteria signed, the current one on `line`. */
 const signed = (
   index = 0,
-  billed = 0,
+  picked = 0,
   ranMs = 0,
   extra: Partial<Consultancy> = {}
 ): Consultancy =>
@@ -64,8 +68,7 @@ const signed = (
       index,
       line: index % CRITERIA_COUNT,
       sinceMs: 100_000,
-      billed,
-      target: SLICE,
+      picked,
       clean: [],
       flagged: [],
       findings: 0,
@@ -85,8 +88,12 @@ describe('the acceptance criteria', () => {
     });
     const next = purchase.buySkill(ready, FINAL_SKILL_ID)!;
     expect(next.signedBudget).toBe(5e14);
-    expect(economy.criterionNow(next)).toEqual({ index: 0, line: 0, done: 0 });
-    expect(next.criterion?.target).toBeGreaterThan(0);
+    expect(economy.criterionNow(next)).toEqual({
+      index: 0,
+      line: 0,
+      picked: 0,
+      goal: CRITERION_GOAL,
+    });
     expect(economy.criterionNow(consultancy({ tier: 8 }))).toBeNull();
   });
 
@@ -102,37 +109,81 @@ describe('the acceptance criteria', () => {
     expect(economy.underTest(state, 'lint')).toBe(false);
   });
 
-  it('counts only what the line under test bills', () => {
-    const state = economy.billUnderTest(signed(0), SLICE / 2);
-    expect(economy.criterionNow(state)?.done).toBeCloseTo(0.5, 6);
-  });
-
-  it('signs once billed and run its minimum, never before', () => {
-    const billed = signed(0, SLICE, CRITERION_MIN_MS - 1);
-    expect(economy.stepCriterion(billed).criterion?.index).toBe(0);
-    const ready = signed(0, SLICE, CRITERION_MIN_MS);
-    const next = economy.stepCriterion(ready);
-    expect(next.criterion).toMatchObject({ index: 1, line: 1, billed: 0 });
+  it('signs clean the moment the hand reaches the goal', () => {
+    const short = signed(0, CRITERION_GOAL - 1, 1_000);
+    expect(economy.stepCriterion(short).criterion?.index).toBe(0);
+    const next = economy.stepCriterion(signed(0, CRITERION_GOAL, 1_000));
+    expect(next.criterion).toMatchObject({ index: 1, line: 1, picked: 0 });
     expect(economy.overtime(next)).toBe(ACCEPTANCE.value + CRITERION_OVERTIME);
   });
 
-  it('signs a slow line anyway at its maximum, with findings: no overtime, no award', () => {
-    const slow = economy.stepCriterion(signed(3, 0, CRITERION_MAX_MS));
+  it('signs with findings when the window closes short: no overtime, no award', () => {
+    const open = signed(3, CRITERION_GOAL - 1, CRITERION_MS - 1);
+    expect(economy.stepCriterion(open).criterion?.index).toBe(3);
+    const slow = economy.stepCriterion(
+      signed(3, CRITERION_GOAL - 1, CRITERION_MS)
+    );
     expect(slow.criterion).toMatchObject({ index: 4, findings: 1, clean: [] });
     expect(economy.criteriaVerified(slow)).toBe(3);
     expect(AWARD_BY_ID.get(criterionAwardId(3))?.when(slow)).toBe(false);
   });
 
-  it('asks a criterion for a steady sweep of its own line', () => {
-    const rate = () => 1e12;
-    expect(economy.criterionTarget(signed(0), 0, 2, rate)).toBe(
-      1e12 * (CRITERION_FIRST_TEST_MS / 1000)
+  it('toasts a criterion signed with findings', () => {
+    const slow = economy.stepCriterion(signed(3, 0, CRITERION_MS));
+    expect(AWARD_BY_ID.get(findingsAwardId(3))?.when(slow)).toBe(true);
+  });
+
+  it('spawns the line under test at one rate whatever its spawners, the rest at their own', () => {
+    const lint = signed(0);
+    expect(
+      economy.spawnRate(lint, 'lint') + economy.spawnRate(lint, 'bug')
+    ).toBeCloseTo(CRITERION_SPAWN_PER_SEC, 9);
+    expect(economy.spawnRate(signed(8), 'swarm')).toBeCloseTo(
+      CRITERION_SPAWN_PER_SEC,
+      9
+    );
+    expect(economy.spawnRate(lint, 'legacy')).toBeCloseTo(
+      economy.spawnRate(
+        consultancy({ tier: 8, skills: { root: 1 } }),
+        'legacy'
+      ),
+      9
     );
   });
 
-  it('toasts a criterion signed with findings', () => {
-    const slow = economy.stepCriterion(signed(3, 0, CRITERION_MAX_MS));
-    expect(AWARD_BY_ID.get(findingsAwardId(3))?.when(slow)).toBe(true);
+  it('asks what the line spawns in the perfect-play time, short of the window', () => {
+    expect(CRITERION_GOAL).toBe(
+      Math.floor(CRITERION_SPAWN_PER_SEC * (CRITERION_PERFECT_MS / 1000))
+    );
+    expect(CRITERION_GOAL).toBe(30);
+    expect(CRITERION_PERFECT_MS).toBeLessThan(CRITERION_MS);
+  });
+
+  it('auto-closes nothing in the push', () => {
+    const skills = { ...signed(0).skills, triagePolicy: 1 };
+    const before = consultancy({ skills: { ...skills, [FINAL_SKILL_ID]: 0 } });
+    expect(economy.autoClosed(before).has('lint')).toBe(true);
+    expect(economy.autoClosed(signed(0, 0, 0, { skills })).size).toBe(0);
+  });
+
+  it('counts and colours only the cards spawned for the test', () => {
+    const store = storeWith(signed(0));
+    const before = place(store, 'lint');
+    store.advanceTo(100);
+    const during = place(store, 'lint');
+    expect(inTest(store.board, store.board.byId.get(before)!)).toBe(false);
+    expect(inTest(store.board, store.board.byId.get(during)!)).toBe(true);
+    store.harvest([before, during]);
+    expect(store.snapshot().criterion!.picked).toBe(1);
+  });
+
+  it('feeds every line under test the same: no interest, no comebacks', () => {
+    expect(economy.debtInterest(signed(5))).toBe(0);
+    expect(economy.spawnRate(signed(0), 'quarter')).toBe(0);
+    const store = storeWith(signed(2));
+    store.advanceTo(100);
+    store.harvest([place(store, 'flaky')]);
+    expect(store.board.pending).toHaveLength(0);
   });
 
   it('keeps the hand-only cards at their own rate during the push', () => {
@@ -144,27 +195,40 @@ describe('the acceptance criteria', () => {
   });
 
   it('is accepted once every criterion is signed', () => {
-    const last = signed(CRITERIA_COUNT - 1, SLICE, CRITERION_MIN_MS);
+    const last = signed(CRITERIA_COUNT - 1, CRITERION_GOAL);
     const done = economy.stepCriterion(last);
     expect(economy.accepted(done)).toBe(true);
     expect(economy.criterionNow(done)).toBeNull();
   });
 
   it('confirms a criterion award as it is signed', () => {
-    const store = storeWith(signed(0, SLICE, CRITERION_MIN_MS));
+    const store = storeWith(signed(0, CRITERION_GOAL));
     store.advanceTo(100);
     expect(store.snapshot().achievements).toContain(criterionAwardId(0));
     expect(store.snapshot().achievements).not.toContain(criterionAwardId(1));
   });
 
-  it('banks what the hand bills on the line under test', () => {
+  it('counts what the hand picks up of the line under test', () => {
     const store = storeWith(signed(0));
-    store.harvest([place(store, 'lint'), place(store, 'legacy')]);
-    const run = store.snapshot().criterion!;
-    expect(run.billed).toBeCloseTo(
-      economy.ticketValue(store.snapshot(), 'lint'),
-      0
-    );
+    store.advanceTo(100);
+    store.harvest([
+      place(store, 'lint'),
+      place(store, 'bug'),
+      place(store, 'legacy'),
+    ]);
+    expect(store.snapshot().criterion!.picked).toBe(2);
+  });
+
+  it('sends the whole crew into the acceptance meeting', () => {
+    const rules = crewRules(emptyBoard(), signed(0), CALM);
+    expect(rules.every((rule) => rule.interrupted)).toBe(true);
+    expect(flow(signed(0), { clicksPerSec: 1 }).crewPerSec).toBe(0);
+  });
+
+  it('never displaces the line under test from a full board', () => {
+    const store = storeWith(signed(0));
+    store.advanceTo(100);
+    expect(store.board.kept).toEqual(['lint', 'bug']);
   });
 });
 
@@ -185,8 +249,8 @@ describe('the closeout', () => {
 });
 
 describe('late P0s', () => {
-  it('bill a handful of the newest line, multipliers and all, once reviews start', () => {
-    const early = consultancy({ tier: INCIDENT_REVIEW_FROM_TIER - 1 });
+  it('bill a handful of the newest line, multipliers and all, from the rung that prices them off the build', () => {
+    const early = consultancy({ tier: INCIDENT_PAYOUT_FROM_TIER - 1 });
     const late = consultancy({
       tier: 8,
       levels: { velocity: 1 },
@@ -204,9 +268,9 @@ describe('late P0s', () => {
     );
   });
 
-  it('pay seconds of the build income on top, once reviews start', () => {
+  it('pay seconds of the build income on top, from the rung that prices them off the build', () => {
     const late = {
-      tier: INCIDENT_REVIEW_FROM_TIER,
+      tier: INCIDENT_PAYOUT_FROM_TIER,
       levels: { velocity: 1 },
       skills: { root: 1 },
       spawners: { '1': 3, '5': 2 },
@@ -221,7 +285,7 @@ describe('late P0s', () => {
     expect(paid.big).toBe(true);
     expect(store.state().budget - before.budget).toBeCloseTo(paid.value, 3);
 
-    const early = storeWith({ ...late, tier: INCIDENT_REVIEW_FROM_TIER - 1 });
+    const early = storeWith({ ...late, tier: INCIDENT_PAYOUT_FROM_TIER - 1 });
     const plain = early.harvest([place(early, 'incident')]);
     expect(plain.value).toBeCloseTo(
       economy.ticketValue(early.state(), 'incident'),
@@ -307,7 +371,7 @@ describe('approving an ADR on credit', () => {
   it('is offered for the next ADR from the credit share of its price', () => {
     expect(purchase.creditOffer(short(0.5), 'adr4')).toBeNull();
     expect(purchase.creditOffer(short(0.7), 'adr4')).toBe(
-      Math.ceil(adrPrice(4) * 0.3 * CREDIT_INTEREST)
+      Math.ceil((adrPrice(4) - short(0.7).storyPoints) * CREDIT_INTEREST)
     );
     expect(CREDIT_INTEREST).toBe(1);
     expect(purchase.creditOffer(short(1.2), 'adr4')).toBeNull();
@@ -359,15 +423,7 @@ describe('the crew ledger', () => {
   });
 });
 
-describe('the push calibration', () => {
-  it('prices a first test without a stale or live hotfix window', () => {
-    const state = signed(0);
-    const stale = { ...state, hotfixUntil: state.lastTick - 1 };
-    const live = { ...state, hotfixUntil: state.lastTick + 60_000 };
-    expect(underTestRate(stale)).toBeCloseTo(underTestRate(state), 6);
-    expect(underTestRate(live)).toBeCloseTo(underTestRate(state), 6);
-  });
-
+describe('the push', () => {
   it('ships every close with no sprint cap and no train', () => {
     const store = storeWith(signed(0));
     store.endRoundNow(0);
@@ -375,19 +431,5 @@ describe('the push calibration', () => {
     expect(store.hauling()).toBe(false);
     expect(store.snapshot().sprintCount).toBe(0);
     expect(economy.sprintRoom(store.snapshot())).toBe(Infinity);
-  });
-
-  it('raises a first test when its line is bought into, never lowers it', () => {
-    const low = signed(0);
-    const raised = economy.recalibrate(
-      { ...low, criterion: { ...low.criterion!, target: 1 } },
-      () => 1e12
-    );
-    expect(raised.criterion!.target).toBeGreaterThan(1);
-    const kept = economy.recalibrate(
-      { ...low, criterion: { ...low.criterion!, target: 1e30 } },
-      () => 1e12
-    );
-    expect(kept.criterion!.target).toBe(1e30);
   });
 });

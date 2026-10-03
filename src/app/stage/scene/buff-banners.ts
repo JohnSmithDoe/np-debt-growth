@@ -2,15 +2,13 @@ import * as Phaser from 'phaser';
 
 import { formatQuantity } from '../../@shared/util/format-quantity';
 import type { BuffNotice } from '../../game/model/round.model';
-import { SPAWNERS } from '../../game/model/spawner.model';
-import { ticketLabelKey } from '../../game/model/ticket.model';
 import { BUFF_BANNER, HOVER_GROUND } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
 
-type LineId = 'acceptance' | 'buffs' | 'call';
+type LineId = 'buffs' | 'call';
 
 /** Bottom up; when the board's hazard banner is up the last line gives way. */
-const IDS: readonly LineId[] = ['acceptance', 'call', 'buffs'];
+const IDS: readonly LineId[] = ['call', 'buffs'];
 
 const CALLS = ['comboLive', 'combo', 'quarter', 'escalationHeld'] as const;
 const CALL_KEYS: Readonly<Record<(typeof CALLS)[number], string>> = {
@@ -20,7 +18,6 @@ const CALL_KEYS: Readonly<Record<(typeof CALLS)[number], string>> = {
   escalationHeld: 'board.buff.escalation.held',
 };
 
-type Acceptance = Extract<BuffNotice, { id: 'acceptance' }>;
 type Timed = Extract<BuffNotice, { msLeft: number }>;
 
 const multOf = (mult: number): string | number =>
@@ -85,13 +82,12 @@ export class BuffBanners {
         this.#drawn.set(id, text);
         line.setText(text);
       }
-      const pulses = id !== 'acceptance';
       const fit = Math.min(1, width / Math.max(1, line.width));
       line
         .setVisible(true)
         .setPosition(centreX, y)
-        .setScale((pulses ? scale : 1) * fit)
-        .setAlpha(pulses ? alpha : 1);
+        .setScale(scale * fit)
+        .setAlpha(alpha);
       y -= line.height * fit + BUFF_BANNER.gap;
       shown += 1;
     }
@@ -99,12 +95,6 @@ export class BuffBanners {
 
   #format(id: LineId, notices: readonly BuffNotice[]): string {
     switch (id) {
-      case 'acceptance': {
-        const notice = notices.find(
-          (one): one is Acceptance => one.id === 'acceptance'
-        );
-        return notice ? this.#acceptance(notice) : '';
-      }
       case 'buffs':
         return [timed(notices, 'escalation'), timed(notices, 'hotfix')]
           .filter((notice): notice is Timed => notice !== undefined)
@@ -123,24 +113,6 @@ export class BuffBanners {
     return this.#deps.text(`board.buff.${notice.id}`, {
       mult: multOf(notice.mult),
       seconds: Math.ceil(notice.msLeft / 1000),
-    });
-  }
-
-  #acceptance(notice: Acceptance): string {
-    const text = this.#deps.text;
-    const criterion = notice.criterion;
-    const mult = multOf(notice.mult);
-    if (!criterion) return text('board.buff.acceptance', { mult });
-    const ticket = SPAWNERS[criterion.line]?.produces[0];
-    if (!ticket) return text('board.buff.acceptance', { mult });
-    return text('board.buff.criterion', {
-      n: criterion.index + 1,
-      of: criterion.of,
-      name: text(`acceptance.criterion.${criterion.line}.label`),
-      ticket: text(ticketLabelKey(ticket)).toUpperCase(),
-      pct: Math.floor(criterion.done * 100),
-      seconds: Math.ceil(criterion.msLeft / 1000),
-      mult,
     });
   }
 

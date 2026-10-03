@@ -19,6 +19,9 @@ import { SettingsUiService } from '../../data/settings-ui.service';
 import { BackdropDirective } from '../../ui/backdrop/backdrop.directive';
 import { PanelComponent } from '../../ui/panel/panel.component';
 
+const sliderVolume = (event: Event): number =>
+  Number((event.target as HTMLInputElement).value) / 100;
+
 @Component({
   selector: 'cb-settings-modal',
   templateUrl: './settings-modal.component.html',
@@ -33,8 +36,14 @@ export class SettingsModalComponent {
   #screen = inject(FullscreenService);
   #help = inject(HelpUiService);
 
-  readonly muted = input(false);
-  readonly mutedChange = output<boolean>();
+  readonly music = input(true);
+  readonly sfx = input(true);
+  readonly musicVolume = input(0.5);
+  readonly sfxVolume = input(0.5);
+  readonly musicChange = output<boolean>();
+  readonly sfxChange = output<boolean>();
+  readonly musicVolumeChange = output<number>();
+  readonly sfxVolumeChange = output<number>();
 
   readonly shown = this.#ui.isOpen;
   readonly showClickRadius = this.#settings.showClickRadius;
@@ -56,8 +65,24 @@ export class SettingsModalComponent {
     this.#settings.setShowAgent(value);
   }
 
-  toggleMuted(): void {
-    this.mutedChange.emit(!this.muted());
+  toggleMusic(): void {
+    this.musicChange.emit(!this.music());
+  }
+
+  toggleSfx(): void {
+    this.sfxChange.emit(!this.sfx());
+  }
+
+  setMusicVolume(event: Event): void {
+    this.musicVolumeChange.emit(sliderVolume(event));
+  }
+
+  setSfxVolume(event: Event): void {
+    this.sfxVolumeChange.emit(sliderVolume(event));
+  }
+
+  percent(volume: number): number {
+    return Math.round(volume * 100);
   }
 
   choose(language: Language): void {

@@ -20,6 +20,8 @@ import { AgentComponent } from './console/feature/agent/agent.component';
 import { AdrModalComponent } from './console/feature/adr-modal/adr-modal.component';
 import { AwardBannerComponent } from './console/feature/award-banner/award-banner.component';
 import { MomentModalComponent } from './console/feature/moment-modal/moment-modal.component';
+import type { MomentId } from './console/feature/moment-modal/moment-copy';
+import { AcceptanceCardComponent } from './console/feature/acceptance-card/acceptance-card.component';
 import { DebugBarComponent } from './console/feature/debug-bar/debug-bar.component';
 import { AchievementsPanelComponent } from './console/feature/achievements-panel/achievements-panel.component';
 import { SupplyPanelComponent } from './console/feature/supply-panel/supply-panel.component';
@@ -56,6 +58,7 @@ import { adrNodeId, epicKey, MAX_TIER } from './game/model/tier.model';
     AgentComponent,
     AwardBannerComponent,
     MomentModalComponent,
+    AcceptanceCardComponent,
     TitleScreenComponent,
     PostMortemComponent,
     FinaleComponent,
@@ -88,6 +91,10 @@ export class AppComponent {
 
   toReview(): void {
     this.#stage.toBoard();
+  }
+
+  momentClosed(id: MomentId): void {
+    if (id === 'closeout') this.#stage.toBoard();
   }
 
   readonly budget = this.#store.budget;
@@ -154,10 +161,31 @@ export class AppComponent {
 
   readonly awardPaid = signal(false);
 
-  readonly muted = this.#audio.muted;
+  readonly music = computed(() => !this.#audio.musicMuted());
+  readonly sfx = computed(() => !this.#audio.sfxMuted());
+  readonly sound = computed(() => this.music() || this.sfx());
+  readonly musicVolume = this.#audio.musicVolume;
+  readonly sfxVolume = this.#audio.sfxVolume;
 
-  toggleMuted(): void {
-    this.#audio.setMuted(!this.#audio.muted());
+  setMusic(on: boolean): void {
+    this.#audio.setMusicMuted(!on);
+  }
+
+  setSfx(on: boolean): void {
+    this.#audio.setSfxMuted(!on);
+  }
+
+  setSound(on: boolean): void {
+    this.setMusic(on);
+    this.setSfx(on);
+  }
+
+  setMusicVolume(volume: number): void {
+    this.#audio.setMusicVolume(volume);
+  }
+
+  setSfxVolume(volume: number): void {
+    this.#audio.setSfxVolume(volume);
   }
 
   openSettings(): void {

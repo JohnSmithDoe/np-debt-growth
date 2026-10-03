@@ -55,6 +55,18 @@
                 }
               </ol>
             </section>
+          } @else if (tab() === 'strategy') {
+            <section>
+              <h3>{{ 'help.strategy.heading' | translate }}</h3>
+              <p class="muted small intro">
+                {{ 'help.strategy.intro' | translate }}
+              </p>
+              <ol class="loop">
+                @for (step of strategy; track step.key) {
+                  <li>{{ step.key | translate: step.params }}</li>
+                }
+              </ol>
+            </section>
           } @else {
             <section>
               <h3>{{ 'help.line.heading' | translate }}</h3>

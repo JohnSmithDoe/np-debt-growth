@@ -17,7 +17,7 @@ The design as the code has it. Every number names the file it lives in; paths ar
    until it is back. The acceptance push has neither: every close ships.
 5. **€ buys supply, SP buys the tree.** The rail sells heads, rate rows and crew; the tree
    sells everything else, the ADRs included. `signoff` starts the acceptance push, which tests
-   one line at a time; the run ends at €20 Qa.
+   one line at a time; the run ends when all nine criteria are signed.
 6. **Income = collected tickets/s × their worth**, where collected is the least of what the
    lines throw, what the hand and crew reach, and what the sprint takes. `util/sim.ts` computes
    exactly this without a board (§9).
@@ -75,7 +75,8 @@ which spends no time in the tree.
    close, SP included, credited to the crew's share. Its card tints green over its life on the
    GPU (`AUTO_CLOSE_RAMP`). If the sprint has no room it **goes to prod**: it becomes an `incident`,
    at most `PROD_INCIDENT_LIVE_CAP` 3 live at once (the rest go stale), counted in
-   `lifetimeProdIncidents`; the first earns _Works on my machine_.
+   `lifetimeProdIncidents`; the first earns _Works on my machine_. A P0 needs a sprint slot like
+   any close, so prod P0s wait for the train and a cycle clears at most three of them.
 6. **One sprint, one release train.** Closed work fills the sprint. A full sprint leaves on the
    train for `haulMs`, and collection is refused until it is back (`phase: 'hauling'`); refused
    cards bounce where they lie (`REFUSAL_BOUNCE`). The wait is the release, and it is meant to
@@ -122,9 +123,9 @@ Player-facing copy never says "truck", "can" or "lane": sprint, sprint scope, re
 (`LINE_PLAN.velocity`, `open: true`), every close pays `SP_PER_PICKUP` 1, **whatever it bills**,
 plus:
 
-- the line's `estimates<Ticket>` node, 5 ranks of `ESTIMATE_SP_PER_RANK` 20 SP at tier 1, ×`ESTIMATE_SP_TIER_GROWTH` 2
-  each tier above; lint's pays
-  `ESTIMATE_SP_PER_RANK_OPENING` 4, since auto-close bills every lint card;
+- the line's `estimates<Ticket>` steps, three of 5⁄3 × `ESTIMATE_SP_PER_RANK` 20 SP at tier 1,
+  ×`ESTIMATE_SP_TIER_GROWTH` 2 each tier above; lint's pays 5⁄3 × `ESTIMATE_SP_PER_RANK_OPENING` 4,
+  since auto-close bills every lint card. A late line's `contract<Ticket>` pays all three at once;
 - ×`CREW_SP_MULT` 2 on crew closes with `timesheets`;
 - `voteBonus`: SP for every live planning-poker vote the ticket fell through, decided at spawn
   (§6).
@@ -160,17 +161,18 @@ interest.
 ### Hand-only cards
 
 No purchase makes these arrive faster (`economy.spec.ts`), but the run does: each ADR approved
-adds `HAND_ONLY_RATE_PER_TIER` +50 % to their rate (×5 at ADR-8), so the hand's targets grow
-with the run. They never expire and are never displaced.
+adds `HAND_ONLY_RATE_PER_TIER` +75 % to their rate (×7 at ADR-8), so the hand's targets grow
+with the run and the short late tiers still see them. Doubling it left a real tier-7 board a third
+under the sim (more P0s, longer incident reviews). They never expire and are never displaced.
 
-| Type         | Rate/s | Effect                                                                                            |
-| ------------ | ------ | ------------------------------------------------------------------------------------------------- |
-| `incident`   | 0.008  | 150 € × tier; from ADR-5, 5 newest-line tickets in € and SP (`INCIDENT_TOP_SHARE`) plus `INCIDENT_PAYOUT_SEC` 3 s of the build's € and SP income (`incidentPayout` in `util/sim.ts`, which the sim also credits to a sweeping hand). First at 75 s |
-| `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 9 s, +4 s with Observability   |
-| `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                                              |
-| `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2), under hotfix and escalation        |
-| `pizza`      | —      | The pizza-party voucher (§5), from the `pizza` node                                               |
-| `invite`     | —      | Hazard invitation (§8): sweep it to decline the meeting                                           |
+| Type         | Rate/s | Effect                                                                                                                                                                                                                                             |
+| ------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `incident`   | 0.008  | 150 € × tier; from ADR-2 (`INCIDENT_PAYOUT_FROM_TIER`), 5 newest-line tickets in € and SP (`INCIDENT_TOP_SHARE`) plus `INCIDENT_PAYOUT_SEC` 3 s of the build's € and SP income (`incidentPayout` in `util/sim.ts`, which the sim credits to a sweeping hand, prod P0s included). First at 75 s |
+| `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 9 s, +4 s with Observability                                                                                                                                                    |
+| `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                                                                                                                                                                                               |
+| `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2), under hotfix and escalation                                                                                                                                                         |
+| `pizza`      | —      | The pizza-party voucher (§5), from the `pizza` node                                                                                                                                                                                                |
+| `invite`     | —      | Hazard invitation (§8): sweep it to decline the meeting                                                                                                                                                                                            |
 
 **Combos** (`armBuffs` in `data/game.store.ts`): a hotfix swept inside a live escalation
 extends the escalation by `COMBO_EXTEND_MS` 3 s, and an escalation swept inside a live hotfix
@@ -189,7 +191,7 @@ and `util/first-act.ts` places the first card on its beat.
 
 ### Golden
 
-Any arrival rolls `goldenChance` (+2 % a rank of `golden`, cap `GOLDEN_CHANCE_CAP` 0.2). A golden
+Any arrival rolls `goldenChance` (+2 % from the single-rank `golden` node). A golden
 card is worth `GOLDEN_VALUE_BASE` 100× + `GOLDEN_VALUE_PER_RANK` 50× a `goldenValue` rank
 (additive, 100× → 300×). **No crew kind claims golden** until `goldenCrew`, which also turns
 `GOLDEN_CREW_CONVERSION` 5 % of crew closes golden. Golden is what keeps the hand worth using
@@ -274,23 +276,42 @@ Every purchase lives in the code: tree nodes in `model/skill.model.ts` (`SKILL_N
 `model/skill.model.ts`. `root` ships bought; every other node is SP, written exactly as charged.
 Each square carries a `+`/`%` badge from its next rank's effects (`skillBadge`).
 
-**Every line has the same five nodes** (`LINE_NODES`), hanging off its ADR:
+**The early lines (lint … slop) have five nodes** (`LINE_NODES`, `earlyLine`), hanging off
+their ADR:
 
 ```
-value<T>  ×2 ──┬── spawn<T>      5 × +20 % throw-two  → ×2 spawn
-               ├── income<T>     5 × +50 % income     → ×3.5
-               └── estimates<T>  5 × +20·2^(t−1) SP
+value<T>  ×2 ──┬── spawn<T>      3 steps × +33 % throw-two  → ×2 spawn
+               ├── income<T>     3 steps × +83 % income     → ×3.5
+               └── estimates<T>  3 steps × 5⁄3·20·2^(t−1) SP
                         │
                double<T>  ×2   opens once all three are maxed (`maxed`)
 ```
 
-A fully bought line earns ×14 per ticket (before rate rows) and throws twice as often.
-Additive ranks are stored as ratios — rank _k_ multiplies by (1 + k·step) / (1 + (k−1)·step) — so
-five +20 % ranks end at exactly ×2. First-rank prices follow `LINE_PRICE_BY_TIER`
-(`balance/progression.ts`: ×2 a tier to ADR-5, ×4 into ADR-6 where poker and timesheets lift SP
-income, ×2 after): `value` 25 / 1 500 then `LINE_DOUBLE_COST`; `spawn` 2 200 × it (ranks ×1.25);
-`income` 1 100 × it (ranks ×1.25); `double` 2 500 × it. `estimates` stays on its own 75 /
-`400 × 2^(t−1)` (ranks ×1.5).
+Each step is its own single-rank node, **one per ADR** (`chained`): `spawnFlaky` under ADR-2,
+`spawnFlaky3` under ADR-3, `spawnFlaky4` under ADR-4, each needing the one before it maxed. A
+line keeps growing for two rungs after it opens, so every ADR also brings old lines a buy. Steps
+stop at ADR-4 (`LINE_CHAIN_LAST_TIER`): conflict's last two and slop's three stay as ranks on
+their ADR-4 node. `double<T>` waits for the last step of each chain.
+
+**The late lines (rockstar … swarm) sell the whole ladder in two buys** (`lateLine`), so the
+late tiers are short and new rather than the same five nodes again:
+
+```
+contract<T>  value ×2, all three estimates steps   (the SP source, cheap)
+    │
+retainer<T>  throws ×2, value ×7                   (spawn, income and double in one)
+```
+
+Both end exactly where a fully bought early line ends: ×14 per ticket (before rate rows),
+throwing twice as often. Additive steps are stored as ratios — step _k_ multiplies by
+(1 + k·step) / (1 + (k−1)·step) — so three +⅓ steps end at exactly ×2.
+
+Prices: `LINE_PRICE_BY_TIER` (`balance/progression.ts`, ×2 a tier to ADR-5, ×4 into ADR-6, ×2
+after) sets a line's base; `value` 25 / 1 500 then `LINE_DOUBLE_COST`; `spawn` 5⁄3 × 2 200 × it
+(steps ×1.5); `income` 5⁄3 × 1 100 × it (steps ×1.5); `double` 2 500 × it; `estimates` 5⁄3 ×
+75 / `400 × 2^(t−1)` (steps ×2.2); `contract` 3 000 × it, `retainer` 30 000 × it. Every line
+node is then priced for the rung it sits on by `LINE_RUNG_PRICE` (1 · 1 · 1 · 0.6 · 0.3 · 0.2 ·
+0.4 · 0.55 · 0.5), the same scale the hand-written prices from ADR-3 on were cut by.
 
 | Track           | Holds                                                                                                                                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -298,7 +319,7 @@ income, ×2 after): `value` 25 / 1 500 then `LINE_DOUBLE_COST`; `spawn` 2 200 ×
 | **B** Juniors   | `junior` (1 200), `juniorSpeed`, `juniorRoom<t>`, `juniorReach` → `stretch`, `juniorPresence`, `ticketStacking`, `timesheets`, `pizza`                                                                  |
 | **E** Seniors   | `senior` (60 000, ADR-3), speed, reach, presence, `seniorRoom<t>`                                                                                                                                       |
 | **H** Managers  | `manager`, speed, `relabel`, `managerRoom5`                                                                                                                                                             |
-| **C** Client    | the per-line `value` / `income` / `estimates` / `double` nodes, `valueBug`, `escalation`, `coaches`, `deck`                                                                                             |
+| **C** Client    | the per-line `value` / `income` / `estimates` / `double` nodes, the late `contract` / `retainer`, `valueBug`, `escalation`, `coaches`, `deck`                                                           |
 | **D** Debt      | the per-line `spawn` nodes, `debtInterest`, `debtInterest<t>`, `triagePolicy`, `spawnIncident` → `spawnIncident7` (escalations), `spawnIncident8` (incident value)                                      |
 | **G** Capstones | `assurance`, `signoff`                                                                                                                                                                                  |
 | **N** ADRs      | `adr1` … `adr8`, chained; each rung is the parent of its line's `value` node (Lint's hangs off the client heading)                                                                                      |
@@ -322,17 +343,21 @@ tree always has something to buy, and never everything at once:
 | ADR-3 | Conflict line, `senior`                                             |
 | ADR-4 | Slop line, `manager`, `debtInterest`                                |
 | ADR-5 | Rockstar line, `pizza`, `timesheets`, `coaches` → `deck`            |
-| ADR-6 | Zombie line, `spawnIncident`                                        |
-| ADR-7 | Rewrite line, `goldenCrew`                                          |
+| ADR-6 | Zombie line, `spawnIncident`, `goldenCrew`                          |
+| ADR-7 | Rewrite line                                                        |
 | ADR-8 | Swarm line, `assurance`, `signoff`                                  |
 
 Every rung also carries its own sprint set (`SPRINT_RUNGS` in `skill.model.ts`): a `capacity<t>`
 and a `cans<t>` node, plus one ceremony cut on tiers 0–4. None of them waits on another rung's
 set, and each is priced for its own rung's SP income, like the extras.
 
-A curve's later ranks are spread the same way (`RUNG_NODES`): each is its own node
-`<family><t>` hanging off ADR-_t_, which needs the family's opener bought (`maxed`), so seats
-never arrive before the crew they seat:
+**One rank per node.** A curve's later ranks are spread the same way: each is its own node
+`<family><t>` hanging off ADR-_t_, which needs the one before it bought (`maxed`), so seats never
+arrive before the crew they seat. `chained` in `skill.model.ts` spreads every multi-rank node one
+per ADR from its opener's rung (`CHAIN_FROM`: `radius` and `escalation` 0/1/2, `juniorSpeed` and
+`juniorReach` 1/2/3, `juniorPresence` and `triagePolicy` 1/2, the senior three 3/4/5,
+`managerSpeed` and `relabel` 4/5/6); `assurance` keeps its three ranks on ADR-8, the tier-0
+`capacity` and tier-1 `cans` their two. The hand-written ones (`RUNG_NODES`):
 
 | Family          | Rungs                                           | Opener          |
 | --------------- | ----------------------------------------------- | --------------- |
@@ -352,16 +377,17 @@ the root in the middle, one arm per compass point. The ADR ladder is a spine run
 each rung's branches hanging north and south; the widest other arm grows west, the other two
 north and south. Every arm is a tidy tree — a layer per depth, a lane per leaf — wired in right
 angles. `signoff` sits alone on the spine well east of ADR-8, drawn twice the size: it is the
-final. Nodes with more than five ranks draw their pips in rows of five.
+final.
 
-**Icons.** Every square draws `assets/skills/<nodeId>.png`; the five per-line kinds share
-`line-<kind>.png` (`stage/model/skill-icon.model.ts`). The files are generated from
+**Icons.** Every square draws `assets/skills/<nodeId>.png`, a chained node its family's; the five
+per-line kinds share `line-<kind>.png`, `contract` the estimates icon and `retainer` the income
+one (`stage/model/skill-icon.model.ts`). The files are generated from
 `tools/art-batch.mjs` rows of the same names; `spare-*.png` are generated but unused.
 
-**Planning poker** (`coaches` 400 k → 27.5 M, `deck` 600 k → 41.2 M, 10 ranks each, ×1.6 a rank, from
-ADR-5, priced for that rung's SP income): coaches on the lane edge hold
+**Planning poker** (`coaches` 600 k then `coaches6` 3 M, `deck` 1 M then `deck6` 4.5 M: two buys
+each, five coaches or five deck cards a buy, at ADR-5 and ADR-6): coaches on the lane edge hold
 votes live for `VOTE_ON_MS` 1.4 s of every `VOTE_CYCLE_MS` 4 s, offset from each other. A
-non-golden ticket that lands below a live vote's beam gains `VOTE_BONUS_BASE` 45 SP + 15 a `deck` rank.
+non-golden ticket that lands below a live vote's beam gains `VOTE_BONUS_BASE` 45 SP + `VOTE_BONUS_PER_RANK` 15 a deck card.
 The beams sit in board units (`VOTE_BEAMS`, `voteBeamY`), so a ticket landing above one is passed over;
 decided at spawn from the landing cell and kept on the ticket as `voteMask`, one bit per beam. The
 heap's `HEAP_FIELD_ROWS` all lie under the first beam, so every card falls through at least one;
@@ -380,52 +406,60 @@ so every flash is a vote and every vote flashes.
 ticket together. `TIER_BURST` spawns 10 at tier 3. The ADR modal only shows the signed
 record; the rail has no ADR panel.
 
-| ADR | SP         | Unlocks    |
-| --- | ---------- | ---------- |
-| 1   | 350        | `legacy`   |
-| 2   | 6 000      | `flaky`    |
-| 3   | 45 000     | `conflict` |
-| 4   | 150 000    | `slop`     |
-| 5   | 420 000    | `rockstar` |
-| 6   | 3 600 000  | `zombie`   |
-| 7   | 9 000 000  | `rewrite`  |
-| 8   | 12 600 000 | `swarm`    |
+| ADR | SP        | Unlocks    |
+| --- | --------- | ---------- |
+| 1   | 350       | `legacy`   |
+| 2   | 6 000     | `flaky`    |
+| 3   | 45 000    | `conflict` |
+| 4   | 120 000   | `slop`     |
+| 5   | 160 000   | `rockstar` |
+| 6   | 480 000   | `zombie`   |
+| 7   | 3 600 000 | `rewrite`  |
+| 8   | 6 900 000 | `swarm`    |
 
-The prices grow with the rung because SP income does; the late ones stay low so the rung's extras,
-not the ADR, take most of the tier.
+The prices grow with the rung because SP income does. From ADR-3 on, every SP price — ADRs,
+extras, sprint sets, crew arms, line nodes — was cut by the rung it sits on (0.6 · 0.3 · 0.2 · 0.4 ·
+0.55 · 0.5 for tiers 3…8), so the opening keeps its pace and each later tier is quicker than the
+one before.
 
-**`signoff`** (16 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced so tier 8 is a short last act. Buying it
+**`signoff`** (8 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced so tier 8 is a short last act. Buying it
 opens the **Closeout Record** (`console/feature/moment-modal/`, the ADR format, signed by the
 client's procurement agent, comments "LGTM"), records the budget and billing it was signed at
 (`signedBudget`, `signedBilled`), and starts the **acceptance push** (`ACCEPTANCE` in
-`balance/progression.ts`, `economy.inAcceptance`): spawns run ×3 and everything bills
-`economy.overtime` (in `globalMultiplier`). Modals pause the clock (`GameClock` reasons `record`,
-`moment`), so reading the record costs no push.
+`balance/progression.ts`, `economy.inAcceptance`) and everything bills `economy.overtime`
+(in `globalMultiplier`). Modals pause the clock (`GameClock` reasons `record`, `moment`), so
+reading the record costs no push; its button returns to the board, and the skill tree button
+is gone until the run ends.
 
+- **The crew sits in the acceptance meeting** (`crewRules` interrupts every kind,
+  `sim.collect` counts no crew): only the hand collects, so only the player moves a criterion.
 - **Acceptance criteria** (`CriterionRun` on the state, `economy.criterionNow`,
-  `economy.stepCriterion`): nine, one per line, lint first. The line under test bills as the
-  newest rung's ticket ×`CRITERION_BONUS` 2 before its own multipliers, so a maxed old line hits
-  hardest; its cards pulse pink (`UNDER_TEST`). Only what **that line** bills counts
-  (`billUnderTest`, from the store's `#bank` and quarter bills, and the sim's
-  `underTestEuroPerSec`). A criterion's target (`economy.criterionTarget`) is
-  `CRITERION_FIRST_TEST_MS` 40 s of what the sim says its line bills at a steady sweep and the
-  opening overtime (`underTestRate` in `util/sim.ts`, handed in by the store, the autoplayer and
-  the sign-off purchase, so the economy stays unpriced; the sim prices it without any live buff
-  window, and counts auto-close at a third since a full real board lets few auto-closed cards
-  live out their life): every build can sign it clean, a better hand signs it sooner, and the
-  overtime earned since makes it quicker. Buying into the line under test raises its target
-  (`economy.recalibrate`). A criterion **signs
-  clean** once billed and at least `CRITERION_MIN_MS` 8 s old: it confirms its award
-  (`c-criterion-<line>`) and adds `CRITERION_OVERTIME` 0.5 to the base ×2 overtime, so the push
-  builds. At `CRITERION_MAX_MS` 55 s it **signs with findings**: no overtime, no clean award, a
-  `c-findings-<line>` toast instead (the first also earns _Signed with findings_). The banner line
-  counts the criterion, its multiplier, how far it is billed and the seconds left. Measured on
-  the advised run: hands-off 472 s with 8 findings; 202 / 173 s at 1 / 2 sweeps a second, every criterion clean.
+  `economy.stepCriterion`): nine, one per line, lint first, each open at most
+  `CRITERION_MS` 20 s. The line under test spawns at `CRITERION_SPAWN_PER_SEC` 2.5 whatever its
+  spawners (split across the types it produces). Only cards **spawned for the criterion** are
+  its own (`BoardTicket.test`, `inTest`): they pulse pink (`UNDER_TEST`), a full board never
+  displaces them, and each one the **hand** picks up counts (`economy.pickUnderTest`). Cards of
+  that line already on the board stay as they were. The line bills as the newest rung's ticket
+  ×`CRITERION_BONUS` 2 before its own multipliers. Every other line spawns at its own rate and
+  nobody collects it, so the hand has to find the pink cards in the heap. In the push debt
+  interest and Triage auto-close are off, nothing comes back, the line under test never rolls
+  golden and no quarter end spawns, so every line is fed the same and only the hand closes it.
+  Once the hand has picked up `CRITERION_GOAL` 30, everything the line spawns in
+  `CRITERION_PERFECT_MS` 12 s, the criterion **signs clean** at once and the next opens: it
+  confirms its award (`c-criterion-<line>`) and adds `CRITERION_OVERTIME` 0.5 to the base ×2
+  overtime. At 20 s short of the goal it **signs with findings**: no overtime, no clean award, a
+  `c-findings-<line>` toast instead (the first also earns _Signed with findings_). The push lasts
+  at most three minutes; the advised autoplayer (one click a second) signs every criterion with
+  findings.
+- **The acceptance card** (`console/feature/acceptance-card/`, `GameStore.acceptance`) sits
+  centred over the board: the test's number and name, the seconds left large (amber in the last
+  five), the tickets to click, picked against the goal, a draining time bar, and a dot per
+  criterion (clean, with findings, under test, to come).
 - **The closeout voids** the hotfixes, escalations and quarter ends held on the board
   (`#voidVouchers` in the store), so buffs cannot be banked into the push, and cancels every
-  meeting; no invitation is sent during the push.
-- **Buffs** keep their own rate in the push: `ACCEPTANCE.spawn` multiplies work, not hand-only
-  cards, so hotfix and escalation are windows to time rather than a constant.
+  meeting and fact; no hazard fires during the push, so no drought eats a test's window.
+- **Buffs** keep their own rate in the push, so hotfix and escalation are windows to time
+  rather than a constant.
 
 The run is accepted once every criterion is signed (`economy.accepted`, checked each store step
 and in the autoplayer); the budget passing €20 Qa on the way earns _Over budget_. An ACCEPTED
@@ -455,7 +489,7 @@ Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buy
 ```
 ticketValue = (type.value + rate-row bonus)
             × per-line value / income / double nodes
-            (incident: × tier; from ADR-5 five of the newest line's tickets, fully multiplied;
+            (incident: × tier; from ADR-2 five of the newest line's tickets, fully multiplied;
              the line under acceptance test: the newest rung's value × 2)
             × global (secret, assurance, o6; overtime during acceptance)
             × hotfix ×2 (inside the window)
@@ -471,7 +505,9 @@ Paid at pickup. There is no invoice; nothing past sprint scope is ever priced.
 
 `HAZARDS` (`model/hazard.model.ts`), each row a `Partial<Weather>` patch (`meeting`,
 `incidentRate`, `slots`, `supply`). Two cadences, both `…_EVERY_MS` 120 s, with facts
-`FACT_OFFSET_MS` 60 s behind invitations so they never land together (`balance/weather.ts`).
+`FACT_OFFSET_MS` 60 s behind invitations so they never land together (`balance/weather.ts`). From
+`LATE_WEATHER_FROM_TIER` ADR-5 both run `LATE_WEATHER_PACE` twice as often (60 s, facts 30 s
+behind), so the short late tiers still see their weather.
 
 - **Invitations** (from tier 1): an `invite` card lands; sweep it within `INVITATION_WINDOW_MS`
   4 s to decline, or the crew go to a meeting (all-hands 10 s, compliance 6 s, retro 8 s, reorg
@@ -517,9 +553,9 @@ game uses:
   reached / (1 + reached / `ceilingPerSec`); € and SP priced as at pickup.
 
 Not counted: quarter bills and jackpots, pizza, incident reviews, and
-weather; outside the push each moves a real board's euros by 10 % at most. In the push a sweeping
-hand bills most of its euros under hotfix and escalation, so a real push runs up to twice as fast
-as the sim's; the criterion clamps (8–40 s) bound it either way. `data/sim.spec.ts` plays the same
+weather; outside the push each moves a real board's euros by 10 % at most. In the push the sim
+counts the hand's pickups of the line under test, and the 20 s window bounds a criterion either
+way. `data/sim.spec.ts` plays the same
 states on a real board (four seeds, averaged) and holds the sim within ×1.5, and plays a whole advised run on a real
 board and holds its acceptance within ×1.1 of the sim's, because per-tier error compounds
 over a run.
@@ -559,7 +595,7 @@ kept in settings) buys each pick the moment it is affordable.
 | Skill                               | one node in `SKILL_NODES`                                                                                  |
 | Sprint, train, hotfix, escalation   | `balance/round.ts`, `balance/weather.ts` (`COMBO_EXTEND_MS`)                                               |
 | Acceptance, criteria, credit        | `ACCEPTANCE`, `CRITERION_*`, `CREDIT_*` in `balance/progression.ts`                                        |
-| Incident review                     | `INCIDENT_REVIEW*` in `balance/round.ts`, `INCIDENT_TOP_SHARE`, `INCIDENT_PAYOUT_SEC` in `balance/flow.ts`                        |
+| Incident review                     | `INCIDENT_REVIEW*` in `balance/round.ts`, `INCIDENT_TOP_SHARE`, `INCIDENT_PAYOUT_SEC` in `balance/flow.ts` |
 | Spawn, golden, votes, pizza, expiry | `balance/flow.ts`                                                                                          |
 | Board cap                           | `BOARD_CAPACITY` in `model/geometry.ts`                                                                    |
 | Hazard                              | one row in `HAZARDS`                                                                                       |
@@ -570,9 +606,9 @@ kept in settings) buys each pick the moment it is affordable.
 - `data/balance-invariants.spec.ts` guards the **shape**: monotone ladders, tiers numbered by
   position, every rung on the tree and chained, no dominated retype rung.
 - `data/balance.spec.ts` guards the **pacing** on the advised autoplayer (`advisedSpend`):
-  the run accepted in 25–45 min, the acceptance push 2–5 min, every tier's share of the run
-  within ±25 % of `TIER_CURVE` (3 · 3.5 · 4 · 4.5 · 5 · 5 · 4.5 · 4 · 3.5 min, tier 8 ending at
-  sign-off: a short open, the longest tiers in the middle, a brisk finish), and the crew's share — at least 5 %
+  the run accepted in 22–30 min, the acceptance push 2–5 min, every tier's share of the run
+  within ±25 % of `TIER_CURVE` (3 · 4 · 3 · 2.25 · 2 · 1.75 · 1.5 · 1.25 · 1 min, tier 8 ending at
+  sign-off: the opening at its own pace, then quicker every rung), and the crew's share — at least 5 %
   of the closes before `goldenCrew`, judged from three minutes after the first junior (the hand's
   gold outweighs their euros until then), and 4 % of the euros after it. Run with the
   reports:
@@ -586,19 +622,18 @@ kept in settings) buys each pick the moment it is affordable.
 
 - `data/sim.spec.ts` guards the **sim** against a real board.
 
-**Measured run** (27 Sep 2026, advised autoplayer, credit from ADR-4, criteria by billing):
+**Measured run** (3 Oct 2026, advised autoplayer, credit from ADR-4):
 
 ```
-ADR-1 3.0    ADR-2 7.0    ADR-3 11.7   ADR-4 15.8   ADR-5 20.9   ADR-6 26.1
-ADR-7 30.1   ADR-8 34.0   signed off 37.3   accepted 39.8
+ADR-1 3.4    ADR-2 7.8    ADR-3 10.6   ADR-4 12.8   ADR-5 14.8   ADR-6 16.7
+ADR-7 18.2   ADR-8 19.2   signed off 20.0   accepted 23.0
 ```
+
+The cheapest-first run buys the whole tree. Over four seeds a real board accepts at 0.93–0.96 of
+the sim's time.
 
 What that run cannot see, because the sim does not price it:
 
-- **Prod incidents.** A real board sends 3–5 auto-closed cards a second to prod from ADR-1 to
-  ADR-3 (lint arrives at 9–25/s and the trains are often away); the live cap of 3 keeps that
-  from flooding. Incidents bill 150 € × tier until ADR-5 and five of the newest rung's tickets after
-  it, when an open P0 also holds the train for an incident review.
 - **Weather** is on and unpriced; `storm` and `page` stack with the hand-only tier climb.
 - **Triage Policy** costs 500 / 1 600 SP for what is the biggest single SP source of the opening
   (every lint card bills); tier-0 estimates were cut to +4 to hold the pace instead.

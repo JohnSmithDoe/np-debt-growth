@@ -4,7 +4,7 @@ import { HAND_ONLY_RATE_PER_TIER } from '../model/balance/flow';
 import type { Consultancy } from '../model/consultancy.model';
 import { consultancy, ranksOf } from '../model/consultancy.fixture';
 import { castPoolSize, crewName } from '../model/cast.model';
-import { SKILL_BY_ID } from '../model/skill.model';
+import { SKILL_BY_ID, skillFamilyIds } from '../model/skill.model';
 import { TICKET_TYPES, TICKET_TYPE_IDS } from '../model/ticket.model';
 import type { CrewKind } from '../model/crew.model';
 import {
@@ -197,8 +197,9 @@ describe('what the crew can close', () => {
     );
   });
 
-  it('compounds a node with the levels it owns', () => {
-    const owned = SKILL_BY_ID.get('juniorSpeed')!.levels.slice(0, 3);
+  it('compounds a family with the nodes it owns', () => {
+    const family = skillFamilyIds('juniorSpeed');
+    const owned = family.flatMap((id) => SKILL_BY_ID.get(id)!.levels);
     const product = owned.reduce(
       (total, level) =>
         total *
@@ -212,26 +213,30 @@ describe('what the crew can close', () => {
         ),
       1
     );
-    expect(juniorCeilingPerSec(crew(10, 0, { juniorSpeed: 3 }))).toBeCloseTo(
+    const all = Object.fromEntries(family.map((id) => [id, 1]));
+    expect(juniorCeilingPerSec(crew(10, 0, all))).toBeCloseTo(
       (heads(10) * product * 1000) / CREW_STATS.juniors.closeMs,
       6
     );
   });
 
   it('spends an aura rank on reaching its cap, never on passing it', () => {
-    const node = SKILL_BY_ID.get('juniorPresence')!;
-    const auras = node.levels.flatMap((level) =>
-      level.effects.filter((effect) => effect.kind === 'standupAura')
+    const family = skillFamilyIds('juniorPresence');
+    const auras = family.flatMap((id) =>
+      SKILL_BY_ID.get(id)!
+        .levels.flatMap((level) => level.effects)
+        .filter((effect) => effect.kind === 'standupAura')
     );
     const capped = auras.reduce((all, effect) => all * effect.cap, 1);
-    const maxed = crew(500, 0, { juniorPresence: node.levels.length });
+    const owned = Object.fromEntries(family.map((id) => [id, 1]));
+    const maxed = crew(500, 0, owned);
     expect(juniorCeilingPerSec(maxed)).toBeCloseTo(
       (heads(500) * capped * 1000) / CREW_STATS.juniors.closeMs,
       6
     );
-    expect(
-      juniorCeilingPerSec(crew(8, 0, { juniorPresence: 3 }))
-    ).toBeGreaterThan(juniorCeilingPerSec(crew(8, 0, { ticketStacking: 1 })));
+    expect(juniorCeilingPerSec(crew(8, 0, owned))).toBeGreaterThan(
+      juniorCeilingPerSec(crew(8, 0, { ticketStacking: 1 }))
+    );
   });
 
   it('counts the women on the crew rather than averaging them away', () => {
@@ -292,10 +297,9 @@ describe('what the crew can close', () => {
       juniorCeilingPerSec(bare),
       6
     );
-    expect(juniorCeilingPerSec(crew(40, 0, { juniorReach: 2 }))).toBeCloseTo(
-      juniorCeilingPerSec(bare),
-      6
-    );
+    expect(
+      juniorCeilingPerSec(crew(40, 0, { juniorReach: 1, juniorReach2: 1 }))
+    ).toBeCloseTo(juniorCeilingPerSec(bare), 6);
   });
 });
 
@@ -315,7 +319,7 @@ describe('what a crew is allowed to claim', () => {
   it('keeps the P0s away from every crew', () => {
     expect(claims()('incident')).toBe(false);
     expect(crewClaims(consultancy(), 'seniors')('incident')).toBe(false);
-    expect(claims({ juniorReach: 2 })('incident')).toBe(false);
+    expect(claims({ juniorReach: 1, juniorReach2: 1 })('incident')).toBe(false);
   });
 
   it('splits the ladder between the two crews, overlapping in the middle', () => {
@@ -333,7 +337,7 @@ describe('what a crew is allowed to claim', () => {
 
   it('lets reach stretch a junior one rung past the band', () => {
     expect(claims()('rockstar')).toBe(false);
-    expect(claims({ juniorReach: 2 })('rockstar')).toBe(true);
+    expect(claims({ juniorReach: 1, juniorReach2: 1 })('rockstar')).toBe(true);
   });
 
   it('drops the type a policy named, and only that one (§6.5)', () => {

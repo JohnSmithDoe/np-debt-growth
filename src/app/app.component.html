@@ -85,7 +85,7 @@
     </div>
   </dl>
   <div class="controls">
-    @if (treeOpen() && !onTree()) {
+    @if (treeOpen() && !onTree() && !accepting()) {
       <button type="button" class="btn primary small tree" (click)="toTree()">
         {{ 'hud.tree.open' | translate }}
         @if (skillAffordable()) {
@@ -121,6 +121,10 @@
       <router-outlet />
     </div>
 
+    @if (!onTree()) {
+      <cb-acceptance-card />
+    }
+
     @if (onTree()) {
       <div class="interval-bar">
         <button type="button" class="btn primary" (click)="toReview()">
@@ -141,11 +145,20 @@
 
 <cb-award-banner />
 <cb-agent />
-<cb-title-screen />
+<cb-title-screen [sound]="sound()" (soundChange)="setSound($event)" />
 <cb-adr-modal />
-<cb-settings-modal [muted]="muted()" (mutedChange)="toggleMuted()" />
+<cb-settings-modal
+  [music]="music()"
+  [sfx]="sfx()"
+  [musicVolume]="musicVolume()"
+  [sfxVolume]="sfxVolume()"
+  (musicChange)="setMusic($event)"
+  (sfxChange)="setSfx($event)"
+  (musicVolumeChange)="setMusicVolume($event)"
+  (sfxVolumeChange)="setSfxVolume($event)"
+/>
 <cb-help-modal />
-<cb-moment-modal />
+<cb-moment-modal (closed)="momentClosed($event)" />
 <cb-post-mortem />
 <cb-story />
 <cb-finale />

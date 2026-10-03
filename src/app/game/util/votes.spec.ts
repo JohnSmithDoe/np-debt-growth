@@ -20,14 +20,18 @@ describe('planning poker', () => {
   });
 
   it('pays each live vote once, and nothing between votes', () => {
-    const one = consultancy({ skills: { coaches: 1 } });
-    expect(economy.voteBonus(one, 0, FLOOR)).toBe(VOTE_BONUS_BASE);
-    expect(economy.voteBonus(one, VOTE_ON_MS + 1, FLOOR)).toBe(0);
-    expect(economy.voteBonus(one, VOTE_CYCLE_MS, FLOOR)).toBe(VOTE_BONUS_BASE);
+    const five = consultancy({ skills: { coaches: 1 } });
+    for (let ms = 0; ms < VOTE_CYCLE_MS; ms += 50) {
+      const live = Array.from({ length: economy.coachCount(five) }, (_, beam) =>
+        economy.voteLive(five, beam, ms)
+      ).filter(Boolean).length;
+      expect(economy.voteBonus(five, ms, FLOOR)).toBe(live * VOTE_BONUS_BASE);
+    }
+    expect(economy.voteLive(five, 0, VOTE_ON_MS + 1)).toBe(false);
   });
 
   it('passes over work that lands above its beam', () => {
-    const two = consultancy({ skills: { coaches: 2 } });
+    const two = consultancy({ skills: { coaches: 1 } });
     const between = (voteBeamY(0) + voteBeamY(1)) / 2;
     for (let ms = 0; ms < VOTE_CYCLE_MS; ms += 50) {
       expect(economy.voteBonus(two, ms, voteBeamY(0) - 1)).toBe(0);
@@ -38,8 +42,9 @@ describe('planning poker', () => {
   });
 
   it('adds the deck per vote, and every coach votes on its own beat', () => {
-    const state = consultancy({ skills: { coaches: 4, deck: 2 } });
-    const perVote = VOTE_BONUS_BASE + 2 * VOTE_BONUS_PER_RANK;
+    const state = consultancy({ skills: { coaches: 1, deck: 1 } });
+    const perVote =
+      VOTE_BONUS_BASE + economy.coachCount(state) * VOTE_BONUS_PER_RANK;
     expect(economy.voteBonusPerCrossing(state)).toBe(perVote);
 
     let seen = 0;
@@ -47,11 +52,11 @@ describe('planning poker', () => {
       seen = Math.max(seen, economy.voteBonus(state, ms, FLOOR) / perVote);
     }
     expect(seen).toBeGreaterThanOrEqual(1);
-    expect(seen).toBeLessThan(4);
+    expect(seen).toBeLessThan(economy.coachCount(state));
   });
 
   it('names the beams it pays for, so the stage can light those and no others', () => {
-    const state = consultancy({ skills: { coaches: 4, deck: 1 } });
+    const state = consultancy({ skills: { coaches: 1, deck: 1 } });
     const between = (voteBeamY(1) + voteBeamY(2)) / 2;
     for (let ms = 0; ms < VOTE_CYCLE_MS; ms += 50) {
       const mask = economy.voteMask(state, ms, between);
@@ -71,7 +76,7 @@ describe('planning poker', () => {
     const state = consultancy({
       tier: 0,
       spawners: { 0: 40 },
-      skills: { coaches: 3 },
+      skills: { coaches: 1 },
     });
     const board = emptyBoard();
     const budget = new SpawnBudget();
@@ -90,7 +95,7 @@ describe('planning poker', () => {
     const state = consultancy({
       tier: 0,
       spawners: { 0: 40 },
-      skills: { golden: 1, coaches: 10, deck: 10 },
+      skills: { golden: 1, coaches: 1, coaches6: 1, deck: 1, deck6: 1 },
     });
     const board = emptyBoard();
     const budget = new SpawnBudget();

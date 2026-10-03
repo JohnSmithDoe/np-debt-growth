@@ -33,9 +33,10 @@ export function spawnInto(
     const due = budget.due(id, rate, seconds, SPAWN_BURST_CAP, rand);
     if (due === 0) continue;
     const dearer = interest > 0 ? economy.interestTarget(state, id) : null;
+    const gilds = economy.underTest(state, id) ? 0 : golden;
     for (let n = 0; n < due; n++) {
       const arriving = dearer && rand() < interest ? dearer : id;
-      const ticket = addTicket(board, arriving, rand, false, rand() < golden);
+      const ticket = addTicket(board, arriving, rand, false, rand() < gilds);
       if (ticket && !ticket.golden) {
         ticket.voteMask = economy.voteMask(
           state,

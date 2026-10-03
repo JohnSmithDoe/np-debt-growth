@@ -24,6 +24,12 @@ import {
 } from '../../../game/model/balance/weather';
 import { PROD_INCIDENT_LIVE_CAP } from '../../../game/model/balance/flow';
 import {
+  CREDIT_FROM_ADR,
+  CREDIT_SHARE,
+  LINE_PLAN,
+} from '../../../game/model/balance/progression';
+import {
+  INCIDENT_REVIEW_FROM_TIER,
   RELEASE_PHASES,
   SPRINT_SLOTS_STEP,
 } from '../../../game/model/balance/round';
@@ -53,7 +59,7 @@ export interface GuideRow {
   readonly ahead: boolean;
 }
 
-export type HelpTab = 'game' | 'tickets';
+export type HelpTab = 'game' | 'tickets' | 'strategy';
 
 const SPECIAL_ORDER: readonly TicketTypeId[] = [
   'incident',
@@ -71,6 +77,25 @@ const INVITES_FROM = Math.min(
 );
 
 const seconds = (ms: number): number => ms / 1000;
+
+const STRATEGY: readonly {
+  readonly key: string;
+  readonly params: Record<string, unknown>;
+}[] = [
+  { key: 'velocity', params: { price: LINE_PLAN.velocity.cost } },
+  { key: 'adr', params: {} },
+  { key: 'rates', params: {} },
+  { key: 'train', params: {} },
+  { key: 'golden', params: { seconds: seconds(GOLDEN_LIFE_MS) } },
+  { key: 'hand', params: {} },
+  { key: 'storm', params: {} },
+  { key: 'meetings', params: {} },
+  { key: 'prod', params: { adr: INCIDENT_REVIEW_FROM_TIER } },
+  {
+    key: 'credit',
+    params: { adr: CREDIT_FROM_ADR, share: Math.round(CREDIT_SHARE * 100) },
+  },
+].map((step) => ({ ...step, key: `help.strategy.${step.key}` }));
 
 @Component({
   selector: 'cb-help-modal',
@@ -90,7 +115,8 @@ export class HelpModalComponent {
     seconds(ticketLifeMs(this.#store.tier()))
   );
   readonly loop = [1, 2, 3, 4, 5].map((step) => `help.loop.${step}`);
-  readonly tabs: readonly HelpTab[] = ['game', 'tickets'];
+  readonly strategy = STRATEGY;
+  readonly tabs: readonly HelpTab[] = ['game', 'tickets', 'strategy'];
   readonly tab = signal<HelpTab>('game');
 
   readonly train = computed(() => [

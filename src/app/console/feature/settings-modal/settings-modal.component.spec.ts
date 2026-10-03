@@ -40,11 +40,28 @@ describe('SettingsModalComponent', () => {
 
   it('asks for a mute rather than performing one', () => {
     const component = modal();
-    const asked: boolean[] = [];
-    component.mutedChange.subscribe((value) => asked.push(value));
+    const music: boolean[] = [];
+    const sfx: boolean[] = [];
+    component.musicChange.subscribe((value) => music.push(value));
+    component.sfxChange.subscribe((value) => sfx.push(value));
 
-    component.toggleMuted();
+    component.toggleMusic();
+    component.toggleSfx();
 
-    expect(asked).toEqual([true]);
+    expect(music).toEqual([false]);
+    expect(sfx).toEqual([false]);
+  });
+
+  it('reads a slider as a volume between 0 and 1', () => {
+    const component = modal();
+    const asked: number[] = [];
+    component.sfxVolumeChange.subscribe((value) => asked.push(value));
+    const slider = document.createElement('input');
+    slider.value = '35';
+    slider.addEventListener('input', (event) => component.setSfxVolume(event));
+
+    slider.dispatchEvent(new Event('input'));
+
+    expect(asked).toEqual([0.35]);
   });
 });

@@ -39,6 +39,8 @@ export interface BoardTicket {
   cell: number;
   at: number;
   poolAt: number;
+  /** The acceptance criterion it spawned for, or NO_TEST. */
+  readonly test: number;
 }
 
 export interface CrewMember {
@@ -65,6 +67,8 @@ export interface Close {
   readonly woman: boolean;
   readonly x: number;
   readonly y: number;
+  /** Spawned for the criterion still under test. */
+  readonly tested?: boolean;
 }
 
 export interface SprintSlot {
@@ -119,6 +123,16 @@ export interface Board {
   nextId: number;
   nextCrewId: number;
   lifeMs: number;
+  /** The line under acceptance test: its arrivals spawn for `test`. */
+  kept: readonly TicketTypeId[];
+  test: number;
+}
+
+export const NO_TEST = -1;
+
+/** Spawned for the criterion under test: pink, never displaced, counted when the hand takes it. */
+export function inTest(board: Board, ticket: BoardTicket): boolean {
+  return board.test !== NO_TEST && ticket.test === board.test;
 }
 
 export const HEAP_COLS = Math.floor(LOGICAL_BOARD.width / TICKET_SLOT.width);
@@ -191,5 +205,7 @@ export function emptyBoard(): Board {
     nextId: 1,
     nextCrewId: 0,
     lifeMs: TICKET_LIFE_MS,
+    kept: [],
+    test: NO_TEST,
   };
 }

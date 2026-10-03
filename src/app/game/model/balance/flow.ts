@@ -40,18 +40,19 @@ export const GOLDEN_LIFE_MS = 20_000;
 
 export const TIER_BURST = { tier: 3, count: 10 } as const;
 
-export const GOLDEN_CHANCE_CAP = 0.2;
 export const GOLDEN_VALUE_BASE = 100;
 export const GOLDEN_VALUE_PER_RANK = 50;
 export const GOLDEN_CREW_CONVERSION = 0.05;
 
-export const HAND_ONLY_RATE_PER_TIER = 0.5;
+export const HAND_ONLY_RATE_PER_TIER = 0.75;
 
 export const PROD_INCIDENT_LIVE_CAP = 3;
 
-/** From INCIDENT_REVIEW_FROM_TIER a P0 bills this many of the newest rung's tickets. */
+/** From this rung a P0 is priced off the build, not its flat value. */
+export const INCIDENT_PAYOUT_FROM_TIER = 2;
+/** From INCIDENT_PAYOUT_FROM_TIER a P0 bills this many of the newest rung's tickets. */
 export const INCIDENT_TOP_SHARE = 5;
-/** On top, a P0 cleared from INCIDENT_REVIEW_FROM_TIER pays this many seconds of the build's income. */
+/** On top, a P0 cleared from INCIDENT_PAYOUT_FROM_TIER pays this many seconds of the build's income. */
 export const INCIDENT_PAYOUT_SEC = 3;
 
 /** Tier 1's; each tier above doubles it. */

@@ -69,19 +69,22 @@ income that doesn't come from a close, and no offline progress.
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
-row costs euros. The last node, `signoff` (16 M SP, off ADR-8), does not end the run: it
-starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: spawns ×3, billing
-`economy.overtime`; no sprint cap, no train, no meetings — `economy.trainRuns`), nine criteria, one line under test at a time (`economy.criterionNow`: it bills
-as the newest rung, and only its billing counts toward a target calibrated on the sim's
-`underTestRate`; each criterion signs clean after 8 s once billed, or with findings at 55 s),
+row costs euros. The last node, `signoff` (8 M SP, off ADR-8), does not end the run: it
+starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: billing
+`economy.overtime`; no sprint cap, no train, no meetings — `economy.trainRuns`; the whole crew sits in the acceptance meeting), nine criteria, one line under test at a time (`economy.criterionNow`: it
+spawns at `CRITERION_SPAWN_PER_SEC` and bills as the newest rung; only cards spawned for the criterion are pink, and only the **hand's** pickups of them count; a criterion signs clean at `CRITERION_GOAL`
+pickups, or with findings at `CRITERION_MS` 20 s; `console/feature/acceptance-card/` shows it),
 and the run ends when every criterion is signed (`economy.accepted` sets `endedAt`). From ADR-4 the next ADR (or the closeout) can be approved on credit
 (`purchase.approveOnCredit`, `spDebt` repaid from half of later SP). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
 bills**, once the €25 `velocity` row is bought, plus the per-ticket `estimates` nodes and planning-poker
 votes a ticket fell through (`voteBonus`, decided at spawn). Euro upgrades never touch SP. There are no euro nodes and no SP rail rows.
 
-Every line has the same five tree nodes (`LINE_NODES`): `value` ×2 opens `spawn` (5 × +20 %),
-`income` (5 × +50 %) and `estimates` (5 × +20·2^(t−1) SP, lint +4); all three maxed (`SkillNode.maxed`) open
-`double` ×2. There are no global spawn or income nodes. Every purchase is a pure step in
+The early lines (lint … slop) have five tree nodes (`LINE_NODES`): `value` ×2 opens `spawn`
+(3 × +⅓), `income` (3 × +⅚) and `estimates` (3 steps of SP); all three maxed (`SkillNode.maxed`)
+open `double` ×2. The late lines (rockstar … swarm) sell the same end state in two buys,
+`contract<T>` (value ×2 + the SP) then `retainer<T>` (throws ×2, value ×7). **One rank per
+node**: a multi-rank curve is a chain of single-rank nodes, one per ADR (`chained`, `<family><t>`,
+each needing the last maxed). There are no global spawn or income nodes. Every purchase is a pure step in
 `game/util/purchase.ts`; the store commits it and adds the side effects.
 
 ### The store is the only clock
@@ -189,9 +192,9 @@ about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.5 of a real 
 change how the board collects, change the sim with it.
 
 `game/data/balance.spec.ts` runs the autoplayer on the Synergy Analyser's advice (`advisedSpend`)
-and **fails** if the run is not accepted in 25–45 minutes (target about 40, the acceptance push 2–5 of
-them) or a tier's share of the run is more than ±25 % off `TIER_CURVE` (a bell: 3 min at
-the open, 5 in the middle, 3.5 at sign-off); a second, cheapest-first run must walk every track and buy the
+and **fails** if the run is not accepted in 22–30 minutes (target about 23, the acceptance push 2–5 of
+them) or a tier's share of the run is more than ±25 % off `TIER_CURVE` (the opening at its own
+pace, 3 · 4 min, then quicker every rung down to 1 min at sign-off); a second, cheapest-first run must walk every track and buy the
 tree out. After any economy change, re-run it with the reports on:
 
 ```bash

@@ -3,6 +3,8 @@ import {
   Component,
   computed,
   inject,
+  input,
+  output,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -45,8 +47,15 @@ export class TitleScreenComponent {
     this.#save.restored() ? 'title.resume' : 'title.start'
   );
 
+  readonly sound = input(true);
+  readonly soundChange = output<boolean>();
+
   readonly canFullscreen = this.#screen.available;
   readonly fullscreen = this.#screen.on;
+
+  toggleSound(): void {
+    this.soundChange.emit(!this.sound());
+  }
 
   toggleFullscreen(): void {
     this.#screen.toggle();

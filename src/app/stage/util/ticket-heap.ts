@@ -18,7 +18,6 @@ import {
   UNDER_TEST,
   WONT_FIX_FADE,
 } from '../model/board.consts';
-import { spawnerFor } from '../../game/model/spawner.model';
 import { BOARD_CAPACITY, LOGICAL_BOARD } from '../../game/model/geometry';
 import {
   ATLAS_KEY,
@@ -159,9 +158,9 @@ export class TicketHeap {
     this.#autoClosed = types;
   }
 
-  underTest(line: number | null): void {
-    if (line === this.#underTest) return;
-    this.#underTest = line;
+  underTest(test: number | null): void {
+    if (test === this.#underTest) return;
+    this.#underTest = test;
     this.redraw();
   }
 
@@ -385,10 +384,7 @@ export class TicketHeap {
   }
 
   #isTested(ticket: BoardTicket): boolean {
-    return (
-      this.#underTest !== null &&
-      spawnerFor(ticket.type)?.adr === this.#underTest
-    );
+    return this.#underTest !== null && ticket.test === this.#underTest;
   }
 
   #untest(id: number): void {

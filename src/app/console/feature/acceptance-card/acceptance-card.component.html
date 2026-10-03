@@ -1,0 +1,54 @@
+@if (view(); as view) {
+  <section class="card" [class.urgent]="urgent()">
+    <header>
+      <span class="kicker">
+        {{
+          'acceptance.card.kicker'
+            | translate: { n: view.index + 1, of: view.of }
+        }}
+      </span>
+      <h3>{{ 'acceptance.criterion.' + view.line + '.label' | translate }}</h3>
+    </header>
+
+    <div class="body">
+      <div class="clock" role="timer">
+        <span class="secs">{{ seconds() }}</span
+        ><span class="unit">s</span>
+      </div>
+
+      <div class="task">
+        <p class="ask">
+          {{ 'acceptance.card.ask' | translate }}
+          @for (ticket of view.tickets; track ticket) {
+            <span class="ticket">{{ ticketKey(ticket) | translate }}</span>
+          }
+        </p>
+        <div class="meter" aria-hidden="true">
+          <span class="fill" [style.width.%]="progress()"></span>
+        </div>
+        <p class="count" aria-live="polite">
+          {{
+            'acceptance.card.count'
+              | translate: { picked: view.picked, goal: view.goal }
+          }}
+        </p>
+      </div>
+    </div>
+
+    <div class="timebar" aria-hidden="true">
+      <span [style.width.%]="timeLeft()"></span>
+    </div>
+
+    <footer>
+      <ol class="steps" [attr.aria-label]="'acceptance.card.steps' | translate">
+        @for (step of steps(); track $index) {
+          <li [class]="step"></li>
+        }
+      </ol>
+      <span class="rule">
+        {{ 'acceptance.card.rule' | translate: { mult: overtime() } }}
+      </span>
+    </footer>
+    <p class="crew">{{ 'acceptance.card.crew' | translate }}</p>
+  </section>
+}

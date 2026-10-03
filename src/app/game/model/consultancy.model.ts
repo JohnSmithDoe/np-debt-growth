@@ -7,11 +7,7 @@ import { SPAWNER_FREE_HEADS } from './spawner.model';
 import type { SeniorHire } from './senior.model';
 import { SKILL_ROOT_ID } from './skill.model';
 import type { PurchaseId } from './balance/progression';
-import {
-  ACCEPTANCE,
-  CRITERION_SHARE,
-  PURCHASE_IDS,
-} from './balance/progression';
+import { PURCHASE_IDS } from './balance/progression';
 
 export interface PizzaParty {
   readonly x: number;
@@ -63,14 +59,12 @@ export interface Consultancy {
   readonly lifetimeJackpots: number;
 }
 
-/** The acceptance criterion under test: its line and what that line has billed since it began. */
+/** The acceptance criterion under test: its line and how many of its tickets the hand picked up. */
 export interface CriterionRun {
   readonly index: number;
   readonly line: number;
   readonly sinceMs: number;
-  readonly billed: number;
-  /** What the line under test must bill for this criterion to sign clean. */
-  readonly target: number;
+  readonly picked: number;
   /** Lines signed clean, and lines signed with findings. */
   readonly clean: readonly number[];
   readonly flagged: readonly number[];
@@ -78,14 +72,6 @@ export interface CriterionRun {
 }
 
 export const CRITERIA_COUNT = 9;
-
-/** One criterion's billing: a ninth of the way from the signed budget to the goal. */
-export function criterionSlice(state: Consultancy): number {
-  return (
-    (Math.max(1, ACCEPTANCE.goal - state.signedBudget) / CRITERIA_COUNT) *
-    CRITERION_SHARE
-  );
-}
 
 export function criteriaPassed(state: Consultancy): number {
   return Math.min(CRITERIA_COUNT, state.criterion?.index ?? 0);

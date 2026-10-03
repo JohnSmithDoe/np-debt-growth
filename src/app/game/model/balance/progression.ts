@@ -34,21 +34,23 @@ export const INCOME_ROWS: Readonly<Partial<Record<TicketTypeId, IncomeRow>>> =
 export const INCOME_COST_OF_SPAWNER = 125;
 export const INCOME_VALUE_ADD = 3;
 
-export const ACCEPTANCE = { goal: 2e16, spawn: 3, value: 2 } as const;
+export const ACCEPTANCE = { goal: 2e16, value: 2 } as const;
 
 /**
- * One acceptance criterion per line, lint first, each a ninth of the way to the goal by billing.
- * The line under test bills at the newest rung's rate; each criterion verified adds overtime.
+ * One acceptance criterion per line, lint first. The crew sits in the acceptance meeting; the
+ * line under test spawns at CRITERION_SPAWN_PER_SEC whatever its spawners. A criterion signs
+ * clean once the hand has picked up CRITERION_GOAL of the cards spawned for it, with findings
+ * at CRITERION_MS.
  */
 export const CRITERION_BONUS = 2;
 export const CRITERION_OVERTIME = 0.5;
-/** A criterion signs once its line has billed its share, but never sooner than MIN nor later than MAX. */
-export const CRITERION_MIN_MS = 8_000;
-export const CRITERION_MAX_MS = 55_000;
-/** A first test asks this long of what its line bills at a steady sweep when it opens. */
-export const CRITERION_FIRST_TEST_MS = 40_000;
-/** Priced without a line rate, a criterion asks this share of a ninth of the way to the goal. */
-export const CRITERION_SHARE = 0.35;
+export const CRITERION_MS = 20_000;
+export const CRITERION_SPAWN_PER_SEC = 2.5;
+/** Perfect play, every card of the line picked up, signs this soon. */
+export const CRITERION_PERFECT_MS = 12_000;
+export const CRITERION_GOAL = Math.floor(
+  CRITERION_SPAWN_PER_SEC * (CRITERION_PERFECT_MS / 1000)
+);
 
 export const CREDIT_FROM_ADR = 4;
 export const CREDIT_SHARE = 0.6;
@@ -70,6 +72,11 @@ export const LINE_COST_STEP = 1.15;
 
 export const LINE_PRICE_BY_TIER: readonly number[] = [
   1, 2, 4, 8, 16, 32, 128, 256, 512,
+];
+
+/** A line node's price for the rung it sits on: from ADR-3 every tier is quicker than the last. */
+export const LINE_RUNG_PRICE: readonly number[] = [
+  1, 1, 1, 0.6, 0.3, 0.2, 0.4, 0.55, 0.5,
 ];
 
 export const LINE_PLAN: Readonly<

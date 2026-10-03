@@ -1,6 +1,13 @@
-export const AUDIO_MUTE_KEY = 'np-debt-growth/muted';
+export const SFX_MUTE_KEY = 'np-debt-growth/sfx-muted';
+export const MUSIC_MUTE_KEY = 'np-debt-growth/music-muted';
+export const SFX_VOLUME_KEY = 'np-debt-growth/sfx-volume';
+export const MUSIC_VOLUME_KEY = 'np-debt-growth/music-volume';
 
-export const MASTER_GAIN = 0.5;
+export const MASTER_GAIN = 1;
+export const DEFAULT_VOLUME = 0.5;
+
+// main-thread currentTime trails the render thread; voices scheduled at it start in the past
+export const SCHEDULE_LEAD_S = 0.03;
 
 export const MAX_VOICES_PER_WINDOW = 6;
 export const VOICE_WINDOW_MS = 16;

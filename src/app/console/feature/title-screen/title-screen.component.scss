@@ -132,4 +132,11 @@ h1 {
     opacity: 1;
     border-color: currentcolor;
   }
+
+  &.lit {
+    opacity: 1;
+    background: var(--np-cb-accent);
+    border-color: var(--np-cb-accent);
+    color: var(--np-cb-accent-ink);
+  }
 }

@@ -87,6 +87,29 @@
   min-width: 2.75rem;
 }
 
+.mix {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+
+  input {
+    width: 6.5rem;
+    accent-color: var(--np-cb-accent);
+    cursor: pointer;
+  }
+
+  .btn {
+    min-width: 2.75rem;
+  }
+
+  .btn.on {
+    background: var(--np-cb-accent);
+    border-color: var(--np-cb-accent);
+    color: var(--np-cb-accent-ink);
+  }
+}
+
 .languages {
   display: flex;
   gap: 0.3rem;

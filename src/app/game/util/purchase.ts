@@ -14,7 +14,6 @@ import { TICKET_TYPE_IDS } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
 import { CREDIT_FROM_ADR, PURCHASE_IDS } from '../model/balance/progression';
 import * as economy from './economy';
-import { underTestRate } from './sim';
 
 function unmaxed(state: Consultancy, id: string): readonly string[] {
   return (SKILL_BY_ID.get(id)?.maxed ?? []).filter(
@@ -123,16 +122,7 @@ function bought(state: Consultancy, id: string, cost: number): Consultancy {
     ...(id === FINAL_SKILL_ID
       ? {
           signedBudget: state.budget,
-          criterion: economy.openCriterion(
-            {
-              ...state,
-              signedBudget: state.budget,
-              skills: { ...state.skills, [FINAL_SKILL_ID]: 1 },
-            },
-            0,
-            undefined,
-            underTestRate
-          ),
+          criterion: economy.openCriterion(state, 0),
         }
       : {}),
   };

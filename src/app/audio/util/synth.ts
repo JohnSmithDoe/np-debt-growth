@@ -13,6 +13,7 @@ import {
   PURCHASE_GAIN,
   RARE_DURATION_S,
   RARE_GAIN,
+  SCHEDULE_LEAD_S,
 } from '../model/audio.consts';
 
 interface ToneSpec {
@@ -37,7 +38,8 @@ function playTone(
     attack = 0.005,
     start = 0,
   } = spec;
-  const t0 = ctx.currentTime + start;
+  const lead = Math.max(SCHEDULE_LEAD_S, ctx.baseLatency || 0);
+  const t0 = ctx.currentTime + lead + start;
   const t1 = t0 + duration;
 
   const osc = ctx.createOscillator();

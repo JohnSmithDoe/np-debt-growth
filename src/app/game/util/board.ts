@@ -11,8 +11,10 @@ import {
   HEAP_COLS,
   HEAP_ROWS,
   HEAP_SPAWN_ROWS,
+  inTest,
   meetingSpot,
   NEVER_EXPIRES,
+  NO_TEST,
   NO_TICKET,
 } from '../model/board.model';
 import { pickTicketTitle } from '../model/ticket-copy.model';
@@ -104,6 +106,7 @@ export function addTicket(
     cell,
     at: board.tickets.length,
     poolAt: OUT_OF_POOL,
+    test: board.kept.includes(type) ? board.test : NO_TEST,
   };
   board.grid[cell] = ticket.id;
   board.tickets.push(ticket);
@@ -127,6 +130,7 @@ function displaceOldest(board: Board): boolean {
   for (const ticket of board.tickets) {
     if (ticket.lifeLeftMs === NEVER_EXPIRES) continue;
     if (ticket.claimedBy !== NO_TICKET) continue;
+    if (inTest(board, ticket)) continue;
     if (!oldest || displacesBefore(ticket, oldest)) oldest = ticket;
   }
   if (!oldest) return false;
@@ -459,6 +463,7 @@ export function comeBack(
   ticket: Pick<Carried, 'type' | 'reborn'>
 ): void {
   if (!TICKET_TYPES[ticket.type].respawns || ticket.reborn) return;
+  if (board.kept.includes(ticket.type)) return;
   board.pending.push({ type: ticket.type, leftMs: FLAKY_COMEBACK_MS });
 }
 

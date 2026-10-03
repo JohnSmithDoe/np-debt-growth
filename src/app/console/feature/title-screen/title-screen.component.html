@@ -27,8 +27,17 @@
             {{ 'language.' + option | translate }}
           </button>
         }
+        <span class="divider" aria-hidden="true"></span>
+        <button
+          type="button"
+          class="lang"
+          [class.lit]="sound()"
+          [attr.aria-pressed]="sound()"
+          (click)="toggleSound()"
+        >
+          {{ (sound() ? 'title.sound.on' : 'title.sound.off') | translate }}
+        </button>
         @if (canFullscreen) {
-          <span class="divider" aria-hidden="true"></span>
           <button
             type="button"
             class="lang"

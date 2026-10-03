@@ -42,6 +42,7 @@ export interface SceneDeps {
 
   harvest(ids: readonly number[]): Harvest;
   autoClosed(): ReadonlySet<TicketTypeId>;
+  /** The acceptance criterion under test: its cards are the ones spawned for it. */
   underTest(): number | null;
   running(): boolean;
   trainRuns(): boolean;

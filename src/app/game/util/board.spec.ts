@@ -206,14 +206,14 @@ describe('the crew, told how to work', () => {
     run(board, plain, juniorCloseMs(plain) + WALK_MS);
     expect(board.tickets.length).toBe(1);
 
-    const stretched = junior({ juniorReach: 2 });
+    const stretched = junior({ juniorReach: 1, juniorReach2: 1 });
     run(board, stretched, juniorCloseMs(stretched) + WALK_MS);
     expect(board.tickets.length).toBe(0);
   });
 
   it('leaves the events alone even with the rota bought', () => {
     const board = emptyBoard();
-    const state = junior({ juniorReach: 2 });
+    const state = junior({ juniorReach: 1, juniorReach2: 1 });
     addTicket(board, 'quarter');
 
     run(board, state, juniorCloseMs(state) + WALK_MS);

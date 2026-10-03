@@ -3,12 +3,16 @@ import { effect, inject, Injectable, signal } from '@angular/core';
 import { FinaleService } from '../../@shared/data/finale.service';
 import { GameStore } from '../../game/data/game.store';
 import {
-  AUDIO_MUTE_KEY,
+  DEFAULT_VOLUME,
   FINALE_TRACK,
   MASTER_GAIN,
   MAX_CLICKS_PER_TICK,
   MAX_VOICES_PER_WINDOW,
+  MUSIC_MUTE_KEY,
   MUSIC_TRACKS,
+  MUSIC_VOLUME_KEY,
+  SFX_MUTE_KEY,
+  SFX_VOLUME_KEY,
   VOICE_WINDOW_MS,
 } from '../model/audio.consts';
 import {
@@ -20,6 +24,9 @@ import {
 } from '../util/synth';
 
 type Voice = (ctx: AudioContext, destination: AudioNode) => void;
+
+const clampVolume = (value: number): number =>
+  Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : DEFAULT_VOLUME;
 
 @Injectable({ providedIn: 'root' })
 export class AudioService {
@@ -44,7 +51,10 @@ export class AudioService {
   #musicOn = signal(false);
   #finaleOn = false;
 
-  readonly muted = signal(this.#loadMuted());
+  readonly sfxMuted = signal(this.#loadFlag(SFX_MUTE_KEY));
+  readonly musicMuted = signal(this.#loadFlag(MUSIC_MUTE_KEY));
+  readonly sfxVolume = signal(this.#loadVolume(SFX_VOLUME_KEY));
+  readonly musicVolume = signal(this.#loadVolume(MUSIC_VOLUME_KEY));
 
   constructor() {
     window.addEventListener('pointerdown', this.#unlock);
@@ -56,8 +66,18 @@ export class AudioService {
         this.#finaleOn = finale;
         if (this.#music) this.#load(this.#music);
       }
-      if (this.#musicOn() && !this.muted()) this.#playMusic();
+      if (this.#musicAudible()) this.#playMusic();
       else this.#music?.pause();
+    });
+
+    effect(() => {
+      const volume = this.musicVolume();
+      if (this.#music) this.#music.volume = this.#trackVolume(volume);
+    });
+
+    effect(() => {
+      const volume = this.sfxVolume();
+      if (this.#master) this.#master.gain.value = MASTER_GAIN * volume;
     });
 
     effect(() => {
@@ -100,19 +120,62 @@ export class AudioService {
     this.#musicOn.set(true);
   }
 
-  setMuted(value: boolean): void {
-    this.muted.set(value);
-    try {
-      localStorage.setItem(AUDIO_MUTE_KEY, value ? '1' : '0');
-    } catch {}
+  setSfxMuted(value: boolean): void {
+    this.sfxMuted.set(value);
+    this.#saveFlag(SFX_MUTE_KEY, value);
   }
 
-  #loadMuted(): boolean {
+  setMusicMuted(value: boolean): void {
+    this.musicMuted.set(value);
+    this.#saveFlag(MUSIC_MUTE_KEY, value);
+  }
+
+  setSfxVolume(value: number): void {
+    const volume = clampVolume(value);
+    this.sfxVolume.set(volume);
+    this.#save(SFX_VOLUME_KEY, String(volume));
+  }
+
+  setMusicVolume(value: number): void {
+    const volume = clampVolume(value);
+    this.musicVolume.set(volume);
+    this.#save(MUSIC_VOLUME_KEY, String(volume));
+  }
+
+  #musicAudible(): boolean {
+    return this.#musicOn() && !this.musicMuted();
+  }
+
+  #trackVolume(volume: number): number {
+    const track = this.#finaleOn ? FINALE_TRACK : MUSIC_TRACKS[this.#track];
+    return (track?.volume ?? 0) * volume;
+  }
+
+  #loadFlag(key: string): boolean {
     try {
-      return localStorage.getItem(AUDIO_MUTE_KEY) === '1';
+      return localStorage.getItem(key) === '1';
     } catch {
       return false;
     }
+  }
+
+  #loadVolume(key: string): number {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw === null ? DEFAULT_VOLUME : clampVolume(Number(raw));
+    } catch {
+      return DEFAULT_VOLUME;
+    }
+  }
+
+  #saveFlag(key: string, value: boolean): void {
+    this.#save(key, value ? '1' : '0');
+  }
+
+  #save(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch {}
   }
 
   #tryUnlock(): void {
@@ -128,7 +191,7 @@ export class AudioService {
     try {
       const ctx = new Ctor();
       const master = ctx.createGain();
-      master.gain.value = MASTER_GAIN;
+      master.gain.value = MASTER_GAIN * this.sfxVolume();
       master.connect(ctx.destination);
       this.#ctx = ctx;
       this.#master = master;
@@ -155,7 +218,7 @@ export class AudioService {
         this.#track = (this.#track + 1) % MUSIC_TRACKS.length;
       }
       this.#load(music);
-      if (this.#musicOn() && !this.muted()) this.#playMusic();
+      if (this.#musicAudible()) this.#playMusic();
     });
     this.#load(music);
     this.#music = music;
@@ -166,21 +229,21 @@ export class AudioService {
     const track = this.#finaleOn ? FINALE_TRACK : MUSIC_TRACKS[this.#track];
     if (!track) return;
     music.src = track.src;
-    music.volume = track.volume;
+    music.volume = this.#trackVolume(this.musicVolume());
   }
 
   #retryMusicOnGesture(): void {
     const retry = (): void => {
       window.removeEventListener('pointerdown', retry);
       window.removeEventListener('keydown', retry);
-      if (this.#musicOn() && !this.muted()) this.#playMusic();
+      if (this.#musicAudible()) this.#playMusic();
     };
     window.addEventListener('pointerdown', retry);
     window.addEventListener('keydown', retry);
   }
 
   #play(voice: Voice): void {
-    if (this.muted() || !this.#ctx || !this.#master) return;
+    if (this.sfxMuted() || !this.#ctx || !this.#master) return;
     if (this.#ctx.state === 'suspended') {
       void this.#ctx.resume();
       return;

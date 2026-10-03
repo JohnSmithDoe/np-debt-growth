@@ -16,13 +16,13 @@ import {
 import {
   GOLDEN_LIFE_MS,
   INCIDENT_PAYOUT_SEC,
+  PROD_INCIDENT_LIVE_CAP,
   ticketLifeMs,
   VOTE_CYCLE_MS,
   VOTE_ON_MS,
   WONT_FIX_FADE_MS,
 } from '../model/balance/flow';
 import { WOMAN_CLOSE_RATE } from '../model/balance/crew';
-import { INCIDENT_REVIEW_FROM_TIER } from '../model/balance/round';
 import { HOTFIX_MS, HOTFIX_MULTIPLIER } from '../model/balance/weather';
 import * as economy from './economy';
 import { heldBack } from './first-act';
@@ -40,8 +40,10 @@ export interface Flow {
   readonly handEuroPerSec: number;
   readonly crewEuroPerSec: number;
   readonly wontFixPerSec: number;
-  readonly underTestEuroPerSec: number;
-  readonly underTestAutoEuroPerSec: number;
+  /** Tickets of the line under acceptance test the hand picks up. */
+  readonly underTestHandPerSec: number;
+  /** Auto-closes that find the sprint full and come back as P0s the hand clears once the train is home. */
+  readonly prodPerSec: number;
 }
 
 interface Stream {
@@ -275,7 +277,8 @@ function collect(
   reach: number
 ): void {
   const crewGold = economy.crewTakesGolden(state);
-  for (const crew of CLOSERS) {
+  const meeting = economy.inAcceptance(state);
+  for (const crew of meeting ? [] : CLOSERS) {
     const claims = economy.crewClaims(state, crew);
     const pool = all.filter((s) => claims(s.type) && (!s.golden || crewGold));
     const share =
@@ -376,21 +379,6 @@ function steady(state: Consultancy): Consultancy {
     : { ...state, hotfixUntil: 0, escalated: false, escalationFiresAt: 0 };
 }
 
-/**
- * The line under test's billing at a steady sweep: what a first test is calibrated on. A real
- * board at the card cap lets far less of an auto-closed line live out its life than the sim's
- * displacement model does, so auto-close counts at AUTO_CLOSE_ON_A_FULL_BOARD.
- */
-export const underTestRate = (probe: Consultancy): number => {
-  const f = flow(probe, STEADY);
-  return (
-    f.underTestEuroPerSec -
-    f.underTestAutoEuroPerSec * (1 - AUTO_CLOSE_ON_A_FULL_BOARD)
-  );
-};
-
-const AUTO_CLOSE_ON_A_FULL_BOARD = 0.35;
-
 const STEADY: SimPolicy = { clicksPerSec: 1 };
 
 /** A late P0 the hand clears: seconds of the build's income, both currencies. */
@@ -407,16 +395,36 @@ export function incidentPayout(state: Consultancy): {
 
 export function flow(live: Consultancy, policy: SimPolicy): Flow {
   const base = baseFlow(live, policy);
-  if (policy.clicksPerSec <= 0 || live.tier < INCIDENT_REVIEW_FROM_TIER)
-    return base;
-  const share = INCIDENT_PAYOUT_SEC * economy.spawnRate(live, 'incident');
-  const euros = base.euroPerSec * share;
+  if (policy.clicksPerSec <= 0 || !economy.paysIncidents(live)) return base;
+  const share =
+    INCIDENT_PAYOUT_SEC *
+    (economy.spawnRate(live, 'incident') + base.prodPerSec);
+  const forgone = base.handEuroPerSec * (base.prodPerSec / policy.clicksPerSec);
+  const euros = base.euroPerSec * share - forgone;
   return {
     ...base,
     euroPerSec: base.euroPerSec + euros,
     handEuroPerSec: base.handEuroPerSec + euros,
     spPerSec: base.spPerSec * (1 + share),
   };
+}
+
+/** A P0 takes a sprint slot like any close, so a train cycle clears at most the live cap of them. */
+function prodPerSec(
+  state: Consultancy,
+  policy: SimPolicy,
+  overflow: number,
+  collected: number
+): number {
+  if (!economy.trainRuns(state) || collected <= 0) return 0;
+  const awaySec = economy.haulMs(state) / 1000;
+  const homeSec = economy.sprintSlots(state) / collected;
+  const perCycle = Math.min(
+    PROD_INCIDENT_LIVE_CAP,
+    overflow * awaySec,
+    policy.clicksPerSec * homeSec
+  );
+  return perCycle / (awaySec + homeSec);
 }
 
 function baseFlow(live: Consultancy, policy: SimPolicy): Flow {
@@ -467,11 +475,12 @@ function baseFlow(live: Consultancy, policy: SimPolicy): Flow {
   let handEuro = 0;
   let crewEuro = 0;
   let tested = 0;
-  let testedAuto = 0;
   let sp = 0;
   let hand = 0;
   let crew = 0;
+  let overflow = 0;
   for (const s of all) {
+    overflow += s.auto * (1 - scale);
     const byHand = s.hand * scale;
     const byCrew = s.crew * scale;
     const byAuto = s.auto * scale;
@@ -483,8 +492,7 @@ function baseFlow(live: Consultancy, policy: SimPolicy): Flow {
     handEuro += euros;
     crewEuro += crewed;
     if (economy.underTest(state, s.type)) {
-      tested += euros + crewed;
-      testedAuto += byAuto * s.worth * buff;
+      tested += byHand;
     }
     hand += byHand;
     crew += byCrew + byAuto;
@@ -503,7 +511,7 @@ function baseFlow(live: Consultancy, policy: SimPolicy): Flow {
     handEuroPerSec: handEuro,
     crewEuroPerSec: crewEuro,
     wontFixPerSec: Math.max(0, supplyPerSec - hand - crew),
-    underTestEuroPerSec: tested,
-    underTestAutoEuroPerSec: testedAuto,
+    underTestHandPerSec: tested,
+    prodPerSec: prodPerSec(state, policy, overflow, collected),
   };
 }
