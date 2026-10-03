@@ -12,7 +12,7 @@ export const DE: Readonly<Record<string, string>> = {
     'Nimmt das nächstgelegene Ticket, nicht irgendeins',
   'skill.effect.juniorBand': 'Juniors reichen {{count}} Stufe höher',
   'skill.effect.none': 'Eröffnet das Programm',
-  'skill.effect.floorPlate': 'Wirkt nicht selbst: öffnet den nächsten Raum',
+  'skill.effect.inert': 'Keine Wirkung. Gar keine.',
   'skill.effect.topOfBand': 'Seniors nehmen zuerst das größte Ticket',
   'strip.shipping': 'DIREKT LIVE',
   'strip.collecting': 'SAMMELN',
@@ -115,27 +115,6 @@ export const DE: Readonly<Record<string, string>> = {
     'räumt alle {{seconds}}s den ganzen Fleck ab, ab den Merge-Konflikten aufwärts; P0s bleiben deine',
   'skill.effect.managerAura':
     '{{pct}} auf Abschlüsse unter den Augen eines Managers',
-  'office.archive.blurb':
-    'Zehn Jahre Stundenzettel. Jede Stunde auf der Rechnung ist belegbar.',
-  'office.archive.label': 'Aktenarchiv',
-  'office.bullpen-a.blurb':
-    'Wo du angefangen hast. Ein Drucker, keine Fenster, kein Tageslicht.',
-  'office.bullpen-a.label': 'Das Kabuff',
-  'office.corner-office.blurb':
-    'Ein Kundenbetreuer mit eigener Tür. Eskalationen haben jetzt ein Ziel.',
-  'office.corner-office.label': 'Eckbüro',
-  'office.kitchen.blurb':
-    'Eine Kaffeemaschine auf der Etage amortisiert sich über die Laufwege.',
-  'office.kitchen.label': 'Teeküche',
-  'office.meeting.blurb':
-    'Ein Ort für die Zeremonie, die entscheidet, was in den Sprint kommt.',
-  'office.meeting.label': 'Besprechungsraum',
-  'office.server.blurb':
-    'Alles zurück ins Haus geholt. Es lief da, wo es war, einwandfrei.',
-  'office.server.label': 'Serverraum',
-  'office.war-room.blurb':
-    'Whiteboards an jeder Wand. Seniors räumen von hier aus großflächiger ab.',
-  'office.war-room.label': 'War Room',
   'kit.ci-tier.blurb':
     'Abrechnung nach Build-Minuten. Die flaky Suite läuft, bis sie grün ist.',
   'kit.ci-tier.label': 'CI-Tarif: Enterprise',
@@ -877,7 +856,7 @@ export const DE: Readonly<Record<string, string>> = {
     'Bau den Serverraum. Er tut nichts. Bezahlt hast du trotzdem.',
   'award.a-office.label': 'Die ganze Etage',
   'award.a-office.blurb':
-    'Richte jeden Raum ein. Es gibt keinen Platz mehr für irgendwen.',
+    'Bau jeden Raum. Es gibt keinen Platz mehr für irgendwen.',
   'award.a-hundred-thousand.label': 'Das Backlog hat ein Backlog',
   'award.a-hundred-thousand.blurb':
     'Schließ 100.000 Tickets. Der Backlog war nie länger.',

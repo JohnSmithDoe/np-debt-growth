@@ -23,7 +23,6 @@ import type { SkillNodeView, SkillView } from '../model/skill-view.model';
 import { skillEffectText } from '../util/skill-copy';
 import type { StageMode } from '../model/stage-mode.model';
 import { BoardScene } from '../scene/board-scene';
-import { DemoScene } from '../scene/demo-scene';
 import { FinaleScene } from '../scene/finale-scene';
 import { SkillScene } from '../scene/skill-scene';
 import { PhaserService } from './phaser.service';
@@ -66,11 +65,6 @@ export class StageService {
     this.#modes.request('board');
     this.#showing = 'board';
     this.#enter(this.#entry('board'));
-  }
-
-  initDemo(parent: HTMLElement): void {
-    this.#phaser.init(parent);
-    this.#phaser.game.scene.add(DemoScene.KEY, new DemoScene(), true);
   }
 
   #showMode(next: StageMode): void {

@@ -11,13 +11,6 @@ const STAGING = new URL('../image-staging/', import.meta.url).pathname;
 const CLEAN = 'Full-bleed edge-to-edge composition, no border, no text, no letters, no numbers, no signature, no watermark, no frame, no vignette.';
 const LOOK = 'Detailed retro game key art, dark moody limited palette of slate grey, charcoal and blue-grey with warm amber monitor glow. Deadpan corporate realism, never whimsical.';
 const PLATE_INK = 'Bright whimsical 16-bit pixel game tileset art with very heavy near-black ink outlines around every single object, hard flat colour with no gradients and no texture, bold and graphic and childlike, cheerful and friendly. High overhead three-quarter view.';
-const PLATE_PALETTE = 'Warm toybox palette of amber, honey, oak, tomato red, teal and moss green on a plain warm tan carpet.';
-const PLATE_FLOOR = 'One single enormous carpet fills every pixel of the image, edge to edge and corner to corner, and carries on far past the image in all directions. Nothing is drawn on the carpet: no rug, no mat, no slab, no platform, no island, no painted markings, no lines, no outlines, no borders, no shadow edge, no walls, no skirting, no doorway, no white background. All of the furniture is gathered together in the middle of this carpet, well away from the image edges, with a broad expanse of plain empty carpet between the furniture and every edge. Nothing touches an edge and nothing is cut off by an edge. The furniture in the middle is packed tightly together with almost no gaps between the pieces.';
-const PLATE_SHELL = 'Warm palette of concrete grey, ochre, tomato red and cream. The floor is unbroken mid-grey concrete in every direction and there is no white slab, no white sheeting, no pale patch, no tarpaulin, no taped-off rectangle and no marked-out area anywhere on it, one single flat mid-grey concrete floor of exactly the same grey everywhere.';
-const SMILEY = 'Every chunky cream computer monitor has a cheerful smiling cartoon face with rosy cheeks glowing on its screen.';
-
-const PLATE = (subject) => `${CLEAN} ${PLATE_INK} ${PLATE_PALETTE} ${PLATE_FLOOR} ${subject}`;
-const SHELL = (subject) => `${CLEAN} ${PLATE_INK} ${PLATE_SHELL} ${PLATE_FLOOR} ${subject}`;
 
 const ICON = 'A single centred icon symbol, one object alone, flat emblem style. Bold thick chunky silhouette with very heavy outlines, extreme contrast, large simple shapes only. No thin lines, no fine detail, no small parts, no texture, no gradient, no shading, no perspective, no scene, no room, no desk, no background objects, no hands. The object is drawn straight on, fills most of the frame, and floats alone on a completely plain flat dark charcoal background.';
 const ICON_INK = 'Drawn in bright warm amber, pale bone white and one accent of tomato red on near-black.';
@@ -28,7 +21,6 @@ const GROUND = (subject) => `${CLEAN} ${CARPET} ${subject}`;
 
 const BIG = '1216x656';
 const BANNER = '1024x512';
-const MODULE = '640x640';
 const EMBLEM_SIZE = '512x512';
 const GROUND_SIZE = '768x768';
 
@@ -61,16 +53,6 @@ const ORDER = [
   ['screens', 'screen-easter-egg', BANNER, 1, `${CLEAN} ${LOOK} Extreme close-up of one glowing amber CRT monitor in total darkness, showing dense scrolling source code, with a single line highlighted in bright green halfway down the screen. Scanlines and phosphor bloom.`],
   ['screens', 'screen-promotion', BANNER, 1, `${CLEAN} ${LOOK} A long row of identical office desks, each with a brand new brass nameplate freshly set on it, catching the light. Same chairs, same monitors, same people absent. Ceremonial and hollow.`],
   ['screens', 'screen-hiring', BANNER, 1, `${CLEAN} ${LOOK} A corporate waiting area with a long row of empty chairs against the wall, a tall stack of printed CVs on the low table, a closed interview room door, harsh fluorescent light on grey carpet.`],
-
-  ['modules', 'bullpen-a', MODULE, 2, PLATE(`Four desks fit across the width of the furnished area and four down its height, sixteen small desks in all, each drawn small and simple with a keyboard and a swivel chair. ${SMILEY} No two desks alike: different chair colours, one buried in paper, one with three potted plants, one with a toppled coffee mug, one bare but for a lamp.`)],
-  ['modules', 'meeting', MODULE, 2, PLATE('Two oval meeting tables fit across the width of the furnished area and two down its height, four small tables in all, each ringed by six little chairs. On each table a projector puck, notepads, a jug of water and paper cups. Small flipchart easels between the tables.')],
-  ['modules', 'kitchen', MODULE, 2, PLATE('Two little kitchen counters with chunky coffee machines, kettles and sinks, two fridges covered in magnets, four small round tables each with three chairs, a mug rack, a fruit bowl, two wonky potted plants and a recycling bin, all drawn small and simple.')],
-  ['modules', 'server', MODULE, 2, PLATE('Four server rack cabinets fit across the width of the furnished area and four down its height, sixteen small racks in all, drawn small and simple, their doors covered in cheerful blinking green and amber lights, thick bundles of rainbow-coloured cables looping between them across the floor.')],
-  ['modules', 'war-room', MODULE, 2, PLATE('Four clusters of small tables pushed together, each cluster with open laptops, mismatched chairs and a pizza box, drawn small and simple. Whiteboards on wheels standing between the clusters, shingled with tiny coloured sticky notes, crumpled paper and coffee cups on the floor around them.')],
-  ['modules', 'archive', MODULE, 2, PLATE('Six tall shelving units in three parallel rows, drawn small and simple, packed tight with colourful ring binders and cardboard archive boxes. Stacks of boxes toppling over in the gangways between them, a small stepladder, and a dusty cardboard box with a sleeping ginger cat curled on top.')],
-  ['modules', 'corner-office', MODULE, 2, PLATE(`One grand executive desk of dark oak with a high-backed leather chair behind it and two little visitor chairs in front, standing on a patterned rug in the middle of the furnished area. ${SMILEY} Around it a bookshelf, two tall potted palms, a drinks trolley, a golf putter leaning against the shelf and a trophy on the desk.`)],
-  ['modules', 'shell', MODULE, 3, SHELL('An unfinished floor plate under construction: coiled cable drums, folded stepladders, stacks of cardboard boxes, paint buckets, a wheelbarrow and orange traffic cones, drawn small and simple and gathered in the middle, with yellow and black hazard tape strung between them. Absolutely no desks, no chairs and no computers.')],
-  ['modules', 'shell-b', MODULE, 3, SHELL('An unfinished floor plate under construction: a cement mixer, a stack of timber planks, two sawhorses with a plank across them, rolls of insulation, a pallet of paint tins, a red toolbox and a leaning broom, drawn small and simple and gathered in the middle, with yellow and black hazard tape strung between them. Absolutely no desks, no chairs and no computers.')],
 
   ['finale', 'finale-party-office', BIG, 2, `${CLEAN} ${PLATE_INK} A leaving party at night on an open-plan office floor. The back wall is one long row of tall windows showing a glittering city skyline and a full moon. The office desks and chairs are pushed back against the side walls. In the middle of the floor one long buffet table with open pizza boxes, a big iced sheet cake and a punch bowl, and to its right a little DJ desk with two chunky speakers and a disco ball on a stand. Strings of warm fairy lights hang across the ceiling, balloons and confetti everywhere, a broad empty stretch of dark blue carpet in the foreground for dancing. No people.`],
 

@@ -11,7 +11,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.nearestClaim': 'Claims the nearest ticket, not just any one',
   'skill.effect.juniorBand': 'Juniors reach {{count}} rung higher',
   'skill.effect.none': 'Opens the programme',
-  'skill.effect.floorPlate': 'No effect of its own: opens the next room',
+  'skill.effect.inert': 'No effect. None at all.',
   'skill.effect.topOfBand': 'Seniors take the biggest ticket first',
   'strip.shipping': 'EVERY CLOSE SHIPS',
   'strip.collecting': 'COLLECTING',
@@ -114,27 +114,6 @@ export const EN: Readonly<Record<string, string>> = {
   'purchase.senior.effect':
     'clears the whole patch every {{seconds}}s, from the merge conflicts up; P0s stay yours',
   'skill.effect.managerAura': '{{pct}} on crew closes a manager oversees',
-  'office.archive.blurb':
-    'Seven years of timesheets. Every hour on the invoice is defensible.',
-  'office.archive.label': 'Records Store',
-  'office.bullpen-a.blurb':
-    'Where you started. One printer, no windows, no natural light.',
-  'office.bullpen-a.label': 'The Bullpen',
-  'office.corner-office.blurb':
-    'An account manager with a door. Escalations now have somewhere to go.',
-  'office.corner-office.label': 'Corner Office',
-  'office.kitchen.blurb':
-    'A coffee machine on the floor pays for itself in walking speed.',
-  'office.kitchen.label': 'Break Room',
-  'office.meeting.blurb':
-    'Somewhere to hold the ceremony that decides what is in the sprint.',
-  'office.meeting.label': 'Meeting Room',
-  'office.server.blurb':
-    'Bringing the estate in-house. It was fine where it was.',
-  'office.server.label': 'Server Room',
-  'office.war-room.blurb':
-    'Whiteboards on every wall. Seniors clear a wider patch from here.',
-  'office.war-room.label': 'War Room',
   'kit.ci-tier.blurb':
     'Billed per minute of build. The flaky suite reruns until it passes.',
   'kit.ci-tier.label': 'CI Tier: Enterprise',
@@ -860,7 +839,7 @@ export const EN: Readonly<Record<string, string>> = {
     'Build the Server Room. It does nothing. You paid for it anyway.',
   'award.a-office.label': 'The whole floor',
   'award.a-office.blurb':
-    'Fit out every plate. There is nowhere left to put anyone.',
+    'Build every room. There is nowhere left to put anyone.',
   'award.a-hundred-thousand.label': 'The backlog has a backlog',
   'award.a-hundred-thousand.blurb':
     'Close 100,000 work items. The backlog has never been longer.',

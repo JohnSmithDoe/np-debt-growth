@@ -6,11 +6,6 @@ import { LANGUAGES } from '../../@shared/util/i18n/language.model';
 
 import { HAZARDS, hazardLabelKey } from '../model/hazard.model';
 import { KIT_PLAN, kitBlurbKey, kitLabelKey } from '../model/kit.model';
-import {
-  OFFICE_PLAN,
-  officeBlurbKey,
-  officeLabelKey,
-} from '../model/office.model';
 import { TRAIT_IDS, traitBlurbKey, traitLabelKey } from '../model/senior.model';
 import {
   SKILL_NODES,
@@ -108,13 +103,6 @@ const BUILT: readonly { readonly owns: RegExp; readonly keys: string[] }[] = [
   {
     owns: /^hazard\.[a-z-]+\.(?:label|blurb)$/,
     keys: HAZARDS.map((row) => hazardLabelKey(row.id)),
-  },
-  {
-    owns: /^office\.[a-z-]+\.(?:label|blurb)$/,
-    keys: OFFICE_PLAN.flatMap((plate) => [
-      officeLabelKey(plate.id),
-      officeBlurbKey(plate.id),
-    ]),
   },
   {
     owns: /^kit\.[a-z-]+\.(?:label|blurb)$/,

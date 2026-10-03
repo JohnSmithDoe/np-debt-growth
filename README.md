@@ -103,12 +103,12 @@ per-character `*.credits.txt` in `art/characters/` records what each one used.
 
 Everything in `src/assets/art/`, `src/assets/board/` (bar the release train, below) and
 `src/assets/skills/` —
-the title screens, the tier plates, the screen art, the office floor plates and
-the seventy-one skill node icons — is generated with **FLUX.2 Klein
+the title screens, the tier plates, the screen art and the skill node icons —
+is generated with **FLUX.2 Klein
 (Apache-2.0) via [mflux](https://github.com/filipstrand/mflux)**. The
 illustrations ship un-pixelated as WebP, converted by `tools/backdrop.mjs`; the
-board's tier backdrops and the modals share those files. The icons, the office
-floor plates and the 2011 easter egg are forced onto the game's own palette by
+board's tier backdrops and the modals share those files. The icons and the
+2011 easter egg are forced onto the game's own palette by
 `tools/pixelate.mjs`, or by `tools/icon-knockout.mjs` for the icons, which
 remaps against the same palette.
 

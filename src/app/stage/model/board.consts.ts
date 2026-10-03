@@ -136,17 +136,6 @@ export const TIER_BACKDROP = {
   swapFadeMs: 4000,
 } as const;
 
-export const officePlateUrl = (id: string): string =>
-  `assets/board/office/${id}.png`;
-
-export const OFFICE_SHELLS = [
-  { key: 'office-shell-a', url: officePlateUrl('shell') },
-  { key: 'office-shell-b', url: officePlateUrl('shell-b') },
-] as const;
-
-export const officeShellKey = (index: number): string =>
-  OFFICE_SHELLS[index % OFFICE_SHELLS.length]!.key;
-
 export const HOVER_WIDTH = 190;
 export const HOVER_GROUND = '#10151c';
 export const HOVER_PAD = { x: 6, y: 4 } as const;

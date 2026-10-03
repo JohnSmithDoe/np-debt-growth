@@ -673,7 +673,7 @@ What the player sees, and where it lives. Paths are relative to `src/app/`.
   `@shared/util/backdrop-art.ts`; the title screen and the ADR modal read the same files.
 - **Illustrations ship un-pixelated** as WebP, converted from `image-staging/` by
   `tools/backdrop.mjs`. Pixelated on purpose: the 2011 easter egg, the finale party, the skill
-  icons, the office floor plates and every sprite.
+  icons and every sprite.
 - **Walkers.** One sprite per debt line (`stage/model/spawner-skin.model.ts`), dressed for the
   office and armed: the fresh grad, a skeleton on a cane, Frankenstein with a hammer, a contractor
   with a pickaxe, a hooded figure with a staff, the Rockstar, a zombie with an axe, a demolition

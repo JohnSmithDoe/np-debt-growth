@@ -8,12 +8,5 @@ export const routes: Routes = [
         (m) => m.StageComponent
       ),
   },
-  {
-    path: 'demo',
-    loadComponent: () =>
-      import('./stage/feature/demo/demo.component').then(
-        (m) => m.DemoComponent
-      ),
-  },
   { path: '', pathMatch: 'full', redirectTo: 'board' },
 ];

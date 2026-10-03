@@ -161,7 +161,7 @@ stops resolving to a file the build ships. **If that footer moves, it moves some
 unavoidable.** Read `README.md` before touching credits, the atlas, or the asset pipeline.
 
 Art is generated, not sourced — the one exception is the release train, Varible_37's "Ghost Train" in `assets/board/train/` (author's terms, credited in the footer): `tools/art-batch.mjs` is the manifest (one row per image, prompt
-included). Illustrations ship un-pixelated as WebP via `tools/backdrop.mjs`; icons, floor plates
+included). Illustrations ship un-pixelated as WebP via `tools/backdrop.mjs`; icons
 and the 2011 easter egg go through `tools/pixelate.mjs` / `icon-knockout.mjs` onto the palette
 whose first block is `src/global.scss`'s `--np-cb-*` tokens. `image-staging/` is gitignored —
 takes, not assets, and the only source of the raw art.
@@ -173,7 +173,6 @@ takes, not assets, and the only source of the raw art.
   card), `finale(curtain?)` (the curtain call; `true` skips the roll), `postMortem()` (accepts the run as it stands). Always open; the viewport and art harnesses drive the game through it, and a whole run
   scripts in a few lines.
 - The in-app debug bar unlocks with the Konami code (`ServiceDoorService`).
-- `/demo` route renders `DemoScene` alone for floor-plate work.
 
 ## The docs
 

@@ -17,7 +17,7 @@ import { ADR_HEADING_ID, DEBT_TIERS, adrNodeId } from './tier.model';
 export type PaceField = 'close' | 'walk' | 'sweep';
 
 export type SkillEffect =
-  | { readonly kind: 'none'; readonly floorPlate?: true }
+  | { readonly kind: 'none'; readonly inert?: true }
   | { readonly kind: 'clickRadius'; readonly mult: number }
   | { readonly kind: 'slots'; readonly add: number }
   | { readonly kind: 'cans'; readonly add: number }
@@ -891,7 +891,7 @@ const TREE_NODES: readonly SkillNode[] = [
     id: 'o4',
     track: 'O',
     requires: 'office',
-    levels: [{ cost: 3750, effects: [{ kind: 'none', floorPlate: true }] }],
+    levels: [{ cost: 3750, effects: [{ kind: 'none', inert: true }] }],
   },
   {
     id: 'kit',

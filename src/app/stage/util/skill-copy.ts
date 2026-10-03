@@ -23,9 +23,7 @@ function describe(effect: SkillEffect): EffectText {
   switch (effect.kind) {
     case 'none':
       return {
-        key: effect.floorPlate
-          ? 'skill.effect.floorPlate'
-          : 'skill.effect.none',
+        key: effect.inert ? 'skill.effect.inert' : 'skill.effect.none',
       };
     case 'goldenChance':
       return {

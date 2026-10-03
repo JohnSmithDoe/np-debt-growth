@@ -5,7 +5,6 @@ import type { TicketMix } from '../model/board.model';
 import { voteBeamY, voteCount } from '../model/board.model';
 import type { Award } from '../model/award.model';
 import { AWARDS } from '../model/award.model';
-import { platesAt } from '../model/office.model';
 import { castPoolSize } from '../model/cast.model';
 import type { Weather } from '../model/hazard.model';
 import { CALM } from '../model/hazard.model';
@@ -21,11 +20,7 @@ import {
 import type { SeniorHire, TraitId } from '../model/senior.model';
 import { TRAITS, hireFor } from '../model/senior.model';
 import type { PaceField, SkillEffect } from '../model/skill.model';
-import {
-  FINAL_SKILL_ID,
-  OFFICE_NODE_IDS,
-  SKILL_BY_ID,
-} from '../model/skill.model';
+import { FINAL_SKILL_ID, SKILL_BY_ID } from '../model/skill.model';
 import type { TicketType, TicketTypeId } from '../model/ticket.model';
 import {
   ladderUp,
@@ -94,12 +89,6 @@ import {
   ESCALATION_MULTIPLIER,
   HOTFIX_MULTIPLIER,
 } from '../model/balance/weather';
-
-export function officePlates(state: Consultancy): number {
-  return platesAt(
-    OFFICE_NODE_IDS.filter((id) => skillRank(state, id) > 0).length
-  );
-}
 
 export function kitNext(state: Consultancy): KitItem | null {
   return nextKitItem(state.levels.kit);
