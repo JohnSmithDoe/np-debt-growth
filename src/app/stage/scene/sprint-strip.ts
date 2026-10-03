@@ -4,7 +4,8 @@
 import * as Phaser from 'phaser';
 
 import { formatCompactMoney } from '../../@shared/util/format-quantity';
-import { TICKET_TYPES } from '../../game/model/ticket.model';
+import type { SprintSlot } from '../../game/model/board.model';
+import { TICKET_TYPES, type TicketTypeId } from '../../game/model/ticket.model';
 import {
   BOARD_INK,
   BOARD_TEXT,
@@ -29,6 +30,33 @@ const SEGMENT = { max: 10, min: 8, gap: 2 } as const;
 const PAD = 18;
 const BAR_MIN_X = 172;
 const GAP = 18;
+
+/** Most common type among the closes a segment covers; ties go to the earliest. */
+function segmentColour(
+  held: readonly SprintSlot[],
+  slots: number,
+  count: number,
+  at: number
+): number {
+  const from = Math.floor((at * slots) / count);
+  const to = Math.min(
+    held.length,
+    Math.max(from + 1, Math.floor(((at + 1) * slots) / count))
+  );
+  const tally = new Map<TicketTypeId, number>();
+  let best: TicketTypeId | undefined;
+  let most = 0;
+  for (let i = from; i < to; i++) {
+    const { type } = held[i]!;
+    const n = (tally.get(type) ?? 0) + 1;
+    tally.set(type, n);
+    if (n > most) {
+      most = n;
+      best = type;
+    }
+  }
+  return best ? TICKET_TYPES[best].colour : BOARD_INK.pipFull;
+}
 
 export class SprintStrip {
   static preload(scene: Phaser.Scene): void {
@@ -214,13 +242,12 @@ export class SprintStrip {
     this.#pips.clear();
 
     const width = this.#barWidth;
-    const newest = this.#deps.sprint().at(-1);
     this.#drawSegments(
       this.#barX,
       this.#top + BAR_TOP,
       width,
       slots <= 0 ? 0 : Math.min(1, filled / slots),
-      newest ? TICKET_TYPES[newest.type].colour : BOARD_INK.pipFull
+      slots
     );
     if (away) {
       this.#drawTrain(this.#barX, this.#top, width, 1 - this.#remaining / haul);
@@ -234,8 +261,9 @@ export class SprintStrip {
     y: number,
     width: number,
     part: number,
-    colour: number
+    slots: number
   ): void {
+    const held = this.#deps.sprint();
     const count = Math.max(
       1,
       Math.min(
@@ -250,7 +278,7 @@ export class SprintStrip {
       this.#pips.fillRect(left, y, each, PIP_HEIGHT);
       const fill = Math.min(1, Math.max(0, part * count - at));
       if (fill <= 0) continue;
-      this.#pips.fillStyle(colour, 1);
+      this.#pips.fillStyle(segmentColour(held, slots, count, at), 1);
       this.#pips.fillRect(left, y, each * fill, PIP_HEIGHT);
     }
   }
