@@ -3,6 +3,7 @@ import { effect, inject, Injectable, signal } from '@angular/core';
 import { FinaleService } from '../../@shared/data/finale.service';
 import { GameStore } from '../../game/data/game.store';
 import {
+  DEFAULT_MUSIC_VOLUME,
   DEFAULT_VOLUME,
   FINALE_TRACK,
   MASTER_GAIN,
@@ -25,8 +26,8 @@ import {
 
 type Voice = (ctx: AudioContext, destination: AudioNode) => void;
 
-const clampVolume = (value: number): number =>
-  Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : DEFAULT_VOLUME;
+const clampVolume = (value: number, fallback = DEFAULT_VOLUME): number =>
+  Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback;
 
 @Injectable({ providedIn: 'root' })
 export class AudioService {
@@ -54,7 +55,9 @@ export class AudioService {
   readonly sfxMuted = signal(this.#loadFlag(SFX_MUTE_KEY));
   readonly musicMuted = signal(this.#loadFlag(MUSIC_MUTE_KEY));
   readonly sfxVolume = signal(this.#loadVolume(SFX_VOLUME_KEY));
-  readonly musicVolume = signal(this.#loadVolume(MUSIC_VOLUME_KEY));
+  readonly musicVolume = signal(
+    this.#loadVolume(MUSIC_VOLUME_KEY, DEFAULT_MUSIC_VOLUME)
+  );
 
   constructor() {
     window.addEventListener('pointerdown', this.#unlock);
@@ -137,7 +140,7 @@ export class AudioService {
   }
 
   setMusicVolume(value: number): void {
-    const volume = clampVolume(value);
+    const volume = clampVolume(value, DEFAULT_MUSIC_VOLUME);
     this.musicVolume.set(volume);
     this.#save(MUSIC_VOLUME_KEY, String(volume));
   }
@@ -159,12 +162,12 @@ export class AudioService {
     }
   }
 
-  #loadVolume(key: string): number {
+  #loadVolume(key: string, fallback = DEFAULT_VOLUME): number {
     try {
       const raw = localStorage.getItem(key);
-      return raw === null ? DEFAULT_VOLUME : clampVolume(Number(raw));
+      return raw === null ? fallback : clampVolume(Number(raw), fallback);
     } catch {
-      return DEFAULT_VOLUME;
+      return fallback;
     }
   }
 

@@ -5,6 +5,7 @@ export const MUSIC_VOLUME_KEY = 'np-debt-growth/music-volume';
 
 export const MASTER_GAIN = 1;
 export const DEFAULT_VOLUME = 0.5;
+export const DEFAULT_MUSIC_VOLUME = 0.33;
 
 // main-thread currentTime trails the render thread; voices scheduled at it start in the past
 export const SCHEDULE_LEAD_S = 0.03;

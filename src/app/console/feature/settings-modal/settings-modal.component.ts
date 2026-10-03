@@ -38,7 +38,7 @@ export class SettingsModalComponent {
 
   readonly music = input(true);
   readonly sfx = input(true);
-  readonly musicVolume = input(0.5);
+  readonly musicVolume = input(0.33);
   readonly sfxVolume = input(0.5);
   readonly musicChange = output<boolean>();
   readonly sfxChange = output<boolean>();
