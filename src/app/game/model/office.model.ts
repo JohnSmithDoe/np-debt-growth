@@ -7,10 +7,9 @@ export const officeBlurbKey = (id: string): string => `office.${id}.blurb`;
 
 export const OFFICE_PLAN: readonly OfficePlate[] = [
   { id: 'bullpen-a' },
-  { id: 'bullpen-b' },
+  { id: 'server' },
   { id: 'meeting' },
   { id: 'kitchen' },
-  { id: 'server' },
   { id: 'war-room' },
   { id: 'archive' },
   { id: 'corner-office' },

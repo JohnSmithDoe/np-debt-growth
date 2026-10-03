@@ -18,7 +18,7 @@ const onTree = SKILL_NODES.filter(
   (node) =>
     node.id !== SECRET_SKILL_ID &&
     node.granted !== true &&
-    node.heading !== true
+    (node.heading !== true || node.group === true)
 );
 
 const ranked = (owned: Record<string, number>) =>
@@ -54,7 +54,7 @@ describe('skill layout', () => {
     );
     expect(arms.map((square) => square.id).sort()).toEqual([
       'adr1',
-      'o1',
+      'o4',
       'radius',
       'valueLint',
     ]);
@@ -154,7 +154,7 @@ describe('skill reveal', () => {
   it('opens as the root, readable, with a box on each arm it would open', () => {
     expect([...ranked({}).entries()].sort()).toEqual([
       ['adr1', 'box'],
-      ['o1', 'box'],
+      ['o4', 'box'],
       ['radius', 'box'],
       [SKILL_ROOT_ID, 'open'],
       ['valueLint', 'box'],
@@ -165,7 +165,7 @@ describe('skill reveal', () => {
     const shown = ranked({ root: 1 });
 
     expect(shown.get(SKILL_ROOT_ID)).toBe('owned');
-    for (const arm of ['radius', 'valueLint', 'o1', 'adr1']) {
+    for (const arm of ['radius', 'valueLint', 'o4', 'adr1']) {
       expect(shown.get(arm)).toBe('open');
     }
     expect(shown.get('capacity')).toBe('box');
@@ -175,8 +175,8 @@ describe('skill reveal', () => {
     const shown = ranked({ root: 1, radius: 1 });
 
     expect(shown.get('capacity')).toBe('open');
-    expect(shown.get('o1')).toBe('open');
-    expect(shown.get('o3')).toBe('box');
+    expect(shown.get('o4')).toBe('open');
+    expect(shown.get('o2')).toBe('box');
     expect(shown.get('junior')).toBe('box');
     expect(shown.get('juniorSpeed')).toBeUndefined();
     expect(shown.get('cutRetro')).toBe('open');

@@ -162,6 +162,12 @@ export const AWARDS: readonly Award[] = [
     when: (s) => s.lifetimeClosed >= 10_000,
   },
   {
+    id: 'a-server',
+    kind: 'achievement',
+    weight: 'small',
+    when: (s) => (s.skills['o4'] ?? 0) > 0,
+  },
+  {
     id: 'a-office',
     kind: 'achievement',
     weight: 'medium',

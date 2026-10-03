@@ -45,7 +45,10 @@ const BUILT: readonly { readonly owns: RegExp; readonly keys: string[] }[] = [
     owns: /^skill\.[A-Za-z0-9]+\.(?:\d+\.label|blurb)$/,
     keys: SKILL_NODES.flatMap((node) =>
       node.heading === true
-        ? [skillLabelKey(node.id)]
+        ? [
+            skillLabelKey(node.id),
+            ...(node.group === true ? [skillBlurbKey(node.id)] : []),
+          ]
         : [
             skillBlurbKey(node.id),
             ...node.levels.map((_, at) => skillLabelKey(node.id, at + 1)),

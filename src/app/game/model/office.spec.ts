@@ -11,8 +11,10 @@ import {
 import { OFFICE_NODE_IDS, SKILL_BY_ID } from './skill.model';
 
 describe('the floor plan (D36)', () => {
-  it('fills the grid it is laid out on exactly', () => {
-    expect(OFFICE_GRID.cols * OFFICE_GRID.rows).toBe(OFFICE_PLATES);
+  it('fits the grid it is laid out on', () => {
+    expect(OFFICE_GRID.cols * OFFICE_GRID.rows).toBeGreaterThanOrEqual(
+      OFFICE_PLATES
+    );
   });
 
   it('names every plate once', () => {

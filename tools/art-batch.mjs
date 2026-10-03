@@ -63,7 +63,6 @@ const ORDER = [
   ['screens', 'screen-hiring', BANNER, 1, `${CLEAN} ${LOOK} A corporate waiting area with a long row of empty chairs against the wall, a tall stack of printed CVs on the low table, a closed interview room door, harsh fluorescent light on grey carpet.`],
 
   ['modules', 'bullpen-a', MODULE, 2, PLATE(`Four desks fit across the width of the furnished area and four down its height, sixteen small desks in all, each drawn small and simple with a keyboard and a swivel chair. ${SMILEY} No two desks alike: different chair colours, one buried in paper, one with three potted plants, one with a toppled coffee mug, one bare but for a lamp.`)],
-  ['modules', 'bullpen-b', MODULE, 2, PLATE(`Four desks fit across the width of the furnished area and four down its height, sixteen small desks in all, pushed together into pods of four facing each other, each with a keyboard and a swivel chair. ${SMILEY} A photocopier and a stack of cardboard boxes wedged between two pods.`)],
   ['modules', 'meeting', MODULE, 2, PLATE('Two oval meeting tables fit across the width of the furnished area and two down its height, four small tables in all, each ringed by six little chairs. On each table a projector puck, notepads, a jug of water and paper cups. Small flipchart easels between the tables.')],
   ['modules', 'kitchen', MODULE, 2, PLATE('Two little kitchen counters with chunky coffee machines, kettles and sinks, two fridges covered in magnets, four small round tables each with three chairs, a mug rack, a fruit bowl, two wonky potted plants and a recycling bin, all drawn small and simple.')],
   ['modules', 'server', MODULE, 2, PLATE('Four server rack cabinets fit across the width of the furnished area and four down its height, sixteen small racks in all, drawn small and simple, their doors covered in cheerful blinking green and amber lights, thick bundles of rainbow-coloured cables looping between them across the floor.')],
@@ -137,7 +136,6 @@ const ORDER = [
   ['icons', 'skill-stretch', EMBLEM_SIZE, 2, EMBLEM('One fat round balloon on a short thick string, stretched and over-inflated.')],
   ['icons', 'skill-spare-magnifier', EMBLEM_SIZE, 2, EMBLEM('A bold thick magnifying glass with a heavy round rim and a fat handle.')],
   ['icons', 'skill-kit', EMBLEM_SIZE, 2, EMBLEM('A chunky computer keyboard seen straight on, with one oversized key raised in the middle of it.')],
-  ['icons', 'skill-o1', EMBLEM_SIZE, 2, EMBLEM('A thick rectangular window frame with heavy bold cross bars dividing it into four panes.')],
   ['icons', 'skill-o7', EMBLEM_SIZE, 2, EMBLEM('One chunky pair of headphones with fat round ear cups and a thick headband.')],
   ['icons', 'skill-relabel', EMBLEM_SIZE, 2, EMBLEM('A thick angled price tag with a fat round hole at its narrow end and a bold arrow on its face pointing up.')],
 

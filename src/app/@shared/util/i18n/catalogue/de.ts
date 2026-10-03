@@ -121,9 +121,6 @@ export const DE: Readonly<Record<string, string>> = {
   'office.bullpen-a.blurb':
     'Wo du angefangen hast. Ein Drucker, keine Fenster, kein Tageslicht.',
   'office.bullpen-a.label': 'Das Kabuff',
-  'office.bullpen-b.blurb':
-    'Identisch mit dem ersten, durch ein Loch in der Rigipswand.',
-  'office.bullpen-b.label': 'Kabuff-Erweiterung',
   'office.corner-office.blurb':
     'Ein Kundenbetreuer mit eigener Tür. Eskalationen haben jetzt ein Ziel.',
   'office.corner-office.label': 'Eckbüro',
@@ -435,8 +432,6 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.managerSpeed6.1.label': 'Executive Sponsor',
   'skill.managerSpeed.blurb':
     'Manager überblicken einen größeren Bereich und laufen schneller.',
-  'skill.o1.1.label': 'Erweiterung Großraum',
-  'skill.o1.blurb': 'Ein zweiter Raum. Schreibtische — und Platz dafür.',
   'skill.o2.1.label': 'Besprechungsraum',
   'skill.o2.blurb': 'Ein Raum zum Entscheiden. Der Sprint nimmt etwas mehr.',
   'skill.o3.1.label': 'Pausenraum',
@@ -449,6 +444,18 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.o7.1.label': 'Eckbüro',
   'skill.o7.blurb': 'Eine Tür, die zugeht. Eskalationen sind mehr wert.',
   'skill.office.1.label': 'Die Fläche',
+  'skill.facilities.1.label': 'Hausmeisterei',
+  'skill.facilities.blurb':
+    'Räume und Ausstattung. Das Ticket ist offen, nächstes Quartal schaut wer drauf.',
+  'skill.ceremonies.1.label': 'Meeting-Entzug',
+  'skill.ceremonies.blurb':
+    'Pro ADR eine Zeremonie weniger. Keiner merkt es, am wenigsten der Kunde.',
+  'skill.onboarding.1.label': 'Onboarding zum Selbermachen',
+  'skill.onboarding.blurb':
+    'Es gibt ein Wiki. Zuletzt bearbeitet von jemandem, der nicht mehr da ist.',
+  'skill.handcuffs.1.label': 'Goldene Handschellen',
+  'skill.handcuffs.blurb':
+    'Seniors bleiben für Perks statt Gehalt. Meistens klappt das.',
   'skill.radius.1.label': 'Mausradius',
   'skill.radius1.1.label': 'Muscle Memory',
   'skill.radius2.1.label': 'Backlog Grooming',
@@ -683,6 +690,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.estimatesLint2.1.label': 'Alles ist XL',
   'skill.estimatesLint.blurb':
     'Ein bisschen höher schätzen. Jede geschlossene Lint-Warnung bringt mehr Story Points.',
+  'skill.lock.needs-adr': 'Braucht ADR-{{adr}}',
   'skill.lock.needs-maxed': 'Erst {{by}} voll ausbauen',
   'skill.o4.1.label': 'Serverraum',
   'skill.o4.blurb': 'Er brummt. Mehr tut er nicht.',
@@ -864,6 +872,9 @@ export const DE: Readonly<Record<string, string>> = {
   'award.a-ten-thousand.label': 'Grooming im Industriemaßstab',
   'award.a-ten-thousand.blurb':
     'Schließ 10.000 Tickets. Behoben ist keins davon.',
+  'award.a-server.label': 'Es brummt',
+  'award.a-server.blurb':
+    'Bau den Serverraum. Er tut nichts. Bezahlt hast du trotzdem.',
   'award.a-office.label': 'Die ganze Etage',
   'award.a-office.blurb':
     'Richte jeden Raum ein. Es gibt keinen Platz mehr für irgendwen.',

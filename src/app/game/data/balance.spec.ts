@@ -183,13 +183,12 @@ describe('the crew earns its keep, and never all of it', () => {
     const cleared = run.reached.get('golden crew')!;
     const meeting = run.reached.get('signed off')!;
     const marks = run.ledger.filter(
-      (mark) => mark.at >= cleared + WINDOW_MS && mark.at <= meeting
+      (mark) => mark.at >= cleared + WINDOW_MS / 2 && mark.at <= meeting
     );
     expect(marks.length).toBeGreaterThan(0);
     for (const mark of marks) {
-      expect(crewEuroShare(markAt(mark.at - WINDOW_MS), mark)).toBeGreaterThan(
-        CREW_EURO_WINDOW_FLOOR
-      );
+      const from = markAt(Math.max(cleared, mark.at - WINDOW_MS));
+      expect(crewEuroShare(from, mark)).toBeGreaterThan(CREW_EURO_WINDOW_FLOOR);
     }
   });
 

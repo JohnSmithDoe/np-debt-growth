@@ -1,6 +1,7 @@
 import type { Consultancy } from '../model/consultancy.model';
 import type { SkillLock } from '../model/skill.model';
 import {
+  ADR_NODE_IDS,
   FINAL_SKILL_ID,
   SKILL_BY_ID,
   SKILL_NODES,
@@ -49,6 +50,12 @@ export function skillLockReason(
     };
   }
   const short = unmaxed(state, id);
+  const adr = ADR_NODE_IDS.indexOf(
+    short.find((need) => ADR_NODE_IDS.includes(need)) ?? ''
+  );
+  if (adr >= 0) {
+    return { key: 'skill.lock.needs-adr', params: { adr: adr + 1 } };
+  }
   if (short.length > 0) {
     return {
       key: 'skill.lock.needs-maxed',

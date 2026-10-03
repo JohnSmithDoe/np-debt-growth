@@ -511,6 +511,7 @@ export class SkillScene extends PanZoomScene {
 
   #edgeColour(node: SkillNodeView, state: SquareState): number {
     if (state === 'box') return SCREEN_INK.wireDead;
+    if (node.group) return SCREEN_INK.wireLive;
     if (state === 'owned') {
       return node.maxed ? SCREEN_INK.maxed : SCREEN_INK.owned;
     }
@@ -578,7 +579,9 @@ export class SkillScene extends PanZoomScene {
         node.levels[Math.min(node.rank, node.ranks - 1)]?.effect ?? '',
         INK.effect
       ),
-      ...lines(this.#tipStatus(node), this.#statusInk(node)),
+      ...(node.group
+        ? []
+        : lines(this.#tipStatus(node), this.#statusInk(node))),
       ...lines(node.blurb, INK.blurb),
       ...(secret
         ? [

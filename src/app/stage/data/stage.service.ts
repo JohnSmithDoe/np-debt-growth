@@ -171,7 +171,8 @@ export class StageService {
     const nodes: SkillNodeView[] = [];
 
     for (const node of SKILL_BY_ID.values()) {
-      if (node.id === SECRET_SKILL_ID || node.heading === true) continue;
+      if (node.id === SECRET_SKILL_ID) continue;
+      if (node.heading === true && node.group !== true) continue;
       const rank = store.skillRank(node.id);
       const maxed = rank >= node.levels.length;
       const lock = maxed ? null : store.skillLockReason(node.id);
@@ -203,6 +204,7 @@ export class StageService {
                   owed: formatWhole(owed),
                 })
               : this.#lockText(lock),
+        group: node.group === true,
       });
     }
 

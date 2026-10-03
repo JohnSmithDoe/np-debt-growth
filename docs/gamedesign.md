@@ -165,14 +165,14 @@ adds `HAND_ONLY_RATE_PER_TIER` +75 % to their rate (×7 at ADR-8), so the hand's
 with the run and the short late tiers still see them. Doubling it left a real tier-7 board a third
 under the sim (more P0s, longer incident reviews). They never expire and are never displaced.
 
-| Type         | Rate/s | Effect                                                                                                                                                                                                                                             |
-| ------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Type         | Rate/s | Effect                                                                                                                                                                                                                                                                                         |
+| ------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `incident`   | 0.008  | 150 € × tier; from ADR-2 (`INCIDENT_PAYOUT_FROM_TIER`), 5 newest-line tickets in € and SP (`INCIDENT_TOP_SHARE`) plus `INCIDENT_PAYOUT_SEC` 3 s of the build's € and SP income (`incidentPayout` in `util/sim.ts`, which the sim credits to a sweeping hand, prod P0s included). First at 75 s |
-| `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 9 s, +4 s with Observability                                                                                                                                                    |
-| `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                                                                                                                                                                                               |
-| `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2), under hotfix and escalation                                                                                                                                                         |
-| `pizza`      | —      | The pizza-party voucher (§5), from the `pizza` node                                                                                                                                                                                                |
-| `invite`     | —      | Hazard invitation (§8): sweep it to decline the meeting                                                                                                                                                                                            |
+| `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 9 s, +4 s with Observability                                                                                                                                                                                                |
+| `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                                                                                                                                                                                                                                           |
+| `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2), under hotfix and escalation                                                                                                                                                                                                     |
+| `pizza`      | —      | The pizza-party voucher (§5), from the `pizza` node                                                                                                                                                                                                                                            |
+| `invite`     | —      | Hazard invitation (§8): sweep it to decline the meeting                                                                                                                                                                                                                                        |
 
 **Combos** (`armBuffs` in `data/game.store.ts`): a hotfix swept inside a live escalation
 extends the escalation by `COMBO_EXTEND_MS` 3 s, and an escalation swept inside a live hotfix
@@ -246,9 +246,8 @@ Every purchase lives in the code: tree nodes in `model/skill.model.ts` (`SKILL_N
 
 - Junior band +1 twice: `juniorReach` rank 2 and `stretch`.
 - Junior walk: `juniorSpeed` and `o3`. Senior sweep: `seniorReach` and `o5`.
-- No effect: `o1`, `o4`.
-- "Human in the Loop" names both `assurance` and `doubleSwarm`; "Bullpen" names `juniorRoom2`, and
-  "Bullpen Extension" is `o1`.
+- No effect: `o4` (the Server Room; buying it earns the `a-server` achievement).
+- "Human in the Loop" names both `assurance` and `doubleSwarm`; "Bullpen" names `juniorRoom2`.
 
 ### The rail — three tabs, all euros
 
@@ -287,8 +286,8 @@ value<T>  ×2 ──┬── spawn<T>      3 steps × +33 % throw-two  → ×2 
                double<T>  ×2   opens once all three are maxed (`maxed`)
 ```
 
-Each step is its own single-rank node, **one per ADR** (`chained`): `spawnFlaky` under ADR-2,
-`spawnFlaky3` under ADR-3, `spawnFlaky4` under ADR-4, each needing the one before it maxed. A
+Each step is its own single-rank node, **one per ADR** (`chained`): `spawnFlaky`, then
+`spawnFlaky3` under it waiting for ADR-3, then `spawnFlaky4` waiting for ADR-4. A
 line keeps growing for two rungs after it opens, so every ADR also brings old lines a buy. Steps
 stop at ADR-4 (`LINE_CHAIN_LAST_TIER`): conflict's last two and slop's three stay as ranks on
 their ADR-4 node. `double<T>` waits for the last step of each chain.
@@ -323,37 +322,40 @@ node is then priced for the rung it sits on by `LINE_RUNG_PRICE` (1 · 1 · 1 ·
 | **D** Debt      | the per-line `spawn` nodes, `debtInterest`, `debtInterest<t>`, `triagePolicy`, `spawnIncident` → `spawnIncident7` (escalations), `spawnIncident8` (incident value)                                      |
 | **G** Capstones | `assurance`, `signoff`                                                                                                                                                                                  |
 | **N** ADRs      | `adr1` … `adr8`, chained; each rung is the parent of its line's `value` node (Lint's hangs off the client heading)                                                                                      |
-| **O** Office    | `o1`–`o7` (the floor plates; `o1` and `o4` are cosmetic), `kit`                                                                                                                                         |
+| **O** Office    | `o4` (cosmetic, the Office arm), and under the `facilities` group off ADR-1: `kit` and the rooms `o2` → `o3` → `o5` → `o6` → `o7`, gated on ADR-1, 2, 5, 6, 6                                           |
 | `secret`        | Konami-granted, ×1.1 global                                                                                                                                                                             |
 
 There are no global spawn-rate or income nodes: a line only grows through its own nodes.
 
-**The tree leads the run.** There are no gates besides the parent: the ADR chain is the spine, and
-whatever a rung unlocks hangs off it, so a node the player can read is a node they can buy. The
-root opens four arms — the Lint line, the Hand, the Office and ADR-1. After that:
+**The tree leads the run.** The ADR chain is the spine and whatever a rung opens hangs off it. A
+family's later ranks grow as arms instead (see _One rank per node_): each hangs off the rank before
+it and waits, a dim box, for its ADR. The root opens four arms — the Lint line, the Hand, the
+Office (`o4` alone) and ADR-1. After that:
 
 Every rung opens its line and at least one mechanic, so no rung is only more of the same. A
 rung's extras are priced to fill the tier — most of the SP it earns, the ADR the rest — so the
 tree always has something to buy, and never everything at once:
 
-| Rung  | Opens                                                               |
-| ----- | ------------------------------------------------------------------- |
-| ADR-1 | Legacy line, `junior` (the whole crew arm, `triagePolicy` under it) |
-| ADR-2 | Flaky line, `golden`                                                |
-| ADR-3 | Conflict line, `senior`                                             |
-| ADR-4 | Slop line, `manager`, `debtInterest`                                |
-| ADR-5 | Rockstar line, `pizza`, `timesheets`, `coaches` → `deck`            |
-| ADR-6 | Zombie line, `spawnIncident`, `goldenCrew`                          |
-| ADR-7 | Rewrite line                                                        |
-| ADR-8 | Swarm line, `assurance`, `signoff`                                  |
+| Rung  | Opens                                                                                                |
+| ----- | ---------------------------------------------------------------------------------------------------- |
+| ADR-1 | Legacy line, `junior` (the whole crew arm, `triagePolicy` under it), `facilities` (`kit`, the rooms) |
+| ADR-2 | Flaky line, `golden`                                                                                 |
+| ADR-3 | Conflict line, `senior`                                                                              |
+| ADR-4 | Slop line, `manager`, `debtInterest`                                                                 |
+| ADR-5 | Rockstar line, `pizza`, `timesheets`, `coaches` → `deck`                                             |
+| ADR-6 | Zombie line, `spawnIncident`, `goldenCrew`                                                           |
+| ADR-7 | Rewrite line                                                                                         |
+| ADR-8 | Swarm line, `assurance`, `signoff`                                                                   |
 
 Every rung also carries its own sprint set (`SPRINT_RUNGS` in `skill.model.ts`): a `capacity<t>`
-and a `cans<t>` node, plus one ceremony cut on tiers 0–4. None of them waits on another rung's
-set, and each is priced for its own rung's SP income, like the extras.
+and a `cans<t>` node, plus one ceremony cut on tiers 0–4, each priced for its own rung's SP
+income. They are drawn as three arms: `capacity` off `radius`, `cans` off ADR-1, the cuts under
+the `ceremonies` group off `radius`; each node hangs off its predecessor and waits for its ADR.
 
 **One rank per node.** A curve's later ranks are spread the same way: each is its own node
-`<family><t>` hanging off ADR-_t_, which needs the one before it bought (`maxed`), so seats never
-arrive before the crew they seat. `chained` in `skill.model.ts` spreads every multi-rank node one
+`<family><t>` hanging off the rank before it and gated on ADR-_t_ (`maxed: [adr<t>]`; the lock
+reads "Needs ADR-_t_"), so seats never arrive before the crew they seat and every family is one
+long arm. `chained` in `skill.model.ts` spreads every multi-rank node one
 per ADR from its opener's rung (`CHAIN_FROM`: `radius` and `escalation` 0/1/2, `juniorSpeed` and
 `juniorReach` 1/2/3, `juniorPresence` and `triagePolicy` 1/2, the senior three 3/4/5,
 `managerSpeed` and `relabel` 4/5/6); `assurance` keeps its three ranks on ADR-8, the tier-0
@@ -371,8 +373,13 @@ per ADR from its opener's rung (`CHAIN_FROM`: `radius` and `escalation` 0/1/2, `
 The rooms sit mid-run on purpose: seats are crew euros for the rest of the run, and moving them
 late costs the ending minutes.
 
-`double<T>` is the one node with a second term (`maxed`); it stays a dim box, not a readable
-square, until its three ladders are full. The map is orthogonal (`stage/util/skill-layout.ts`):
+`double<T>` waits on its three ladders (`maxed`); it stays a dim box, not a readable square, until
+they are full.
+
+**Groups** (`group: true`) are headings drawn as squares: free, open the moment their parent is
+owned, invisible to game logic (`skillParent` reads through them like any heading). They exist to
+give a crowded parent depth: `facilities` (ADR-1), `ceremonies` (`radius`), `onboarding` (junior
+speed, reach, presence) and `handcuffs` (the senior three). The map is orthogonal (`stage/util/skill-layout.ts`):
 the root in the middle, one arm per compass point. The ADR ladder is a spine running east with
 each rung's branches hanging north and south; the widest other arm grows west, the other two
 north and south. Every arm is a tidy tree — a layer per depth, a lane per leaf — wired in right

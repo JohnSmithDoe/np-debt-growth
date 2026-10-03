@@ -120,9 +120,6 @@ export const EN: Readonly<Record<string, string>> = {
   'office.bullpen-a.blurb':
     'Where you started. One printer, no windows, no natural light.',
   'office.bullpen-a.label': 'The Bullpen',
-  'office.bullpen-b.blurb':
-    'Identical to the first, through a hole in the partition wall.',
-  'office.bullpen-b.label': 'Bullpen Extension',
   'office.corner-office.blurb':
     'An account manager with a door. Escalations now have somewhere to go.',
   'office.corner-office.label': 'Corner Office',
@@ -426,8 +423,6 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.managerSpeed5.1.label': 'Client Golf',
   'skill.managerSpeed6.1.label': 'Executive Sponsor',
   'skill.managerSpeed.blurb': 'Managers oversee a wider desk and walk faster.',
-  'skill.o1.1.label': 'Bullpen Extension',
-  'skill.o1.blurb': 'A second room. Desks, and somewhere to put them.',
   'skill.o2.1.label': 'Meeting Room',
   'skill.o2.blurb': 'A room to decide in. The sprint takes a little more.',
   'skill.o3.1.label': 'Break Room',
@@ -439,6 +434,18 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.o7.1.label': 'Corner Office',
   'skill.o7.blurb': 'A door that closes. Escalations are worth more.',
   'skill.office.1.label': 'The Floor',
+  'skill.facilities.1.label': 'Facility Management',
+  'skill.facilities.blurb':
+    'Rooms and kit. The ticket is raised; someone looks at it next quarter.',
+  'skill.ceremonies.1.label': 'Meeting Detox',
+  'skill.ceremonies.blurb':
+    'One ceremony fewer per ADR. Nobody notices, least of all the client.',
+  'skill.onboarding.1.label': 'Self-Service Onboarding',
+  'skill.onboarding.blurb':
+    'There is a wiki. It was last edited by someone who has since left.',
+  'skill.handcuffs.1.label': 'Golden Handcuffs',
+  'skill.handcuffs.blurb':
+    'Seniors are kept with perks instead of pay. It mostly works.',
   'skill.radius.1.label': 'Mouse Radius',
   'skill.radius1.1.label': 'Muscle Memory',
   'skill.radius2.1.label': 'Backlog Grooming',
@@ -668,6 +675,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.estimatesLint2.1.label': 'Everything Is an XL',
   'skill.estimatesLint.blurb':
     'Estimate a little higher. Every lint warning closed carries more story points.',
+  'skill.lock.needs-adr': 'Needs ADR-{{adr}}',
   'skill.lock.needs-maxed': 'Max {{by}} first',
   'skill.o4.1.label': 'Server Room',
   'skill.o4.blurb': 'It hums. That is all it does.',
@@ -847,6 +855,9 @@ export const EN: Readonly<Record<string, string>> = {
   'award.a-ten-thousand.label': 'Industrial grooming',
   'award.a-ten-thousand.blurb':
     'Close 10,000 work items. None of them are fixed.',
+  'award.a-server.label': 'It hums',
+  'award.a-server.blurb':
+    'Build the Server Room. It does nothing. You paid for it anyway.',
   'award.a-office.label': 'The whole floor',
   'award.a-office.blurb':
     'Fit out every plate. There is nowhere left to put anyone.',

@@ -93,6 +93,8 @@ export interface SkillNode {
   readonly maxed?: readonly string[];
   readonly granted?: boolean;
   readonly heading?: boolean;
+  /** A heading drawn as a free square; game logic reads through it like any heading. */
+  readonly group?: boolean;
   readonly levels: readonly SkillLevel[];
 }
 
@@ -194,8 +196,8 @@ function chained(
       nodes.push({
         id: `${base.id}${at}`,
         track: base.track,
-        requires: adrNodeId(at),
-        maxed: [last.id],
+        requires: last.id,
+        maxed: [adrNodeId(at)],
         levels: [level],
       });
     }
@@ -378,15 +380,34 @@ const SPRINT_RUNGS: readonly SprintRung[] = [
   { capacity: [1_500_000], cans: [4_500_000] },
 ];
 
+const cutId = (phase: ReleasePhaseId): string => `cut${capitalised(phase)}`;
+
+function cutArm(tier: number): Pick<SkillNode, 'requires' | 'maxed'> {
+  const last = SPRINT_RUNGS[tier - 1]?.cut;
+  return last === undefined
+    ? { requires: 'ceremonies' }
+    : { requires: cutId(last[0]), maxed: [adrNodeId(tier)] };
+}
+
+const sprintId = (family: string, tier: number): string =>
+  tier === 0 ? family : `${family}${tier}`;
+
+/** Capacity and cans grow one arm each: every rung's node hangs off the last, gated on its ADR. */
 const SPRINT_NODES: readonly SkillNode[] = SPRINT_RUNGS.flatMap(
   ({ capacity, cans, cut }, tier) => {
     const requires = tier === 0 ? 'radius' : adrNodeId(tier);
-    const suffix = tier === 0 ? '' : String(tier);
+    const armed = (
+      family: string,
+      first: number
+    ): Pick<SkillNode, 'requires' | 'maxed'> =>
+      tier <= first
+        ? { requires }
+        : { requires: sprintId(family, tier - 1), maxed: [adrNodeId(tier)] };
     return [
       {
-        id: `capacity${suffix}`,
+        id: sprintId('capacity', tier),
         track: 'A' as const,
-        requires,
+        ...armed('capacity', 0),
         levels: capacity.map((cost) => ({
           cost,
           effects: [{ kind: 'slots' as const, add: SPRINT_SLOTS_STEP }],
@@ -396,9 +417,9 @@ const SPRINT_NODES: readonly SkillNode[] = SPRINT_RUNGS.flatMap(
         ? []
         : [
             {
-              id: `cans${suffix}`,
+              id: sprintId('cans', tier),
               track: 'A' as const,
-              requires,
+              ...armed('cans', 1),
               levels: cans.map((cost) => ({
                 cost,
                 effects: [{ kind: 'cans' as const, add: 1 }],
@@ -409,9 +430,9 @@ const SPRINT_NODES: readonly SkillNode[] = SPRINT_RUNGS.flatMap(
         ? []
         : [
             {
-              id: `cut${capitalised(cut[0])}`,
+              id: cutId(cut[0]),
               track: 'A' as const,
-              requires,
+              ...cutArm(tier),
               levels: [
                 {
                   cost: cut[1],
@@ -434,14 +455,14 @@ const rung = (
   family: string,
   track: SkillTrack,
   tier: number,
-  opener: string,
+  after: string,
   cost: number,
   effects: readonly SkillEffect[]
 ): SkillNode => ({
   id: `${family}${tier}`,
   track,
-  requires: adrNodeId(tier),
-  maxed: [opener],
+  requires: after,
+  maxed: [adrNodeId(tier)],
   levels: [{ cost, effects }],
 });
 
@@ -456,21 +477,21 @@ const interest: SkillEffect = {
 
 const RUNG_NODES: readonly SkillNode[] = [
   rung('juniorRoom', 'B', 2, 'junior', 20_000, [seats('junior')]),
-  rung('juniorRoom', 'B', 3, 'junior', 36_000, [seats('junior')]),
-  rung('juniorRoom', 'B', 4, 'junior', 54_000, [seats('junior')]),
+  rung('juniorRoom', 'B', 3, 'juniorRoom2', 36_000, [seats('junior')]),
+  rung('juniorRoom', 'B', 4, 'juniorRoom3', 54_000, [seats('junior')]),
   rung('seniorRoom', 'E', 3, 'senior', 60_000, [seats('senior')]),
-  rung('seniorRoom', 'E', 4, 'senior', 90_000, [seats('senior')]),
-  rung('seniorRoom', 'E', 5, 'senior', 180_000, [seats('senior')]),
+  rung('seniorRoom', 'E', 4, 'seniorRoom3', 90_000, [seats('senior')]),
+  rung('seniorRoom', 'E', 5, 'seniorRoom4', 180_000, [seats('senior')]),
   rung('managerRoom', 'H', 5, 'manager', 120_000, [seats('manager')]),
   rung('goldenValue', 'A', 3, 'goldenValue', 24_000, [goldenRate]),
-  rung('goldenValue', 'A', 5, 'goldenValue', 200_000, [goldenRate]),
-  rung('goldenValue', 'A', 7, 'goldenValue', 4_400_000, [goldenRate]),
+  rung('goldenValue', 'A', 5, 'goldenValue3', 200_000, [goldenRate]),
+  rung('goldenValue', 'A', 7, 'goldenValue5', 4_400_000, [goldenRate]),
   rung('debtInterest', 'D', 6, 'debtInterest', 1_600_000, [interest]),
-  rung('debtInterest', 'D', 7, 'debtInterest', 4_400_000, [interest]),
+  rung('debtInterest', 'D', 7, 'debtInterest6', 4_400_000, [interest]),
   rung('spawnIncident', 'D', 7, 'spawnIncident', 4_400_000, [
     { kind: 'spawnRate', target: 'escalation', mult: 1.5 },
   ]),
-  rung('spawnIncident', 'D', 8, 'spawnIncident', 3_000_000, [
+  rung('spawnIncident', 'D', 8, 'spawnIncident7', 3_000_000, [
     { kind: 'ticketValue', target: 'incident', mult: 2 },
   ]),
 ];
@@ -496,8 +517,8 @@ function poker(
     {
       id: `${id}${POKER_TIERS[1]}`,
       track: 'C',
-      requires: adrNodeId(POKER_TIERS[1]),
-      maxed: [id],
+      requires: id,
+      maxed: [adrNodeId(POKER_TIERS[1])],
       levels: [{ cost: costs[1], effects: [effect] }],
     },
   ];
@@ -531,6 +552,21 @@ const TREE_NODES: readonly SkillNode[] = [
   { id: 'debt', track: 'D', requires: 'adr4', heading: true, levels: [] },
   { id: 'client', track: 'C', requires: 'root', heading: true, levels: [] },
   { id: 'office', track: 'O', requires: 'root', heading: true, levels: [] },
+  ...(
+    [
+      ['facilities', 'O', 'adr1'],
+      ['ceremonies', 'A', 'radius'],
+      ['onboarding', 'B', 'junior'],
+      ['handcuffs', 'E', 'senior'],
+    ] as const
+  ).map(([id, track, requires]) => ({
+    id,
+    track,
+    requires,
+    heading: true,
+    group: true,
+    levels: [],
+  })),
   { id: 'poker', track: 'C', requires: 'adr5', heading: true, levels: [] },
   { id: 'partner', track: 'A', requires: 'adr2', heading: true, levels: [] },
   { id: 'seniors', track: 'E', requires: 'adr3', heading: true, levels: [] },
@@ -575,7 +611,7 @@ const TREE_NODES: readonly SkillNode[] = [
   {
     id: 'juniorSpeed',
     track: 'B',
-    requires: 'junior',
+    requires: 'onboarding',
     levels: [
       {
         cost: 1500,
@@ -603,7 +639,7 @@ const TREE_NODES: readonly SkillNode[] = [
   {
     id: 'juniorReach',
     track: 'B',
-    requires: 'junior',
+    requires: 'onboarding',
     levels: [
       {
         cost: 120,
@@ -625,7 +661,7 @@ const TREE_NODES: readonly SkillNode[] = [
   {
     id: 'juniorPresence',
     track: 'B',
-    requires: 'junior',
+    requires: 'onboarding',
     levels: [
       {
         cost: 200,
@@ -658,7 +694,7 @@ const TREE_NODES: readonly SkillNode[] = [
   {
     id: 'seniorSpeed',
     track: 'E',
-    requires: 'senior',
+    requires: 'handcuffs',
     levels: [
       {
         cost: 9600,
@@ -686,7 +722,7 @@ const TREE_NODES: readonly SkillNode[] = [
   {
     id: 'seniorReach',
     track: 'E',
-    requires: 'senior',
+    requires: 'handcuffs',
     levels: [
       {
         cost: 13_200,
@@ -709,7 +745,7 @@ const TREE_NODES: readonly SkillNode[] = [
   {
     id: 'seniorPresence',
     track: 'E',
-    requires: 'senior',
+    requires: 'handcuffs',
     levels: [
       { cost: 21_600, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
       { cost: 31_200, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
@@ -852,21 +888,28 @@ const TREE_NODES: readonly SkillNode[] = [
   },
 
   {
-    id: 'o1',
+    id: 'o4',
     track: 'O',
     requires: 'office',
-    levels: [{ cost: 80, effects: [{ kind: 'none', floorPlate: true }] }],
+    levels: [{ cost: 3750, effects: [{ kind: 'none', floorPlate: true }] }],
+  },
+  {
+    id: 'kit',
+    track: 'O',
+    requires: 'facilities',
+    levels: [{ cost: 400, effects: [{ kind: 'line', line: 'kit' }] }],
   },
   {
     id: 'o2',
     track: 'O',
-    requires: 'o1',
+    requires: 'facilities',
     levels: [{ cost: 380, effects: [{ kind: 'slots', add: 14 }] }],
   },
   {
     id: 'o3',
     track: 'O',
-    requires: 'o1',
+    requires: 'o2',
+    maxed: ['adr2'],
     levels: [
       {
         cost: 1000,
@@ -875,15 +918,10 @@ const TREE_NODES: readonly SkillNode[] = [
     ],
   },
   {
-    id: 'o4',
-    track: 'O',
-    requires: 'o1',
-    levels: [{ cost: 3750, effects: [{ kind: 'none', floorPlate: true }] }],
-  },
-  {
     id: 'o5',
     track: 'O',
-    requires: 'o1',
+    requires: 'o3',
+    maxed: ['adr5'],
     levels: [
       {
         cost: 15_000,
@@ -894,20 +932,16 @@ const TREE_NODES: readonly SkillNode[] = [
   {
     id: 'o6',
     track: 'O',
-    requires: 'o1',
+    requires: 'o5',
+    maxed: ['adr6'],
     levels: [{ cost: 50_000, effects: [{ kind: 'global', mult: 1.05 }] }],
   },
   {
     id: 'o7',
     track: 'O',
-    requires: 'o1',
+    requires: 'o6',
+    maxed: ['adr6'],
     levels: [{ cost: 175_000, effects: [{ kind: 'escalation', mult: 1.25 }] }],
-  },
-  {
-    id: 'kit',
-    track: 'O',
-    requires: 'o1',
-    levels: [{ cost: 400, effects: [{ kind: 'line', line: 'kit' }] }],
   },
 
   {

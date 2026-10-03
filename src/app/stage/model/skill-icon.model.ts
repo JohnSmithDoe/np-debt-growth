@@ -32,7 +32,6 @@ const OWN_ICONS: readonly string[] = [
   'goldenCrew',
   'signoff',
   'secret',
-  'o1',
   'o2',
   'o3',
   'o4',

@@ -6,9 +6,9 @@ import {
   FINAL_SKILL_ID,
   isSkillHeading,
   SECRET_SKILL_ID,
+  SKILL_BY_ID,
   SKILL_NODES,
   SKILL_ROOT_ID,
-  skillParent,
 } from '../../game/model/skill.model';
 import type { HitRect } from '../model/hit-rect.model';
 import { hits } from '../model/hit-rect.model';
@@ -33,7 +33,7 @@ const ON_TREE = SKILL_NODES.filter(
   (node) =>
     node.id !== SECRET_SKILL_ID &&
     node.granted !== true &&
-    node.heading !== true
+    (node.heading !== true || node.group === true)
 );
 
 const BY_NODE: ReadonlyMap<string, SkillNode> = new Map(
@@ -61,6 +61,17 @@ export interface SkillGraph {
   readonly height: number;
 }
 
+const isGroup = (id: string): boolean => BY_NODE.get(id)?.group === true;
+
+/** Like `skillParent`, but stops at a group: groups are drawn, other headings are not. */
+function drawnParent(node: SkillNode): string | null {
+  let at = node.requires;
+  while (at !== null && isSkillHeading(at) && !isGroup(at)) {
+    at = SKILL_BY_ID.get(at)?.requires ?? null;
+  }
+  return at;
+}
+
 function topology(): {
   children: ReadonlyMap<string, readonly string[]>;
   parents: ReadonlyMap<string, string | null>;
@@ -69,7 +80,7 @@ function topology(): {
   const parents = new Map<string, string | null>();
 
   for (const node of ON_TREE) {
-    const parent = skillParent(node.id);
+    const parent = drawnParent(node);
     parents.set(node.id, parent);
     if (parent === null) continue;
     const kids = children.get(parent);
@@ -240,7 +251,9 @@ function elbow(from: Vec, to: Vec, stacked: boolean): readonly Vec[] {
 }
 
 const HEADING_ARMS: ReadonlyMap<string, readonly string[]> = new Map(
-  SKILL_NODES.filter((node) => node.heading === true).flatMap((node) => {
+  SKILL_NODES.filter(
+    (node) => node.heading === true && node.group !== true
+  ).flatMap((node) => {
     const arms = SKILL_NODES.filter(
       (one) =>
         one.requires === node.id &&
@@ -451,6 +464,12 @@ export function revealSquares(
   const shown = new Map<string, SquareState>();
 
   const walk = (id: string, from: SquareState): void => {
+    if (isGroup(id)) {
+      if (from === 'box') return;
+      shown.set(id, from === 'owned' ? 'owned' : 'box');
+      for (const kid of kidsOf(id)) walk(kid, from);
+      return;
+    }
     const state = stateOf(rankOf(id), from, () => ready(id));
     if (state === null) return;
     shown.set(id, state);
