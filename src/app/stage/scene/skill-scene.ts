@@ -29,6 +29,7 @@ import {
   squareAt,
 } from '../util/skill-layout';
 import { PanZoomScene } from './pan-zoom-scene';
+import { TreeBackdrop } from './tree-backdrop';
 
 const CODE_SCALE = 2;
 const ICON_BOX = SKILL_ICON_SIZE;
@@ -104,6 +105,7 @@ const WASH_FILL: Readonly<Record<'owned' | 'open', number>> = {
 export class SkillScene extends PanZoomScene {
   static readonly KEY = 'skills';
 
+  #backdrop?: TreeBackdrop;
   #wires?: Phaser.GameObjects.Graphics;
   #frames?: Phaser.GameObjects.Graphics;
   #pulse?: Phaser.GameObjects.Graphics;
@@ -127,6 +129,7 @@ export class SkillScene extends PanZoomScene {
   }
 
   preload(): void {
+    TreeBackdrop.preload(this);
     for (const icon of SKILL_ICON_FILES) {
       this.load.image(skillIconKey(icon), skillIconUrl(icon));
     }
@@ -137,6 +140,8 @@ export class SkillScene extends PanZoomScene {
     this.frame();
     this.#measureGlyph();
 
+    this.#backdrop = new TreeBackdrop(this, 0);
+    this.#backdrop.tier(this.deps.tier());
     this.#wires = this.add.graphics().setDepth(1);
     this.#frames = this.add.graphics().setDepth(2);
     this.#pulse = this.add.graphics().setDepth(PULSE.depth);
@@ -153,6 +158,8 @@ export class SkillScene extends PanZoomScene {
   }
 
   override update(time: number): void {
+    this.#backdrop?.tier(this.deps.tier());
+    this.#backdrop?.follow(this.cameras.main);
     const view = this.deps.skillView();
     if (view !== this.#drawn) {
       this.#take(view);
@@ -646,6 +653,8 @@ export class SkillScene extends PanZoomScene {
   }
 
   #teardown(): void {
+    this.#backdrop?.destroy();
+    this.#backdrop = undefined;
     this.#tipText?.clear();
     this.#tipText = undefined;
     this.#icons?.clear();

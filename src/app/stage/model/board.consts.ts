@@ -136,6 +136,16 @@ export const TIER_BACKDROP = {
   swapFadeMs: 4000,
 } as const;
 
+/** One wall per ADR behind the skill tree, faded in when the ADR is approved. */
+export const TREE_BACKDROP = {
+  tiers: 8,
+  alpha: 0.3,
+  fadeMs: 1600,
+} as const;
+
+export const treeBackdropUrl = (tier: number): string =>
+  `assets/art/tree/${tier}.webp`;
+
 export const HOVER_WIDTH = 190;
 export const HOVER_GROUND = '#10151c';
 export const HOVER_PAD = { x: 6, y: 4 } as const;

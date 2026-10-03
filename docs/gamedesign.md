@@ -386,6 +386,10 @@ north and south. Every arm is a tidy tree — a layer per depth, a lane per leaf
 angles. `signoff` sits alone on the spine well east of ADR-8, drawn twice the size: it is the
 final.
 
+**Backdrop.** Behind the tree hangs one wall per ADR (`assets/art/tree/<tier>.webp`, `TREE_BACKDROP`
+in `stage/model/board.consts.ts`): a clean whiteboard at the start, then one per tier, crossfaded
+when an ADR is approved and kept dim under the squares (`stage/scene/tree-backdrop.ts`).
+
 **Icons.** Every square draws `assets/skills/<nodeId>.png`, a chained node its family's; the five
 per-line kinds share `line-<kind>.png`, `contract` the estimates icon and `retainer` the income
 one (`stage/model/skill-icon.model.ts`). The files are generated from

@@ -31,9 +31,30 @@ const SCREENS = [
   },
 ];
 
+const TREE = [
+  'tree-whiteboard.285961884',
+  'tree-blueprint.520904666',
+  'tree-copy-paste.770108842',
+  'tree-blueprint.576055726',
+  'tree-ai-slop.779512895',
+  'tree-rockstar.183248022',
+  'tree-zombie.654163032',
+  'tree-big-rewrite.78097455',
+  'tree-agent-swarm.843320202',
+];
+SCREENS.push(
+  ...TREE.map((take, tier) => ({
+    take,
+    out: `src/assets/art/tree/${tier}.webp`,
+  }))
+);
+
 const quality = process.argv.find((a) => a.startsWith('--quality='));
 const staged = await readdir(STAGING);
 await mkdir(OUT, { recursive: true });
+await mkdir(new URL('../src/assets/art/tree/', import.meta.url).pathname, {
+  recursive: true,
+});
 
 for (const [tier, takes] of TIERS.entries()) {
   for (const [kind, name] of Object.entries(takes)) {
