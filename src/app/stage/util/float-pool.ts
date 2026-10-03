@@ -1,5 +1,7 @@
 import * as Phaser from 'phaser';
 
+import { FLOAT_PUNCH } from '../model/board.consts';
+
 export class FloatPool {
   readonly #idle: Phaser.GameObjects.Text[] = [];
   readonly #live: Phaser.GameObjects.Text[] = [];
@@ -21,7 +23,12 @@ export class FloatPool {
       this.#live.length >= this.cap
         ? this.#recycle()
         : (this.#idle.pop() ??
-          this.scene.add.text(0, 0, '', { fontFamily: 'monospace' }));
+          this.scene.add.text(0, 0, '', {
+            fontFamily: 'monospace',
+            fontStyle: 'bold',
+            stroke: FLOAT_PUNCH.stroke,
+            strokeThickness: FLOAT_PUNCH.strokeThickness,
+          }));
     this.#live.push(text);
     return text
       .setText(label)

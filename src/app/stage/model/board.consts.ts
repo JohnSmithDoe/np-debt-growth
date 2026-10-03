@@ -152,13 +152,28 @@ export const HOVER_PAD = { x: 6, y: 4 } as const;
 export const HOVER_LINE_GAP = 2;
 export const HOVER_OFFSET = { x: 14, y: 10, edge: 4 } as const;
 
-export const CLOSE_FLOAT = { size: '13px', rise: 30 } as const;
+export const CLOSE_FLOAT = {
+  size: '18px',
+  rise: 34,
+  poolMs: 300,
+  cols: 4,
+  rows: 2,
+  lighten: 25,
+} as const;
+export const PAYOUT_FLOAT_SIZE = '22px';
+export const FLOAT_PUNCH = {
+  stroke: '#1b2029',
+  strokeThickness: 3,
+  from: 0.6,
+  ms: 260,
+  overshoot: 3,
+} as const;
 export const FLOAT_MS = 750;
 
 export const FLOAT_CAP = { small: 48, big: 4 } as const;
 
 export const BIG_FLOAT = {
-  size: '24px',
+  sizes: ['28px', '38px'],
   colour: '#f0c86a',
   stroke: '#d99a3f',
   strokeThickness: 2,

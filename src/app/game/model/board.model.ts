@@ -88,6 +88,7 @@ export interface CloseFloat {
   readonly x: number;
   readonly y: number;
   readonly value: number;
+  readonly type: TicketTypeId;
   readonly big: boolean;
   readonly headline: string | null;
 }

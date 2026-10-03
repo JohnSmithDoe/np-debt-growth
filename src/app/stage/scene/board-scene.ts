@@ -54,6 +54,7 @@ import {
   voteFrame,
 } from '../util/board-atlas';
 import { loadCrewAtlas, registerCrewAnimations } from '../util/lpc-sprite';
+import { ClosePool } from '../util/close-pool';
 import { FLIGHT, FlyerPool } from '../util/flyer-pool';
 import { NONE, TicketHeap } from '../util/ticket-heap';
 import { CrewLayer } from './crew-layer';
@@ -190,7 +191,14 @@ export class BoardScene extends CbScene {
     if (pointer.worldY >= this.#boardHeight) return;
     this.#harvest(pointer.worldX, pointer.worldY);
   };
+  readonly #closePool = new ClosePool<TicketTypeId>(LOGICAL_BOARD, {
+    cols: CLOSE_FLOAT.cols,
+    rows: CLOSE_FLOAT.rows,
+    ms: CLOSE_FLOAT.poolMs,
+  });
+  readonly #tints = new Map<TicketTypeId, string>();
   #onWake = (): void => {
+    this.#closePool.clear();
     this.deps.takeCloseFloats();
     this.deps.takeWontFix();
   };
@@ -764,30 +772,52 @@ export class BoardScene extends CbScene {
   }
 
   #floatCloses(): void {
-    const due = this.deps.takeCloseFloats();
-    if (due.length === 0) return;
-    const shown = [
-      ...due.filter((close) => close.big),
-      ...due.filter((close) => !close.big),
-    ].slice(0, CLOSE_FLOATS_PER_FRAME);
-    for (const close of shown) {
-      const x = close.x * this.#scaleX + this.#offX;
-      const y = close.y * this.#scaleY + this.#offY;
-      if (close.big) {
+    const now = this.time.now;
+    for (const close of this.deps.takeCloseFloats()) {
+      const shown =
+        close.big &&
         this.floatBig(
-          x,
-          y,
-          formatCompactMoney(close.value),
+          this.#viewX(close.x),
+          this.#viewY(close.y),
+          `+${formatCompactMoney(close.value)}`,
           this.#caption(close.headline)
         );
-        continue;
+      if (!shown) {
+        this.#closePool.add(close.x, close.y, close.value, close.type, now);
       }
-      this.floatPayout(x, y, formatCompactMoney(close.value), {
-        colour: BOARD_TEXT.bright,
-        size: CLOSE_FLOAT.size,
-        rise: CLOSE_FLOAT.rise,
-      });
     }
+    const due = this.#closePool.due(now);
+    for (const sum of due.slice(0, CLOSE_FLOATS_PER_FRAME)) {
+      this.floatPayout(
+        this.#viewX(sum.x),
+        this.#viewY(sum.y),
+        `+${formatCompactMoney(sum.value)}`,
+        {
+          colour: this.#tint(sum.type),
+          size: CLOSE_FLOAT.size,
+          rise: CLOSE_FLOAT.rise,
+        }
+      );
+    }
+  }
+
+  #viewX(x: number): number {
+    return x * this.#scaleX + this.#offX;
+  }
+
+  #viewY(y: number): number {
+    return y * this.#scaleY + this.#offY;
+  }
+
+  #tint(type: TicketTypeId): string {
+    let tint = this.#tints.get(type);
+    if (!tint) {
+      tint = Phaser.Display.Color.IntegerToColor(
+        TICKET_TYPES[type].colour
+      ).lighten(CLOSE_FLOAT.lighten).rgba;
+      this.#tints.set(type, tint);
+    }
+    return tint;
   }
 
   #caption(titleKey: string | null): string | undefined {

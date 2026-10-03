@@ -951,11 +951,14 @@ export class GameStore {
         budget: state.budget + payout,
         sprintCount: count,
         ...economy.repaid(state, velocitySp),
-        lifetimeClosed: state.lifetimeClosed + closed.length,
+        lifetimeClosed: state.lifetimeClosed + banked.took.length,
         lifetimeClosedByWomen: state.lifetimeClosedByWomen + byWomen,
         lifetimeClosedByCrew:
           state.lifetimeClosedByCrew +
-          closed.filter((close) => crewed(close.by)).length,
+          closed.filter(
+            (close) =>
+              crewed(close.by) && TICKET_TYPES[close.type].effect === 'value'
+          ).length,
         lifetimeBilled: state.lifetimeBilled + payout,
       },
       value: banked.value,
@@ -1012,18 +1015,29 @@ export class GameStore {
       took.push({ type, titleKey });
       worths.push(worth);
       if (by !== 'you') {
-        this.#addCloseFloat(x, y, worth, loud ? titleKey : null);
+        this.#addCloseFloat(x, y, worth, type, loud ? titleKey : null);
       }
     }
     return { value, sp, big, headline, took, worths, picked };
   }
 
-  #billWholeBoard(now: number, bonus = 1): number {
+  /** Bills a random draw of resting value cards, as many as the sprint has room for; the rest stay. */
+  #billWholeBoard(
+    now: number,
+    bonus = 1
+  ): { billed: number; left: readonly number[] } {
     const state = this.#state();
-    const resting = this.#board.tickets.filter(
+    const pool = this.#board.tickets.filter(
       (ticket) => TICKET_TYPES[ticket.type].effect === 'value' && !ticket.golden
     );
-    if (resting.length === 0) return 0;
+    const room = Math.min(pool.length, economy.sprintRoom(state, this.#sky()));
+    for (let at = 0; at < room; at++) {
+      const pick = at + Math.floor(this.#rand() * (pool.length - at));
+      [pool[at], pool[pick]] = [pool[pick]!, pool[at]!];
+    }
+    const resting = pool.slice(0, room);
+    const left = pool.slice(room).map((ticket) => ticket.id);
+    if (resting.length === 0) return { billed: 0, left };
 
     const types = resting.map((ticket) => ticket.type);
     const payout = economy.boardPayout(state, types, now) * bonus;
@@ -1036,6 +1050,13 @@ export class GameStore {
     }
 
     this.#bill(payout);
+    const slotted = economy.trainRuns(state) ? resting.length : 0;
+    if (slotted > 0) {
+      this.#sprint.update((held) => [
+        ...held,
+        ...resting.map(({ type, titleKey }) => ({ type, titleKey })),
+      ]);
+    }
     const sp =
       bonus > 1
         ? types.reduce(
@@ -1047,10 +1068,11 @@ export class GameStore {
       ...economy.pickUnderTest(state, picked),
       ...economy.repaid(state, sp),
       budget: state.budget + payout,
+      sprintCount: state.sprintCount + slotted,
       lifetimeClosed: state.lifetimeClosed + resting.length,
       lifetimeBilled: state.lifetimeBilled + payout,
     });
-    return payout;
+    return { billed: payout, left };
   }
 
   #payIncidents<
@@ -1162,15 +1184,19 @@ export class GameStore {
       return { taken, refused, value, sp, big, headline, declined };
     const jackpot =
       next.escalated && next.escalationFiresAt > now && next.hotfixUntil > now;
-    const billed = this.#billWholeBoard(now, jackpot ? JACKPOT_BONUS : 1);
+    const { billed, left } = this.#billWholeBoard(
+      now,
+      jackpot ? JACKPOT_BONUS : 1
+    );
+    const wasted = [...refused, ...left];
     if (!jackpot || billed <= 0) {
-      return { taken, refused, value, sp, big, headline, declined };
+      return { taken, refused: wasted, value, sp, big, headline, declined };
     }
     const after = this.#state();
     this.#state.set({ ...after, lifetimeJackpots: after.lifetimeJackpots + 1 });
     return {
       taken,
-      refused,
+      refused: wasted,
       value: value + billed,
       sp,
       big: true,
@@ -1193,22 +1219,22 @@ export class GameStore {
     x: number,
     y: number,
     worth: number,
+    type: TicketTypeId,
     headline: string | null
   ): void {
     const big = headline !== null;
     const last = this.#closeFloats.at(-1);
-    if (last && last.x === x && last.y === y) {
+    const full = this.#closeFloats.length >= CLOSE_FLOAT_BUFFER;
+    if (last && (full || (last.x === x && last.y === y))) {
       this.#closeFloats[this.#closeFloats.length - 1] = {
-        x,
-        y,
+        ...last,
         value: last.value + worth,
         big: last.big || big,
         headline: last.headline ?? headline,
       };
       return;
     }
-    if (this.#closeFloats.length >= CLOSE_FLOAT_BUFFER) return;
-    this.#closeFloats.push({ x, y, value: worth, big, headline });
+    this.#closeFloats.push({ x, y, value: worth, type, big, headline });
   }
 
   takeCloseFloats(): readonly CloseFloat[] {
@@ -1419,6 +1445,7 @@ export class GameStore {
     this.#sampleEvery = BURNDOWN_SAMPLE_MS;
     this.#billed = 0;
     this.#awarded.set([]);
+    this.#rewards.set(new Map());
     this.#sprint.set([]);
     this.#outcome.set(null);
     this.#previous.set(null);
@@ -1445,7 +1472,6 @@ export class GameStore {
   }
 
   #calm(runMs: number): void {
-    this.#rewards.set(new Map());
     this.#live = [];
     this.#sky.set(CALM);
     this.#cadence = freshCadence(runMs);

@@ -179,7 +179,7 @@ under the sim (more P0s, longer incident reviews). They never expire and are nev
 | `incident`   | 0.008  | 150 € × tier; from ADR-2 (`INCIDENT_PAYOUT_FROM_TIER`), 5 newest-line tickets in € and SP (`INCIDENT_TOP_SHARE`) plus `INCIDENT_PAYOUT_SEC` 3 s of the build's € and SP income (`incidentPayout` in `util/sim.ts`, which the sim credits to a sweeping hand, prod P0s included). First at 75 s |
 | `escalation` | 0.0015 | ×`ESCALATION_MULTIPLIER` 5 on every close for `ESCALATION_HOLD_MS` 9 s, +4 s with Observability                                                                                                                                                                                                |
 | `hotfix`     | 0.006  | ×2 ticket value for `HOTFIX_MS` 10 s                                                                                                                                                                                                                                                           |
-| `quarter`    | 0.0012 | Bills every resting ticket on the board at once (from tier 2), under hotfix and escalation                                                                                                                                                                                                     |
+| `quarter`    | 0.0012 | Bills a random draw of resting tickets, as many as the sprint has room for (from tier 2), under hotfix and escalation; the rest stay and bounce                                                                                                                                                |
 | `pizza`      | —      | The pizza-party voucher (§5), from the `pizza` node                                                                                                                                                                                                                                            |
 | `invite`     | —      | Hazard invitation (§8): sweep it to decline the meeting                                                                                                                                                                                                                                        |
 
@@ -696,11 +696,14 @@ What the player sees, and where it lives. Paths are relative to `src/app/`.
   `.claude/skills/lpc-character/presets.json`.
 - **Crew** wear their role: juniors short-sleeved in bright colours, seniors long-sleeved in dark
   ones, managers in hat and vest (`stage/model/lpc-uniform.spec.ts`).
-- **Payouts.** Every sweep floats its own `+€` and `+SP` and fades (`floatPayout`, pooled in
-  `stage/util/float-pool.ts`, capped by `FLOAT_CAP`). The sprint strip keeps one float for the
+- **Payouts.** Every sweep floats its own `+€` and `+SP`, bold and outlined, popping in before
+  it fades (`floatPayout`, pooled in `stage/util/float-pool.ts`, capped by `FLOAT_CAP`). Crew
+  closes are summed per board area over `CLOSE_FLOAT.poolMs` (`stage/util/close-pool.ts`) and
+  float as one number tinted by the type that paid most. Golden and incident closes float big, at
+  one of `BIG_FLOAT.sizes` picked at random. The sprint strip keeps one float for the
   sprint and updates its sum while money keeps landing.
-- **Sprint strip.** One bar, filled left to right in up to ten segments tinted by the newest
-  ticket; below it Varible_37's ghost train (one image per car count, composed at run time)
+- **Sprint strip.** One bar, filled left to right in up to ten segments, each tinted by the most
+  common type among the closes it holds; below it Varible_37's ghost train (one image per car count, composed at run time)
   crosses between two portals while it is out
   (`stage/scene/sprint-strip.ts`).
 - **Masthead.** Budget and SP roll to their value and glow as they climb

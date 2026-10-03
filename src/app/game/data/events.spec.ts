@@ -106,17 +106,19 @@ describe('the held Escalation (D31)', () => {
 });
 
 describe('Quarter End (D31 — C4s one exception)', () => {
-  it('bills far more than the sprint has slots for', () => {
+  it('bills only what the sprint has room for; the rest stay and are refused', () => {
     const store = storeWith();
     for (let n = 0; n < SPRINT_SLOTS_BASE + 80; n += 1) place(store, 'bug');
     const onBoard = store.board.tickets.length;
 
-    store.harvest([place(store, 'quarter')]);
+    const { refused } = store.harvest([place(store, 'quarter')]);
 
     const state = store.snapshot();
     expect(state.budget).toBeGreaterThan(0);
-    expect(state.lifetimeClosed).toBeGreaterThan(SPRINT_SLOTS_BASE);
-    expect(store.board.tickets.length).toBeLessThan(onBoard);
+    expect(state.lifetimeClosed).toBe(SPRINT_SLOTS_BASE);
+    expect(state.sprintCount).toBe(SPRINT_SLOTS_BASE);
+    expect(store.board.tickets.length).toBe(onBoard - SPRINT_SLOTS_BASE);
+    expect(refused).toHaveLength(80);
   });
 
   it('pays a buried board far more than a clear one', () => {

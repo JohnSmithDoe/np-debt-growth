@@ -10,7 +10,9 @@ import {
   BOARD_TEXT,
   FLOAT_CAP,
   FLOAT_MS,
+  FLOAT_PUNCH,
   MAX_FRAME_MS,
+  PAYOUT_FLOAT_SIZE,
 } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
 import { FloatPool } from '../util/float-pool';
@@ -106,10 +108,11 @@ export abstract class CbScene extends Phaser.Scene {
       x,
       y,
       label,
-      style.size ?? '18px',
+      style.size ?? PAYOUT_FLOAT_SIZE,
       style.colour ?? BOARD_TEXT.gold
     );
 
+    this.#popIn(text);
     this.tweens.add({
       targets: text,
       y: y - (style.rise ?? 46),
@@ -121,18 +124,21 @@ export abstract class CbScene extends Phaser.Scene {
     return text;
   }
 
+  /** False when the cap is reached and nothing was shown. */
   protected floatBig(
     x: number,
     y: number,
     label: string,
     caption?: string
-  ): void {
-    if (this.#bigLive >= FLOAT_CAP.big) return;
+  ): boolean {
+    if (this.#bigLive >= FLOAT_CAP.big) return false;
     this.#bigLive += 1;
+    const sizes = BIG_FLOAT.sizes;
     const text = this.add
       .text(x, y, label, {
         fontFamily: 'monospace',
-        fontSize: BIG_FLOAT.size,
+        fontStyle: 'bold',
+        fontSize: sizes[Math.floor(Math.random() * sizes.length)],
         color: BIG_FLOAT.colour,
         stroke: BIG_FLOAT.stroke,
         strokeThickness: BIG_FLOAT.strokeThickness,
@@ -141,6 +147,7 @@ export abstract class CbScene extends Phaser.Scene {
       .setDepth(51);
     const targets = caption ? [text, this.#caption(text, caption)] : [text];
 
+    this.#popIn(text);
     this.tweens.add({
       targets,
       y: `-=${BIG_FLOAT.rise}`,
@@ -151,6 +158,17 @@ export abstract class CbScene extends Phaser.Scene {
         this.#bigLive -= 1;
         for (const target of targets) target.destroy();
       },
+    });
+    return true;
+  }
+
+  #popIn(text: Phaser.GameObjects.Text): void {
+    this.tweens.add({
+      targets: text,
+      scale: { from: FLOAT_PUNCH.from, to: 1 },
+      duration: FLOAT_PUNCH.ms,
+      ease: 'Back.easeOut',
+      easeParams: [FLOAT_PUNCH.overshoot],
     });
   }
 
