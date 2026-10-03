@@ -38,19 +38,15 @@ export const ACCEPTANCE = { goal: 2e16, value: 2 } as const;
 
 /**
  * One acceptance criterion per line, lint first. The crew sits in the acceptance meeting; the
- * line under test spawns at CRITERION_SPAWN_PER_SEC whatever its spawners. A criterion signs
- * clean once the hand has picked up CRITERION_GOAL of the cards spawned for it, with findings
- * at CRITERION_MS.
+ * line under test spawns at CRITERION_SPAWN_PER_SEC whatever its spawners. Every criterion runs
+ * its full CRITERION_MS and signs then: clean if the hand has picked up CRITERION_GOAL of the
+ * cards spawned for it, with findings if not.
  */
 export const CRITERION_BONUS = 2;
 export const CRITERION_OVERTIME = 0.5;
-export const CRITERION_MS = 20_000;
+export const CRITERION_MS = 15_000;
 export const CRITERION_SPAWN_PER_SEC = 2.5;
-/** Perfect play, every card of the line picked up, signs this soon. */
-export const CRITERION_PERFECT_MS = 12_000;
-export const CRITERION_GOAL = Math.floor(
-  CRITERION_SPAWN_PER_SEC * (CRITERION_PERFECT_MS / 1000)
-);
+export const CRITERION_GOAL = 15;
 
 export const CREDIT_FROM_ADR = 4;
 export const CREDIT_SHARE = 0.6;

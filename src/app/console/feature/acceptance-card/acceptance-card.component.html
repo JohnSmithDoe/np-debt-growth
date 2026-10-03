@@ -23,7 +23,7 @@
             <span class="ticket">{{ ticketKey(ticket) | translate }}</span>
           }
         </p>
-        <div class="meter" aria-hidden="true">
+        <div class="meter" [class.met]="met()" aria-hidden="true">
           <span class="fill" [style.width.%]="progress()"></span>
         </div>
         <p class="count" aria-live="polite">

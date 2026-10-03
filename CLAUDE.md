@@ -73,8 +73,8 @@ closes, only **achievements** pay: euros before ADR-3, SP from it, a fixed amoun
 row costs euros. The last node, `signoff` (8 M SP, off ADR-8), does not end the run: it
 starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: billing
 `economy.overtime`; no sprint cap, no train, no meetings — `economy.trainRuns`; the whole crew sits in the acceptance meeting), nine criteria, one line under test at a time (`economy.criterionNow`: it
-spawns at `CRITERION_SPAWN_PER_SEC` and bills as the newest rung; only cards spawned for the criterion are pink, and only the **hand's** pickups of them count; a criterion signs clean at `CRITERION_GOAL`
-pickups, or with findings at `CRITERION_MS` 20 s; `console/feature/acceptance-card/` shows it),
+spawns at `CRITERION_SPAWN_PER_SEC` and bills as the newest rung; only cards spawned for the criterion are pink, and only the **hand's** pickups of them count; every criterion runs its full `CRITERION_MS` 15 s and then
+signs clean if the hand reached `CRITERION_GOAL` 15 pickups, with findings if not; `console/feature/acceptance-card/` shows it),
 and the run ends when every criterion is signed (`economy.accepted` sets `endedAt`). From ADR-4 the next ADR (or the closeout) can be approved on credit
 (`purchase.approveOnCredit`, `spDebt` repaid from half of later SP). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
 bills**, once the €25 `velocity` row is bought, plus the per-ticket `estimates` nodes and planning-poker

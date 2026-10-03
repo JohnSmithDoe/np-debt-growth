@@ -454,8 +454,8 @@ is gone until the run ends.
 - **The crew sits in the acceptance meeting** (`crewRules` interrupts every kind,
   `sim.collect` counts no crew): only the hand collects, so only the player moves a criterion.
 - **Acceptance criteria** (`CriterionRun` on the state, `economy.criterionNow`,
-  `economy.stepCriterion`): nine, one per line, lint first, each open at most
-  `CRITERION_MS` 20 s. The line under test spawns at `CRITERION_SPAWN_PER_SEC` 2.5 whatever its
+  `economy.stepCriterion`): nine, one per line, lint first, each open for exactly
+  `CRITERION_MS` 15 s. The line under test spawns at `CRITERION_SPAWN_PER_SEC` 2.5 whatever its
   spawners (split across the types it produces). Only cards **spawned for the criterion** are
   its own (`BoardTicket.test`, `inTest`): they pulse pink (`UNDER_TEST`), a full board never
   displaces them, and each one the **hand** picks up counts (`economy.pickUnderTest`). Cards of
@@ -464,13 +464,12 @@ is gone until the run ends.
   nobody collects it, so the hand has to find the pink cards in the heap. In the push debt
   interest and Triage auto-close are off, nothing comes back, the line under test never rolls
   golden and no quarter end spawns, so every line is fed the same and only the hand closes it.
-  Once the hand has picked up `CRITERION_GOAL` 30, everything the line spawns in
-  `CRITERION_PERFECT_MS` 12 s, the criterion **signs clean** at once and the next opens: it
-  confirms its award (`c-criterion-<line>`) and adds `CRITERION_OVERTIME` 0.5 to the base ×2
-  overtime. At 20 s short of the goal it **signs with findings**: no overtime, no clean award, a
-  `c-findings-<line>` toast instead (the first also earns _Signed with findings_). The push lasts
-  at most three minutes; the advised autoplayer (one click a second) signs every criterion with
-  findings.
+  Every criterion plays its whole window; reaching the goal early does not skip it. When the
+  15 s are up it signs: **clean** if the hand has picked up `CRITERION_GOAL` 15, which confirms
+  its award (`c-criterion-<line>`) and adds `CRITERION_OVERTIME` 0.5 to the base ×2 overtime;
+  short of the goal it **signs with findings**: no overtime, no clean award, a
+  `c-findings-<line>` toast instead (the first also earns _Signed with findings_). The push
+  always lasts nine windows, 2 min 15 s.
 - **The acceptance card** (`console/feature/acceptance-card/`, `GameStore.acceptance`) sits
   centred over the board: the test's number and name, the seconds left large (amber in the last
   five), the tickets to click, picked against the goal, a draining time bar, and a dot per

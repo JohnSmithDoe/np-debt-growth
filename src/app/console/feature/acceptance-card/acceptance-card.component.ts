@@ -41,6 +41,11 @@ export class AcceptanceCardComponent {
     return view ? Math.min(100, (view.picked / view.goal) * 100) : 0;
   });
 
+  readonly met = computed(() => {
+    const view = this.view();
+    return !!view && view.picked >= view.goal;
+  });
+
   readonly overtime = computed(() => {
     const mult = this.view()?.overtime ?? 0;
     return Number.isInteger(mult) ? mult : formatQuantity(mult);

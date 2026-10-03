@@ -295,14 +295,14 @@ export function openCriterion(
 }
 
 /**
- * Signs the criterion under test clean once the hand has picked up CRITERION_GOAL of its cards;
- * at CRITERION_MS it signs anyway, with findings: no overtime, no award.
+ * Signs the criterion under test when its CRITERION_MS window closes: clean if the hand has
+ * picked up CRITERION_GOAL of its cards, otherwise with findings (no overtime, no award).
  */
 export function stepCriterion(state: Consultancy): Consultancy {
   const run = state.criterion;
   if (!inAcceptance(state) || !run || run.index >= CRITERIA) return state;
+  if (state.runMs - run.sinceMs < CRITERION_MS) return state;
   const clean = run.picked >= CRITERION_GOAL;
-  if (!clean && state.runMs - run.sinceMs < CRITERION_MS) return state;
   const signed: CriterionRun = {
     ...run,
     index: run.index + 1,

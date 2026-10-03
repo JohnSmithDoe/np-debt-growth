@@ -8,7 +8,6 @@ import {
   CRITERION_GOAL,
   CRITERION_MS,
   CRITERION_OVERTIME,
-  CRITERION_PERFECT_MS,
   CRITERION_SPAWN_PER_SEC,
 } from '../model/balance/progression';
 import {
@@ -109,10 +108,10 @@ describe('the acceptance criteria', () => {
     expect(economy.underTest(state, 'lint')).toBe(false);
   });
 
-  it('signs clean the moment the hand reaches the goal', () => {
-    const short = signed(0, CRITERION_GOAL - 1, 1_000);
-    expect(economy.stepCriterion(short).criterion?.index).toBe(0);
-    const next = economy.stepCriterion(signed(0, CRITERION_GOAL, 1_000));
+  it('plays the whole window, then signs clean if the hand reached the goal', () => {
+    const early = signed(0, CRITERION_GOAL, CRITERION_MS - 1);
+    expect(economy.stepCriterion(early).criterion?.index).toBe(0);
+    const next = economy.stepCriterion(signed(0, CRITERION_GOAL, CRITERION_MS));
     expect(next.criterion).toMatchObject({ index: 1, line: 1, picked: 0 });
     expect(economy.overtime(next)).toBe(ACCEPTANCE.value + CRITERION_OVERTIME);
   });
@@ -151,12 +150,12 @@ describe('the acceptance criteria', () => {
     );
   });
 
-  it('asks what the line spawns in the perfect-play time, short of the window', () => {
-    expect(CRITERION_GOAL).toBe(
-      Math.floor(CRITERION_SPAWN_PER_SEC * (CRITERION_PERFECT_MS / 1000))
+  it('asks for less than the window spawns', () => {
+    expect(CRITERION_GOAL).toBe(15);
+    expect(CRITERION_MS).toBe(15_000);
+    expect(CRITERION_GOAL).toBeLessThan(
+      CRITERION_SPAWN_PER_SEC * (CRITERION_MS / 1000)
     );
-    expect(CRITERION_GOAL).toBe(30);
-    expect(CRITERION_PERFECT_MS).toBeLessThan(CRITERION_MS);
   });
 
   it('auto-closes nothing in the push', () => {
@@ -195,14 +194,14 @@ describe('the acceptance criteria', () => {
   });
 
   it('is accepted once every criterion is signed', () => {
-    const last = signed(CRITERIA_COUNT - 1, CRITERION_GOAL);
+    const last = signed(CRITERIA_COUNT - 1, CRITERION_GOAL, CRITERION_MS);
     const done = economy.stepCriterion(last);
     expect(economy.accepted(done)).toBe(true);
     expect(economy.criterionNow(done)).toBeNull();
   });
 
   it('confirms a criterion award as it is signed', () => {
-    const store = storeWith(signed(0, CRITERION_GOAL));
+    const store = storeWith(signed(0, CRITERION_GOAL, CRITERION_MS));
     store.advanceTo(100);
     expect(store.snapshot().achievements).toContain(criterionAwardId(0));
     expect(store.snapshot().achievements).not.toContain(criterionAwardId(1));

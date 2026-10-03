@@ -100,7 +100,13 @@ h3 {
     display: block;
     height: 100%;
     background: var(--test);
-    transition: width 120ms linear;
+    transition:
+      width 120ms linear,
+      background-color 200ms ease-out;
+  }
+
+  &.met .fill {
+    background: var(--np-cb-good);
   }
 }
 
