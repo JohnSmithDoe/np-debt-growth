@@ -180,6 +180,7 @@ describe('purchases', () => {
       storyPoints: node.levels[0]!.cost,
       tier: 1,
       skills: { root: 1, adr1: 1 },
+      achievements: ['a-first-thousand-billed'],
     });
     expect(store.buySkill('junior')).toBe(true);
     expect(store.levels().junior).toBe(1);
@@ -212,6 +213,18 @@ describe('purchases', () => {
     expect(store.buySkill(SECRET_SKILL_ID)).toBe(false);
     expect(store.unlockSecret()).toBe(true);
     expect(store.skillRank(SECRET_SKILL_ID)).toBe(1);
+  });
+
+  it('confirms what a tree purchase earns without a tick', () => {
+    const store = storeWith({
+      storyPoints: 10_000,
+      skills: { root: 1, valueBug: 1 },
+      levels: { senior: 1 },
+    });
+    expect(store.buySkill('escalation')).toBe(true);
+    expect(store.awarded()).toContain('a-war-room');
+    expect(store.unlockSecret()).toBe(true);
+    expect(store.awarded()).toContain('a-secret');
   });
 
   it('sells a node again at its authored price, and stops at its last level', () => {

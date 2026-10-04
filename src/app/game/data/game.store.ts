@@ -1359,7 +1359,7 @@ export class GameStore {
 
   #commit(next: Consultancy | null): boolean {
     if (next === null) return false;
-    this.#state.set(next);
+    this.#state.set(this.#grantAwards(next));
     return true;
   }
 
@@ -1436,11 +1436,10 @@ export class GameStore {
   unlockSecret(): boolean {
     const state = this.#state();
     if (economy.skillRank(state, SECRET_SKILL_ID) > 0) return false;
-    this.#state.set({
+    return this.#commit({
       ...state,
       skills: { ...state.skills, [SECRET_SKILL_ID]: 1 },
     });
-    return true;
   }
 
   readonly assisted = computed(() => this.#state().assisted);
