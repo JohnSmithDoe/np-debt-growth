@@ -116,6 +116,18 @@ h3 {
   color: var(--np-cb-ink);
 }
 
+.perk {
+  display: inline-block;
+  white-space: nowrap;
+  margin-inline-start: 0.5rem;
+  padding: 0 0.3rem;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: var(--np-cb-good);
+}
+
 .timebar {
   height: 0.3rem;
   background: var(--np-cb-rule-soft);

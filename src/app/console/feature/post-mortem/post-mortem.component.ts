@@ -10,6 +10,7 @@ import {
 
 import { FinaleService } from '../../../@shared/data/finale.service';
 import {
+  formatCompactMoney,
   formatMoney,
   formatPoints,
   formatQuantity,
@@ -119,7 +120,7 @@ export class PostMortemComponent {
         total: ACHIEVEMENTS.length,
       }),
       this.#say('postmortem.well.rewards', {
-        euros: formatMoney(this.#store.state().lifetimeAwardEuros),
+        euros: formatCompactMoney(this.#store.state().lifetimeAwardEuros),
         sp: formatPoints(this.#store.state().lifetimeAwardSp),
       }),
       this.#criteriaLine(),
@@ -178,13 +179,13 @@ export class PostMortemComponent {
   #criteriaLine(): string {
     const total = CRITERIA_COUNT;
     const findings = this.#store.state().criterion?.findings ?? 0;
-    return findings === 0
-      ? this.#say('postmortem.well.criteria.all', { total })
-      : this.#say('postmortem.well.criteria.findings', {
-          clean: total - findings,
-          total,
-          findings,
-        });
+    const key =
+      findings === 0
+        ? 'postmortem.well.criteria.all'
+        : findings === 1
+          ? 'postmortem.well.criteria.retest'
+          : 'postmortem.well.criteria.retests';
+    return this.#say(key, { total, findings });
   }
 
   #say(key: string, params?: Record<string, string | number>): string {

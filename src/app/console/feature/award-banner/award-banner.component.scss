@@ -15,9 +15,9 @@
   pointer-events: none;
 }
 
+/* The hand sweeps the board under the stack; a toast never catches the pointer. */
 .award {
-  pointer-events: auto;
-  cursor: pointer;
+  pointer-events: none;
   text-align: start;
 
   position: relative;
@@ -64,6 +64,7 @@
 }
 
 .reward {
+  text-transform: none;
   grid-area: reward;
   justify-self: start;
   margin-block-start: 0.2rem;

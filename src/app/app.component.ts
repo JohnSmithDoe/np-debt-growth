@@ -140,6 +140,7 @@ export class AppComponent {
   });
 
   readonly debt = computed(() => {
+    if (this.#store.ended() || this.#store.inAcceptance()) return null;
     const owed = this.#store.spDebt();
     return owed > 0 ? { owed: formatPoints(owed) } : null;
   });

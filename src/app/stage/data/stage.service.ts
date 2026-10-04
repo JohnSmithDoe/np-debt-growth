@@ -248,7 +248,7 @@ export class StageService {
       releasePhases: () => store.releasePhases(),
       buffNotices: () => store.buffNotices(),
       autoClosed: () => store.autoClosed(),
-      underTest: () => economy.criterionNow(store.state())?.index ?? null,
+      underTest: () => economy.criterionNow(store.state())?.window ?? null,
       womanEvery: (crew) => store.womanEvery(crew),
       takePayouts: () => store.takePayouts(),
       takeCloseFloats: () => store.takeCloseFloats(),

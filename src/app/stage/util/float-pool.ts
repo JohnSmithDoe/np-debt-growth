@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 
-import { FLOAT_PUNCH } from '../model/board.consts';
+import { FLOAT_PUNCH, FLOAT_SPACING } from '../model/board.consts';
 
 export class FloatPool {
   readonly #idle: Phaser.GameObjects.Text[] = [];
@@ -29,17 +29,42 @@ export class FloatPool {
             stroke: FLOAT_PUNCH.stroke,
             strokeThickness: FLOAT_PUNCH.strokeThickness,
           }));
-    this.#live.push(text);
-    return text
+    text
       .setText(label)
       .setFontSize(size)
       .setColor(colour)
-      .setPosition(x, y)
       .setOrigin(0.5)
       .setScale(1)
       .setAlpha(1)
       .setDepth(this.depth)
       .setVisible(true);
+    text.setPosition(this.#clearX(x, y, text.width, text.height), y);
+    this.#live.push(text);
+    return text;
+  }
+
+  /** Nearest x clear of live floats level with or just above `y`, which a fresh float would catch up with. Tweens only move y. */
+  #clearX(x: number, y: number, width: number, height: number): number {
+    const blockers = this.#live.filter(
+      (other) =>
+        other.alpha > FLOAT_SPACING.minAlpha &&
+        other.y - y < (other.height + height) / 2 &&
+        y - other.y < (other.height + height) / 2 + FLOAT_SPACING.trail
+    );
+    if (blockers.length === 0) return x;
+    const hits = (at: number): boolean =>
+      blockers.some(
+        (other) =>
+          Math.abs(other.x - at) < (other.width + width) / 2 + FLOAT_SPACING.gap
+      );
+    const step = width / 2 + FLOAT_SPACING.gap;
+    for (let tries = 0; tries <= FLOAT_SPACING.tries; tries++) {
+      for (const sign of [1, -1]) {
+        const at = x + sign * tries * step;
+        if (!hits(at)) return at;
+      }
+    }
+    return x;
   }
 
   give(text: Phaser.GameObjects.Text): void {

@@ -3,8 +3,8 @@
     <header>
       <span class="kicker">
         {{
-          'acceptance.card.kicker'
-            | translate: { n: view.index + 1, of: view.of }
+          (view.retest ? 'acceptance.card.retest' : 'acceptance.card.kicker')
+            | translate: { n: view.index, of: view.of }
         }}
       </span>
       <h3>{{ 'acceptance.criterion.' + view.line + '.label' | translate }}</h3>
@@ -31,6 +31,16 @@
             'acceptance.card.count'
               | translate: { picked: view.picked, goal: view.goal }
           }}
+          @if (view.discount > 0) {
+            <span class="perk">{{
+              'acceptance.card.discount' | translate: { n: view.discount }
+            }}</span>
+          }
+          @if (view.weight > 1) {
+            <span class="perk">{{
+              'acceptance.card.weight' | translate: { n: view.weight }
+            }}</span>
+          }
         </p>
       </div>
     </div>

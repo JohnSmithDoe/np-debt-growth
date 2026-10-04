@@ -177,7 +177,8 @@ export const DE: Readonly<Record<string, string>> = {
   'settings.music.volume': 'Lautstärke Musik',
   'settings.off': 'Aus',
   'settings.on': 'An',
-  'settings.ring.blurb': 'Zeigt rund um den Zeiger, wie weit ein Klick reicht.',
+  'settings.ring.blurb':
+    'Zeigt rund um den Zeiger, wie weit deine Hand reicht.',
   'settings.ring.label': 'Maus-Radius anzeigen',
   'settings.sfx.blurb':
     'Jeder Effekt wird synthetisiert. Es gibt keine Dateien.',
@@ -187,6 +188,8 @@ export const DE: Readonly<Record<string, string>> = {
     'Wie sich das Spiel verhält. Nichts davon ist Fortschritt.',
   'title.fullscreen': 'Vollbild',
   'title.name': 'Schuld & Wachstum',
+  'title.photosensitivity':
+    'Warnung vor Lichtempfindlichkeit: Dieses Spiel enthält schnelle Lichtblitze, flackernde Farben und sich rasch bewegende Lichter.',
   'title.premise':
     'Eigentlich sollst du sauberen, wartbaren Code liefern. Bezahlt wirst du für geschlossene Tickets — und Tickets entstehen aus schlechtem Code.',
   'title.resume': 'Zurück zum Mandat',
@@ -200,6 +203,7 @@ export const DE: Readonly<Record<string, string>> = {
   'award.reward.euro': '+{{amount}}',
   'award.reward.sp': '+{{amount}} SP',
   'award.milestone': 'Meilenstein',
+  'award.criterion': 'Abnahme',
   'award.waiting': '+{{count}} weitere',
   'hud.budget': 'Budget',
   'hud.goal.adr': '{{pct}} % bis ADR-{{adr}}',
@@ -224,7 +228,7 @@ export const DE: Readonly<Record<string, string>> = {
   'finale.curtain.action': 'Maßnahme: noch einmal spielen. Verantwortlich: du.',
   'finale.curtain.again': 'Neues Mandat',
   'finale.curtain.artists':
-    'Und danke an alle Künstlerinnen und Künstler im Abspann. Die Crew gibt es nur, weil ihr sie gezeichnet und verschenkt habt.',
+    'Und danke an alle Künstlerinnen und Künstler im Abspann. Das Team gibt es nur, weil ihr es gezeichnet und verschenkt habt.',
   'finale.curtain.back': 'Zurück zum Post-Mortem',
   'finale.curtain.body':
     'Du hast ein ganzes Mandat lang eine Codebasis mit Absicht verschlechtert, und du warst richtig, richtig gut darin.',
@@ -234,7 +238,7 @@ export const DE: Readonly<Record<string, string>> = {
   'finale.roll.adrs': 'Und erstmals dabei, in der Reihenfolge ihrer Freigabe',
   'finale.roll.adrs.note': 'Alle acht sind noch in Produktion.',
   'finale.roll.approved': 'Schriftlich freigegeben für {{client}} von',
-  'finale.roll.aside.backlog': 'Das Backlog ist immer noch nicht leer.',
+  'finale.roll.aside.backlog': 'Der Backlog ist immer noch nicht leer.',
   'finale.roll.aside.harm':
     'Bei der Entstehung dieses Spiels kam kein Ticket zu Schaden. Einige wurden als „Won’t fix“ geschlossen.',
   'finale.roll.aside.resemblance':
@@ -243,8 +247,8 @@ export const DE: Readonly<Record<string, string>> = {
   'finale.roll.inspired': 'Inspiriert von',
   'finale.roll.inspired.thanks':
     'Eine Beratung ist nur ein Müllunternehmen, das nach Stunden abrechnet. Spielt das Original.',
-  'finale.roll.crew': 'Die Crew',
-  'finale.roll.drawn': 'Gezeichnet wurde die Crew von',
+  'finale.roll.crew': 'Das Team',
+  'finale.roll.drawn': 'Gezeichnet wurde das Team von',
   'finale.roll.drawn.thanks':
     'Sie haben diese Leute umsonst gezeichnet, damit Fremde so etwas bauen können. Danke.',
   'finale.roll.drawn.unnamed':
@@ -283,7 +287,7 @@ export const DE: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'Keiner freigegeben',
   'skill.golden.1.label': 'Partnersache',
   'skill.signoff.blurb':
-    'Der Abschluss startet den Abnahme-Endspurt: Das Team geht ins Abnahme-Meeting, und der Kunde prüft eine Arbeitslinie nach der anderen. Klick die pinken Tickets dieser Linie, bevor die Zeit abläuft; jedes sauber unterschriebene Kriterium erhöht die Überstunden.',
+    'Der Abschluss startet den Abnahme-Endspurt: Das Team geht ins Abnahme-Meeting, und der Kunde prüft eine Arbeitslinie nach der anderen. Sammle die pinken Tickets dieser Linie ein, bevor die Zeit abläuft. Eine Linie, die ihr Ziel verfehlt, kommt am Ende zum Nachtest, ihre Treffer bleiben; jedes unterschriebene Kriterium erhöht die Überstunden. Kauf vor dem Unterschreiben in die Linien: ihre Knoten senken ihr Ziel, ihr Verdoppler oder Retainer zählt jeden Treffer doppelt.',
   'skill.signoff.1.label': 'Abschluss unterschreiben',
   'skill.golden.blurb':
     'Manche Arbeit kommt als Partnersache herein. Sie zahlt ein Vermögen, und das Team fasst sie nicht an.',
@@ -447,7 +451,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.relabel.blurb':
     'Was das Team unter den Augen eines Managers schließt, rechnet mehr ab.',
   'skill.root.1.label': 'Backlog-Triage',
-  'skill.root.blurb': 'Öffnet das Backlog. Alles andere hängt daran.',
+  'skill.root.blurb': 'Öffnet den Backlog. Alles andere hängt daran.',
   'skill.secret.1.label': 'Du hast den Code gelesen',
   'skill.secret.blurb':
     'Du hast nachgesehen. Alles rechnet besser ab, und niemand hat es abgezeichnet.',
@@ -487,7 +491,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.triagePolicy.1.label': 'Triage-Richtlinie',
   'skill.triagePolicy2.1.label': 'Scope Freeze',
   'skill.triagePolicy.blurb':
-    'Die Crew nimmt den Typ nicht mehr. Eine liegengebliebene Karte schließt sich selbst, statt zu veralten, und wird ausgeliefert. Ist der Zug unterwegs, bleibt ihr nur der Weg nach Prod.',
+    'Das Team nimmt den Typ nicht mehr. Eine liegengebliebene Karte schließt sich selbst, statt zu veralten, und wird ausgeliefert. Ist der Zug unterwegs, bleibt ihr nur der Weg nach Prod.',
   'skill.valueBug.1.label': 'Bug Bounty',
   'skill.valueBug.blurb': 'Bugs rechnen doppelt ab.',
   'skill.valueConflict.1.label': 'Konflikt-Boost',
@@ -522,6 +526,10 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.estimatesSlop.blurb':
     'Jeder halluzinierte Import wird pro Token geschätzt.',
   'skill.effect.spPerClose': '+{{count}} SP pro Ticket',
+  'skill.effect.acceptance.goal':
+    'Abnahme: ein niedrigeres Ziel für diese Linie',
+  'skill.effect.acceptance.finisher':
+    'Abnahme: jeder Treffer dieser Linie zählt doppelt',
   'skill.effect.spPerClose.ticket': '+{{count}} SP pro {{ticket}}',
   'skill.coaches.1.label': 'Agiles Kompetenzzentrum',
   'skill.coaches6.1.label': 'Der agile Tribe',
@@ -574,8 +582,8 @@ export const DE: Readonly<Record<string, string>> = {
     'Fünf Account-Manager-Plätze mehr, und ein Sofa für den Kunden.',
   'rail.affordable': 'bezahlbar',
   'rail.eta': 'bezahlbar in {{time}}',
-  'rail.more.adr': 'Danach {{count}} weitere.',
-  'rail.more.rate': 'Danach {{count}} weitere.',
+  'rail.more.adr': 'Danach noch {{count}}.',
+  'rail.more.rate': 'Danach noch {{count}}.',
   'rail.teaser.adr': 'Öffnet mit ADR-{{adr}}.',
   'rail.tab.supply': 'Schulden',
   'rail.tab.income': 'Sätze',
@@ -763,12 +771,12 @@ export const DE: Readonly<Record<string, string>> = {
   'help.strategy.prod':
     'Räum Prod auf, bevor der Zug fährt. Ab ADR-{{adr}} hängt jeder P0, der noch auf dem Board liegt, ein Incident Review an das Release.',
   'help.strategy.credit':
-    'Nimm Kredit, wenn ein ADR nah ist. Ab ADR-{{adr}} kannst du das nächste mit {{share}} % seines Preises freigeben und den Rest aus späteren Story Points abzahlen. Auf den Rest zu warten ist Zeit, die du nicht abrechnest.',
+    'Nimm Kredit, wenn ein ADR nah ist. Von ADR-{{adr}} bis ADR-{{last}} kannst du das nächste mit {{share}} % seines Preises freigeben und den Rest aus späteren Story Points abzahlen. Auf den Rest zu warten ist Zeit, die du nicht abrechnest.',
   'help.train.heading': 'Der Release-Zug',
   'help.train.intro':
     'Es gibt keinen Runden-Timer. Eine Runde ist das Release eines Sprints, das Tempo bestimmt also dein Durchsatz.',
   'help.train.1':
-    'Jedes Linien-Ticket, das du oder das Team aufnehmt, belegt einen Platz im Sprint: gerade {{slots}} Plätze.',
+    'Jedes Linien-Ticket, das du oder das Team aufnimmt, belegt einen Platz im Sprint: gerade {{slots}} Plätze.',
   'help.train.2':
     'Ist der letzte Platz belegt, fährt der Zug von selbst los. Abgerechnet wurde schon beim Aufnehmen; das Release bringt nichts extra.',
   'help.train.3':
@@ -788,7 +796,7 @@ export const DE: Readonly<Record<string, string>> = {
   'help.loop.4':
     'Mit Story Points kaufst du den Skill-Baum. Gib dort ADRs frei, um neue Linien immer teurerer Schulden zu öffnen. Ziehen verschiebt, das Mausrad zoomt, über ein Feld fahren liest es; ein schwarzer Kasten sagt nur, dass dort etwas ist.',
   'help.loop.5':
-    'Ganz oben im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt: neun Tests, je zwanzig Sekunden. Klick die pinken Tickets der Linie im Test, bis das Ziel erreicht ist; das Mandat ist erfüllt, wenn alle neun unterschrieben sind.',
+    'Zuletzt im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt: neun Tests zu je fünfzehn Sekunden. Sammle die pinken Tickets der Linie im Test ein; eine Linie, die ihr Ziel verfehlt, wird am Ende zehn Sekunden nachgetestet, ihre Treffer bleiben. Die eigenen Knoten einer Linie senken ihr Ziel, ihr Verdoppler oder Retainer zählt jeden Treffer doppelt. Das Mandat ist erfüllt, wenn alle neun unterschrieben sind.',
   'award.m-first-close.label': 'Erstes Ticket triagiert',
   'award.m-first-close.blurb': 'Irgendwer musste ja.',
   'award.m-first-invoice.label': 'Erste Rechnung gestellt',
@@ -859,7 +867,7 @@ export const DE: Readonly<Record<string, string>> = {
   'award.a-office.label': 'Die ganze Etage',
   'award.a-office.blurb':
     'Bau jeden Raum. Es gibt keinen Platz mehr für irgendwen.',
-  'award.a-hundred-thousand.label': 'Das Backlog hat ein Backlog',
+  'award.a-hundred-thousand.label': 'Der Backlog hat einen Backlog',
   'award.a-hundred-thousand.blurb':
     'Schließ 100.000 Tickets. Der Backlog war nie länger.',
   'award.a-billion.label': 'Der Kunde ist jetzt eine Tochter',
@@ -965,7 +973,7 @@ export const DE: Readonly<Record<string, string>> = {
   'postmortem.well.awards':
     '{{unlocked}} von {{total}} Erfolgen vom Team bestätigt.',
   'postmortem.well.rewards':
-    'Erfolge zahlten {{euros}} und {{sp}} SP ins Budget ein, der Rest war nur fürs Protokoll.',
+    'Erfolge zahlten {{euros}} und {{sp}} SP aus, der Rest war nur fürs Protokoll.',
   'postmortem.badly.adrs':
     'Jeder Architecture Decision Record hat die Codebasis dauerhaft verschlechtert. Keiner wurde zurückgenommen, keiner stand je zur Debatte, und jeder wurde von {{client}} schriftlich freigegeben.',
   'postmortem.badly.backlog':
@@ -973,7 +981,7 @@ export const DE: Readonly<Record<string, string>> = {
   'postmortem.badly.headcount':
     'Auf jeder Stufe kam schneller Headcount dazu, als der Backlog schrumpfte.',
   'postmortem.action.gender':
-    'Team-Durchsatz nach Geschlecht abgleichen – Frauen: {{women}} Abschlüsse/Kopf (n={{womenHeads}}); Männer: {{men}} Abschlüsse/Kopf (n={{menHeads}}). Verantwortlich: nicht zugewiesen.',
+    'Der Lenkungsausschuss hat Team-Durchsatz nach Geschlecht angefordert. Die Anfrage wurde abgelehnt; Durchsatz ist eine Eigenschaft des Prozesses. Verantwortlich: HR.',
   'postmortem.action.load':
     'Klären, warum {{tier}} jetzt tragend ist. Verantwortlich: nicht zugewiesen.',
   'postmortem.action.assisted':
@@ -982,7 +990,7 @@ export const DE: Readonly<Record<string, string>> = {
     'Eine Retrospektive zu dieser Retrospektive ansetzen. Verantwortlich: nicht zugewiesen.',
   'achievements.heading': 'Erfolge',
   'achievements.subheading':
-    'Anerkennungsregister – bestätigt nach Ergebnis, nie nach Aufwand, und nie vergütet.',
+    'Anerkennungsregister – bestätigt nach Ergebnis, nie nach Aufwand, vergütet bei Bestätigung.',
   'achievements.count': '{{confirmed}}/{{total}} bestätigt',
   'achievements.column.award': 'Erfolg',
   'achievements.column.status': 'Status',
@@ -992,6 +1000,7 @@ export const DE: Readonly<Record<string, string>> = {
   'rail.subheading': 'Gekauft, während das Board volläuft.',
   'rail.shop': 'Shop',
   'rail.buyable': 'etwas zu kaufen',
+  'rail.buyMax': 'alle kaufen',
   'rail.crew.note': 'Linien öffnen im Baum; Köpfe werden hier eingestellt.',
   'rail.maxed': 'MAX',
   'rail.on-tree': 'im Baum',
@@ -1009,7 +1018,7 @@ export const DE: Readonly<Record<string, string>> = {
   'crew.tally.juniors': '{{count}} Juniors auf der Etage',
   'crew.tally.seniors': '{{count}} Seniors auf der Etage',
   'crew.tally.managers': '{{count}} Manager auf der Etage',
-  'epic.0.name': 'Ein neues Backlog',
+  'epic.0.name': 'Ein neuer Backlog',
   'epic.1.name': 'Das Legacy schlägt zurück',
   'epic.2.name': 'Die Rückkehr der Zwischenablage',
   'epic.3.name': 'Das Erwachen der Konflikte',
@@ -1023,14 +1032,17 @@ export const DE: Readonly<Record<string, string>> = {
     'Auf Kredit genehmigen: {{owed}} SP Schulden, getilgt aus der Hälfte jedes späteren Tickets',
   'hud.debt': 'tilgt {{owed}} SP',
   'hud.goal.credit': '{{pct}} % bis ADR-{{adr}} · auf Kredit genehmigbar',
-  'acceptance.card.kicker': 'Abnahmetest {{n}} von {{of}}',
-  'acceptance.card.ask': 'Klick die pinken Tickets:',
+  'acceptance.card.kicker': 'Abnahme · {{n}} von {{of}} unterschrieben',
+  'acceptance.card.retest': 'Nachtest · {{n}} von {{of}} unterschrieben',
+  'acceptance.card.ask': 'Sammle die pinken Tickets ein:',
   'acceptance.card.count': '{{picked}} von {{goal}} aufgesammelt',
+  'acceptance.card.discount': '−{{n}} durch deine Knoten',
+  'acceptance.card.weight': 'jeder zählt ×{{n}}',
   'acceptance.card.rule':
-    'Ziel rechtzeitig: sauber, Überstunden ×{{mult}} steigen',
+    'verfehlt: Nachtest, Treffer bleiben · Überstunden ×{{mult}}',
   'acceptance.card.steps': 'Abnahmekriterien',
   'acceptance.card.crew':
-    'Das Team sitzt im Abnahme-Meeting. Nur deine Klicks zählen.',
+    'Das Team sitzt im Abnahme-Meeting. Nur deine Hand zählt.',
   'board.jackpot':
     'PERFECT STORM — das ganze Board abgerechnet, unter Eskalation und Hotfix',
   'release.phase.incident': 'Incident-Review',
@@ -1101,21 +1113,23 @@ export const DE: Readonly<Record<string, string>> = {
   'moment.closeout.chip': 'Unterschrieben',
   'moment.closeout.action': 'Zum Board: Abnahme starten',
   'moment.closeout.context':
-    'Acht Architecture Decision Records wurden genehmigt, keiner zurückgenommen. Das Backlog steht auf Rekordhöhe. Der Kunde möchte das Projekt vor dem nächsten Budgetzyklus abschließen.',
+    'Acht Architecture Decision Records wurden genehmigt, keiner zurückgenommen. Der Backlog steht auf Rekordhöhe. Der Kunde möchte das Projekt vor dem nächsten Budgetzyklus abschließen.',
   'moment.closeout.decision':
     'Formale Abnahme beginnen. Der Kunde prüft die Lieferung Kriterium für Kriterium, eine Arbeitslinie je Kriterium. Das Team sitzt im Abnahme-Meeting; die Tickets sammelst du selbst ein.',
   'moment.closeout.consequences':
-    'Jeder Test läuft zwanzig Sekunden; was seine Linie in dieser Zeit liefert, ist pink markiert. Sammelst du genug davon von Hand ein, ist das Kriterium sofort sauber unterschrieben: eine Auszeichnung und mehr Überstunden auf jedes Ticket. Läuft die Zeit ab, wird es mit Befund unterschrieben. Offene Hotfixes, Eskalationen und Quartalsenden verfallen.',
+    'Jeder Test läuft fünfzehn Sekunden; was seine Linie in dieser Zeit liefert, ist pink markiert. Sammelst du genug davon von Hand ein, wird das Kriterium am Ende der Zeit unterschrieben: eine Auszeichnung und mehr Überstunden auf jedes Ticket. Reicht es nicht, geht die Linie ans Ende der Schlange zu einem Nachtest von zehn Sekunden, ihre Treffer bleiben. Jeder gekaufte Knoten einer Linie senkt ihr Ziel; ihr Verdoppler oder Retainer zählt jeden Treffer doppelt. Offene Hotfixes, Eskalationen, Quartalsenden, Pizza-Gutscheine und P0s verfallen, und im Endspurt kommen keine neuen.',
   'moment.closeout.approved':
-    'Meridian Procurement Agent (automatisiert), im Auftrag des Programme Boards, Quorum nicht erforderlich.',
+    'Meridian Procurement Agent (automatisiert), im Auftrag des Programmausschusses, Quorum nicht erforderlich.',
   'moment.closeout.comments': 'LGTM.',
   'postmortem.stamp': 'ABGENOMMEN',
   'postmortem.stamp.by': 'Meridian Financial Group · ungelesen unterschrieben',
   'postmortem.well.criteria.all':
-    'Alle {{total}} Abnahmekriterien geprüft. Keines davon von einem Menschen.',
-  'award.a-findings.label': 'Mit Befund unterschrieben',
+    'Alle {{total}} Abnahmekriterien im ersten Durchgang geprüft. Die Revision fragt, wie.',
+  'postmortem.well.criteria.retest':
+    'Alle {{total}} Abnahmekriterien geprüft, nach einem Nachtest. Die Befunde wurden als erledigt geschlossen.',
+  'award.a-findings.label': 'Zurückgeschickt',
   'award.a-findings.blurb':
-    'Ein Kriterium lief aus der Zeit und wurde trotzdem unterschrieben. Der Befund liegt jetzt in Phase zwei.',
+    'Ein Kriterium hat sein Ziel verfehlt und ging zurück in die Schlange. Der Kunde nannte es Sorgfalt.',
   'award.a-over-budget.label': 'Über Budget',
   'award.a-over-budget.blurb':
     'Das Budget hat 20 Brd. € überschritten, bevor das letzte Kriterium unterschrieben war. Der Kunde hat eine passende Erhöhung genehmigt.',
@@ -1125,17 +1139,17 @@ export const DE: Readonly<Record<string, string>> = {
     'HOTFIX AUF DEM BOARD · ERST IHN, DANN DIE ESKALATION, DANN DAS QUARTALSENDE',
   'board.buff.combo.live':
     'HOTFIX LÄUFT · JETZT DIE ESKALATION, DANN DAS QUARTALSENDE',
-  'postmortem.well.criteria.findings':
-    '{{clean}} von {{total}} Abnahmekriterien geprüft. Die übrigen {{findings}} wurden mit Befund unterschrieben und nach Phase zwei verschoben.',
-  'award.c-findings-0.label': 'Mit Befund: Code-Stil',
-  'award.c-findings-1.label': 'Mit Befund: Abwärtskompatibilität',
-  'award.c-findings-2.label': 'Mit Befund: Testsuite',
-  'award.c-findings-3.label': 'Mit Befund: Merge-Strategie',
-  'award.c-findings-4.label': 'Mit Befund: Dokumentation',
-  'award.c-findings-5.label': 'Mit Befund: Wissenstransfer',
-  'award.c-findings-6.label': 'Mit Befund: Abschaltung',
-  'award.c-findings-7.label': 'Mit Befund: Architektur',
-  'award.c-findings-8.label': 'Mit Befund: Performance',
+  'postmortem.well.criteria.retests':
+    'Alle {{total}} Abnahmekriterien geprüft, nach {{findings}} Nachtests. Die Befunde wurden als erledigt geschlossen.',
+  'award.c-findings-0.label': 'Nachtest: Code-Stil',
+  'award.c-findings-1.label': 'Nachtest: Abwärtskompatibilität',
+  'award.c-findings-2.label': 'Nachtest: Testsuite',
+  'award.c-findings-3.label': 'Nachtest: Merge-Strategie',
+  'award.c-findings-4.label': 'Nachtest: Dokumentation',
+  'award.c-findings-5.label': 'Nachtest: Wissenstransfer',
+  'award.c-findings-6.label': 'Nachtest: Abschaltung',
+  'award.c-findings-7.label': 'Nachtest: Architektur',
+  'award.c-findings-8.label': 'Nachtest: Performance',
   'award.c-findings-0.blurb': 'Der Linter steht jetzt im Backlog.',
   'award.c-findings-1.blurb':
     'Die Kompatibilität wird in einem künftigen Release wiederhergestellt.',

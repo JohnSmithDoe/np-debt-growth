@@ -90,6 +90,10 @@ const maxedLast = (rows: readonly Row[]): readonly Row[] => [
   ...rows.filter((row) => row.maxed),
 ];
 
+/** The newest line is the one worth buying; older ones stay reachable below it. */
+const newestFirst = <T>(rows: readonly T[]): readonly T[] =>
+  [...rows].reverse();
+
 const percent = (mult: number): string => `+${Math.round((mult - 1) * 100)}%`;
 
 const samePriced = (a: Consultancy, b: Consultancy): boolean =>
@@ -157,7 +161,7 @@ export class SupplyPanelComponent {
 
   readonly #affordable = computed<Affordable>(
     () => {
-      const budget = this.#store.budget();
+      const budget = this.#store.inAcceptance() ? 0 : this.#store.budget();
       const keys = (rows: readonly Row[]): ReadonlySet<string> =>
         new Set(
           rows
@@ -225,8 +229,8 @@ export class SupplyPanelComponent {
   }
 
   #spawnerRows(state: Consultancy): readonly Row[] {
-    return SPAWNERS.filter((row) =>
-      economy.spawnerUnlocked(state, row.adr)
+    return newestFirst(
+      SPAWNERS.filter((row) => economy.spawnerUnlocked(state, row.adr))
     ).map((row) => {
       const held = economy.spawnerCount(state, row.adr);
       const maxed = held >= SPAWNER_CAP;
@@ -279,8 +283,8 @@ export class SupplyPanelComponent {
   });
 
   #rateRows(state: Consultancy): readonly Row[] {
-    return SPAWNED_TICKET_IDS.filter((id) =>
-      economy.incomeUnlocked(state, id)
+    return newestFirst(
+      SPAWNED_TICKET_IDS.filter((id) => economy.incomeUnlocked(state, id))
     ).map((id) => {
       const held = economy.incomeLevel(state, id);
       const maxed = held >= INCOME_CAP;
@@ -348,7 +352,29 @@ export class SupplyPanelComponent {
     maxedLast(this.#tabRows(this.tab()))
   );
 
+  /** The "more after that" note follows the last teaser, ahead of maxed rows. */
+  readonly moreAfter = computed(() => {
+    const more =
+      this.tab() === 'supply'
+        ? this.locked()
+        : this.tab() === 'income'
+          ? this.rateLocked()
+          : 0;
+    if (more === 0) return null;
+    const teaser = this.rows().findLast((row) => row.teaser);
+    return teaser
+      ? {
+          key: teaser.key,
+          text: this.#say(
+            this.tab() === 'supply' ? 'rail.more.adr' : 'rail.more.rate',
+            { count: more }
+          ),
+        }
+      : null;
+  });
+
   readonly etas = computed<ReadonlyMap<string, Eta>>(() => {
+    if (this.#store.inAcceptance()) return new Map();
     const budget = this.#store.budget();
     const rate = this.#rate();
     const etas = new Map<string, Eta>();
@@ -399,6 +425,12 @@ export class SupplyPanelComponent {
       this.#holdTimer = setTimeout(again, holdGapMs(bought));
     };
     this.#holdTimer = setTimeout(again, HOLD_REPEAT.delayMs);
+  }
+
+  buyMax(key: string): void {
+    this.release();
+    const tab = this.tab();
+    while (this.#buy(tab, key));
   }
 
   release(): void {

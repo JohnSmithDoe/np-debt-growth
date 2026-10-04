@@ -8,6 +8,7 @@ import {
   formatCompactWhole,
 } from '../../@shared/util/format-quantity';
 import type { Board, SprintSlot } from '../../game/model/board.model';
+import { inTest } from '../../game/model/board.model';
 import { pickTouching, pickWithin } from '../../game/util/board';
 import { WONT_FIX_FADE_MS } from '../../game/model/balance/flow';
 import { hazardLabelKey } from '../../game/model/hazard.model';
@@ -43,6 +44,7 @@ import {
   LANE,
   RARE_LIFT,
   SPRINT_STRIP_HEIGHT,
+  UNDER_TEST,
   VOTES,
   WONT_FIX_FADE,
 } from '../model/board.consts';
@@ -207,6 +209,11 @@ export class BoardScene extends CbScene {
   #carryingFresh = false;
   #spawnerCount = (adr: number): number => this.deps.spawnerCount(adr);
   #seniorSeat = (seat: number): number => this.deps.seniorPoolSeat(seat);
+  #tested = (id: number): boolean => {
+    const board = this.deps.board();
+    const ticket = board.byId.get(id);
+    return ticket !== undefined && inTest(board, ticket);
+  };
   #onLand = (
     id: number,
     type: TicketTypeId,
@@ -366,7 +373,14 @@ export class BoardScene extends CbScene {
     this.#carryingFresh = false;
     parts.heap.sync(board, this.#onLand, this.#onGone);
     parts.heap.autoCloses(this.deps.autoClosed());
-    parts.heap.underTest(this.deps.underTest());
+    const test = this.deps.underTest();
+    this.floatAlpha = test === null ? 1 : UNDER_TEST.others;
+    parts.heap.underTest(test);
+    parts.flyers.shade(
+      test === null ? 1 : UNDER_TEST.others,
+      this.#tested,
+      UNDER_TEST.ink
+    );
     parts.crew.sync(board, board.juniors, this.deps.womanEvery('juniors'));
     parts.managers.sync(
       board,
@@ -384,7 +398,10 @@ export class BoardScene extends CbScene {
     parts.bubbles.hear(parts.managers);
 
     parts.spawners.update(step);
-    parts.votes.update(this.deps.coaches(), step);
+    parts.votes.update(
+      this.deps.underTest() === null ? this.deps.coaches() : 0,
+      step
+    );
     parts.heap.update(step);
     parts.crew.update(step);
     parts.seniors.update(step);

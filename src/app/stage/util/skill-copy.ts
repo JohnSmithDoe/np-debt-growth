@@ -1,5 +1,10 @@
 import { LINE_EFFECT_PARAMS } from '../../game/model/purchase-copy.model';
 import type { SkillEffect, SkillNode } from '../../game/model/skill.model';
+import {
+  LINE_COUNT,
+  lineFinisherId,
+  lineNodeIds,
+} from '../../game/model/skill.model';
 import { releasePhaseKey } from '../../game/model/round.model';
 import { ticketLabelKey } from '../../game/model/ticket.model';
 import {
@@ -8,6 +13,7 @@ import {
   PIZZA_MS,
   PIZZA_RUSH,
 } from '../../game/model/balance/flow';
+import { formatPoints } from '../../@shared/util/format-quantity';
 import type { SceneDeps } from '../model/scene-deps.model';
 
 interface EffectText {
@@ -44,10 +50,13 @@ function describe(effect: SkillEffect): EffectText {
       return { key: 'skill.effect.clickRadius', params: pct(effect.mult) };
     case 'spPerClose':
       return effect.target === undefined
-        ? { key: 'skill.effect.spPerClose', params: { count: effect.add } }
+        ? {
+            key: 'skill.effect.spPerClose',
+            params: { count: formatPoints(effect.add) },
+          }
         : {
             key: 'skill.effect.spPerClose.ticket',
-            params: { count: effect.add, ticket: effect.target },
+            params: { count: formatPoints(effect.add), ticket: effect.target },
           };
     case 'crewSp':
       return { key: 'skill.effect.crewSp' };
@@ -180,6 +189,17 @@ function oneEffect(effect: SkillEffect, text: SceneDeps['text']): string {
   });
 }
 
+const ACCEPTANCE_NOTE: ReadonlyMap<string, string> = new Map(
+  Array.from({ length: LINE_COUNT }, (_, line) =>
+    lineNodeIds(line).map((id): [string, string] => [
+      id,
+      id === lineFinisherId(line)
+        ? 'skill.effect.acceptance.finisher'
+        : 'skill.effect.acceptance.goal',
+    ])
+  ).flat()
+);
+
 export function skillEffectText(
   node: SkillNode,
   level: number,
@@ -188,9 +208,13 @@ export function skillEffectText(
   const memo = `${node.id}:${level}`;
   const known = BY_LEVEL.get(memo);
   if (known !== undefined) return known;
-  const resolved = (node.levels[level - 1]?.effects ?? [])
-    .map((effect) => oneEffect(effect, text))
-    .join(' · ');
+  const note = ACCEPTANCE_NOTE.get(node.id);
+  const resolved = [
+    ...(node.levels[level - 1]?.effects ?? []).map((effect) =>
+      oneEffect(effect, text)
+    ),
+    ...(note ? [text(note)] : []),
+  ].join(' · ');
   BY_LEVEL.set(memo, resolved);
   return resolved;
 }

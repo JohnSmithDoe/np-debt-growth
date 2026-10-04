@@ -5,9 +5,12 @@ import {
   CREDIT_FROM_ADR,
   CREDIT_INTEREST,
   CRITERION_BONUS,
+  CRITERION_FINISHER_PICK,
   CRITERION_GOAL,
+  CRITERION_GOAL_DISCOUNT,
   CRITERION_MS,
   CRITERION_OVERTIME,
+  CRITERION_RETEST_MS,
   CRITERION_SPAWN_PER_SEC,
 } from '../model/balance/progression';
 import {
@@ -31,7 +34,12 @@ import {
   criterionAwardId,
   findingsAwardId,
 } from '../model/award.model';
-import { FINAL_SKILL_ID, adrPrice } from '../model/skill.model';
+import {
+  FINAL_SKILL_ID,
+  adrPrice,
+  lineFinisherId,
+  lineNodeIds,
+} from '../model/skill.model';
 import { TICKET_TYPES } from '../model/ticket.model';
 import { addTicket } from '../util/board';
 import * as economy from '../util/economy';
@@ -52,9 +60,12 @@ function place(
   return ticket!.id;
 }
 
-/** Signed with nothing picked; `index` criteria signed, the current one on `line`. */
+const lines = (from: number, to: number): number[] =>
+  Array.from({ length: Math.max(0, to - from) }, (_, at) => from + at);
+
+/** The lines before `line` signed clean, `line` under test with `picked` banked. */
 const signed = (
-  index = 0,
+  line = 0,
   picked = 0,
   ranMs = 0,
   extra: Partial<Consultancy> = {}
@@ -64,11 +75,11 @@ const signed = (
     runMs: 100_000 + ranMs,
     signedBudget: 0,
     criterion: {
-      index,
-      line: index % CRITERIA_COUNT,
+      window: line,
       sinceMs: 100_000,
-      picked,
-      clean: [],
+      queue: lines(line, CRITERIA_COUNT),
+      picked: lines(0, CRITERIA_COUNT).map((at) => (at === line ? picked : 0)),
+      clean: lines(0, line),
       flagged: [],
       findings: 0,
     },
@@ -90,8 +101,10 @@ describe('the acceptance criteria', () => {
     expect(economy.criterionNow(next)).toEqual({
       index: 0,
       line: 0,
+      window: 0,
       picked: 0,
       goal: CRITERION_GOAL,
+      retest: false,
     });
     expect(economy.criterionNow(consultancy({ tier: 8 }))).toBeNull();
   });
@@ -110,26 +123,78 @@ describe('the acceptance criteria', () => {
 
   it('plays the whole window, then signs clean if the hand reached the goal', () => {
     const early = signed(0, CRITERION_GOAL, CRITERION_MS - 1);
-    expect(economy.stepCriterion(early).criterion?.index).toBe(0);
+    expect(economy.stepCriterion(early).criterion?.queue[0]).toBe(0);
     const next = economy.stepCriterion(signed(0, CRITERION_GOAL, CRITERION_MS));
-    expect(next.criterion).toMatchObject({ index: 1, line: 1, picked: 0 });
+    expect(next.criterion).toMatchObject({ window: 1, clean: [0] });
+    expect(next.criterion?.queue[0]).toBe(1);
     expect(economy.overtime(next)).toBe(ACCEPTANCE.value + CRITERION_OVERTIME);
   });
 
-  it('signs with findings when the window closes short: no overtime, no award', () => {
-    const open = signed(3, CRITERION_GOAL - 1, CRITERION_MS - 1);
-    expect(economy.stepCriterion(open).criterion?.index).toBe(3);
+  it('sends a line short of its goal to the back of the queue: no overtime, no award', () => {
     const slow = economy.stepCriterion(
       signed(3, CRITERION_GOAL - 1, CRITERION_MS)
     );
-    expect(slow.criterion).toMatchObject({ index: 4, findings: 1, clean: [] });
+    expect(slow.criterion).toMatchObject({
+      queue: [4, 5, 6, 7, 8, 3],
+      flagged: [3],
+      findings: 1,
+    });
+    expect(slow.criterion?.picked[3]).toBe(CRITERION_GOAL - 1);
     expect(economy.criteriaVerified(slow)).toBe(3);
+    expect(economy.accepted(slow)).toBe(false);
     expect(AWARD_BY_ID.get(criterionAwardId(3))?.when(slow)).toBe(false);
   });
 
-  it('toasts a criterion signed with findings', () => {
+  it('re-tests for a shorter window and keeps what the hand already picked', () => {
+    const missed = economy.stepCriterion(
+      signed(8, CRITERION_GOAL - 2, CRITERION_MS)
+    );
+    expect(economy.criterionNow(missed)).toMatchObject({
+      line: 8,
+      retest: true,
+      picked: CRITERION_GOAL - 2,
+    });
+    expect(economy.criterionMsLeft(missed)).toBe(CRITERION_RETEST_MS);
+    const topped = economy.pickUnderTest(missed, 2);
+    const later = { ...topped, runMs: topped.runMs + CRITERION_RETEST_MS };
+    const done = economy.stepCriterion(later);
+    expect(economy.accepted(done)).toBe(true);
+    expect(done.criterion?.findings).toBe(1);
+  });
+
+  it('toasts a line sent back for a re-test', () => {
     const slow = economy.stepCriterion(signed(3, 0, CRITERION_MS));
     expect(AWARD_BY_ID.get(findingsAwardId(3))?.when(slow)).toBe(true);
+  });
+
+  it("takes the line's own nodes off its goal", () => {
+    const owned = Object.fromEntries(lineNodeIds(0).map((id) => [id, 1]));
+    const bare = signed(0);
+    const maxed = signed(0, 0, 0, {
+      skills: { ...bare.skills, ...owned },
+    });
+    expect(economy.criterionGoal(bare, 0)).toBe(CRITERION_GOAL);
+    expect(economy.criterionGoal(maxed, 0)).toBe(
+      CRITERION_GOAL - CRITERION_GOAL_DISCOUNT
+    );
+  });
+
+  it("counts every pickup double once the line's finisher is bought", () => {
+    const finisher = lineFinisherId(8)!;
+    expect(lineNodeIds(8)).toContain(finisher);
+    const bare = signed(8);
+    const kept = signed(8, 0, 0, {
+      skills: { ...bare.skills, [finisher]: 1 },
+    });
+    expect(economy.pickUnderTest(bare, 3).criterion?.picked[8]).toBe(3);
+    expect(economy.pickUnderTest(kept, 3).criterion?.picked[8]).toBe(
+      3 * CRITERION_FINISHER_PICK
+    );
+  });
+
+  it('spawns no pizza while the crew is in the meeting', () => {
+    const skills = { ...signed(0).skills, pizza: 1 };
+    expect(economy.spawnRate(signed(0, 0, 0, { skills }), 'pizza')).toBe(0);
   });
 
   it('spawns the line under test at one rate whatever its spawners, the rest at their own', () => {
@@ -151,7 +216,7 @@ describe('the acceptance criteria', () => {
   });
 
   it('asks for less than the window spawns', () => {
-    expect(CRITERION_GOAL).toBe(15);
+    expect(CRITERION_GOAL).toBe(32);
     expect(CRITERION_MS).toBe(15_000);
     expect(CRITERION_GOAL).toBeLessThan(
       CRITERION_SPAWN_PER_SEC * (CRITERION_MS / 1000)
@@ -173,7 +238,7 @@ describe('the acceptance criteria', () => {
     expect(inTest(store.board, store.board.byId.get(before)!)).toBe(false);
     expect(inTest(store.board, store.board.byId.get(during)!)).toBe(true);
     store.harvest([before, during]);
-    expect(store.snapshot().criterion!.picked).toBe(1);
+    expect(store.snapshot().criterion!.picked[0]).toBe(1);
   });
 
   it('feeds every line under test the same: no interest, no comebacks', () => {
@@ -185,12 +250,11 @@ describe('the acceptance criteria', () => {
     expect(store.board.pending).toHaveLength(0);
   });
 
-  it('keeps the hand-only cards at their own rate during the push', () => {
+  it('spawns no hand-only card during the push: only the pink cards ask for the hand', () => {
     const before = consultancy({ tier: 8, skills: { root: 1 } });
-    expect(economy.spawnRate(signed(0), 'hotfix')).toBeCloseTo(
-      economy.spawnRate(before, 'hotfix'),
-      9
-    );
+    expect(economy.spawnRate(before, 'hotfix')).toBeGreaterThan(0);
+    for (const id of ['hotfix', 'escalation', 'incident', 'invite'] as const)
+      expect(economy.spawnRate(signed(0), id)).toBe(0);
   });
 
   it('is accepted once every criterion is signed', () => {
@@ -215,7 +279,7 @@ describe('the acceptance criteria', () => {
       place(store, 'bug'),
       place(store, 'legacy'),
     ]);
-    expect(store.snapshot().criterion!.picked).toBe(2);
+    expect(store.snapshot().criterion!.picked[0]).toBe(2);
   });
 
   it('sends the whole crew into the acceptance meeting', () => {
@@ -232,7 +296,7 @@ describe('the acceptance criteria', () => {
 });
 
 describe('the closeout', () => {
-  it('voids the hotfixes, escalations and quarter ends held on the board', () => {
+  it('voids every hand-only card held on the board', () => {
     const store = storeWith({
       tier: 8,
       storyPoints: 1e9,
@@ -241,9 +305,9 @@ describe('the closeout', () => {
     place(store, 'hotfix');
     place(store, 'escalation');
     place(store, 'quarter');
-    const incident = place(store, 'incident');
+    place(store, 'incident');
     expect(store.buySkill(FINAL_SKILL_ID)).toBe(true);
-    expect(store.board.rares.map((ticket) => ticket.id)).toEqual([incident]);
+    expect(store.board.rares).toEqual([]);
   });
 });
 

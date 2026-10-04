@@ -61,22 +61,25 @@ export interface Consultancy {
   readonly lifetimeAwardSp: number;
 }
 
-/** The acceptance criterion under test: its line and how many of its tickets the hand picked up. */
+/** The acceptance push: lines still to sign, the head under test, re-tests queued at the back. */
 export interface CriterionRun {
-  readonly index: number;
-  readonly line: number;
+  /** Test windows opened so far; tags the cards spawned for the open one. */
+  readonly window: number;
   readonly sinceMs: number;
-  readonly picked: number;
-  /** Lines signed clean, and lines signed with findings. */
+  readonly queue: readonly number[];
+  /** Pickups banked per line: a re-test asks only for the rest. */
+  readonly picked: readonly number[];
+  /** Lines signed, in signing order, and lines that missed a window at least once. */
   readonly clean: readonly number[];
   readonly flagged: readonly number[];
+  /** Windows that closed short of their goal. */
   readonly findings: number;
 }
 
 export const CRITERIA_COUNT = 9;
 
 export function criteriaPassed(state: Consultancy): number {
-  return Math.min(CRITERIA_COUNT, state.criterion?.index ?? 0);
+  return Math.min(CRITERIA_COUNT, state.criterion?.clean.length ?? 0);
 }
 
 export function resumed(state: Consultancy, now: number): Consultancy {

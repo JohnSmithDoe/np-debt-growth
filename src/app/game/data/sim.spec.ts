@@ -10,6 +10,7 @@ import type { Buy } from '../util/advisor';
 import { advise } from '../util/advisor';
 import { DEFAULT_POLICY, advisedSpend, autoplay } from '../util/autoplay';
 import { pickTouching } from '../util/board';
+import { inTest } from '../model/board.model';
 import * as economy from '../util/economy';
 import { flow } from '../util/sim';
 
@@ -37,6 +38,8 @@ function sweep(store: GameStore, credit: number): number {
     let aim = store.board.tickets[0];
     for (const ticket of store.board.tickets) {
       const better =
+        Number(inTest(store.board, ticket)) -
+          Number(inTest(store.board, aim!)) ||
         Number(ticket.golden) - Number(aim!.golden) ||
         worth(ticket.type) - worth(aim!.type);
       if (better > 0) aim = ticket;

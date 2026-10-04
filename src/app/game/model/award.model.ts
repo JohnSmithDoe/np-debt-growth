@@ -9,6 +9,8 @@ export interface Award {
   readonly id: string;
   readonly kind: 'milestone' | 'achievement';
   readonly weight: AwardWeight;
+  /** Confirmed by a running total: it comes with playing on, not with a choice. */
+  readonly passive?: boolean;
   readonly when: (state: Consultancy) => boolean;
 }
 
@@ -93,12 +95,14 @@ export const AWARDS: readonly Award[] = [
     id: 'a-250',
     kind: 'achievement',
     weight: 'small',
+    passive: true,
     when: (s) => s.lifetimeClosed >= 250,
   },
   {
     id: 'a-first-thousand-billed',
     kind: 'achievement',
     weight: 'small',
+    passive: true,
     when: (s) => s.lifetimeBilled >= 1_000,
   },
   {
@@ -111,24 +115,28 @@ export const AWARDS: readonly Award[] = [
     id: 'a-500',
     kind: 'achievement',
     weight: 'small',
+    passive: true,
     when: (s) => s.lifetimeClosed >= 500,
   },
   {
     id: 'a-ten-thousand-billed',
     kind: 'achievement',
     weight: 'small',
+    passive: true,
     when: (s) => s.lifetimeBilled >= 10_000,
   },
   {
     id: 'a-sprints-fifty',
     kind: 'achievement',
     weight: 'small',
+    passive: true,
     when: (s) => s.lifetimeRounds >= 50,
   },
   {
     id: 'a-thousand',
     kind: 'achievement',
     weight: 'medium',
+    passive: true,
     when: (s) => s.lifetimeClosed >= 1_000,
   },
   {
@@ -153,12 +161,14 @@ export const AWARDS: readonly Award[] = [
     id: 'a-million',
     kind: 'achievement',
     weight: 'medium',
+    passive: true,
     when: (s) => s.lifetimeBilled >= 1_000_000,
   },
   {
     id: 'a-ten-thousand',
     kind: 'achievement',
     weight: 'medium',
+    passive: true,
     when: (s) => s.lifetimeClosed >= 10_000,
   },
   {
@@ -177,48 +187,56 @@ export const AWARDS: readonly Award[] = [
     id: 'a-hundred-thousand',
     kind: 'achievement',
     weight: 'medium',
+    passive: true,
     when: (s) => s.lifetimeClosed >= 100_000,
   },
   {
     id: 'a-billion',
     kind: 'achievement',
     weight: 'large',
+    passive: true,
     when: (s) => s.lifetimeBilled >= 1_000_000_000,
   },
   {
     id: 'a-hundred-billion',
     kind: 'achievement',
     weight: 'large',
+    passive: true,
     when: (s) => s.lifetimeBilled >= 1e11,
   },
   {
     id: 'a-trillion',
     kind: 'achievement',
     weight: 'large',
+    passive: true,
     when: (s) => s.lifetimeBilled >= 1e12,
   },
   {
     id: 'a-ten-trillion',
     kind: 'achievement',
     weight: 'large',
+    passive: true,
     when: (s) => s.lifetimeBilled >= 1e13,
   },
   {
     id: 'a-hundred-trillion',
     kind: 'achievement',
     weight: 'large',
+    passive: true,
     when: (s) => s.lifetimeBilled >= 1e14,
   },
   {
     id: 'a-quadrillion',
     kind: 'achievement',
     weight: 'large',
+    passive: true,
     when: (s) => s.lifetimeBilled >= 1e15,
   },
   {
     id: 'a-ten-quadrillion',
     kind: 'achievement',
     weight: 'large',
+    passive: true,
     when: (s) => s.lifetimeBilled >= 1e16,
   },
   {
@@ -264,6 +282,7 @@ export const AWARDS: readonly Award[] = [
     id: 'a-million-tickets',
     kind: 'achievement',
     weight: 'large',
+    passive: true,
     when: (s) => s.lifetimeClosed >= 500_000,
   },
   {

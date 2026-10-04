@@ -176,6 +176,7 @@ describe('the German cut', () => {
 
   it('uses the LONG scale, where English used the short one', () => {
     expect(formatQuantity(1e6)).toBe('1,00 Million');
+    expect(formatQuantity(8.4e6)).toBe('8,40 Millionen');
     expect(formatQuantity(1e9)).toBe('1,00 Milliarde');
     expect(formatQuantity(1e12)).toBe('1,00 Billion');
     expect(formatQuantity(1e15)).toBe('1,00 Billiarde');
@@ -206,14 +207,14 @@ describe('the German cut', () => {
 
   it('trails the € after a non-breaking space', () => {
     expect(formatMoney(6_000)).toBe('6.000 €');
-    expect(formatCompactMoney(47_500)).toBe('47,5k €');
+    expect(formatCompactMoney(47_500)).toBe('47,5\u00A0k €');
   });
 
   it('abbreviates with the German symbols', () => {
-    expect(formatCompact(1.5e6)).toBe('1,50Mio');
-    expect(formatCompact(1.5e9)).toBe('1,50Mrd');
-    expect(formatCompact(1.5e12)).toBe('1,50Bio');
-    expect(formatCompact(1_000)).toBe('1,00k');
+    expect(formatCompact(1.5e6)).toBe('1,50\u00A0Mio');
+    expect(formatCompact(1.5e9)).toBe('1,50\u00A0Mrd');
+    expect(formatCompact(1.5e12)).toBe('1,50\u00A0Bio');
+    expect(formatCompact(1_000)).toBe('1,00\u00A0k');
   });
 
   it('promotes a rounding overflow onto the German rung above', () => {

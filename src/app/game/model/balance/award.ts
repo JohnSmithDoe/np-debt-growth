@@ -13,3 +13,7 @@ export const AWARD_WEIGHT_UNITS: Readonly<Record<AwardWeight, number>> = {
   medium: 2,
   large: 4,
 };
+
+/** From this tier a passive achievement pays `AWARD_PASSIVE_SHARE` of its reward. */
+export const AWARD_PASSIVE_FROM_TIER = 5;
+export const AWARD_PASSIVE_SHARE = 0.25;

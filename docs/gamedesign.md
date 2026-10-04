@@ -135,7 +135,9 @@ Value nodes and rate rows lift euros only. The run opens with one developer and 
 **Achievement rewards** (`economy.grantAwards`): every `kind: 'achievement'` in
 `model/award.model.ts` pays once, when it fires, `AWARD_UNIT[tier]` × `AWARD_WEIGHT_UNITS[weight]`
 (small 1, medium 2, large 4) from `balance/award.ts`, in euros below `AWARD_SP_FROM_TIER` (ADR-3)
-and in SP from it on. SP rewards go through the credit line like any SP. The units are fixed per
+and in SP from it on. From `AWARD_PASSIVE_FROM_TIER` 5 an achievement confirmed by a running
+total (`passive`: billed, closed, sprints) pays `AWARD_PASSIVE_SHARE` 25 %: an active hand crossed
+several billing thresholds in seconds and was paid a whole ADR. SP rewards go through the credit line like any SP. The units are fixed per
 tier, never lower on a higher one, and sized against that tier's prices: big enough to show, small
 enough that no tier is skipped. Milestones (tiers, first close, criteria) pay nothing, and nothing
 pays once the tree is signed off: those count only in the post-mortem. Rewards are a bonus, so a
@@ -188,7 +190,7 @@ extends the escalation by `COMBO_EXTEND_MS` 3 s, and an escalation swept inside 
 extends the hotfix. A quarter end billed under both is a **jackpot**: the board bills ×2 and
 ×escalation at once, the sweep floats _Perfect storm_, and `lifetimeJackpots` counts it. The
 order is the skill: hotfix, escalation, then the quarter end on a full board, and it bills the
-board `JACKPOT_BONUS` 10 times over, story points included. The call line in `buffNotices` teaches it while a buff is
+board `JACKPOT_BONUS` 10 times over; its story points are capped at `JACKPOT_SP_SEC` 15 s of the build's SP income, so one combo cannot skip an ADR. The call line in `buffNotices` teaches it while a buff is
 live: an escalation held with no quarter end (`escalationHeld`), a quarter end held (`quarter`),
 both held with a hotfix on the board (`combo`) or live (`comboLive`), and both buffs live over a
 held quarter end (`storm`). The
@@ -434,15 +436,15 @@ record; the rail has no ADR panel.
 | 4   | 120 000   | `slop`     |
 | 5   | 160 000   | `rockstar` |
 | 6   | 480 000   | `zombie`   |
-| 7   | 3 600 000 | `rewrite`  |
-| 8   | 6 900 000 | `swarm`    |
+| 7   | 2 600 000 | `rewrite`  |
+| 8   | 5 400 000 | `swarm`    |
 
 The prices grow with the rung because SP income does. From ADR-3 on, every SP price — ADRs,
 extras, sprint sets, crew arms, line nodes — was cut by the rung it sits on (0.6 · 0.3 · 0.2 · 0.4 ·
 0.55 · 0.5 for tiers 3…8), so the opening keeps its pace and each later tier is quicker than the
 one before.
 
-**`signoff`** (8 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced so tier 8 is a short last act. Buying it
+**`signoff`** (8.5 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced so tier 8 is a short last act. Buying it
 opens the **Closeout Record** (`console/feature/moment-modal/`, the ADR format, signed by the
 client's procurement agent, comments "LGTM"), records the budget and billing it was signed at
 (`signedBudget`, `signedBilled`), and starts the **acceptance push** (`ACCEPTANCE` in
@@ -454,8 +456,8 @@ is gone until the run ends.
 - **The crew sits in the acceptance meeting** (`crewRules` interrupts every kind,
   `sim.collect` counts no crew): only the hand collects, so only the player moves a criterion.
 - **Acceptance criteria** (`CriterionRun` on the state, `economy.criterionNow`,
-  `economy.stepCriterion`): nine, one per line, lint first, each open for exactly
-  `CRITERION_MS` 15 s. The line under test spawns at `CRITERION_SPAWN_PER_SEC` 2.5 whatever its
+  `economy.stepCriterion`): nine, one per line, lint first, queued; the first window of each
+  is `CRITERION_MS` 15 s. The line under test spawns at `CRITERION_SPAWN_PER_SEC` 2.5 whatever its
   spawners (split across the types it produces). Only cards **spawned for the criterion** are
   its own (`BoardTicket.test`, `inTest`): they pulse pink (`UNDER_TEST`), a full board never
   displaces them, and each one the **hand** picks up counts (`economy.pickUnderTest`). Cards of
@@ -464,39 +466,46 @@ is gone until the run ends.
   nobody collects it, so the hand has to find the pink cards in the heap. In the push debt
   interest and Triage auto-close are off, nothing comes back, the line under test never rolls
   golden and no quarter end spawns, so every line is fed the same and only the hand closes it.
-  Every criterion plays its whole window; reaching the goal early does not skip it. When the
-  15 s are up it signs: **clean** if the hand has picked up `CRITERION_GOAL` 15, which confirms
-  its award (`c-criterion-<line>`) and adds `CRITERION_OVERTIME` 0.5 to the base ×2 overtime;
-  short of the goal it **signs with findings**: no overtime, no clean award, a
-  `c-findings-<line>` toast instead (the first also earns _Signed with findings_). The push
-  always lasts nine windows, 2 min 15 s.
+  Every window plays out in full; reaching the goal early does not skip it. The goal is
+  `CRITERION_GOAL` 32 less up to `CRITERION_GOAL_DISCOUNT` 10 for the share of the line's own
+  nodes bought (`economy.criterionGoal`, `lineNodeIds`), and once the line's finisher (double,
+  or retainer on a late line, `lineFinisherId`) is bought every pickup counts
+  `CRITERION_FINISHER_PICK` 2. When the window closes the line **signs** if its banked pickups
+  reach the goal, which confirms its award (`c-criterion-<line>`) and adds `CRITERION_OVERTIME`
+  0.5 to the base ×2 overtime; short of it the line goes to **the back of the queue** with its
+  pickups kept and is re-tested for `CRITERION_RETEST_MS` 10 s (a `c-findings-<line>` toast, the
+  first also earns _Sent back_). The run cannot end until all nine are signed; the advised
+  1 click/s player misses the two late lines whose retainers it skipped, twice each, and the push
+  takes about 2.9 min; a human-paced pink hunter (24–30 pickups a window) misses at most those two.
+  The card shows the node discount and the ×2 as chips; the line nodes' tooltips say so.
 - **The acceptance card** (`console/feature/acceptance-card/`, `GameStore.acceptance`) sits
   centred over the board: the test's number and name, the seconds left large (amber in the last
-  five), the tickets to click, picked against the goal, a draining time bar, and a dot per
-  criterion (clean, with findings, under test, to come).
-- **The closeout voids** the hotfixes, escalations and quarter ends held on the board
+  five), the tickets to sweep up, picked against the goal (Re-test in the kicker on a second window), a draining time bar, and a dot per
+  criterion (signed, sent back, under test, to come).
+- **The closeout voids** the hotfixes, escalations, quarter ends, pizza vouchers and P0s held on the board
   (`#voidVouchers` in the store), so buffs cannot be banked into the push, and cancels every
   meeting and fact; no hazard fires during the push, so no drought eats a test's window.
-- **Buffs** keep their own rate in the push, so hotfix and escalation are windows to time
-  rather than a constant.
+- **No hand-only card spawns in the push** (`economy.spawnRate`): only the pink cards ask for the
+  hand. While a window runs every other card, flyer, float, the crew and the vote beams draw at
+  `UNDER_TEST.others` 30 % alpha and pink cards are saturated on top.
 
 The run is accepted once every criterion is signed (`economy.accepted`, checked each store step
 and in the autoplayer); the budget passing €20 Qa on the way earns _Over budget_. An ACCEPTED
-stamp holds for 2.8 s before the post-mortem, which counts criteria verified and signed with
-findings, and ends on the office filmstrip.
+stamp holds for 2.8 s before the post-mortem, which counts the re-tests, and ends on the office
+filmstrip.
 Closing the engagement plays the story (`console/feature/story/`, finale act `story`): each office
 the run reached, full-frame, with one narrator line (`story.<adr>`, `story.outside` with the run's
 totals), `STORY_FRAME_MS` 14 s each or a click; then the closing credits over the leaving party.
 No prestige.
 
 **Approval on credit** (`purchase.creditOffer` / `approveOnCredit`): from ADR-4
-(`CREDIT_FROM_ADR`), the next ADR, or the closeout after ADR-8, can be approved holding
+(`CREDIT_FROM_ADR`) to ADR-6 (`CREDIT_UNTIL_ADR`) the next ADR can be approved holding
 `CREDIT_SHARE` 60 % of its price. The player pays what they hold; the rest (`CREDIT_INTEREST` 1,
 no interest) becomes `spDebt`, repaid out of `CREDIT_GARNISH` half of every later SP pickup
 (`economy.repaid`, in the store and the autoplayer), so the new rung's extras stay buyable. One
 loan at a time. The tree frames the square in gold, the HUD shows the debt, and the advisor
-recommends it (`Buy` kind `credit`): it shortens the late waits for the next ADR from 80–105 s to
-about a minute.
+recommends it (`Buy` kind `credit`). ADR-7, ADR-8 and the closeout are paid in full: after the ×14
+of ADR-7 a loan was repaid within seconds and an active hand crossed tiers 7–8 in under a minute.
 
 Every purchase is a pure step in `util/purchase.ts` (`buySkill`, `buyLine`, `buySpawner`,
 `buyIncome`); `GameStore` commits the result and handles the side effects.
@@ -573,8 +582,8 @@ game uses:
 
 Not counted: quarter bills and jackpots, pizza, incident reviews, and
 weather; outside the push each moves a real board's euros by 10 % at most. In the push the sim
-counts the hand's pickups of the line under test, and the 20 s window bounds a criterion either
-way. `data/sim.spec.ts` plays the same
+counts the hand's pickups of the line under test, its aimed clicks hunting the pink first as
+a player does. `data/sim.spec.ts` plays the same
 states on a real board (four seeds, averaged) and holds the sim within ×1.5, and plays a whole advised run on a real
 board and holds its acceptance within ×1.1 of the sim's, because per-tier error compounds
 over a run.
@@ -626,8 +635,8 @@ kept in settings) buys each pick the moment it is affordable.
 - `data/balance-invariants.spec.ts` guards the **shape**: monotone ladders, tiers numbered by
   position, every rung on the tree and chained, no dominated retype rung.
 - `data/balance.spec.ts` guards the **pacing** on the advised autoplayer (`advisedSpend`):
-  the run accepted in 18–22 min, the acceptance push 2–5 min, every tier's share of the run
-  within ±25 % of `TIER_CURVE` (3 · 4 · 3 · 2.25 · 1.75 · 1.5 · 1.25 · 1 · 0.75 min, tier 8 ending at
+  the run accepted in 18–22 min, the acceptance push 2–3.5 min with at most four re-tests, every
+  tier's share of the run within ±25 % of `TIER_CURVE` (3 · 4 · 3 · 2.25 · 1.75 · 1.5 · 1.3 · 1 · 0.85 min, tier 8 ending at
   sign-off: the opening at its own pace, then quicker every rung), and the crew's share — at least 5 %
   of the closes before `goldenCrew`, judged from three minutes after the first junior (the hand's
   gold outweighs their euros until then), and 4 % of the euros after it. Run with the
@@ -646,7 +655,7 @@ kept in settings) buys each pick the moment it is affordable.
 
 ```
 ADR-1 3.2    ADR-2 7.3    ADR-3 10.2   ADR-4 12.4   ADR-5 14.1   ADR-6 15.6
-ADR-7 16.7   ADR-8 17.6   signed off 18.3   accepted 21.3
+ADR-7 16.9   ADR-8 18.0   signed off 18.7   accepted 21.6   (4 re-tests: rewrite, swarm twice each)
 ```
 
 The cheapest-first run buys the whole tree. `sim.spec` holds a real board's acceptance within

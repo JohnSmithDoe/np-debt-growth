@@ -62,7 +62,7 @@ describe('HelpModalComponent', () => {
     TestBed.inject(HelpUiService).open();
 
     expect(component.tab()).toBe('game');
-    expect(component.haulSeconds()).toBe(HAUL_MS / 1000);
+    expect(component.haulSeconds()).toBe(String(HAUL_MS / 1000));
     expect(component.ceremonies().map((phase) => phase.id)).toEqual(
       RELEASE_PHASES.map((phase) => phase.id)
     );

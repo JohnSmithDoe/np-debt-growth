@@ -5,20 +5,16 @@
     }}</span>
   }
   @for (award of stack(); track award.id) {
-    <button
-      type="button"
+    <div
       class="award"
       [class]="award.weight"
       [class.milestone]="award.milestone"
-      (click)="dismiss(award.id)"
     >
       @if (award.pieces > 0) {
         <cb-confetti [pieces]="award.pieces" />
       }
       <cb-trophy class="pokal" />
-      <span class="kind chip">{{
-        (award.milestone ? 'award.milestone' : 'award.achievement') | translate
-      }}</span>
+      <span class="kind chip">{{ award.kindKey | translate }}</span>
       <span class="label">{{ award.labelKey | translate }}</span>
       <span class="blurb">{{ award.blurbKey | translate }}</span>
       @if (award.reward; as reward) {
@@ -27,7 +23,7 @@
         }}</span>
       }
       <span class="offscreen">{{ 'award.dismiss' | translate }}</span>
-    </button>
+    </div>
   }
 </div>
 <div class="pops" aria-hidden="true">

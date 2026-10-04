@@ -1,4 +1,5 @@
 import { LOGICAL_BOARD } from '../geometry';
+import type { TicketTypeId } from '../ticket.model';
 
 export const SPAWN_BURST_CAP = 12;
 
@@ -37,6 +38,11 @@ export const ticketLifeMs = (tier: number): number =>
   TICKET_LIFE_BY_TIER[Math.min(tier, TICKET_LIFE_BY_TIER.length - 1)]!;
 export const WONT_FIX_FADE_MS = 900;
 export const GOLDEN_LIFE_MS = 20_000;
+/** Hand-only cards that leave unclaimed; the buff cards stay to be held for a combo. */
+export const HAND_ONLY_LIFE_MS: Partial<Record<TicketTypeId, number>> = {
+  incident: 30_000,
+  pizza: 30_000,
+};
 
 export const TIER_BURST = { tier: 3, count: 10 } as const;
 

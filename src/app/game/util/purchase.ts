@@ -13,7 +13,11 @@ import { SPAWNER_FREE_HEADS, SPAWNERS } from '../model/spawner.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPE_IDS } from '../model/ticket.model';
 import type { PurchaseId } from '../model/balance/progression';
-import { CREDIT_FROM_ADR, PURCHASE_IDS } from '../model/balance/progression';
+import {
+  CREDIT_FROM_ADR,
+  CREDIT_UNTIL_ADR,
+  PURCHASE_IDS,
+} from '../model/balance/progression';
 import * as economy from './economy';
 
 function unmaxed(state: Consultancy, id: string): readonly string[] {
@@ -77,7 +81,8 @@ export function buySkill(state: Consultancy, id: string): Consultancy | null {
 }
 
 export function creditOffer(state: Consultancy, id: string): number | null {
-  if (state.tier + 1 < CREDIT_FROM_ADR) return null;
+  const adr = state.tier + 1;
+  if (adr < CREDIT_FROM_ADR || adr > CREDIT_UNTIL_ADR) return null;
   const next = nextAdrNodeId(state) ?? FINAL_SKILL_ID;
   if (id !== next || !skillAvailable(state, id)) return null;
   const cost = economy.skillRankCost(state, id);
@@ -129,7 +134,7 @@ function bought(state: Consultancy, id: string, cost: number): Consultancy {
     ...(id === FINAL_SKILL_ID
       ? {
           signedBudget: state.budget,
-          criterion: economy.openCriterion(state, 0),
+          criterion: economy.openCriterion(state),
         }
       : {}),
   };

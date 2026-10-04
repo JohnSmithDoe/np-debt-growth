@@ -1,3 +1,4 @@
+import { formatQuantity } from '../../../@shared/util/format-quantity';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -25,6 +26,7 @@ import {
 import { PROD_INCIDENT_LIVE_CAP } from '../../../game/model/balance/flow';
 import {
   CREDIT_FROM_ADR,
+  CREDIT_UNTIL_ADR,
   CREDIT_SHARE,
   LINE_PLAN,
 } from '../../../game/model/balance/progression';
@@ -76,7 +78,7 @@ const INVITES_FROM = Math.min(
   )
 );
 
-const seconds = (ms: number): number => ms / 1000;
+const seconds = (ms: number): string => formatQuantity(ms / 1000);
 
 const STRATEGY: readonly {
   readonly key: string;
@@ -93,7 +95,11 @@ const STRATEGY: readonly {
   { key: 'prod', params: { adr: INCIDENT_REVIEW_FROM_TIER } },
   {
     key: 'credit',
-    params: { adr: CREDIT_FROM_ADR, share: Math.round(CREDIT_SHARE * 100) },
+    params: {
+      adr: CREDIT_FROM_ADR,
+      last: CREDIT_UNTIL_ADR,
+      share: Math.round(CREDIT_SHARE * 100),
+    },
   },
 ].map((step) => ({ ...step, key: `help.strategy.${step.key}` }));
 

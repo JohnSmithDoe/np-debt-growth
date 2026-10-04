@@ -57,10 +57,10 @@ export class AcceptanceCardComponent {
     return Array.from({ length: view.of }, (_, line) =>
       view.clean.includes(line)
         ? 'clean'
-        : view.flagged.includes(line)
-          ? 'flagged'
-          : line === view.index
-            ? 'now'
+        : line === view.line
+          ? 'now'
+          : view.flagged.includes(line)
+            ? 'flagged'
             : 'todo'
     );
   });

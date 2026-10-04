@@ -2,7 +2,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding-bottom: 4.5rem;
 }
 
 .tabs {
@@ -51,8 +50,13 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   margin: 0;
-  padding: 0;
+  padding: 0 0 1.25rem;
   list-style: none;
+  mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - 1.25rem),
+    transparent
+  );
 }
 
 .line {
@@ -234,6 +238,30 @@
   }
 }
 
+.lines > li {
+  position: relative;
+}
+
+.max-buy {
+  position: absolute;
+  inset-block-end: 0.5rem;
+  inset-inline-end: 3.6rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--np-cb-rule);
+  border-radius: 3px;
+  background: var(--np-cb-ground);
+  color: var(--np-cb-ink-2);
+  font-family: var(--np-cb-font-util);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--np-cb-ink);
+    border-color: currentColor;
+  }
+}
+
 .held {
   grid-column: 2;
   align-self: end;
@@ -248,7 +276,7 @@
   opacity: 0.6;
 
   &.more {
-    margin-top: 6px;
+    margin-top: 0;
     padding-inline: 10px;
     font-family: var(--np-cb-font-util);
     font-size: 0.72rem;

@@ -8,6 +8,8 @@ export const HOTFIX_MS = 10_000;
 export const COMBO_EXTEND_MS = 3_000;
 /** A quarter end billed under both buffs bills the board this many times over. */
 export const JACKPOT_BONUS = 10;
+/** A jackpot's story points are capped at this many seconds of the build's SP income. */
+export const JACKPOT_SP_SEC = 15;
 
 export const INVITATION_EVERY_MS = 120_000;
 export const INVITATION_WINDOW_MS = 4_000;

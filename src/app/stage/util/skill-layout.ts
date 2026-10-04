@@ -1,5 +1,6 @@
 /*
- * BAND_ROOM fits the longest heading name (25 glyphs of 14 px); raise it if one grows.
+ * BAND_ROOM fits the longest heading name (25 glyphs of 14 px) and sizes the map;
+ * the drawn bands are refitted to their text by `fitBands`. Raise it if a name grows.
  */
 import type { SkillNode } from '../../game/model/skill.model';
 import {
@@ -20,8 +21,9 @@ const MARGIN = SQUARE;
 const FINAL_SIDE = SQUARE * 2;
 const FINAL_RUN = LAYER * 3;
 const BAND_ROOM = 360;
-const BAND_HIGH = 24;
-const BAND_TEXT_TOP = 8;
+/** One pixel-font cell (GLYPH_CELL) at the band's ×2; the text is centred on the band. */
+const BAND_HIGH = 32;
+const BAND_TEXT_TOP = BAND_HIGH / 2;
 const BAND_CLEAR = 10;
 
 interface Vec {
@@ -284,16 +286,11 @@ const boxAround = (centre: Vec, hw: number, hh: number): Box => ({
   bottom: centre.y + hh,
 });
 
-const BAND_NEAR = 3;
+const BAND_STEP = 8;
+const BAND_REACH = LAYER;
 
-function bandCentres(
-  centres: ReadonlyMap<string, Vec>,
-  wires: readonly (readonly Vec[])[]
-): Map<string, Vec> {
-  const solid: Box[] = [...centres].map(([id, one]) =>
-    boxAround(one, sideOf(id) / 2, sideOf(id) / 2)
-  );
-  const wired: Box[] = wires.flatMap((wire) =>
+const segmentBoxes = (wires: readonly (readonly Vec[])[]): Box[] =>
+  wires.flatMap((wire) =>
     wire.slice(1).map((to, at) => {
       const from = wire[at]!;
       return {
@@ -304,15 +301,31 @@ function bandCentres(
       };
     })
   );
-  const [hw, hh] = [BAND_ROOM / 2 + BAND_CLEAR, BAND_HIGH / 2 + BAND_CLEAR];
-  const clear = (spot: Vec, boxes: readonly Box[]): boolean =>
-    !boxes.some((box) => overlaps(box, boxAround(spot, hw, hh)));
+
+const gapBetween = (one: Box, two: Box): number =>
+  Math.hypot(
+    Math.max(0, one.left - two.right, two.left - one.right),
+    Math.max(0, one.top - two.bottom, two.top - one.bottom)
+  );
+
+/**
+ * Nearest spot to each heading's arms clear of squares, wires and earlier
+ * labels; failing that clear of squares and labels; failing that the nearest.
+ */
+function bandCentres(
+  squares: ReadonlyMap<string, Box>,
+  wires: readonly (readonly Vec[])[],
+  widthOf: (heading: string) => number,
+  bounds?: Box
+): Map<string, Vec> {
+  const solid: Box[] = [...squares.values()];
+  const wired = segmentBoxes(wires);
   const out = new Map<string, Vec>();
 
   for (const [heading, arms] of HEADING_ARMS) {
     const placed = arms.flatMap((id) => {
-      const at = centres.get(id);
-      return at ? [boxAround(at, sideOf(id) / 2, sideOf(id) / 2)] : [];
+      const box = squares.get(id);
+      return box ? [box] : [];
     });
     if (placed.length === 0) continue;
     const span: Box = {
@@ -325,28 +338,54 @@ function bandCentres(
       (span.left + span.right) / 2,
       (span.top + span.bottom) / 2,
     ];
-    const ring = (far: number): Vec[] => {
-      const off = far * 16;
-      return [
-        { x: cx, y: span.top - hh - off },
-        { x: cx, y: span.bottom + hh + off },
-        { x: span.right + hw + off, y: cy },
-        { x: span.left - hw - off, y: cy },
-      ];
+    const [hw, hh] = [
+      widthOf(heading) / 2 + BAND_CLEAR,
+      BAND_HIGH / 2 + BAND_CLEAR,
+    ];
+    const reachX = (span.right - span.left) / 2 + hw + BAND_REACH;
+    const reachY = (span.bottom - span.top) / 2 + hh + BAND_REACH;
+    const spots: { at: Vec; cost: number }[] = [];
+    for (let dy = -reachY; dy <= reachY; dy += BAND_STEP) {
+      for (let dx = -reachX; dx <= reachX; dx += BAND_STEP) {
+        const at = { x: Math.round(cx + dx), y: Math.round(cy + dy) };
+        const box = boxAround(at, hw, hh);
+        if (
+          bounds &&
+          (box.left < bounds.left ||
+            box.right > bounds.right ||
+            box.top < bounds.top ||
+            box.bottom > bounds.bottom)
+        ) {
+          continue;
+        }
+        spots.push({
+          at,
+          cost: gapBetween(box, span) + Math.hypot(dx, dy) / 4,
+        });
+      }
+    }
+    spots.sort((one, two) => one.cost - two.cost);
+    const clear = (at: Vec, boxes: readonly Box[]): boolean => {
+      const box = boxAround(at, hw, hh);
+      return !boxes.some((one) => overlaps(one, box));
     };
-    const near = Array.from({ length: BAND_NEAR }, (_, far) =>
-      ring(far)
-    ).flat();
-    const wide = Array.from({ length: 24 }, (_, far) => ring(far)).flat();
-    const spot =
-      near.find((one) => clear(one, [...solid, ...wired])) ??
-      wide.find((one) => clear(one, solid)) ??
-      near[0]!;
+    const spot = spots.find(({ at }) => clear(at, solid) && clear(at, wired))
+      ?.at ??
+      spots.find(({ at }) => clear(at, solid))?.at ??
+      spots[0]?.at ?? { x: cx, y: span.top - hh };
     out.set(heading, spot);
     solid.push(boxAround(spot, hw, hh));
   }
   return out;
 }
+
+const squareBoxes = (centres: ReadonlyMap<string, Vec>): Map<string, Box> =>
+  new Map(
+    [...centres].map(([id, one]) => [
+      id,
+      boxAround(one, sideOf(id) / 2, sideOf(id) / 2),
+    ])
+  );
 
 function build(): SkillGraph {
   const root = BY_NODE.get(SKILL_ROOT_ID);
@@ -360,8 +399,9 @@ function build(): SkillGraph {
     return from && to ? elbow(from, to, STACKED.has(id)) : [];
   };
   const named = bandCentres(
-    raw,
-    [...raw.keys()].map((id) => wireOf(id, raw))
+    squareBoxes(raw),
+    [...raw.keys()].map((id) => wireOf(id, raw)),
+    () => BAND_ROOM
   );
 
   const boxes = [
@@ -439,6 +479,34 @@ function descendants(
 }
 
 export const SKILL_GRAPH: SkillGraph = build();
+
+/** Bands sized to their drawn text, so a short name finds room a worst-case one would not. */
+export function fitBands(
+  widthOf: (heading: string) => number
+): readonly SkillBand[] {
+  const centres = new Map(
+    SKILL_GRAPH.squares.map((one) => [
+      one.id,
+      { x: one.x + one.width / 2, y: one.y + one.height / 2 },
+    ])
+  );
+  const named = bandCentres(
+    squareBoxes(centres),
+    SKILL_GRAPH.squares.map((one) => one.wire),
+    widthOf,
+    { left: 0, top: 0, right: SKILL_GRAPH.width, bottom: SKILL_GRAPH.height }
+  );
+  return [...named].map(([heading, centre]) => {
+    const width = widthOf(heading);
+    return {
+      id: heading,
+      x: Math.round(centre.x - width / 2),
+      y: centre.y - BAND_TEXT_TOP,
+      width,
+      over: descendants(centres, HEADING_ARMS.get(heading) ?? []),
+    };
+  });
+}
 
 const BY_ID: ReadonlyMap<string, SkillSquare> = new Map(
   SKILL_GRAPH.squares.map((square) => [square.id, square])

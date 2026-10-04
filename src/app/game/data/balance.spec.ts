@@ -52,7 +52,7 @@ function everySkill(): Record<string, number> {
 }
 
 /** Minutes per tier 0…8 (tier 8 ends at sign-off): the opening at its own pace, then quicker every rung. */
-const TIER_CURVE = [3, 4, 3, 2.25, 1.75, 1.5, 1.25, 1, 0.75] as const;
+const TIER_CURVE = [3, 4, 3, 2.25, 1.75, 1.5, 1.3, 1, 0.85] as const;
 const TIER_SLACK = 0.25;
 
 const MILESTONES = [
@@ -470,7 +470,17 @@ describe('the session arc', () => {
     const push =
       (run.reached.get('accepted')! - run.reached.get('signed off')!) / 60_000;
     expect(push).toBeGreaterThan(2);
-    expect(push).toBeLessThan(5);
+    expect(push).toBeLessThan(3.5);
+  });
+
+  it('re-tests no more than a few criteria for a player hunting pink', () => {
+    const retests = run.end.criterion?.findings ?? Infinity;
+    if (process.env['CB_CLOCK']) {
+      report(
+        `\npush re-tests: ${retests} (${run.end.criterion?.flagged.join(', ')})\n`
+      );
+    }
+    expect(retests).toBeLessThanOrEqual(4);
   });
 
   it('leaves nothing on the tree unbought by the time it signs off', () => {

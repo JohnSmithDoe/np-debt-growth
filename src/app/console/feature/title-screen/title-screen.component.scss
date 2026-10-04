@@ -77,6 +77,17 @@ h1 {
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
 }
 
+.warning {
+  margin: 1.2rem auto 0;
+  max-width: 26rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--np-cb-radius);
+  background: rgb(6 8 11 / 0.72);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--np-cb-ink-2);
+}
+
 .doors {
   display: flex;
   gap: 0.6rem;

@@ -38,17 +38,24 @@ export const ACCEPTANCE = { goal: 2e16, value: 2 } as const;
 
 /**
  * One acceptance criterion per line, lint first. The crew sits in the acceptance meeting; the
- * line under test spawns at CRITERION_SPAWN_PER_SEC whatever its spawners. Every criterion runs
- * its full CRITERION_MS and signs then: clean if the hand has picked up CRITERION_GOAL of the
- * cards spawned for it, with findings if not.
+ * line under test spawns at CRITERION_SPAWN_PER_SEC whatever its spawners. Every window runs its
+ * full length and signs then: clean if the hand's pickups of the line's cards reach its goal,
+ * otherwise the line goes to the back of the queue for a CRITERION_RETEST_MS re-test, its pickups
+ * kept. The line's own nodes take up to CRITERION_GOAL_DISCOUNT off the goal; its finisher
+ * (double / retainer) counts every pickup CRITERION_FINISHER_PICK times.
  */
 export const CRITERION_BONUS = 2;
 export const CRITERION_OVERTIME = 0.5;
 export const CRITERION_MS = 15_000;
+export const CRITERION_RETEST_MS = 10_000;
 export const CRITERION_SPAWN_PER_SEC = 2.5;
-export const CRITERION_GOAL = 15;
+export const CRITERION_GOAL = 32;
+export const CRITERION_GOAL_DISCOUNT = 10;
+export const CRITERION_FINISHER_PICK = 2;
 
 export const CREDIT_FROM_ADR = 4;
+/** The last ADR approvable on credit: from ADR-7 the ×14 income repays it at once. */
+export const CREDIT_UNTIL_ADR = 6;
 export const CREDIT_SHARE = 0.6;
 export const CREDIT_INTEREST = 1;
 /** Share of every later SP pickup that goes to the debt until it is repaid. */

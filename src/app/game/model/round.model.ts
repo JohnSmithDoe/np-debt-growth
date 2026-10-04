@@ -31,6 +31,10 @@ export interface AcceptanceView {
   readonly tickets: readonly TicketTypeId[];
   readonly picked: number;
   readonly goal: number;
+  readonly retest: boolean;
+  /** What one pickup counts for, and how much the line's own nodes took off the goal. */
+  readonly weight: number;
+  readonly discount: number;
   readonly msLeft: number;
   readonly windowMs: number;
   readonly overtime: number;

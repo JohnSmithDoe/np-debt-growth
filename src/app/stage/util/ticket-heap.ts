@@ -42,7 +42,7 @@ function sinkOf(fade: number): number {
 const DEPTH = {
   goldGlow: 9,
   layer: 10,
-  tested: 10.5,
+  tested: 21.5,
   glow: 20.5,
   rare: 21,
 } as const;
@@ -344,9 +344,12 @@ export class TicketHeap {
       }
     }
 
+    const testing = this.#underTest !== null;
+    const backdrop = testing && !this.#isTested(ticket);
+    const shown = backdrop ? fade * UNDER_TEST.others : fade;
     this.#member.frame = ticket.golden
       ? goldFrame(ticket.type)
-      : voted(ticket)
+      : voted(ticket) && !testing
         ? voteFrame(ticket.type)
         : cardFrame(ticket.type);
     this.#member.x = x;
@@ -354,7 +357,7 @@ export class TicketHeap {
     this.#member.rotation = ((ticket.id % 13) - 6) * 0.01;
     this.#member.scaleX = 1;
     this.#member.scaleY = 1;
-    this.#member.alpha = fade;
+    this.#member.alpha = shown;
     this.#tintRamp(ticket);
     const tested = this.#isTested(ticket)
       ? (this.#testedSlot.get(ticket.id) ?? this.#testedFree.pop())
@@ -367,7 +370,7 @@ export class TicketHeap {
       this.#tested.editMember(tested, this.#member);
       this.#layer.editMember(slot, this.#hiddenMember());
     }
-    if (ticket.golden) this.#glowUnder(ticket.id, x, y, fade);
+    if (ticket.golden) this.#glowUnder(ticket.id, x, y, shown);
   }
 
   /** A caption that would print over another visible one stays hidden. */

@@ -5,6 +5,7 @@ interface Tier {
   readonly exponent: number;
   readonly name: string;
   readonly symbol: string;
+  readonly plural?: string;
 }
 
 const TIERS_EN: readonly Tier[] = [
@@ -22,17 +23,27 @@ const TIERS_EN: readonly Tier[] = [
 ];
 
 const TIERS_DE: readonly Tier[] = [
-  { exponent: 36, name: 'Sextillion', symbol: 'Sxt' },
-  { exponent: 33, name: 'Quintilliarde', symbol: 'Qid' },
-  { exponent: 30, name: 'Quintillion', symbol: 'Qui' },
-  { exponent: 27, name: 'Quadrilliarde', symbol: 'Qad' },
-  { exponent: 24, name: 'Quadrillion', symbol: 'Qua' },
-  { exponent: 21, name: 'Trilliarde', symbol: 'Trd' },
-  { exponent: 18, name: 'Trillion', symbol: 'Tri' },
-  { exponent: 15, name: 'Billiarde', symbol: 'Brd' },
-  { exponent: 12, name: 'Billion', symbol: 'Bio' },
-  { exponent: 9, name: 'Milliarde', symbol: 'Mrd' },
-  { exponent: 6, name: 'Million', symbol: 'Mio' },
+  { exponent: 36, name: 'Sextillion', plural: 'Sextillionen', symbol: 'Sxt' },
+  {
+    exponent: 33,
+    name: 'Quintilliarde',
+    plural: 'Quintilliarden',
+    symbol: 'Qid',
+  },
+  { exponent: 30, name: 'Quintillion', plural: 'Quintillionen', symbol: 'Qui' },
+  {
+    exponent: 27,
+    name: 'Quadrilliarde',
+    plural: 'Quadrilliarden',
+    symbol: 'Qad',
+  },
+  { exponent: 24, name: 'Quadrillion', plural: 'Quadrillionen', symbol: 'Qua' },
+  { exponent: 21, name: 'Trilliarde', plural: 'Trilliarden', symbol: 'Trd' },
+  { exponent: 18, name: 'Trillion', plural: 'Trillionen', symbol: 'Tri' },
+  { exponent: 15, name: 'Billiarde', plural: 'Billiarden', symbol: 'Brd' },
+  { exponent: 12, name: 'Billion', plural: 'Billionen', symbol: 'Bio' },
+  { exponent: 9, name: 'Milliarde', plural: 'Milliarden', symbol: 'Mrd' },
+  { exponent: 6, name: 'Million', plural: 'Millionen', symbol: 'Mio' },
 ];
 
 const TIERS_BY_LANGUAGE: Readonly<Record<Language, readonly Tier[]>> = {
@@ -77,9 +88,9 @@ export function formatQuantity(value: number): string {
   if (value >= BEYOND_NAMES) return value.toExponential(2);
 
   const scaled = scale(value, tiers());
-  return scaled
-    ? `${scaled.mantissa} ${scaled.tier.name}`
-    : value.toExponential(2);
+  if (!scaled) return value.toExponential(2);
+  const one = Number(scaled.mantissa.replace(',', '.')) === 1;
+  return `${scaled.mantissa} ${one ? scaled.tier.name : (scaled.tier.plural ?? scaled.tier.name)}`;
 }
 
 export function formatWhole(value: number): string {
@@ -97,9 +108,9 @@ export function formatCompact(value: number): string {
   if (value >= BEYOND_NAMES) return value.toExponential(2);
 
   const scaled = scale(value, compactTiers());
-  return scaled
-    ? `${scaled.mantissa}${scaled.tier.symbol}`
-    : value.toExponential(2);
+  if (!scaled) return value.toExponential(2);
+  const gap = activeLanguage === 'de' ? NBSP : '';
+  return `${scaled.mantissa}${gap}${scaled.tier.symbol}`;
 }
 
 export function formatCompactWhole(value: number): string {

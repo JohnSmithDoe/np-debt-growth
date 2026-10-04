@@ -55,12 +55,15 @@ const VOIDED_AT_SIGNOFF: ReadonlySet<TicketTypeId> = new Set([
   'hotfix',
   'escalation',
   'quarter',
+  'pizza',
+  'incident',
 ]);
 import type { KitItem } from '../model/kit.model';
 import type { PurchaseId } from '../model/balance/progression';
-import { CRITERION_MS } from '../model/balance/progression';
+import { CRITERION_GOAL } from '../model/balance/progression';
 import type { ReleasePhase } from '../model/balance/round';
 import {
+  INCIDENT_PAYOUT_SEC,
   PIZZA_MS,
   PROD_INCIDENT_LIVE_CAP,
   TIER_BURST,
@@ -69,6 +72,7 @@ import {
 import {
   COMBO_EXTEND_MS,
   JACKPOT_BONUS,
+  JACKPOT_SP_SEC,
   FACT_COUNTDOWN_MS,
   FACT_EVERY_MS,
   FACT_OFFSET_MS,
@@ -416,10 +420,13 @@ export class GameStore {
       of: CRITERIA_COUNT,
       line: criterion.line,
       tickets: economy.underTestTypes(state),
-      picked: criterion.picked,
+      picked: Math.min(criterion.picked, criterion.goal),
       goal: criterion.goal,
+      retest: criterion.retest,
+      weight: economy.criterionPickWeight(state, criterion.line),
+      discount: CRITERION_GOAL - criterion.goal,
       msLeft: economy.criterionMsLeft(state),
-      windowMs: CRITERION_MS,
+      windowMs: economy.criterionWindowMs(state),
       overtime: economy.overtime(state),
       clean: run.clean,
       flagged: run.flagged,
@@ -596,9 +603,7 @@ export class GameStore {
     const dtMs = seconds * 1000;
     const runMs = state.runMs + dtMs;
     this.#board.lifeMs = ticketLifeMs(state.tier);
-    this.#board.kept = economy.underTestTypes(state);
-    this.#board.test =
-      this.#board.kept.length > 0 ? state.criterion!.index : NO_TEST;
+    this.#markTest(state);
     const slots = economy.sprintSlots(state, this.#sky());
     const work = this.#stepBoard(state, dtMs, slots);
     const banked = this.#bank(state, work, now, slots);
@@ -625,9 +630,17 @@ export class GameStore {
       next = { ...next, escalated: false, escalationFiresAt: 0 };
     }
     next = economy.stepCriterion(next);
+    this.#markTest(next);
     next = this.#grantAwards(next);
     next = this.#stepTrain(next, dtMs);
     return economy.accepted(next) ? { ...next, endedAt: now } : next;
+  }
+
+  /** Pickups between ticks must credit the window that is open, not the one that just closed. */
+  #markTest(state: Consultancy): void {
+    this.#board.kept = economy.underTestTypes(state);
+    this.#board.test =
+      this.#board.kept.length > 0 ? state.criterion!.window : NO_TEST;
   }
 
   #stepTrain(state: Consultancy, dtMs: number): Consultancy {
@@ -1059,10 +1072,14 @@ export class GameStore {
     }
     const sp =
       bonus > 1
-        ? types.reduce(
-            (sum, type) => sum + economy.pickupStoryPoints(state, type, false),
-            0
-          ) * bonus
+        ? Math.min(
+            types.reduce(
+              (sum, type) =>
+                sum + economy.pickupStoryPoints(state, type, false),
+              0
+            ) * bonus,
+            (incidentPayout(state).sp / INCIDENT_PAYOUT_SEC) * JACKPOT_SP_SEC
+          )
         : 0;
     this.#state.set({
       ...economy.pickUnderTest(state, picked),

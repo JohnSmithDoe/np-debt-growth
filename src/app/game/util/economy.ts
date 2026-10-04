@@ -6,6 +6,8 @@ import { voteBeamY, voteCount } from '../model/board.model';
 import type { Award } from '../model/award.model';
 import { AWARDS } from '../model/award.model';
 import {
+  AWARD_PASSIVE_FROM_TIER,
+  AWARD_PASSIVE_SHARE,
   AWARD_SP_FROM_TIER,
   AWARD_UNIT,
   AWARD_WEIGHT_UNITS,
@@ -25,7 +27,12 @@ import {
 import type { SeniorHire, TraitId } from '../model/senior.model';
 import { TRAITS, hireFor } from '../model/senior.model';
 import type { PaceField, SkillEffect } from '../model/skill.model';
-import { FINAL_SKILL_ID, SKILL_BY_ID } from '../model/skill.model';
+import {
+  FINAL_SKILL_ID,
+  SKILL_BY_ID,
+  lineFinisherId,
+  lineNodeIds,
+} from '../model/skill.model';
 import type { TicketType, TicketTypeId } from '../model/ticket.model';
 import {
   ladderUp,
@@ -42,7 +49,10 @@ import {
   CREDIT_SHARE,
   CRITERION_BONUS,
   CRITERION_GOAL,
+  CRITERION_FINISHER_PICK,
+  CRITERION_GOAL_DISCOUNT,
   CRITERION_MS,
+  CRITERION_RETEST_MS,
   CRITERION_OVERTIME,
   CRITERION_SPAWN_PER_SEC,
 } from '../model/balance/progression';
@@ -261,86 +271,130 @@ function globalMultiplier(state: Consultancy): number {
 export const CRITERIA = CRITERIA_COUNT;
 
 export interface Criterion {
+  /** Criteria signed so far. */
   readonly index: number;
   readonly line: number;
+  readonly window: number;
   readonly picked: number;
   readonly goal: number;
+  readonly retest: boolean;
+}
+
+function lineUnderTest(state: Consultancy): number | null {
+  const run = state.criterion;
+  if (!inAcceptance(state) || !run) return null;
+  return run.queue[0] ?? null;
 }
 
 export function criterionNow(state: Consultancy): Criterion | null {
   const run = state.criterion;
-  if (!inAcceptance(state) || !run || run.index >= CRITERIA) return null;
+  const line = lineUnderTest(state);
+  if (!run || line === null) return null;
   return {
-    index: run.index,
-    line: run.line,
-    picked: run.picked,
-    goal: CRITERION_GOAL,
+    index: run.clean.length,
+    line,
+    window: run.window,
+    picked: run.picked[line] ?? 0,
+    goal: criterionGoal(state, line),
+    retest: run.flagged.includes(line),
   };
 }
 
-export function openCriterion(
-  state: Consultancy,
-  index: number,
-  from?: CriterionRun
-): CriterionRun {
+/** The line's own nodes owned take up to CRITERION_GOAL_DISCOUNT off its goal. */
+export function criterionGoal(state: Consultancy, line: number): number {
+  const nodes = lineNodeIds(line);
+  if (nodes.length === 0) return CRITERION_GOAL;
+  const owned = nodes.filter((id) => skillRank(state, id) > 0).length;
+  return (
+    CRITERION_GOAL -
+    Math.round((CRITERION_GOAL_DISCOUNT * owned) / nodes.length)
+  );
+}
+
+/** What one pickup of the line's cards counts for: more once its finisher is bought. */
+export function criterionPickWeight(state: Consultancy, line: number): number {
+  const finisher = lineFinisherId(line);
+  return finisher !== null && skillRank(state, finisher) > 0
+    ? CRITERION_FINISHER_PICK
+    : 1;
+}
+
+export function openCriterion(state: Consultancy): CriterionRun {
   return {
-    index,
-    line: index,
+    window: 0,
     sinceMs: state.runMs,
-    picked: 0,
-    clean: from?.clean ?? [],
-    flagged: from?.flagged ?? [],
-    findings: from?.findings ?? 0,
+    queue: Array.from({ length: CRITERIA }, (_, line) => line),
+    picked: Array.from({ length: CRITERIA }, () => 0),
+    clean: [],
+    flagged: [],
+    findings: 0,
   };
+}
+
+function windowMs(run: CriterionRun, line: number): number {
+  return run.flagged.includes(line) ? CRITERION_RETEST_MS : CRITERION_MS;
 }
 
 /**
- * Signs the criterion under test when its CRITERION_MS window closes: clean if the hand has
- * picked up CRITERION_GOAL of its cards, otherwise with findings (no overtime, no award).
+ * Closes the open window when its time is up: the line signs clean if its banked pickups reach
+ * the goal, otherwise it goes to the back of the queue for a re-test.
  */
 export function stepCriterion(state: Consultancy): Consultancy {
   const run = state.criterion;
-  if (!inAcceptance(state) || !run || run.index >= CRITERIA) return state;
-  if (state.runMs - run.sinceMs < CRITERION_MS) return state;
-  const clean = run.picked >= CRITERION_GOAL;
-  const signed: CriterionRun = {
-    ...run,
-    index: run.index + 1,
-    clean: clean ? [...run.clean, run.line] : run.clean,
-    flagged: clean ? run.flagged : [...run.flagged, run.line],
-    findings: run.findings + (clean ? 0 : 1),
-  };
+  const line = lineUnderTest(state);
+  if (!run || line === null) return state;
+  if (state.runMs - run.sinceMs < windowMs(run, line)) return state;
+  const clean = (run.picked[line] ?? 0) >= criterionGoal(state, line);
+  const rest = run.queue.slice(1);
   return {
     ...state,
-    criterion:
-      signed.index < CRITERIA
-        ? openCriterion(state, signed.index, signed)
-        : signed,
+    criterion: {
+      ...run,
+      window: run.window + 1,
+      sinceMs: state.runMs,
+      queue: clean ? rest : [...rest, line],
+      clean: clean ? [...run.clean, line] : run.clean,
+      flagged:
+        clean || run.flagged.includes(line)
+          ? run.flagged
+          : [...run.flagged, line],
+      findings: run.findings + (clean ? 0 : 1),
+    },
   };
 }
 
 export function criterionMsLeft(state: Consultancy): number {
   const run = state.criterion;
-  return run ? Math.max(0, CRITERION_MS - (state.runMs - run.sinceMs)) : 0;
+  const line = lineUnderTest(state);
+  if (!run || line === null) return 0;
+  return Math.max(0, windowMs(run, line) - (state.runMs - run.sinceMs));
+}
+
+export function criterionWindowMs(state: Consultancy): number {
+  const run = state.criterion;
+  const line = lineUnderTest(state);
+  return run && line !== null ? windowMs(run, line) : CRITERION_MS;
 }
 
 export function pickUnderTest(state: Consultancy, count: number): Consultancy {
   const run = state.criterion;
-  if (!run || count <= 0 || !inAcceptance(state)) return state;
-  return { ...state, criterion: { ...run, picked: run.picked + count } };
+  const line = lineUnderTest(state);
+  if (!run || line === null || count <= 0) return state;
+  const picked = [...run.picked];
+  picked[line] = (picked[line] ?? 0) + count * criterionPickWeight(state, line);
+  return { ...state, criterion: { ...run, picked } };
 }
 
 /** The ticket types the line under test produces; empty outside a criterion. */
 export function underTestTypes(state: Consultancy): readonly TicketTypeId[] {
-  const run = state.criterion;
-  if (!run || run.index >= CRITERIA || !inAcceptance(state)) return [];
-  return SPAWNER_BY_ADR.get(run.line)?.produces ?? [];
+  const line = lineUnderTest(state);
+  return line === null ? [] : (SPAWNER_BY_ADR.get(line)?.produces ?? []);
 }
 
 /** Criteria signed clean: the ones that raise overtime. */
 export function criteriaVerified(state: Consultancy): number {
   if (skillRank(state, FINAL_SKILL_ID) === 0) return 0;
-  return criteriaPassed(state) - (state.criterion?.findings ?? 0);
+  return criteriaPassed(state);
 }
 
 const RUNG_VALUE: readonly number[] = TICKET_TYPE_IDS.reduce<number[]>(
@@ -358,13 +412,8 @@ export function rungValue(tier: number): number {
 }
 
 export function underTest(state: Consultancy, id: TicketTypeId): boolean {
-  const run = state.criterion;
-  return (
-    run !== null &&
-    run.index < CRITERIA &&
-    inAcceptance(state) &&
-    spawnerFor(id)?.adr === run.line
-  );
+  const line = lineUnderTest(state);
+  return line !== null && spawnerFor(id)?.adr === line;
 }
 
 function baseValue(state: Consultancy, type: TicketType): number {
@@ -468,7 +517,7 @@ export function accepted(state: Consultancy): boolean {
   if (!inAcceptance(state)) return false;
   return state.criterion === null
     ? state.budget >= ACCEPTANCE.goal
-    : criteriaPassed(state) >= CRITERIA;
+    : state.criterion.queue.length === 0;
 }
 
 export function goldenChance(state: Consultancy): number {
@@ -629,7 +678,11 @@ function sourceMultiplier(state: Consultancy, type: TicketType): number {
 
 export function spawnRate(state: Consultancy, id: TicketTypeId): number {
   const type = TICKET_TYPES[id];
-  if (type.effect === 'crewRush' && !holds(state, 'pizza')) return 0;
+  if (
+    type.effect === 'crewRush' &&
+    (!holds(state, 'pizza') || inAcceptance(state))
+  )
+    return 0;
   const fromSkills = productOf(state, `spawn:${id}`, (e) =>
     e.kind === 'spawnRate' &&
     (e.target === id || (e.target === undefined && !type.handOnly))
@@ -639,6 +692,7 @@ export function spawnRate(state: Consultancy, id: TicketTypeId): number {
   if (underTest(state, id)) {
     return CRITERION_SPAWN_PER_SEC / underTestTypes(state).length;
   }
+  if (type.handOnly && inAcceptance(state)) return 0;
   if (type.effect === 'billBoard' && inAcceptance(state)) return 0;
   const climb = type.handOnly ? 1 + HAND_ONLY_RATE_PER_TIER * state.tier : 1;
   return type.ratePerSec * sourceMultiplier(state, type) * fromSkills * climb;
@@ -1154,9 +1208,11 @@ export function awardReward(
   if (award.kind !== 'achievement' || skillRank(state, FINAL_SKILL_ID) > 0)
     return null;
   const tier = Math.min(state.tier, AWARD_UNIT.length - 1);
+  const share =
+    award.passive && tier >= AWARD_PASSIVE_FROM_TIER ? AWARD_PASSIVE_SHARE : 1;
   return {
     currency: tier < AWARD_SP_FROM_TIER ? 'euro' : 'sp',
-    amount: AWARD_UNIT[tier]! * AWARD_WEIGHT_UNITS[award.weight],
+    amount: AWARD_UNIT[tier]! * AWARD_WEIGHT_UNITS[award.weight] * share,
   };
 }
 

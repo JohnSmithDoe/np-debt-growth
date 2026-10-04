@@ -7,6 +7,21 @@
   padding: 0.9rem 1rem 1rem;
 }
 
+/* Overlays position themselves; as flex items they would each add a gap below the workspace. */
+cb-award-banner,
+cb-agent,
+cb-title-screen,
+cb-adr-modal,
+cb-settings-modal,
+cb-help-modal,
+cb-moment-modal,
+cb-post-mortem,
+cb-story,
+cb-finale,
+cb-debug-bar {
+  display: contents;
+}
+
 .ticker {
   margin: -0.5rem 0 -0.4rem;
   border: 1px solid var(--np-cb-rule);
@@ -59,7 +74,10 @@
 
 .readout {
   display: grid;
-  grid-template-columns: 6.5rem 6.5rem 7.5rem minmax(9rem, 1fr);
+  grid-template-columns: 6.5rem 6.5rem minmax(7.5rem, max-content) minmax(
+      9rem,
+      1fr
+    );
   gap: 0 1.25rem;
   margin: 0;
   min-width: 0;

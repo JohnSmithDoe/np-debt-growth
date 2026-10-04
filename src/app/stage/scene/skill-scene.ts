@@ -20,8 +20,9 @@ import {
 } from '../model/skill-icon.model';
 import { SKILL_ROOT_ID } from '../../game/model/skill.model';
 import { skillBadge, skillCode } from '../util/skill-copy';
-import type { SkillSquare, SquareState } from '../util/skill-layout';
+import type { SkillBand, SkillSquare, SquareState } from '../util/skill-layout';
 import {
+  fitBands,
   revealSquares,
   SKILL_GRAPH,
   skillSquare,
@@ -119,6 +120,7 @@ export class SkillScene extends PanZoomScene {
   #byId: ReadonlyMap<string, SkillNodeView> = new Map();
   #shown: ReadonlyMap<string, SquareState> = new Map();
   #glyph = 7;
+  #bands?: { readonly key: string; readonly bands: readonly SkillBand[] };
 
   constructor(deps: SceneDeps) {
     super(SkillScene.KEY, deps);
@@ -466,22 +468,24 @@ export class SkillScene extends PanZoomScene {
 
   #drawBands(view: SkillView): void {
     if (!this.labelsVisible(BAND.scale)) return;
-    const named = new Map(view.headings.map((one) => [one.id, one.label]));
+    const named = new Map(
+      view.headings.map((one) => [one.id, one.label.toUpperCase()])
+    );
+    const key = [...named.values()].join('|');
+    if (this.#bands?.key !== key) {
+      this.#bands = {
+        key,
+        bands: fitBands(
+          (id) => (named.get(id)?.length ?? 0) * this.#glyph * BAND.scale
+        ),
+      };
+    }
 
-    for (const band of SKILL_GRAPH.bands) {
+    for (const band of this.#bands.bands) {
       if (!band.over.some((id) => this.#shown.has(id))) continue;
-      const label = named.get(band.id);
-      if (label === undefined) continue;
-
-      const text = label.toUpperCase();
-      this.label(
-        band.x + (band.width - text.length * this.#glyph * BAND.scale) / 2,
-        band.y,
-        text,
-        INK.band,
-        band.width,
-        BAND.scale
-      );
+      const text = named.get(band.id);
+      if (text === undefined) continue;
+      this.label(band.x, band.y, text, INK.band, Infinity, BAND.scale);
     }
   }
 

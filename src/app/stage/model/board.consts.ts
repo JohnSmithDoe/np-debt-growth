@@ -41,10 +41,12 @@ export const SPRINT_STRIP_HEIGHT = 48;
 
 export const AUTO_CLOSE_RAMP = { ink: 0x5cff9d, peak: 1 } as const;
 export const UNDER_TEST = {
-  ink: 0xa3226a,
-  blend: 0.6,
-  pulse: 0.4,
+  ink: 0xff2d95,
+  blend: 0.85,
+  pulse: 0.15,
   pulseMs: 700,
+  /** Alpha of every other falling card while a test runs. */
+  others: 0.3,
 } as const;
 
 export const BUFF_BANNER = {
@@ -82,6 +84,13 @@ export const RELEASE_BANNER = {
   stepGap: 8,
   doneAlpha: 0.45,
   centre: 0.32,
+  plate: {
+    ground: 0x0f1216,
+    alpha: 0.86,
+    rule: 0x2a323c,
+    pad: { x: 22, y: 14 },
+    radius: 4,
+  },
 } as const;
 export const SPRINT_BAR_WIDTH = 420;
 
@@ -169,6 +178,13 @@ export const FLOAT_PUNCH = {
   overshoot: 3,
 } as const;
 export const FLOAT_MS = 750;
+/** Live floats a new one steps sideways around; faded ones no longer count. */
+export const FLOAT_SPACING = {
+  gap: 6,
+  tries: 6,
+  minAlpha: 0.25,
+  trail: 40,
+} as const;
 
 export const FLOAT_CAP = { small: 48, big: 4 } as const;
 

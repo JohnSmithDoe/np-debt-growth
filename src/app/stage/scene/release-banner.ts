@@ -17,6 +17,7 @@ export class ReleaseBanner {
   readonly #scene: Phaser.Scene;
   readonly #deps: SceneDeps;
   readonly #depth: number;
+  readonly #plate: Phaser.GameObjects.Graphics;
   readonly #title: Phaser.GameObjects.Text;
   readonly #current: Phaser.GameObjects.Text;
   readonly #hint: Phaser.GameObjects.Text;
@@ -33,6 +34,7 @@ export class ReleaseBanner {
     this.#scene = scene;
     this.#deps = deps;
     this.#depth = depth;
+    this.#plate = scene.add.graphics().setDepth(depth).setVisible(false);
     this.#title = this.#text(RELEASE_BANNER.titleSize);
     this.#current = this.#text(RELEASE_BANNER.currentSize, true);
     this.#hint = this.#text(RELEASE_BANNER.stepSize);
@@ -85,7 +87,9 @@ export class ReleaseBanner {
       this.#hint,
     ].map((t) => t.height);
     const total = heights.reduce((sum, h) => sum + h, 0) + gap * 3;
-    let y = centreY - total / 2;
+    const top = centreY - total / 2;
+    this.#drawPlate(centreX, top, total, width, maxWidth);
+    let y = top;
     this.#title.setPosition(centreX, y).setVisible(true);
     y += heights[0]! + gap;
     this.#current.setPosition(centreX, y).setVisible(true);
@@ -97,6 +101,7 @@ export class ReleaseBanner {
 
   destroy(): void {
     for (const object of [
+      this.#plate,
       this.#title,
       this.#current,
       this.#hint,
@@ -149,6 +154,7 @@ export class ReleaseBanner {
     this.#shown = false;
     this.#drawnPhases = null;
     for (const object of [
+      this.#plate,
       this.#title,
       this.#current,
       this.#hint,
@@ -157,6 +163,33 @@ export class ReleaseBanner {
     ]) {
       object.setVisible(false);
     }
+  }
+
+  #drawPlate(
+    centreX: number,
+    top: number,
+    height: number,
+    stepsWidth: number,
+    maxWidth: number
+  ): void {
+    const { plate } = RELEASE_BANNER;
+    const content = Math.max(
+      this.#title.width,
+      this.#current.width,
+      this.#hint.width,
+      stepsWidth
+    );
+    const width = Math.min(maxWidth, content) + plate.pad.x * 2;
+    const x = centreX - width / 2;
+    const y = top - plate.pad.y;
+    const h = height + plate.pad.y * 2;
+    this.#plate
+      .clear()
+      .fillStyle(plate.ground, plate.alpha)
+      .fillRoundedRect(x, y, width, h, plate.radius)
+      .lineStyle(1, plate.rule, 1)
+      .strokeRoundedRect(x, y, width, h, plate.radius)
+      .setVisible(true);
   }
 
   #text(size: string, gold = false): Phaser.GameObjects.Text {

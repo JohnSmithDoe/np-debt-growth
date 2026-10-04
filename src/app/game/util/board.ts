@@ -28,7 +28,11 @@ import {
   LOGICAL_BOARD,
   RARE_HIT,
 } from '../model/geometry';
-import { GOLDEN_LIFE_MS, WONT_FIX_FADE_MS } from '../model/balance/flow';
+import {
+  GOLDEN_LIFE_MS,
+  HAND_ONLY_LIFE_MS,
+  WONT_FIX_FADE_MS,
+} from '../model/balance/flow';
 
 const OUT_OF_POOL = -1;
 const COLUMN_SAMPLES = 4;
@@ -95,7 +99,7 @@ export function addTicket(
     spBonus: 0,
     voteMask: 0,
     lifeLeftMs: TICKET_TYPES[type].handOnly
-      ? NEVER_EXPIRES
+      ? (HAND_ONLY_LIFE_MS[type] ?? NEVER_EXPIRES)
       : golden
         ? GOLDEN_LIFE_MS
         : board.lifeMs,
@@ -128,7 +132,7 @@ export function removeTicket(board: Board, ticket: BoardTicket): void {
 function displaceOldest(board: Board): boolean {
   let oldest: BoardTicket | null = null;
   for (const ticket of board.tickets) {
-    if (ticket.lifeLeftMs === NEVER_EXPIRES) continue;
+    if (handOnly(ticket) || ticket.lifeLeftMs === NEVER_EXPIRES) continue;
     if (ticket.claimedBy !== NO_TICKET) continue;
     if (inTest(board, ticket)) continue;
     if (!oldest || displacesBefore(ticket, oldest)) oldest = ticket;

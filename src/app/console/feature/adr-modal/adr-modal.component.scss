@@ -3,6 +3,7 @@
   z-index: 1;
   max-width: 34rem;
   width: 100%;
+  height: auto;
   max-height: calc(100vh - 4rem);
   box-shadow: var(--np-cb-lift);
   cursor: default;
@@ -58,7 +59,7 @@
   grid-template-columns: auto 1fr;
   gap: 0.2rem 0.9rem;
   margin: 1rem 0 0;
-  padding: 0.8rem 0.85rem 0;
+  padding: 0.8rem 0.85rem 0.6rem;
   border-top: 1px solid var(--np-cb-rule);
   font-family: var(--np-cb-font-util);
   font-size: 0.72rem;

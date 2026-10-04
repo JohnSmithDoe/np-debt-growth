@@ -55,6 +55,7 @@ interface AwardShow {
   readonly labelKey: string;
   readonly blurbKey: string;
   readonly milestone: boolean;
+  readonly kindKey: string;
   readonly weight: AwardWeight;
   readonly pieces: number;
   readonly reward: AwardRewardShow | null;
@@ -172,6 +173,11 @@ export class AwardBannerComponent {
       labelKey: awardLabelKey(award.id),
       blurbKey: awardBlurbKey(award.id),
       milestone: award.kind === 'milestone',
+      kindKey: award.id.startsWith(CRITERION_PREFIX)
+        ? 'award.criterion'
+        : award.kind === 'milestone'
+          ? 'award.milestone'
+          : 'award.achievement',
       weight: award.weight,
       pieces: BANDS[award.weight].pieces,
       reward: this.#reward(award.id),

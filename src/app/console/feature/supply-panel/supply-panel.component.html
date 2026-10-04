@@ -76,19 +76,16 @@
               <span class="held">{{ row.held }}/{{ row.cap }}</span>
             }
           </button>
+          @if (affordable().has(row.key) && !row.maxed && row.cap > 1) {
+            <button type="button" class="max-buy" (click)="buyMax(row.key)">
+              {{ 'rail.buyMax' | translate }}
+            </button>
+          }
         </li>
+        @if (moreAfter()?.key === row.key) {
+          <li class="locked more">{{ moreAfter()!.text }}</li>
+        }
       }
     </ul>
-
-    @if (tab() === 'supply' && locked() > 0) {
-      <p class="locked more">
-        {{ 'rail.more.adr' | translate: { count: locked() } }}
-      </p>
-    }
-    @if (tab() === 'income' && rateLocked() > 0) {
-      <p class="locked more">
-        {{ 'rail.more.rate' | translate: { count: rateLocked() } }}
-      </p>
-    }
   </div>
 </cb-panel>

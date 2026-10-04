@@ -291,7 +291,14 @@ function collect(
   }
 
   let aimed = policy.clicksPerSec;
-  for (const s of all) {
+  const hunted = meeting
+    ? [...all].sort(
+        (a, b) =>
+          Number(economy.underTest(state, b.type)) -
+          Number(economy.underTest(state, a.type))
+      )
+    : all;
+  for (const s of hunted) {
     if (aimed <= 0) break;
     const take = Math.min(aimed, s.left);
     s.hand += take;

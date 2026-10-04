@@ -362,6 +362,29 @@ const LINE_NODES: readonly SkillNode[] = LINE_TICKETS.flatMap((ticket, tier) =>
   tier < LATE_LINE_TIER ? earlyLine(ticket, tier) : lateLine(ticket, tier)
 );
 
+export const LINE_COUNT = LINE_TICKETS.length;
+
+/** Every buyable node on a line's ladder, its finisher last. */
+export function lineNodeIds(tier: number): readonly string[] {
+  const ticket = LINE_TICKETS[tier];
+  if (ticket === undefined) return [];
+  const own = (node: SkillNode): boolean =>
+    !node.heading &&
+    node.levels.some((level) =>
+      level.effects.some(
+        (effect) => 'target' in effect && effect.target === ticket
+      )
+    );
+  return LINE_NODES.filter(own).map((node) => node.id);
+}
+
+/** The node that finishes a line: double on an early line, retainer on a late one. */
+export function lineFinisherId(tier: number): string | null {
+  const ticket = LINE_TICKETS[tier];
+  if (ticket === undefined) return null;
+  return `${tier < LATE_LINE_TIER ? 'double' : 'retainer'}${capitalised(ticket)}`;
+}
+
 interface SprintRung {
   readonly capacity: readonly number[];
   readonly cans: readonly number[];
@@ -967,7 +990,7 @@ const TREE_NODES: readonly SkillNode[] = [
     id: 'signoff',
     track: 'G',
     requires: 'adr8',
-    levels: [{ cost: 8_000_000, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 8_500_000, effects: [{ kind: 'none' }] }],
   },
 
   {

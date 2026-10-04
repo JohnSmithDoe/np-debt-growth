@@ -41,6 +41,10 @@ export class FlyerPool {
   #alpha = new Float32Array(FLYER_CAPACITY);
   readonly #falling = new Map<number, number>();
 
+  #shade = 1;
+  #keepsShade: (ticket: number) => boolean = () => false;
+  #keptInk = 0xffffff;
+  #inked = new Uint8Array(FLYER_CAPACITY);
   #onArrive: Arrival = () => undefined;
   #onVote: VoteCrossing = () => undefined;
   #beamTop = 0;
@@ -92,6 +96,7 @@ export class FlyerPool {
     this.#voteTotal = widen(this.#voteTotal, new Uint8Array(to));
     this.#lastY = widen(this.#lastY, new Float32Array(to));
     this.#alpha = widen(this.#alpha, new Float32Array(to));
+    this.#inked = widen(this.#inked, new Uint8Array(to));
     this.#add(from, to);
   }
 
@@ -106,6 +111,13 @@ export class FlyerPool {
   beams(offY: number, scaleY: number): void {
     this.#beamTop = offY;
     this.#beamScale = scaleY;
+  }
+
+  /** Every flyer but the ones `keep` names drawn at `alpha`; vote rings hidden while shaded. */
+  shade(alpha: number, keep: (ticket: number) => boolean, ink: number): void {
+    this.#shade = alpha;
+    this.#keepsShade = keep;
+    this.#keptInk = ink;
   }
 
   launch(
@@ -213,12 +225,21 @@ export class FlyerPool {
             lift(this.#kind[slot] ?? FLIGHT.drop, progress);
         const kind = this.#kind[slot];
         const alpha = this.#alpha[slot] ?? 1;
-        if (kind === FLIGHT.fade) image.alpha = alpha * (1 - progress);
+        const kept =
+          this.#shade < 1 && this.#keepsShade(this.#ticket[slot] ?? IDLE);
+        const shade = this.#shade < 1 && !kept ? this.#shade : 1;
+        if (kept !== (this.#inked[slot] === 1)) {
+          this.#inked[slot] = kept ? 1 : 0;
+          if (kept) image.setTint(this.#keptInk);
+          else image.clearTint();
+        }
+        if (kind === FLIGHT.fade) image.alpha = alpha * (1 - progress) * shade;
         else {
           image.rotation = (1 - progress) * 0.4 * ((slot & 1) === 0 ? 1 : -1);
-          if (alpha < 1)
-            image.alpha =
-              alpha + (1 - alpha) * Math.min(1, progress / REVIVE_SHARE);
+          image.alpha =
+            (alpha < 1
+              ? alpha + (1 - alpha) * Math.min(1, progress / REVIVE_SHARE)
+              : 1) * shade;
         }
         if (this.#voteTotal[slot]) this.#followRing(slot, image);
       }
@@ -256,10 +277,14 @@ export class FlyerPool {
     ring
       .setPosition(card.x, card.y)
       .setRotation(card.rotation)
-      .setAlpha((total - voteCount(pending)) / total);
+      .setAlpha(this.#shade < 1 ? 0 : (total - voteCount(pending)) / total);
   }
 
   #retire(slot: number): void {
+    if (this.#inked[slot] === 1) {
+      this.#inked[slot] = 0;
+      this.#images[slot]?.clearTint();
+    }
     this.#images[slot]?.setVisible(false);
     this.#rings[slot]?.setVisible(false);
     this.#votes[slot] = 0;

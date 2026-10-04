@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { HAND_ONLY_RATE_PER_TIER } from '../model/balance/flow';
 import {
   AWARD_SP_FROM_TIER,
+  AWARD_PASSIVE_FROM_TIER,
+  AWARD_PASSIVE_SHARE,
   AWARD_UNIT,
   AWARD_WEIGHT_UNITS,
 } from '../model/balance/award';
@@ -544,6 +546,19 @@ describe('achievement rewards', () => {
       currency: 'sp',
       amount: AWARD_UNIT[AWARD_SP_FROM_TIER]! * AWARD_WEIGHT_UNITS.large,
     });
+  });
+
+  it('pays a running-total achievement a share of its reward from the late tiers', () => {
+    const late = consultancy({ tier: AWARD_PASSIVE_FROM_TIER });
+    expect(awardReward(late, award('a-billion'))?.amount).toBe(
+      AWARD_UNIT[AWARD_PASSIVE_FROM_TIER]! *
+        AWARD_WEIGHT_UNITS.large *
+        AWARD_PASSIVE_SHARE
+    );
+    expect(awardReward(late, award('a-perfect-storm'))?.amount).toBe(
+      AWARD_UNIT[AWARD_PASSIVE_FROM_TIER]! *
+        AWARD_WEIGHT_UNITS[award('a-perfect-storm').weight]
+    );
   });
 
   it('never pays a milestone, nor anything once the tree is signed off', () => {

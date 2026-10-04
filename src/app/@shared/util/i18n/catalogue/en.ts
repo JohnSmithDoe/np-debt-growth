@@ -175,7 +175,7 @@ export const EN: Readonly<Record<string, string>> = {
   'settings.music.volume': 'Music volume',
   'settings.off': 'Off',
   'settings.on': 'On',
-  'settings.ring.blurb': 'Draws how far one click reaches, around the pointer.',
+  'settings.ring.blurb': 'Draws how far your hand reaches, around the pointer.',
   'settings.ring.label': 'Show mouse radius',
   'settings.sfx.blurb': 'Every effect is synthesised. There are no files.',
   'settings.sfx.label': 'Sound effects',
@@ -183,6 +183,8 @@ export const EN: Readonly<Record<string, string>> = {
   'settings.subheading': 'How the game behaves. None of it is progress.',
   'title.fullscreen': 'Fullscreen',
   'title.name': 'Debt Growth',
+  'title.photosensitivity':
+    'Photosensitivity warning: this game has rapid flashes, flickering colours and fast-moving lights.',
   'title.premise':
     'You are supposed to be shipping clean, maintainable code. You are paid to close tickets, and tickets are produced by bad code.',
   'title.resume': 'Back to the engagement',
@@ -196,6 +198,7 @@ export const EN: Readonly<Record<string, string>> = {
   'award.reward.euro': '+{{amount}}',
   'award.reward.sp': '+{{amount}} SP',
   'award.milestone': 'Milestone',
+  'award.criterion': 'Acceptance',
   'award.waiting': '+{{count}} more',
   'hud.budget': 'Budget',
   'hud.goal.adr': '{{pct}} % to ADR-{{adr}}',
@@ -278,7 +281,7 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'None approved',
   'skill.golden.1.label': 'Partner-Only Work',
   'skill.signoff.blurb':
-    "The closeout starts the acceptance push: the crew goes into the acceptance meeting and the client tests one line of work at a time. Click that line's pink tickets before the timer runs out; every criterion signed clean raises the overtime.",
+    "The closeout starts the acceptance push: the crew goes into the acceptance meeting and the client tests one line of work at a time. Sweep up that line's pink tickets before the timer runs out. A line that misses its goal comes back for a re-test at the end, its pickups kept; every criterion signed raises the overtime. Buy into a line before signing: its nodes lower its goal, its double or retainer counts each pickup twice.",
   'skill.signoff.1.label': 'Sign the Closeout',
   'skill.golden.blurb':
     'Some work arrives flagged partner-only. It pays a fortune, and the crew will not go near it.',
@@ -508,6 +511,9 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.estimatesSlop.blurb':
     'Every hallucinated import is estimated by the token.',
   'skill.effect.spPerClose': '+{{count}} SP per ticket',
+  'skill.effect.acceptance.goal': 'acceptance: a lower goal for this line',
+  'skill.effect.acceptance.finisher':
+    'acceptance: every pickup of this line counts twice',
   'skill.effect.spPerClose.ticket': '+{{count}} SP per {{ticket}}',
   'skill.coaches.1.label': 'Agile Centre of Excellence',
   'skill.coaches6.1.label': 'The Agile Tribe',
@@ -747,7 +753,7 @@ export const EN: Readonly<Record<string, string>> = {
   'help.strategy.prod':
     'Clear prod before the train leaves. From ADR-{{adr}}, every P0 still on the board adds an Incident Review to the release.',
   'help.strategy.credit':
-    'Take credit when an ADR is close. From ADR-{{adr}} you can approve the next one holding {{share}} % of its price and repay the rest from later story points. Waiting for the last of it is time you don’t bill.',
+    'Take credit when an ADR is close. From ADR-{{adr}} to ADR-{{last}} you can approve the next one holding {{share}} % of its price and repay the rest from later story points. Waiting for the last of it is time you don’t bill.',
   'help.train.heading': 'The release train',
   'help.train.intro':
     'There is no round timer. A round is one sprint’s release, so the pace is whatever your throughput makes it.',
@@ -772,7 +778,7 @@ export const EN: Readonly<Record<string, string>> = {
   'help.loop.4':
     'Story points buy the skill tree. Approve ADRs there to open new lines of ever dearer debt. Drag to pan, wheel to zoom, hover a square to read it; a black box says only that something is there.',
   'help.loop.5':
-    'Last on the tree, Sign the Closeout starts the acceptance push: nine tests, twenty seconds each. Click the pink tickets of the line under test until the goal is met; the engagement is done when all nine are signed.',
+    'Last on the tree, Sign the Closeout starts the acceptance push: nine tests of fifteen seconds. Sweep up the pink tickets of the line under test; a line that misses its goal is re-tested for ten seconds at the end, its pickups kept. A line’s own nodes lower its goal, and its double or retainer counts each pickup twice. The engagement is done when all nine are signed.',
   'award.m-first-close.label': 'First ticket triaged',
   'award.m-first-close.blurb': 'Somebody had to.',
   'award.m-first-invoice.label': 'First invoice raised',
@@ -948,7 +954,7 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.well.awards':
     '{{unlocked}} of {{total}} achievements confirmed by the crew.',
   'postmortem.well.rewards':
-    'Achievements paid {{euros}} and {{sp}} SP into the budget; the rest were just for the record.',
+    'Achievements paid out {{euros}} and {{sp}} SP; the rest were just for the record.',
   'postmortem.badly.adrs':
     'Every Architecture Decision Record made the codebase permanently worse. None were reverted, none were on the agenda to be, and each was approved in writing by {{client}}.',
   'postmortem.badly.backlog':
@@ -956,7 +962,7 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.badly.headcount':
     'Headcount was added faster than the backlog shrank, at every tier.',
   'postmortem.action.gender':
-    'Reconcile crew throughput by gender — women: {{women}} closes/head (n={{womenHeads}}); men: {{men}} closes/head (n={{menHeads}}). Owner: unassigned.',
+    'The steering committee asked for crew throughput by gender. Request declined; throughput is a property of the process. Owner: HR.',
   'postmortem.action.load':
     'Investigate why {{tier}} is now load-bearing. Owner: unassigned.',
   'postmortem.action.assisted':
@@ -965,7 +971,7 @@ export const EN: Readonly<Record<string, string>> = {
     'Schedule a retrospective on this retrospective. Owner: unassigned.',
   'achievements.heading': 'Achievements',
   'achievements.subheading':
-    'Recognition register — confirmed on outcome, never on effort, and never paid.',
+    'Recognition register — confirmed on outcome, never on effort, paid on confirmation.',
   'achievements.count': '{{confirmed}}/{{total}} confirmed',
   'achievements.column.award': 'Achievement',
   'achievements.column.status': 'Status',
@@ -975,6 +981,7 @@ export const EN: Readonly<Record<string, string>> = {
   'rail.subheading': 'Bought while the board fills.',
   'rail.shop': 'Shop',
   'rail.buyable': 'something to buy',
+  'rail.buyMax': 'buy max',
   'rail.crew.note': 'Lines open on the tree; heads are hired here.',
   'rail.maxed': 'MAX',
   'rail.on-tree': 'on the tree',
@@ -1006,13 +1013,16 @@ export const EN: Readonly<Record<string, string>> = {
     'Approve on credit: {{owed}} SP owed, repaid from half of every later pickup',
   'hud.debt': 'repaying {{owed}} SP',
   'hud.goal.credit': '{{pct}} % to ADR-{{adr}} · approvable on credit',
-  'acceptance.card.kicker': 'Acceptance test {{n}} of {{of}}',
-  'acceptance.card.ask': 'Click the pink tickets:',
+  'acceptance.card.kicker': 'Acceptance · {{n}} of {{of}} signed',
+  'acceptance.card.retest': 'Re-test · {{n}} of {{of}} signed',
+  'acceptance.card.ask': 'Sweep up the pink tickets:',
   'acceptance.card.count': '{{picked}} of {{goal}} picked up',
-  'acceptance.card.rule': 'goal in time: clean, overtime ×{{mult}} rises',
+  'acceptance.card.discount': '−{{n}} from your nodes',
+  'acceptance.card.weight': 'each counts ×{{n}}',
+  'acceptance.card.rule': 'miss it: re-test, pickups kept · overtime ×{{mult}}',
   'acceptance.card.steps': 'Acceptance criteria',
   'acceptance.card.crew':
-    'The crew is in the acceptance meeting. Only your clicks count.',
+    'The crew is in the acceptance meeting. Only your hand counts.',
   'board.jackpot':
     'PERFECT STORM — the whole board billed under escalation and hotfix',
   'release.phase.incident': 'Incident Review',
@@ -1086,17 +1096,19 @@ export const EN: Readonly<Record<string, string>> = {
   'moment.closeout.decision':
     'Enter formal acceptance. The client tests the delivery one criterion at a time, one line of work per criterion. The crew sits in the acceptance meeting; the tickets are yours to pick up.',
   'moment.closeout.consequences':
-    'Each test runs twenty seconds; what its line delivers in that time is marked pink. Pick up enough of them by hand and the criterion signs clean at once: an award and more overtime on every ticket. Run out of time and it signs with findings. Open hotfixes, escalations and quarter ends are void.',
+    'Each test runs fifteen seconds; what its line delivers in that time is marked pink. Pick up enough of them by hand and the criterion signs when the time is up: an award and more overtime on every ticket. Fall short and the line goes to the back of the queue for a ten-second re-test, its pickups kept. Every node bought on a line lowers its goal; its double or retainer counts each pickup twice. Open hotfixes, escalations, quarter ends, pizza vouchers and P0s are void, and none arrive during the push.',
   'moment.closeout.approved':
     'Meridian Procurement Agent (automated), on behalf of the Programme Board, quorum not required.',
   'moment.closeout.comments': 'LGTM.',
   'postmortem.stamp': 'ACCEPTED',
   'postmortem.stamp.by': 'Meridian Financial Group · signed without reading',
   'postmortem.well.criteria.all':
-    'All {{total}} acceptance criteria verified. None of them by a human.',
-  'award.a-findings.label': 'Signed with findings',
+    'All {{total}} acceptance criteria verified on the first pass. Audit has asked how.',
+  'postmortem.well.criteria.retest':
+    'All {{total}} acceptance criteria verified, after one re-test. The findings were closed as resolved.',
+  'award.a-findings.label': 'Sent back',
   'award.a-findings.blurb':
-    'A criterion ran out of time and was signed anyway. The findings were filed under Phase Two.',
+    'A criterion missed its goal and went back into the queue. The client called it diligence.',
   'award.a-over-budget.label': 'Over budget',
   'award.a-over-budget.blurb':
     'The budget passed €20 Qa before the last criterion was signed. The client approved an increase to match.',
@@ -1106,17 +1118,17 @@ export const EN: Readonly<Record<string, string>> = {
     'HOTFIX ON THE BOARD · SWEEP IT, THEN THE ESCALATION, THEN THE QUARTER END',
   'board.buff.combo.live':
     'HOTFIX LIVE · SWEEP THE ESCALATION, THEN THE QUARTER END',
-  'postmortem.well.criteria.findings':
-    '{{clean}} of {{total}} acceptance criteria verified. The other {{findings}} were signed with findings and moved to Phase Two.',
-  'award.c-findings-0.label': 'With findings: code style',
-  'award.c-findings-1.label': 'With findings: backwards compatibility',
-  'award.c-findings-2.label': 'With findings: test suite',
-  'award.c-findings-3.label': 'With findings: merge strategy',
-  'award.c-findings-4.label': 'With findings: documentation',
-  'award.c-findings-5.label': 'With findings: knowledge transfer',
-  'award.c-findings-6.label': 'With findings: decommissioning',
-  'award.c-findings-7.label': 'With findings: architecture',
-  'award.c-findings-8.label': 'With findings: performance',
+  'postmortem.well.criteria.retests':
+    'All {{total}} acceptance criteria verified, after {{findings}} re-tests. The findings were closed as resolved.',
+  'award.c-findings-0.label': 'Re-test: code style',
+  'award.c-findings-1.label': 'Re-test: backwards compatibility',
+  'award.c-findings-2.label': 'Re-test: test suite',
+  'award.c-findings-3.label': 'Re-test: merge strategy',
+  'award.c-findings-4.label': 'Re-test: documentation',
+  'award.c-findings-5.label': 'Re-test: knowledge transfer',
+  'award.c-findings-6.label': 'Re-test: decommissioning',
+  'award.c-findings-7.label': 'Re-test: architecture',
+  'award.c-findings-8.label': 'Re-test: performance',
   'award.c-findings-0.blurb': 'The linter has been added to the backlog.',
   'award.c-findings-1.blurb':
     'Compatibility will be restored in a future release.',

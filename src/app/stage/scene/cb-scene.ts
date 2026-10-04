@@ -83,6 +83,9 @@ export abstract class CbScene extends Phaser.Scene {
     return this.#floats;
   }
 
+  /** Alpha new floats start at; the board lowers it while an acceptance test runs. */
+  protected floatAlpha = 1;
+
   protected cappedDelta(delta: number): number {
     return Math.min(delta, MAX_FRAME_MS);
   }
@@ -111,6 +114,7 @@ export abstract class CbScene extends Phaser.Scene {
       style.size ?? PAYOUT_FLOAT_SIZE,
       style.colour ?? BOARD_TEXT.gold
     );
+    text.setAlpha(this.floatAlpha);
 
     this.#popIn(text);
     this.tweens.add({
@@ -144,7 +148,8 @@ export abstract class CbScene extends Phaser.Scene {
         strokeThickness: BIG_FLOAT.strokeThickness,
       })
       .setOrigin(0.5)
-      .setDepth(51);
+      .setDepth(51)
+      .setAlpha(this.floatAlpha);
     const targets = caption ? [text, this.#caption(text, caption)] : [text];
 
     this.#popIn(text);

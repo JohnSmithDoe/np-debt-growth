@@ -66,7 +66,7 @@ describe('AwardBannerComponent', () => {
     expect(component.waiting()).toBe(2);
   });
 
-  it('dismisses the award that was clicked', () => {
+  it('dismisses one award and keeps the rest', () => {
     const component = banner();
 
     grant(first, second, third);
