@@ -4,6 +4,10 @@
   "description": "Debt Growth — an idle game about a consultancy that bills to fix the mess it is paid to make.",
   "private": true,
   "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JohnSmithDoe/np-debt-growth.git"
+  },
   "packageManager": "pnpm@11.18.0",
   "engines": {
     "node": ">=22.18"

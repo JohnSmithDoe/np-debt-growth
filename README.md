@@ -41,6 +41,21 @@ pnpm rust:lint    # cargo clippy
 pnpm rust:test    # cargo test
 ```
 
+## Release
+
+The web build is published to GitHub Pages at
+<https://johnsmithdoe.github.io/np-debt-growth/> by `.github/workflows/release.yml`.
+
+1. Bump the version in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`
+   (the workflow fails if the tag disagrees with any of them).
+2. Commit, tag `vX.Y.Z`, and push with `git push --follow-tags`.
+3. The workflow verifies (lint, typecheck, sheriff, tests), builds, deploys to Pages and
+   publishes the GitHub release. A manual run from the Actions tab is a dry run: verify and
+   build only.
+
+Once per repository: Settings → Pages → Source **GitHub Actions**, and Settings →
+Environments → `github-pages` → Deployment branches and tags → add a **Tag** rule `v*`.
+
 ## Licence
 
 **AGPL-3.0-only** — full text in [`LICENSE.txt`](./LICENSE.txt).

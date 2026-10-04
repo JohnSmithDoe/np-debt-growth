@@ -1,0 +1,165 @@
+# Release: a `vX.Y.Z` tag deploys the web build to Pages and publishes a GitHub release.
+# Adapted from np-commlink's release.yml. Unlike there, this repo has no pre-push gate,
+# so `verify` runs the suite here and nothing deploys past a red test.
+#
+# - A manual run (workflow_dispatch) is a dry run: verify and build, no deploy, no release.
+# - Repo settings: Pages → Source **GitHub Actions**; Environments → github-pages →
+#   Deployment branches and tags → add a **Tag** rule `v*` (the default branch rule does
+#   not cover tags).
+# - setup-node's `cache: pnpm` runs before corepack has made pnpm exist; hence the
+#   explicit cache step.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+# Never cancel: a superseded run may be mid-deploy.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+
+jobs:
+  # The tag must agree with every file that carries the version. REF reaches the
+  # script through env, never spliced as ${{ }}, so it stays data rather than code.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.release.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Release version?
+        id: release
+        env:
+          REF: ${{ github.ref }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            echo "::notice::Manual run — verify and build only, nothing published."
+            exit 0
+          fi
+          version="${REF#refs/tags/}"
+          if ! printf '%s' "$version" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::notice::$version is not a release version — nothing published."
+            exit 0
+          fi
+          for declared in \
+            "v$(node -p 'require("./package.json").version')" \
+            "v$(node -p 'require("./src-tauri/tauri.conf.json").version')" \
+            "v$(sed -n 's/^version = "\(.*\)"/\1/p' src-tauri/Cargo.toml | head -1)"; do
+            if [ "$version" != "$declared" ]; then
+              echo "::error::tag $version disagrees with a declared version ($declared): package.json, tauri.conf.json and Cargo.toml must all match."
+              exit 1
+            fi
+          done
+          echo 'publish=true' >> "$GITHUB_OUTPUT"
+
+  verify:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      # Corepack reads the pinned version from package.json's packageManager.
+      - name: Activate pnpm
+        run: corepack enable pnpm
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+
+      - run: pnpm install --frozen-lockfile --store-dir ~/.pnpm-store
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm verify
+      - run: pnpm test
+
+  build:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Activate pnpm
+        run: corepack enable pnpm
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+
+      - run: pnpm install --frozen-lockfile --store-dir ~/.pnpm-store
+
+      # The base href is relative (`./`) and routing is hash-based, so the same build
+      # serves from the Pages subpath unchanged.
+      - run: pnpm build
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist/renderer
+
+  # Separate jobs keep the tokens separate: deploy holds only the Pages scopes,
+  # release only contents: write.
+  deploy:
+    needs: [version, build]
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+  # Edit-or-create, so a re-run of a failed job needs no manual delete.
+  release:
+    needs: [version, deploy]
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          cat > notes.md <<'EOF'
+          **Play in the browser:** <https://johnsmithdoe.github.io/np-debt-growth/>
+
+          Debt Growth is AGPL-3.0; the source is this repository.
+          EOF
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TAG" --notes-file notes.md
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file notes.md --generate-notes
+          fi
