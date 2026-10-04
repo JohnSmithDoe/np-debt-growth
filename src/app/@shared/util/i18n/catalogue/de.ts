@@ -242,7 +242,7 @@ export const DE: Readonly<Record<string, string>> = {
   'settings.subheading':
     'Wie sich das Spiel verhält. Nichts davon ist Fortschritt.',
   'title.fullscreen': 'Vollbild',
-  'title.pitch.fullscreen': 'Ab ins Vollbild!',
+  'title.pitch.fullscreen': 'im Vollbild spielen',
   'title.name': 'Schuld & Wachstum',
   'title.photosensitivity':
     'Warnung vor Lichtempfindlichkeit: Dieses Spiel enthält schnelle Lichtblitze, flackernde Farben und sich rasch bewegende Lichter.',

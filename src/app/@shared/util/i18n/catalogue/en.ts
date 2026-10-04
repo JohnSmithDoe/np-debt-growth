@@ -236,7 +236,7 @@ export const EN: Readonly<Record<string, string>> = {
   'settings.sfx.volume': 'Sound effects volume',
   'settings.subheading': 'How the game behaves. None of it is progress.',
   'title.fullscreen': 'Fullscreen',
-  'title.pitch.fullscreen': 'Go fullscreen!',
+  'title.pitch.fullscreen': 'play it fullscreen',
   'title.name': 'Debt Growth',
   'title.photosensitivity':
     'Photosensitivity warning: this game has rapid flashes, flickering colours and fast-moving lights.',
