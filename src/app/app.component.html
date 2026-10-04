@@ -128,6 +128,12 @@
 
     @if (!onTree()) {
       <cb-acceptance-card />
+    } @else {
+      <div class="interval-bar">
+        <button type="button" class="btn primary" (click)="toReview()">
+          {{ 'hud.tree.back' | translate }}
+        </button>
+      </div>
     }
   </div>
 

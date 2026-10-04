@@ -6,56 +6,88 @@
       <h1>{{ 'title.name' | translate }}</h1>
       <p class="strap">{{ 'title.strap' | translate }}</p>
       <p class="premise">{{ 'title.premise' | translate }}</p>
-      <div class="doors">
-        <button type="button" class="btn primary" (click)="open()">
-          {{ action() | translate }}
-        </button>
-        <button type="button" class="btn ghost" (click)="openHelp()">
-          {{ 'title.help' | translate }}
-        </button>
-      </div>
+      <button type="button" class="btn primary" (click)="open()">
+        {{ action() | translate }}
+      </button>
 
-      <div class="languages">
-        @for (option of languages; track option) {
-          <button
-            type="button"
-            class="lang"
-            [class.active]="option === language"
-            [attr.aria-current]="option === language"
-            (click)="choose(option)"
-          >
-            {{ 'language.' + option | translate }}
-          </button>
-        }
-        <span class="divider" aria-hidden="true"></span>
+      <div class="toggles">
+        <div class="languages" role="group">
+          @for (option of languages; track option) {
+            <button
+              type="button"
+              class="toggle"
+              [class.active]="option === language"
+              [attr.aria-current]="option === language"
+              [title]="'language.' + option | translate"
+              [attr.aria-label]="'language.' + option | translate"
+              (click)="choose(option)"
+            >
+              {{ option }}
+            </button>
+          }
+        </div>
         <button
           type="button"
-          class="lang"
-          [class.lit]="sound()"
+          class="toggle"
+          [class.active]="sound()"
           [attr.aria-pressed]="sound()"
+          [title]="(sound() ? 'title.sound.on' : 'title.sound.off') | translate"
+          [attr.aria-label]="
+            (sound() ? 'title.sound.on' : 'title.sound.off') | translate
+          "
           (click)="toggleSound()"
         >
-          {{ (sound() ? 'title.sound.on' : 'title.sound.off') | translate }}
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path class="solid" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+            @if (sound()) {
+              <path
+                d="M15.2 9.2a4 4 0 0 1 0 5.6M17.8 6.6a7.7 7.7 0 0 1 0 10.8"
+              />
+            } @else {
+              <path d="M15.5 9.5l5 5M20.5 9.5l-5 5" />
+            }
+          </svg>
         </button>
         @if (canFullscreen) {
           <button
             type="button"
-            class="lang"
+            class="toggle"
+            [class.active]="fullscreen()"
             [attr.aria-pressed]="fullscreen()"
+            [title]="
+              (fullscreen() ? 'title.windowed' : 'title.fullscreen') | translate
+            "
+            [attr.aria-label]="
+              (fullscreen() ? 'title.windowed' : 'title.fullscreen') | translate
+            "
             (click)="toggleFullscreen()"
           >
-            {{
-              (fullscreen() ? 'title.windowed' : 'title.fullscreen') | translate
-            }}
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              @if (fullscreen()) {
+                <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+              } @else {
+                <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+              }
+            </svg>
           </button>
         }
+        <button
+          type="button"
+          class="toggle"
+          [title]="'title.help' | translate"
+          [attr.aria-label]="'title.help' | translate"
+          (click)="openHelp()"
+        >
+          ?
+        </button>
       </div>
+    </div>
 
+    <footer class="legal">
       <p class="warning" role="note">
         {{ 'title.photosensitivity' | translate }}
       </p>
-    </div>
-
-    <cb-credits class="legal" />
+      <cb-credits />
+    </footer>
   </div>
 }

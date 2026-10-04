@@ -45,7 +45,8 @@ cb-debug-bar {
   justify-content: flex-end;
 }
 
-.controls .btn {
+.controls .btn,
+.interval-bar .btn {
   white-space: nowrap;
 }
 
@@ -302,6 +303,21 @@ cb-debug-bar {
   inset: 0;
 }
 
+.interval-bar {
+  position: absolute;
+  z-index: 2;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--np-cb-rule);
+  border-radius: var(--np-cb-radius);
+  background: var(--np-cb-surface);
+  box-shadow: var(--np-cb-lift);
+}
+
 @media (max-width: 1360px) {
   .masthead {
     grid-template-columns: auto 1fr;
@@ -358,7 +374,8 @@ cb-debug-bar {
 
   .masthead,
   .ticker,
-  .rail {
+  .rail,
+  .interval-bar {
     display: none;
   }
 

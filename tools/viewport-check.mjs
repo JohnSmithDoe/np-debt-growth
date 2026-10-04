@@ -92,7 +92,7 @@ for (const [width, height] of SIZES) {
     failures.push(`${width}x${height}: the tree never opened`);
   } else {
     await fits('Skills');
-    await page.getByRole('button', { name: /back to the floor/i }).click();
+    await page.locator('.interval-bar .btn').click();
     await page.waitForTimeout(900);
     if ((await page.locator('.controls .back').count()) > 0) {
       failures.push(`${width}x${height}: the tree would not close`);
