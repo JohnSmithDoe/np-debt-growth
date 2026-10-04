@@ -11,6 +11,40 @@ tickets, and therefore buys bad code on purpose.
 | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | [![Every bug is billable.](docs/promo/2-every-bug-is-billable.webp)](https://johnsmithdoe.github.io/np-debt-growth/) | [![Eight ADRs. Nine criteria. One hand.](docs/promo/3-one-hand.webp)](https://johnsmithdoe.github.io/np-debt-growth/) |
 
+## The game
+
+**Your consultancy bills by the hour. Clean code is bad for business.**
+
+Every ticket is an invoice, so you need more of them — and the surest way to get
+more tickets is to make the codebase worse. You hire developers whose only job is
+to produce work for everyone else: lint warnings first, then bugs, then whatever
+the copy-paste culture and the offshore contractors can throw at you. Your team
+cleans it all up, and the client pays for every hour of it.
+
+### How you play
+
+- **Sweep the board.** Developers throw tickets onto the board; move your cursor
+  over them to pick them up. Each pickup pays at once — in euros and, once you
+  track velocity, in story points. Work nobody reaches is closed as _won't fix_.
+- **Fill the sprint.** Closed work fills the sprint. A full sprint leaves on the
+  release train, and the board waits until it is back — so the faster you close,
+  the faster you ship. Cut a ceremony or two and the train comes back sooner.
+- **Hire the problem.** Euros buy supply: more developers on every line, faster
+  throwers, a crew that walks the board and closes tickets for you, and managers
+  who make them bill more.
+- **Grow the tree.** Story points buy the skill tree — dearer tickets, more of
+  them, better estimates — and the **architecture decision records** that open
+  the next line. Eight ADRs take you from a Legacy Framework through AI Slop and
+  The Rockstar Dev to the Agent Swarm, and every one makes the work worth ten
+  times more.
+- **Get it signed off.** At the top of the tree, the client finally runs
+  acceptance. Nine criteria, one line at a time, and only your own hand counts.
+  Sign all nine and the engagement is over — with a retrospective of everything
+  you billed.
+
+A run lasts about twenty minutes. There is no offline progress and no wall clock:
+the game plays while you play it, and pauses when you look away.
+
 ## Stack
 
 | Layer     | Choice                                                     |
