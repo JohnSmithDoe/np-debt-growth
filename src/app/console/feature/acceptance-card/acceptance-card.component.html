@@ -19,7 +19,7 @@
       <div class="task">
         <p class="ask">
           {{ 'acceptance.card.ask' | translate }}
-          @for (ticket of view.tickets; track ticket) {
+          @for (ticket of view.tickets; track $index) {
             <span class="ticket">{{ ticketKey(ticket) | translate }}</span>
           }
         </p>

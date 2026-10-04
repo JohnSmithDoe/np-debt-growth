@@ -485,8 +485,9 @@ export class BoardScene extends CbScene {
     voted: boolean,
     alpha: number
   ): void {
-    const frame = voted ? voteFrame(type) : cardFrame(type);
     const from = parts.flyers.catch(id) ?? { x, y };
+    if (TICKET_TYPES[type].handOnly) return;
+    const frame = voted ? voteFrame(type) : cardFrame(type);
     if (this.#wontFix.has(id)) {
       if (alpha <= 0) return;
       parts.flyers.launch(
