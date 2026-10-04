@@ -1002,7 +1002,8 @@ export const EN: Readonly<Record<string, string>> = {
   'buyNext.heading': 'Buy next',
   'buyNext.subheading':
     'The Synergy Analyser’s pick for your Story Points, wherever it hangs on the tree.',
-  'buyNext.buy': 'Buy · {{cost}}',
+  'buyNext.buy': 'Buy',
+  'buyNext.cost': 'Costs {{cost}}',
   'buyNext.credit': 'On credit',
   'buyNext.goTo': 'Show in tree',
   'achievements.heading': 'Achievements',

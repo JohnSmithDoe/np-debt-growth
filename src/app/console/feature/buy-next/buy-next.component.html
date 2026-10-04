@@ -14,13 +14,16 @@
           [disabled]="!next.affordable"
           (click)="buy()"
         >
-          {{ 'buyNext.buy' | translate: { cost: next.cost } }}
+          {{ 'buyNext.buy' | translate }}
         </button>
         <button type="button" class="btn ghost small" (click)="goTo()">
           {{ 'buyNext.goTo' | translate }}
         </button>
       </div>
       <p class="label">{{ next.label }}</p>
+      <p class="small cost">
+        {{ 'buyNext.cost' | translate: { cost: next.cost } }}
+      </p>
       <p class="small effect">{{ next.effect }}</p>
       <p class="small muted">{{ next.blurb }}</p>
       @if (!next.affordable) {

@@ -19,6 +19,11 @@ cb-panel {
   font-weight: 600;
 }
 
+.cost {
+  color: var(--np-cb-points);
+  font-family: var(--np-cb-font-util);
+}
+
 .effect {
   color: var(--np-cb-points);
 }
