@@ -23,6 +23,10 @@ export class SettingsService {
     () => this.#settings().agentWarned ?? SETTINGS_DEFAULTS.agentWarned
   );
 
+  readonly tutorialDone = computed(
+    () => this.#settings().tutorialDone ?? SETTINGS_DEFAULTS.tutorialDone
+  );
+
   readonly railTab = computed(
     () => this.#settings().railTab ?? SETTINGS_DEFAULTS.railTab
   );
@@ -41,6 +45,10 @@ export class SettingsService {
 
   setAgentWarned(): void {
     this.#write({ ...this.#settings(), agentWarned: true });
+  }
+
+  setTutorialDone(): void {
+    this.#write({ ...this.#settings(), tutorialDone: true });
   }
 
   setShowClickRadius(value: boolean): void {

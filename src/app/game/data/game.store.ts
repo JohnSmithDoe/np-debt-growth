@@ -1363,6 +1363,12 @@ export class GameStore {
     return true;
   }
 
+  /** Drops one card on the board, outside the spawners; returns its id or NO_TICKET. */
+  place(type: TicketTypeId, golden = false): number {
+    const ticket = addTicket(this.#board, type, this.#rand, false, golden);
+    return ticket ? ticket.id : NO_TICKET;
+  }
+
   #burst(tier: number, type: TicketTypeId): void {
     if (tier !== TIER_BURST.tier) return;
     for (let n = 0; n < TIER_BURST.count; n++)

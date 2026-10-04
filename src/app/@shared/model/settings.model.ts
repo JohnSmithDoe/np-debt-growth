@@ -5,6 +5,7 @@ export interface Settings {
   readonly showAgent?: boolean;
   readonly agentAuto?: boolean;
   readonly agentWarned?: boolean;
+  readonly tutorialDone?: boolean;
   readonly railTab?: string;
 }
 
@@ -13,5 +14,6 @@ export const SETTINGS_DEFAULTS: Required<Settings> = {
   showAgent: true,
   agentAuto: false,
   agentWarned: false,
+  tutorialDone: false,
   railTab: 'supply',
 } as const;

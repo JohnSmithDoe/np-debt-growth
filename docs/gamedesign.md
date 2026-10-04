@@ -620,6 +620,12 @@ paperclip (`console/feature/agent/`, on by default, switchable in settings) show
 behind a once-only warning that it is cheating. Its auto-buy switch (`AgentService.auto`, off by default,
 kept in settings) buys each pick the moment it is affordable.
 
+On a fresh run's first opening the paperclip gives a tour (`console/data/tutorial.service.ts`): it
+talks, throws one lint ticket, waits for the hand to pick it up, and talks again. The clock is held
+(`'tutorial'`) from the first line to the last, so the crew cannot take the ticket and nothing
+expires; the hand still collects while it is held. The tour is skippable, shown once
+(`tutorialDone`, kept in settings) and never offered over a restored save.
+
 ---
 
 ## 10. Where the knobs live, and how they are guarded

@@ -165,6 +165,21 @@ export const EN: Readonly<Record<string, string>> = {
   'agent.auto.blurb': 'Buys every suggestion the moment it is affordable.',
   'agent.warn.body':
     "It looks like you're trying to stop thinking. I tell you what to buy next, and my auto-buy buys it the moment you can afford it. That is cheating, and it takes all the fun out of the game.",
+  'agent.tutorial.hello':
+    "Hi! It looks like you're running a software consultancy. You bill by the ticket, and bad code makes tickets. Shall I show you around? Nothing moves while I talk.",
+  'agent.tutorial.hello.next': 'Show me',
+  'agent.tutorial.ticket':
+    'Your developer throws work onto the board as tickets. The crew picks them up, and so can you. Let me throw you one.',
+  'agent.tutorial.ticket.next': 'Throw a ticket',
+  'agent.tutorial.collect':
+    'There it is. Sweep your pointer over the ticket to pick it up. Hovering is enough, but clicking works too.',
+  'agent.tutorial.paid':
+    'Billed! Every ticket you or the crew picks up pays at once and fills the sprint. A full sprint ships on the release train, and the board waits until the train is back.',
+  'agent.tutorial.paid.next': 'And then?',
+  'agent.tutorial.goal':
+    'Spend euros in the shop on the right: more developers, more lines of debt. Story Point Estimation earns Story Points, and Story Points buy the skill tree, where ADRs open dearer debt. I will be down here with advice. Click me any time.',
+  'agent.tutorial.goal.next': 'Start billing',
+  'agent.tutorial.skip': 'Skip the tour',
   'agent.warn.ok': 'Understood',
   'agent.push.quip.0':
     "It looks like you're being tested. Would you like me to schedule a meeting about it?",

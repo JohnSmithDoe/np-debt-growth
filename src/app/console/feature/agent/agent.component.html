@@ -1,6 +1,23 @@
 @if (shown()) {
-  <aside class="agent" [class.open]="open()">
-    @if (open()) {
+  <aside class="agent" [class.open]="open() || lesson()">
+    @if (lesson(); as step) {
+      <div class="bubble lesson" role="dialog" aria-live="polite">
+        <p class="name">{{ 'agent.name' | translate }}</p>
+        <p class="headline">
+          {{ 'agent.tutorial.' + step | translate }}
+        </p>
+        <div class="lesson-actions">
+          <button type="button" class="skip" (click)="skipLesson()">
+            {{ 'agent.tutorial.skip' | translate }}
+          </button>
+          @if (step !== 'collect') {
+            <button type="button" class="ack" (click)="lessonNext()">
+              {{ 'agent.tutorial.' + step + '.next' | translate }}
+            </button>
+          }
+        </div>
+      </div>
+    } @else if (open()) {
       <div class="bubble" role="status">
         <p class="name">{{ 'agent.name' | translate }}</p>
         @if (pushing()) {

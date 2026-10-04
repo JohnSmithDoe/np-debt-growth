@@ -165,6 +165,21 @@ export const DE: Readonly<Record<string, string>> = {
   'agent.auto.blurb': 'Kauft jeden Vorschlag, sobald er bezahlbar ist.',
   'agent.warn.body':
     'Sieht so aus, als wolltest du aufhören nachzudenken. Ich sage dir, was du als Nächstes kaufst, und mein Autokauf kauft es, sobald du es dir leisten kannst. Das ist Schummeln, und es nimmt dem Spiel jeden Spaß.',
+  'agent.tutorial.hello':
+    'Hallo! Sieht so aus, als würdest du eine Software-Beratung führen. Du rechnest pro Ticket ab, und schlechter Code macht Tickets. Soll ich dir alles zeigen? Solange ich rede, steht alles still.',
+  'agent.tutorial.hello.next': 'Zeig es mir',
+  'agent.tutorial.ticket':
+    'Dein Entwickler wirft Arbeit als Tickets aufs Board. Das Team nimmt sie auf, und du auch. Ich werfe dir eins zu.',
+  'agent.tutorial.ticket.next': 'Ticket werfen',
+  'agent.tutorial.collect':
+    'Da ist es. Fahr mit dem Zeiger über das Ticket, um es aufzunehmen. Darüberfahren reicht, Klicken geht auch.',
+  'agent.tutorial.paid':
+    'Abgerechnet! Jedes Ticket, das du oder das Team aufnehmt, zahlt sofort und füllt den Sprint. Ein voller Sprint fährt mit dem Release-Zug los, und das Board wartet, bis der Zug zurück ist.',
+  'agent.tutorial.paid.next': 'Und dann?',
+  'agent.tutorial.goal':
+    'Gib Euro rechts im Shop aus: mehr Entwickler, mehr Linien voller Schulden. Die Story-Point-Schätzung bringt Story Points, und mit Story Points kaufst du den Skill-Baum, wo ADRs teurere Schulden öffnen. Ich bin hier unten und berate dich. Klick mich jederzeit an.',
+  'agent.tutorial.goal.next': 'Abrechnen',
+  'agent.tutorial.skip': 'Tour überspringen',
   'agent.warn.ok': 'Verstanden',
   'agent.push.quip.0':
     'Sieht so aus, als würdest du getestet. Soll ich dazu ein Meeting ansetzen?',

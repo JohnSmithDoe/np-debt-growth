@@ -52,6 +52,9 @@ for (const [width, height] of SIZES) {
     await page.waitForTimeout(1200);
   }
 
+  const skipTour = page.locator('cb-agent .skip');
+  if (await skipTour.count()) await skipTour.click();
+
   await page.evaluate(() => {
     window.debtGrowth.grant(1_000_000, 1_000);
     window.debtGrowth.buyLine('velocity');

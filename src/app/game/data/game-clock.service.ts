@@ -3,7 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { TICK_MS } from '../model/game.consts';
 import { GameStore } from './game.store';
 
-export type PauseReason = 'tree' | 'hidden' | 'help' | 'record' | 'moment';
+export type PauseReason =
+  'tree' | 'hidden' | 'help' | 'record' | 'moment' | 'tutorial';
 
 @Injectable({ providedIn: 'root' })
 export class GameClock {

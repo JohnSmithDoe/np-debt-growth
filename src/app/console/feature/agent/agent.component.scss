@@ -218,6 +218,37 @@
   }
 }
 
+.lesson {
+  max-inline-size: 22rem;
+
+  .headline {
+    font-size: 0.9rem;
+  }
+}
+
+.lesson-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: flex-end;
+  margin-block-start: 0.4rem;
+
+  .ack {
+    margin-block-start: 0;
+  }
+}
+
+.skip {
+  padding: 0.3rem 0.2rem;
+  border: 0;
+  background: none;
+  color: #6b6540;
+  font: inherit;
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .clip.auto .wire {
   stroke: var(--np-cb-warn);
 }

@@ -18,6 +18,7 @@ import type { Pick } from '../../../game/util/advisor';
 import { buyKey } from '../../../game/util/advisor';
 import { affordable, AgentService } from '../../data/agent.service';
 import { DoorService } from '../../data/door.service';
+import { TutorialService } from '../../data/tutorial.service';
 import type { Phrase } from '../../util/agent-copy';
 import { buyName, goalKey, pushQuipKey } from '../../util/agent-copy';
 import { onRise } from '../../util/on-rise';
@@ -44,6 +45,9 @@ export class AgentComponent {
   #translate = inject(TranslateService);
   #door = inject(DoorService);
   #settings = inject(SettingsService);
+  #tutorial = inject(TutorialService);
+
+  readonly lesson = this.#tutorial.step;
 
   readonly #open = signal(false);
   readonly open = this.#open.asReadonly();
@@ -61,7 +65,10 @@ export class AgentComponent {
 
   readonly shown = computed(
     () =>
-      this.#settings.showAgent() && this.#door.opened() && !this.#store.ended()
+      this.lesson() !== null ||
+      (this.#settings.showAgent() &&
+        this.#door.opened() &&
+        !this.#store.ended())
   );
 
   readonly headline = computed(() =>
@@ -119,7 +126,16 @@ export class AgentComponent {
   }
 
   toggle(): void {
+    if (this.lesson() !== null) return;
     this.#open.update((open) => !open);
+  }
+
+  lessonNext(): void {
+    this.#tutorial.next();
+  }
+
+  skipLesson(): void {
+    this.#tutorial.finish();
   }
 
   acknowledge(): void {

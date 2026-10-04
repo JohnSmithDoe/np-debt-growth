@@ -3,9 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { FinaleService } from '../../@shared/data/finale.service';
 
 import type { PurchaseId } from '../model/balance/progression';
-import { NO_TICKET } from '../model/board.model';
 import type { TicketTypeId } from '../model/ticket.model';
-import { addTicket } from '../util/board';
 import { GameClock } from './game-clock.service';
 import { GameStore } from './game.store';
 import { SaveService } from './save.service';
@@ -48,16 +46,7 @@ export class HarnessDoor {
       buyLine: (line) => this.#store.buyLine(line),
       buySpawner: (adr) => this.#store.buySpawner(adr),
       buyOut: () => this.#store.buyOut(),
-      place: (type, golden = false) => {
-        const ticket = addTicket(
-          this.#store.board,
-          type,
-          Math.random,
-          false,
-          golden
-        );
-        return ticket ? ticket.id : NO_TICKET;
-      },
+      place: (type, golden = false) => this.#store.place(type, golden),
       postMortem: () => this.#store.acceptNow(this.#clock.now()),
       finale: (curtain = false) => {
         this.#finale.open();
