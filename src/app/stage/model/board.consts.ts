@@ -46,7 +46,7 @@ export const UNDER_TEST = {
   pulse: 0.15,
   pulseMs: 700,
   /** Alpha of every other falling card while a test runs. */
-  others: 0.3,
+  others: 0.35,
 } as const;
 
 export const BUFF_BANNER = {

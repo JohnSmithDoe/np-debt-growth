@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 
 import type { Board, CrewMember } from '../../game/model/board.model';
-import { meetingSpot, NO_TEST, NO_TICKET } from '../../game/model/board.model';
+import { meetingSpot, NO_TICKET } from '../../game/model/board.model';
 import { crewName } from '../../game/model/cast.model';
 import { TICKET_TYPES } from '../../game/model/ticket.model';
 import type { CrewKind } from '../../game/model/crew.model';
@@ -17,7 +17,6 @@ import {
   CREW_SPRITE_LIMIT,
   BOARD_TEXT,
   CARRIED_CARD,
-  UNDER_TEST,
 } from '../model/board.consts';
 import { LpcSprite } from '../util/lpc-sprite';
 
@@ -189,11 +188,9 @@ export class CrewLayer {
       }
     }
 
-    const alpha = board.test === NO_TEST ? 1 : UNDER_TEST.others;
     for (let index = 0; index < this.#shown; index++) {
       const member = members[index];
       if (!member) continue;
-      this.#sprites[index]?.setAlpha(alpha);
       const x = this.#offX + member.x * this.#scaleX;
       const y = this.#offY + member.y * this.#scaleY;
       this.#targetX[index] = x;
