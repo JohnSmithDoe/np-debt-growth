@@ -45,7 +45,7 @@ import { addTicket } from '../util/board';
 import * as economy from '../util/economy';
 import * as purchase from '../util/purchase';
 import { crewRules } from '../util/crew-rules';
-import { flow, incidentPayout } from '../util/sim';
+import { ACTIVE_HAND, flow, incidentPayout } from '../util/sim';
 import { CALM } from '../model/hazard.model';
 import { emptyBoard, inTest } from '../model/board.model';
 import type { GameStore } from './game.store';
@@ -215,10 +215,10 @@ describe('the acceptance criteria', () => {
     );
   });
 
-  it('asks for less than the window spawns', () => {
-    expect(CRITERION_GOAL).toBe(32);
+  it('lets a finished line sign in one window', () => {
+    expect(CRITERION_GOAL).toBe(56);
     expect(CRITERION_MS).toBe(15_000);
-    expect(CRITERION_GOAL).toBeLessThan(
+    expect(CRITERION_GOAL / CRITERION_FINISHER_PICK).toBeLessThan(
       CRITERION_SPAWN_PER_SEC * (CRITERION_MS / 1000)
     );
   });
@@ -285,7 +285,7 @@ describe('the acceptance criteria', () => {
   it('sends the whole crew into the acceptance meeting', () => {
     const rules = crewRules(emptyBoard(), signed(0), CALM);
     expect(rules.every((rule) => rule.interrupted)).toBe(true);
-    expect(flow(signed(0), { clicksPerSec: 1 }).crewPerSec).toBe(0);
+    expect(flow(signed(0), ACTIVE_HAND).crewPerSec).toBe(0);
   });
 
   it('never displaces the line under test from a full board', () => {

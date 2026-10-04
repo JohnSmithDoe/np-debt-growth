@@ -85,6 +85,15 @@
     </div>
   </dl>
   <div class="controls">
+    @if (onTree()) {
+      <button
+        type="button"
+        class="btn primary small tree back"
+        (click)="toReview()"
+      >
+        {{ 'hud.tree.back' | translate }}
+      </button>
+    }
     @if (treeOpen() && !onTree() && !accepting()) {
       <button type="button" class="btn primary small tree" (click)="toTree()">
         {{ 'hud.tree.open' | translate }}
@@ -124,18 +133,11 @@
     @if (!onTree()) {
       <cb-acceptance-card />
     }
-
-    @if (onTree()) {
-      <div class="interval-bar">
-        <button type="button" class="btn primary" (click)="toReview()">
-          {{ 'hud.tree.back' | translate }}
-        </button>
-      </div>
-    }
   </div>
 
   <aside class="rail">
     @if (onTree()) {
+      <cb-buy-next />
       <cb-achievements-panel />
     } @else {
       <cb-supply-panel />

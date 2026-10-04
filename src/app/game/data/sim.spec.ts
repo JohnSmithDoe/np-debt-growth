@@ -4,14 +4,10 @@ import { GameStore } from './game.store';
 import type { Consultancy } from '../model/consultancy.model';
 import { freshConsultancy } from '../model/consultancy.model';
 import { SAVE_VERSION } from '../model/game.consts';
-import type { TicketTypeId } from '../model/ticket.model';
-import { TICKET_TYPES } from '../model/ticket.model';
 import type { Buy } from '../util/advisor';
 import { advise } from '../util/advisor';
 import { DEFAULT_POLICY, advisedSpend, autoplay } from '../util/autoplay';
-import { pickTouching } from '../util/board';
-import { inTest } from '../model/board.model';
-import * as economy from '../util/economy';
+import { hoverHand } from './hover-hand.fixture';
 import { flow } from '../util/sim';
 
 const SPAN_MS = 5 * 60_000;
@@ -28,30 +24,6 @@ const seeded = (start: number = SEEDS[0]): GameStore => {
   return store;
 };
 
-function sweep(store: GameStore, credit: number): number {
-  const state = store.snapshot();
-  const worth = (id: TicketTypeId): number =>
-    (TICKET_TYPES[id].handOnly ? 1e12 : 0) + economy.ticketValue(state, id);
-  let left = credit + DEFAULT_POLICY.clicksPerSec / 10;
-  while (left >= 1) {
-    left -= 1;
-    let aim = store.board.tickets[0];
-    for (const ticket of store.board.tickets) {
-      const better =
-        Number(inTest(store.board, ticket)) -
-          Number(inTest(store.board, aim!)) ||
-        Number(ticket.golden) - Number(aim!.golden) ||
-        worth(ticket.type) - worth(aim!.type);
-      if (better > 0) aim = ticket;
-    }
-    if (!aim) break;
-    store.harvest(
-      pickTouching(store.board, aim.x, aim.y, economy.clickRadius(state))
-    );
-  }
-  return left;
-}
-
 function onTheBoard(state: Consultancy): {
   euro: number;
   sp: number;
@@ -63,10 +35,10 @@ function onTheBoard(state: Consultancy): {
   for (const seed of SEEDS) {
     const store = seeded(seed);
     store.hydrate({ ...state, lastTick: 0, runMs: state.runMs });
-    let credit = 0;
+    const hand = hoverHand(seed);
     for (let ms = 100; ms <= SPAN_MS; ms += 100) {
       store.advanceTo(ms);
-      credit = sweep(store, credit);
+      hand(store, ms);
     }
     const end = store.snapshot();
     euro += end.lifetimeBilled - state.lifetimeBilled;
@@ -151,10 +123,10 @@ const RUN_TOLERANCE = 1.1;
 function acceptedOnTheBoard(): number {
   const store = seeded();
   store.hydrate({ ...freshConsultancy(0, SAVE_VERSION), lastTick: 0 });
-  let credit = 0;
+  const hand = hoverHand(SEEDS[0]);
   for (let ms = 100; ms <= RUN_LIMIT_MS; ms += 100) {
     store.advanceTo(ms);
-    credit = sweep(store, credit);
+    hand(store, ms);
     if (ms % DEFAULT_POLICY.spendEveryMs === 0) {
       for (;;) {
         const advice = advise(store.snapshot(), DEFAULT_POLICY);

@@ -1,3 +1,4 @@
+import type { TreeFocus } from '../../@shared/model/tree-focus.model';
 import type { FinaleAct } from '../../@shared/model/finale.model';
 import type { BuffNotice } from '../../game/model/round.model';
 import type {
@@ -61,6 +62,8 @@ export interface SceneDeps {
   }): void;
 
   skillView(): SkillView;
+  /** The node the console asked the tree to show. */
+  treeFocus(): TreeFocus | null;
   buySkill(id: string): boolean;
 
   finaleAct(): FinaleAct;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { EN } from '../../@shared/util/i18n/catalogue/en';
-import { SKILL_NODES } from '../../game/model/skill.model';
+import { SKILL_NODES } from '../model/skill.model';
 import { skillEffectText } from './skill-copy';
 
 const text = (key: string, params?: Record<string, string | number>): string =>

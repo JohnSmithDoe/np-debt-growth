@@ -33,6 +33,7 @@ import {
   HAND_ONLY_LIFE_MS,
   WONT_FIX_FADE_MS,
 } from '../model/balance/flow';
+import { CRITERION_LIFE_MS } from '../model/balance/progression';
 
 const OUT_OF_POOL = -1;
 const COLUMN_SAMPLES = 4;
@@ -89,6 +90,7 @@ export function addTicket(
   const cell = claimCell(board, rand);
   if (cell === NO_TICKET) return null;
 
+  const test = board.kept.includes(type) ? board.test : NO_TEST;
   const col = Math.floor(cell / HEAP_ROWS);
   const ticket: BoardTicket = {
     id: board.nextId++,
@@ -102,7 +104,9 @@ export function addTicket(
       ? (HAND_ONLY_LIFE_MS[type] ?? NEVER_EXPIRES)
       : golden
         ? GOLDEN_LIFE_MS
-        : board.lifeMs,
+        : test !== NO_TEST
+          ? CRITERION_LIFE_MS
+          : board.lifeMs,
     fadeLeftMs: WONT_FIX_FADE_MS,
     x: cellX(col),
     y: cellY(cell - col * HEAP_ROWS),
@@ -110,7 +114,7 @@ export function addTicket(
     cell,
     at: board.tickets.length,
     poolAt: OUT_OF_POOL,
-    test: board.kept.includes(type) ? board.test : NO_TEST,
+    test,
   };
   board.grid[cell] = ticket.id;
   board.tickets.push(ticket);

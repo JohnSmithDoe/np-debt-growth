@@ -1,3 +1,4 @@
+import { TreeFocusService } from '../../@shared/data/tree-focus.service';
 import { computed, effect, inject, Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import type * as Phaser from 'phaser';
@@ -20,7 +21,7 @@ import * as economy from '../../game/util/economy';
 import { MODE_FADE_MS } from '../model/board.consts';
 import type { SceneDeps } from '../model/scene-deps.model';
 import type { SkillNodeView, SkillView } from '../model/skill-view.model';
-import { skillEffectText } from '../util/skill-copy';
+import { skillEffectText } from '../../game/util/skill-copy';
 import type { StageMode } from '../model/stage-mode.model';
 import { BoardScene } from '../scene/board-scene';
 import { FinaleScene } from '../scene/finale-scene';
@@ -44,6 +45,7 @@ export class StageService {
   #settings = inject(SettingsService);
   #icons = inject(BoardIcons);
   #finale = inject(FinaleService);
+  #treeFocus = inject(TreeFocusService);
 
   #showing: StageMode = 'board';
   #switching = false;
@@ -256,6 +258,7 @@ export class StageService {
       unlockSecret: () => void store.unlockSecret(),
       publishIcons: (icons) => this.#icons.publish(icons),
       skillView: () => this.#skillView(),
+      treeFocus: () => this.#treeFocus.request(),
       buySkill: (id: string) => store.buySkill(id) || store.approveOnCredit(id),
       finaleAct: () => this.#finale.act(),
     };

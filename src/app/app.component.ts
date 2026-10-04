@@ -24,6 +24,7 @@ import type { MomentId } from './console/feature/moment-modal/moment-copy';
 import { AcceptanceCardComponent } from './console/feature/acceptance-card/acceptance-card.component';
 import { DebugBarComponent } from './console/feature/debug-bar/debug-bar.component';
 import { AchievementsPanelComponent } from './console/feature/achievements-panel/achievements-panel.component';
+import { BuyNextComponent } from './console/feature/buy-next/buy-next.component';
 import { SupplyPanelComponent } from './console/feature/supply-panel/supply-panel.component';
 import { FinaleComponent } from './console/feature/finale/finale.component';
 import { StoryComponent } from './console/feature/story/story.component';
@@ -52,6 +53,7 @@ import { adrNodeId, epicKey, MAX_TIER } from './game/model/tier.model';
     BacklogTickerComponent,
     RouterOutlet,
     AchievementsPanelComponent,
+    BuyNextComponent,
     SupplyPanelComponent,
     DebugBarComponent,
     AdrModalComponent,

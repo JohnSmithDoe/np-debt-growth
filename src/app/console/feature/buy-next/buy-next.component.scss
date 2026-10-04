@@ -1,0 +1,34 @@
+:host {
+  display: contents;
+}
+
+cb-panel {
+  flex: none;
+  height: auto;
+}
+
+.pick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.85rem;
+}
+
+.label {
+  font-weight: 600;
+}
+
+.effect {
+  color: var(--np-cb-points);
+}
+
+.wait {
+  color: var(--np-cb-ink-3);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}

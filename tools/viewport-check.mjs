@@ -88,13 +88,13 @@ for (const [width, height] of SIZES) {
   await page.getByRole('button', { name: /open the tree/i }).click();
   await page.waitForTimeout(1200);
 
-  if ((await page.locator('.interval-bar').count()) === 0) {
+  if ((await page.locator('.controls .back').count()) === 0) {
     failures.push(`${width}x${height}: the tree never opened`);
   } else {
     await fits('Skills');
     await page.getByRole('button', { name: /back to the floor/i }).click();
     await page.waitForTimeout(900);
-    if ((await page.locator('.interval-bar').count()) > 0) {
+    if ((await page.locator('.controls .back').count()) > 0) {
       failures.push(`${width}x${height}: the tree would not close`);
     }
   }

@@ -1,0 +1,31 @@
+@if (next(); as next) {
+  <cb-panel
+    [heading]="'buyNext.heading' | translate"
+    [subheading]="'buyNext.subheading' | translate"
+  >
+    @if (next.credit) {
+      <span panel-meta class="chip">{{ 'buyNext.credit' | translate }}</span>
+    }
+    <div class="pick">
+      <div class="actions">
+        <button
+          type="button"
+          class="btn primary small"
+          [disabled]="!next.affordable"
+          (click)="buy()"
+        >
+          {{ 'buyNext.buy' | translate: { cost: next.cost } }}
+        </button>
+        <button type="button" class="btn ghost small" (click)="goTo()">
+          {{ 'buyNext.goTo' | translate }}
+        </button>
+      </div>
+      <p class="label">{{ next.label }}</p>
+      <p class="small effect">{{ next.effect }}</p>
+      <p class="small muted">{{ next.blurb }}</p>
+      @if (!next.affordable) {
+        <p class="small wait">{{ next.wait }}</p>
+      }
+    </div>
+  </cb-panel>
+}

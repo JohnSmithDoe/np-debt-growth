@@ -70,11 +70,11 @@ closes, only **achievements** pay: euros before ADR-3, SP from it, a fixed amoun
 
 **The tree unlocks, the rail buys.** Every `SKILL_NODES` entry costs story points, the ADR ladder
 (`adr1`…`adr8`, track `N`) included, written exactly as charged, with no hidden multiplier; every rail
-row costs euros. The last node, `signoff` (8.5 M SP, off ADR-8), does not end the run: it
+row costs euros. The last node, `signoff` (19 M SP, off ADR-8), does not end the run: it
 starts the **acceptance push** (`ACCEPTANCE`, `economy.inAcceptance`: billing
 `economy.overtime`; no sprint cap, no train, no meetings — `economy.trainRuns`; the whole crew sits in the acceptance meeting), nine criteria, one line under test at a time (`economy.criterionNow`: it
 spawns at `CRITERION_SPAWN_PER_SEC` and bills as the newest rung; only cards spawned for the criterion are pink, and only the **hand's** pickups of them count; every window runs in full (`CRITERION_MS` 15 s) and the line
-signs if the hand's banked pickups reach its goal (`CRITERION_GOAL` 32, less up to 10 for the line's own nodes, a bought double/retainer counting each pickup twice); short of it the line is re-tested at the back of the queue for `CRITERION_RETEST_MS` 10 s, pickups kept; `console/feature/acceptance-card/` shows it),
+signs if the hand's banked pickups reach its goal (`CRITERION_GOAL` 56, less up to 10 for the line's own nodes, a bought double/retainer counting each pickup ×1.5); short of it the line is re-tested at the back of the queue for `CRITERION_RETEST_MS` 10 s, pickups kept; `console/feature/acceptance-card/` shows it),
 and the run ends when every criterion is signed (`economy.accepted` sets `endedAt`). From ADR-4 to ADR-6 the next ADR can be approved on credit (`CREDIT_UNTIL_ADR`: from ADR-7 the ×14 income would repay it at once)
 (`purchase.approveOnCredit`, `spDebt` repaid from half of later SP). SP is earned at pickup (`pickupStoryPoints`), **one point per ticket, whatever it
 bills**, once the €25 `velocity` row is bought, plus the per-ticket `estimates` nodes and planning-poker
@@ -189,7 +189,9 @@ Docs describe the current state only — no history; git has that.
 The economy runs without a board: `game/util/sim.ts` prices any state per second (supply,
 density, crew walk, hand sweep, the sprint), and `game/util/autoplay.ts` plays a whole run on it in
 about two seconds. `game/data/sim.spec.ts` keeps the sim within ×1.5 of a real board at each stop and ×1.1 over a whole run — if you
-change how the board collects, change the sim with it.
+change how the board collects, change the sim with it. Every number is measured on one player, `ACTIVE_HAND` in `sim.ts`:
+an engaged hand hovering at 600 px/s, on the board 60 % of the time (all of it in the push); `data/hover-hand.fixture.ts`
+plays that player frame by frame on the real board.
 
 `game/data/balance.spec.ts` runs the autoplayer on the Synergy Analyser's advice (`advisedSpend`)
 and **fails** if the run is not accepted in 18–22 minutes (the acceptance push 2–3.5 of

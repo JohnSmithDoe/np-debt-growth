@@ -287,7 +287,7 @@ export const DE: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'Keiner freigegeben',
   'skill.golden.1.label': 'Partnersache',
   'skill.signoff.blurb':
-    'Der Abschluss startet den Abnahme-Endspurt: Das Team geht ins Abnahme-Meeting, und der Kunde prüft eine Arbeitslinie nach der anderen. Sammle die pinken Tickets dieser Linie ein, bevor die Zeit abläuft. Eine Linie, die ihr Ziel verfehlt, kommt am Ende zum Nachtest, ihre Treffer bleiben; jedes unterschriebene Kriterium erhöht die Überstunden. Kauf vor dem Unterschreiben in die Linien: ihre Knoten senken ihr Ziel, ihr Verdoppler oder Retainer zählt jeden Treffer doppelt.',
+    'Der Abschluss startet den Abnahme-Endspurt: Das Team geht ins Abnahme-Meeting, und der Kunde prüft eine Arbeitslinie nach der anderen. Sammle die pinken Tickets dieser Linie ein, bevor die Zeit abläuft. Eine Linie, die ihr Ziel verfehlt, kommt am Ende zum Nachtest, ihre Treffer bleiben; jedes unterschriebene Kriterium erhöht die Überstunden. Kauf vor dem Unterschreiben in die Linien: ihre Knoten senken ihr Ziel, ihr Verdoppler oder Retainer zählt jeden Treffer anderthalbfach.',
   'skill.signoff.1.label': 'Abschluss unterschreiben',
   'skill.golden.blurb':
     'Manche Arbeit kommt als Partnersache herein. Sie zahlt ein Vermögen, und das Team fasst sie nicht an.',
@@ -529,7 +529,7 @@ export const DE: Readonly<Record<string, string>> = {
   'skill.effect.acceptance.goal':
     'Abnahme: ein niedrigeres Ziel für diese Linie',
   'skill.effect.acceptance.finisher':
-    'Abnahme: jeder Treffer dieser Linie zählt doppelt',
+    'Abnahme: jeder Treffer dieser Linie zählt anderthalbfach',
   'skill.effect.spPerClose.ticket': '+{{count}} SP pro {{ticket}}',
   'skill.coaches.1.label': 'Agiles Kompetenzzentrum',
   'skill.coaches6.1.label': 'Der agile Tribe',
@@ -796,7 +796,7 @@ export const DE: Readonly<Record<string, string>> = {
   'help.loop.4':
     'Mit Story Points kaufst du den Skill-Baum. Gib dort ADRs frei, um neue Linien immer teurerer Schulden zu öffnen. Ziehen verschiebt, das Mausrad zoomt, über ein Feld fahren liest es; ein schwarzer Kasten sagt nur, dass dort etwas ist.',
   'help.loop.5':
-    'Zuletzt im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt: neun Tests zu je fünfzehn Sekunden. Sammle die pinken Tickets der Linie im Test ein; eine Linie, die ihr Ziel verfehlt, wird am Ende zehn Sekunden nachgetestet, ihre Treffer bleiben. Die eigenen Knoten einer Linie senken ihr Ziel, ihr Verdoppler oder Retainer zählt jeden Treffer doppelt. Das Mandat ist erfüllt, wenn alle neun unterschrieben sind.',
+    'Zuletzt im Baum startet „Abschluss unterschreiben“ den Abnahme-Endspurt: neun Tests zu je fünfzehn Sekunden. Sammle die pinken Tickets der Linie im Test ein; eine Linie, die ihr Ziel verfehlt, wird am Ende zehn Sekunden nachgetestet, ihre Treffer bleiben. Die eigenen Knoten einer Linie senken ihr Ziel, ihr Verdoppler oder Retainer zählt jeden Treffer anderthalbfach. Das Mandat ist erfüllt, wenn alle neun unterschrieben sind.',
   'award.m-first-close.label': 'Erstes Ticket triagiert',
   'award.m-first-close.blurb': 'Irgendwer musste ja.',
   'award.m-first-invoice.label': 'Erste Rechnung gestellt',
@@ -988,6 +988,12 @@ export const DE: Readonly<Record<string, string>> = {
     'Die Zahlen des Mandats enthalten Budget, das außerhalb des Abrechnungssystems gebucht wurde. Verantwortlich: nicht zugewiesen.',
   'postmortem.action.retro':
     'Eine Retrospektive zu dieser Retrospektive ansetzen. Verantwortlich: nicht zugewiesen.',
+  'buyNext.heading': 'Als Nächstes kaufen',
+  'buyNext.subheading':
+    'Die Empfehlung des Synergy Analysers für deine Story Points, wo immer sie im Baum hängt.',
+  'buyNext.buy': 'Kaufen · {{cost}}',
+  'buyNext.credit': 'Auf Kredit',
+  'buyNext.goTo': 'Im Baum zeigen',
   'achievements.heading': 'Erfolge',
   'achievements.subheading':
     'Anerkennungsregister – bestätigt nach Ergebnis, nie nach Aufwand, vergütet bei Bestätigung.',
@@ -1117,7 +1123,7 @@ export const DE: Readonly<Record<string, string>> = {
   'moment.closeout.decision':
     'Formale Abnahme beginnen. Der Kunde prüft die Lieferung Kriterium für Kriterium, eine Arbeitslinie je Kriterium. Das Team sitzt im Abnahme-Meeting; die Tickets sammelst du selbst ein.',
   'moment.closeout.consequences':
-    'Jeder Test läuft fünfzehn Sekunden; was seine Linie in dieser Zeit liefert, ist pink markiert. Sammelst du genug davon von Hand ein, wird das Kriterium am Ende der Zeit unterschrieben: eine Auszeichnung und mehr Überstunden auf jedes Ticket. Reicht es nicht, geht die Linie ans Ende der Schlange zu einem Nachtest von zehn Sekunden, ihre Treffer bleiben. Jeder gekaufte Knoten einer Linie senkt ihr Ziel; ihr Verdoppler oder Retainer zählt jeden Treffer doppelt. Offene Hotfixes, Eskalationen, Quartalsenden, Pizza-Gutscheine und P0s verfallen, und im Endspurt kommen keine neuen.',
+    'Jeder Test läuft fünfzehn Sekunden; was seine Linie in dieser Zeit liefert, ist pink markiert. Sammelst du genug davon von Hand ein, wird das Kriterium am Ende der Zeit unterschrieben: eine Auszeichnung und mehr Überstunden auf jedes Ticket. Reicht es nicht, geht die Linie ans Ende der Schlange zu einem Nachtest von zehn Sekunden, ihre Treffer bleiben. Jeder gekaufte Knoten einer Linie senkt ihr Ziel; ihr Verdoppler oder Retainer zählt jeden Treffer anderthalbfach. Offene Hotfixes, Eskalationen, Quartalsenden, Pizza-Gutscheine und P0s verfallen, und im Endspurt kommen keine neuen.',
   'moment.closeout.approved':
     'Meridian Procurement Agent (automatisiert), im Auftrag des Programmausschusses, Quorum nicht erforderlich.',
   'moment.closeout.comments': 'LGTM.',

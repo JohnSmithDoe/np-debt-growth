@@ -281,7 +281,7 @@ export const EN: Readonly<Record<string, string>> = {
   'postmortem.no-tier': 'None approved',
   'skill.golden.1.label': 'Partner-Only Work',
   'skill.signoff.blurb':
-    "The closeout starts the acceptance push: the crew goes into the acceptance meeting and the client tests one line of work at a time. Sweep up that line's pink tickets before the timer runs out. A line that misses its goal comes back for a re-test at the end, its pickups kept; every criterion signed raises the overtime. Buy into a line before signing: its nodes lower its goal, its double or retainer counts each pickup twice.",
+    "The closeout starts the acceptance push: the crew goes into the acceptance meeting and the client tests one line of work at a time. Sweep up that line's pink tickets before the timer runs out. A line that misses its goal comes back for a re-test at the end, its pickups kept; every criterion signed raises the overtime. Buy into a line before signing: its nodes lower its goal, its double or retainer counts each pickup one and a half times.",
   'skill.signoff.1.label': 'Sign the Closeout',
   'skill.golden.blurb':
     'Some work arrives flagged partner-only. It pays a fortune, and the crew will not go near it.',
@@ -513,7 +513,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.spPerClose': '+{{count}} SP per ticket',
   'skill.effect.acceptance.goal': 'acceptance: a lower goal for this line',
   'skill.effect.acceptance.finisher':
-    'acceptance: every pickup of this line counts twice',
+    'acceptance: every pickup of this line counts one and a half times',
   'skill.effect.spPerClose.ticket': '+{{count}} SP per {{ticket}}',
   'skill.coaches.1.label': 'Agile Centre of Excellence',
   'skill.coaches6.1.label': 'The Agile Tribe',
@@ -778,7 +778,7 @@ export const EN: Readonly<Record<string, string>> = {
   'help.loop.4':
     'Story points buy the skill tree. Approve ADRs there to open new lines of ever dearer debt. Drag to pan, wheel to zoom, hover a square to read it; a black box says only that something is there.',
   'help.loop.5':
-    'Last on the tree, Sign the Closeout starts the acceptance push: nine tests of fifteen seconds. Sweep up the pink tickets of the line under test; a line that misses its goal is re-tested for ten seconds at the end, its pickups kept. A line’s own nodes lower its goal, and its double or retainer counts each pickup twice. The engagement is done when all nine are signed.',
+    'Last on the tree, Sign the Closeout starts the acceptance push: nine tests of fifteen seconds. Sweep up the pink tickets of the line under test; a line that misses its goal is re-tested for ten seconds at the end, its pickups kept. A line’s own nodes lower its goal, and its double or retainer counts each pickup one and a half times. The engagement is done when all nine are signed.',
   'award.m-first-close.label': 'First ticket triaged',
   'award.m-first-close.blurb': 'Somebody had to.',
   'award.m-first-invoice.label': 'First invoice raised',
@@ -969,6 +969,12 @@ export const EN: Readonly<Record<string, string>> = {
     'Engagement figures include budget booked outside the billing system. Owner: unassigned.',
   'postmortem.action.retro':
     'Schedule a retrospective on this retrospective. Owner: unassigned.',
+  'buyNext.heading': 'Buy next',
+  'buyNext.subheading':
+    'The Synergy Analyser’s pick for your Story Points, wherever it hangs on the tree.',
+  'buyNext.buy': 'Buy · {{cost}}',
+  'buyNext.credit': 'On credit',
+  'buyNext.goTo': 'Show in tree',
   'achievements.heading': 'Achievements',
   'achievements.subheading':
     'Recognition register — confirmed on outcome, never on effort, paid on confirmation.',
@@ -1096,7 +1102,7 @@ export const EN: Readonly<Record<string, string>> = {
   'moment.closeout.decision':
     'Enter formal acceptance. The client tests the delivery one criterion at a time, one line of work per criterion. The crew sits in the acceptance meeting; the tickets are yours to pick up.',
   'moment.closeout.consequences':
-    'Each test runs fifteen seconds; what its line delivers in that time is marked pink. Pick up enough of them by hand and the criterion signs when the time is up: an award and more overtime on every ticket. Fall short and the line goes to the back of the queue for a ten-second re-test, its pickups kept. Every node bought on a line lowers its goal; its double or retainer counts each pickup twice. Open hotfixes, escalations, quarter ends, pizza vouchers and P0s are void, and none arrive during the push.',
+    'Each test runs fifteen seconds; what its line delivers in that time is marked pink. Pick up enough of them by hand and the criterion signs when the time is up: an award and more overtime on every ticket. Fall short and the line goes to the back of the queue for a ten-second re-test, its pickups kept. Every node bought on a line lowers its goal; its double or retainer counts each pickup one and a half times. Open hotfixes, escalations, quarter ends, pizza vouchers and P0s are void, and none arrive during the push.',
   'moment.closeout.approved':
     'Meridian Procurement Agent (automated), on behalf of the Programme Board, quorum not required.',
   'moment.closeout.comments': 'LGTM.',

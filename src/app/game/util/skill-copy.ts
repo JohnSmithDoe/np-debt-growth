@@ -1,20 +1,20 @@
-import { LINE_EFFECT_PARAMS } from '../../game/model/purchase-copy.model';
-import type { SkillEffect, SkillNode } from '../../game/model/skill.model';
-import {
-  LINE_COUNT,
-  lineFinisherId,
-  lineNodeIds,
-} from '../../game/model/skill.model';
-import { releasePhaseKey } from '../../game/model/round.model';
-import { ticketLabelKey } from '../../game/model/ticket.model';
+import { LINE_EFFECT_PARAMS } from '../model/purchase-copy.model';
+import type { SkillEffect, SkillNode } from '../model/skill.model';
+import { LINE_COUNT, lineFinisherId, lineNodeIds } from '../model/skill.model';
+import { releasePhaseKey } from '../model/round.model';
+import { ticketLabelKey } from '../model/ticket.model';
 import {
   DEBT_INTEREST_CAP,
   GOLDEN_CREW_CONVERSION,
   PIZZA_MS,
   PIZZA_RUSH,
-} from '../../game/model/balance/flow';
+} from '../model/balance/flow';
 import { formatPoints } from '../../@shared/util/format-quantity';
-import type { SceneDeps } from '../model/scene-deps.model';
+
+export type Text = (
+  key: string,
+  params?: Readonly<Record<string, string | number>>
+) => string;
 
 interface EffectText {
   readonly key: string;
@@ -176,7 +176,7 @@ const pct = (mult: number): Readonly<Record<string, string>> => ({
 
 const BY_LEVEL = new Map<string, string>();
 
-function oneEffect(effect: SkillEffect, text: SceneDeps['text']): string {
+function oneEffect(effect: SkillEffect, text: Text): string {
   const { key, params } = describe(effect);
   return text(key, {
     ...params,
@@ -203,7 +203,7 @@ const ACCEPTANCE_NOTE: ReadonlyMap<string, string> = new Map(
 export function skillEffectText(
   node: SkillNode,
   level: number,
-  text: SceneDeps['text']
+  text: Text
 ): string {
   const memo = `${node.id}:${level}`;
   const known = BY_LEVEL.get(memo);

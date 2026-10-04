@@ -320,14 +320,14 @@ Prices: `LINE_PRICE_BY_TIER` (`balance/progression.ts`, ×2 a tier to ADR-5, ×4
 after) sets a line's base; `value` 25 / 1 500 then `LINE_DOUBLE_COST`; `spawn` 5⁄3 × 2 200 × it
 (steps ×1.5); `income` 5⁄3 × 1 100 × it (steps ×1.5); `double` 2 500 × it; `estimates` 5⁄3 ×
 75 / `400 × 2^(t−1)` (steps ×2.2); `contract` 3 000 × it, `retainer` 30 000 × it. Every line
-node is then priced for the rung it sits on by `LINE_RUNG_PRICE` (1 · 1 · 1 · 0.6 · 0.3 · 0.2 ·
-0.4 · 0.55 · 0.5), the same scale the hand-written prices from ADR-3 on were cut by.
+node is then priced for the rung it opens on by `LINE_RUNG_PRICE` (3.36 · 2.01 · 0.96 · 1.47 · 0.8 ·
+1.13 · 0.64 · 0.59 · 0.65); a `double` opens on the rung its last step does.
 
 | Track           | Holds                                                                                                                                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **A** Hand      | `radius`, the sprint nodes (`SPRINT_RUNGS`: per tier `capacity<t>` +25 scope, `cans<t>` +1 team, `cut<Ceremony>` on tiers 0–4), `lineOfSight`, `golden` → `goldenValue`, `goldenValue<t>`, `goldenCrew` |
 | **B** Juniors   | `junior` (1 200), `juniorSpeed`, `juniorRoom<t>`, `juniorReach` → `stretch`, `juniorPresence`, `ticketStacking`, `timesheets`, `pizza`                                                                  |
-| **E** Seniors   | `senior` (60 000, ADR-3), speed, reach, presence, `seniorRoom<t>`                                                                                                                                       |
+| **E** Seniors   | `senior` (88 000, ADR-3), speed, reach, presence, `seniorRoom<t>`                                                                                                                                       |
 | **H** Managers  | `manager`, speed, `relabel`, `managerRoom5`                                                                                                                                                             |
 | **C** Client    | the per-line `value` / `income` / `estimates` / `double` nodes, the late `contract` / `retainer`, `valueBug`, `escalation`, `coaches`, `deck`                                                           |
 | **D** Debt      | the per-line `spawn` nodes, `debtInterest`, `debtInterest<t>`, `triagePolicy`, `spawnIncident` → `spawnIncident7` (escalations), `spawnIncident8` (incident value)                                      |
@@ -430,21 +430,20 @@ record; the rail has no ADR panel.
 
 | ADR | SP        | Unlocks    |
 | --- | --------- | ---------- |
-| 1   | 350       | `legacy`   |
-| 2   | 6 000     | `flaky`    |
-| 3   | 45 000    | `conflict` |
-| 4   | 120 000   | `slop`     |
-| 5   | 160 000   | `rockstar` |
-| 6   | 480 000   | `zombie`   |
-| 7   | 2 600 000 | `rewrite`  |
-| 8   | 5 400 000 | `swarm`    |
+| 1   | 1 200     | `legacy`   |
+| 2   | 12 000    | `flaky`    |
+| 3   | 60 000    | `conflict` |
+| 4   | 290 000   | `slop`     |
+| 5   | 470 000   | `rockstar` |
+| 6   | 2 600 000 | `zombie`   |
+| 7   | 4 200 000 | `rewrite`  |
+| 8   | 9 500 000 | `swarm`    |
 
-The prices grow with the rung because SP income does. From ADR-3 on, every SP price — ADRs,
-extras, sprint sets, crew arms, line nodes — was cut by the rung it sits on (0.6 · 0.3 · 0.2 · 0.4 ·
-0.55 · 0.5 for tiers 3…8), so the opening keeps its pace and each later tier is quicker than the
-one before.
+The prices grow with the rung because SP income does. Every SP price — ADRs, extras, sprint sets,
+crew arms, line nodes, the reward units from ADR-3 — is fitted per rung so that the engaged
+player of §9 plays each tier for its `TIER_CURVE` minutes.
 
-**`signoff`** (8.5 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced so tier 8 is a short last act. Buying it
+**`signoff`** (19 M SP, off ADR-8) is `FINAL_SKILL_ID`, priced so tier 8 is a short last act. Buying it
 opens the **Closeout Record** (`console/feature/moment-modal/`, the ADR format, signed by the
 client's procurement agent, comments "LGTM"), records the budget and billing it was signed at
 (`signedBudget`, `signedBilled`), and starts the **acceptance push** (`ACCEPTANCE` in
@@ -457,27 +456,30 @@ is gone until the run ends.
   `sim.collect` counts no crew): only the hand collects, so only the player moves a criterion.
 - **Acceptance criteria** (`CriterionRun` on the state, `economy.criterionNow`,
   `economy.stepCriterion`): nine, one per line, lint first, queued; the first window of each
-  is `CRITERION_MS` 15 s. The line under test spawns at `CRITERION_SPAWN_PER_SEC` 2.5 whatever its
+  is `CRITERION_MS` 15 s. The line under test spawns at `CRITERION_SPAWN_PER_SEC` 4 whatever its
   spawners (split across the types it produces). Only cards **spawned for the criterion** are
-  its own (`BoardTicket.test`, `inTest`): they pulse pink (`UNDER_TEST`), a full board never
-  displaces them, and each one the **hand** picks up counts (`economy.pickUnderTest`). Cards of
+  its own (`BoardTicket.test`, `inTest`): they pulse pink (`UNDER_TEST`), live `CRITERION_LIFE_MS` 6 s whatever the
+  tier, a full board never displaces them, and each one the **hand** picks up counts (`economy.pickUnderTest`). Cards of
   that line already on the board stay as they were. The line bills as the newest rung's ticket
   ×`CRITERION_BONUS` 2 before its own multipliers. Every other line spawns at its own rate and
   nobody collects it, so the hand has to find the pink cards in the heap. In the push debt
   interest and Triage auto-close are off, nothing comes back, the line under test never rolls
   golden and no quarter end spawns, so every line is fed the same and only the hand closes it.
   Every window plays out in full; reaching the goal early does not skip it. The goal is
-  `CRITERION_GOAL` 32 less up to `CRITERION_GOAL_DISCOUNT` 10 for the share of the line's own
+  `CRITERION_GOAL` 56 less up to `CRITERION_GOAL_DISCOUNT` 10 for the share of the line's own
   nodes bought (`economy.criterionGoal`, `lineNodeIds`), and once the line's finisher (double,
   or retainer on a late line, `lineFinisherId`) is bought every pickup counts
-  `CRITERION_FINISHER_PICK` 2. When the window closes the line **signs** if its banked pickups
+  `CRITERION_FINISHER_PICK` 1.5. When the window closes the line **signs** if its banked pickups
   reach the goal, which confirms its award (`c-criterion-<line>`) and adds `CRITERION_OVERTIME`
   0.5 to the base ×2 overtime; short of it the line goes to **the back of the queue** with its
   pickups kept and is re-tested for `CRITERION_RETEST_MS` 10 s (a `c-findings-<line>` toast, the
-  first also earns _Sent back_). The run cannot end until all nine are signed; the advised
-  1 click/s player misses the two late lines whose retainers it skipped, twice each, and the push
-  takes about 2.9 min; a human-paced pink hunter (24–30 pickups a window) misses at most those two.
-  The card shows the node discount and the ×2 as chips; the line nodes' tooltips say so.
+  first also earns _Sent back_). The run cannot end until all nine are signed. It is a hand test in every window: an
+  engaged hand (§9) catches 40–60 of a window's 60 pink cards, travelling between them, so a
+  finished line (31 pickups at ×1.5) signs first time and a slower hand misses it; a late line
+  with its contract but not its retainer needs 51 at ×1, which a fast hand makes and an engaged
+  one usually misses once. On a real board the engaged player re-tests twice and the push takes
+  2.6–2.8 min; a line with its finisher needs at most 38 of the 60 (`late-game.spec`).
+  The card shows the node discount and the ×1.5 as chips; the line nodes' tooltips say so.
 - **The acceptance card** (`console/feature/acceptance-card/`, `GameStore.acceptance`) sits
   centred over the board: the test's number and name, the seconds left large (amber in the last
   five), the tickets to sweep up, picked against the goal (Re-test in the kicker on a second window), a draining time bar, and a dot per
@@ -571,9 +573,15 @@ game uses:
   (`NEAREST_WALK`) to a random card, or with `nearest` to the nearest of the four claim samples
   that hold a card this crew takes (binomial in its share of the field). The batch fills as
   far as the sweep reaches at that density.
-- **Hand** takes one aimed card per sweep (gold first, then the dearest) plus a proportional mix
-  of whatever other cards the ring touches, counted on the heap grid by box overlap
-  (`cellsTouched`). Crew sweep batches count centres within their radius (`cellsInReach`).
+- **Hand** (`ACTIVE_HAND`): an engaged player, the pointer on the board 60 % of the time (all of
+  it in the push), hovering at 600 px/s with a new aim every 300 ms. It aims at
+  `clicksPerSec` cards (gold first, then the dearest; pink first in the push), each costing the
+  travel to the nearest live card of its kind, `HUNT_DETOUR` × half the mean spacing, so sparse
+  gold and pink are travel-bound and dense lines are not. Its ring sweeps a swath of
+  2 × radius + a card's extent at `sweepPxPerSec` and takes a proportional mix of what lies in
+  it, plus what each aim touches, counted on the heap grid by box overlap (`cellsTouched`). Crew
+  sweep batches count centres within their radius (`cellsInReach`); seniors on `topOfBand`
+  claim the dearest of their band first, the rest a proportional mix.
 - **Auto-close** takes whatever of an auto-closed type the hand left and lives to expiry.
 - **Managers**: crew euros × (1 + (aura − 1) × covered share), the share being the managers'
   reach area over the board's, capped at 1 (`overseenShare`).
@@ -582,16 +590,18 @@ game uses:
 
 Not counted: quarter bills and jackpots, pizza, incident reviews, and
 weather; outside the push each moves a real board's euros by 10 % at most. In the push the sim
-counts the hand's pickups of the line under test, its aimed clicks hunting the pink first as
-a player does. `data/sim.spec.ts` plays the same
-states on a real board (four seeds, averaged) and holds the sim within ×1.5, and plays a whole advised run on a real
+counts the hand's pickups of the line under test, its aims hunting the pink first as
+a player does. `data/sim.spec.ts` plays the same states on a real board with the player
+`ACTIVE_HAND` stands for, frame by frame (`data/hover-hand.fixture.ts`: 600 px/s, a new aim every
+300 ms among six random cards plus every gold, pink and hand-only one, away 4 s of every 10
+outside the push), over eight seeds, and holds the sim within ×1.5, and plays a whole advised run on a real
 board and holds its acceptance within ×1.1 of the sim's, because per-tier error compounds
 over a run.
 All 600 cards lie on the 374-cell field (three offset layers), so a click's reach grows with
 density past one layer, and the sim counts that.
 
 `util/autoplay.ts` plays a whole run on the sim: earn for a second, spend like a player
-(`DEFAULT_POLICY`: 1 sweep/s, a quarter of the budget per purchase, cheapest first;
+(`DEFAULT_POLICY`: `ACTIVE_HAND`, a quarter of the budget per purchase, cheapest first;
 `saveForAdrSec`, off by default and `CB_SAVE` in the balance spec, holds SP for a near ADR) through
 `purchase.ts`. A four-hour cap runs in about two seconds.
 
@@ -651,12 +661,15 @@ kept in settings) buys each pick the moment it is affordable.
 
 - `data/sim.spec.ts` guards the **sim** against a real board.
 
-**Measured run** (3 Oct 2026, advised autoplayer, credit from ADR-4):
+**Measured run** (4 Oct 2026, advised autoplayer, credit from ADR-4):
 
 ```
-ADR-1 3.2    ADR-2 7.3    ADR-3 10.2   ADR-4 12.4   ADR-5 14.1   ADR-6 15.6
-ADR-7 16.9   ADR-8 18.0   signed off 18.7   accepted 21.6   (4 re-tests: rewrite, swarm twice each)
+ADR-1 2.9    ADR-2 6.7    ADR-3 9.5    ADR-4 11.4   ADR-5 13.2   ADR-6 14.6
+ADR-7 15.7   ADR-8 16.7   signed off 17.4   accepted 19.7   (no re-tests: the sim buys every finisher)
 ```
+
+The same player on a real board (`sim.spec`) is accepted at 19.8; with the analyser's advice
+there it skips the late retainers and re-tests twice, accepted at 20.2–20.9 (four seeds).
 
 The cheapest-first run buys the whole tree. `sim.spec` holds a real board's acceptance within
 ×1.1 of the sim's time and compares each stop over eight seeds; it leaves reward SP out of the
@@ -665,7 +678,7 @@ board's SP, since the sim prices closes.
 What that run cannot see, because the sim does not price it:
 
 - **Weather** is on and unpriced; `storm` and `page` stack with the hand-only tier climb.
-- **Triage Policy** costs 500 / 1 600 SP for what is the biggest single SP source of the opening
+- **Triage Policy** costs 1 000 / 1 500 SP for what is the biggest single SP source of the opening
   (every lint card bills); tier-0 estimates were cut to +4 to hold the pace instead.
 
 ### Load-bearing, do not undo
@@ -725,6 +738,10 @@ What the player sees, and where it lives. Paths are relative to `src/app/`.
   Story Points in the HUD flash when an SP reward lands. The post-mortem lists the reward totals.
 - **Rail.** Debt rows show their line's walker, Rates rows the card they bill; the next two
   locked rows are silhouettes. Affordable rows glow on hover and flash when bought.
+- **Buy next** (`console/feature/buy-next/`), from `BUY_NEXT_FROM_TIER` ADR-3, sits above the
+  achievements while the tree is open: the analyser's SP pick with the tree's own label, effect
+  and blurb, and a buy button, or how long until it is affordable. It shows whatever the paperclip
+  setting says, since finding the pick in a grown tree takes longer than buying it.
 - **Tree.** Opens framed on what can be bought; buyable squares pulse, bought paths are lit green,
   lines into a buyable square are blue (`stage/scene/skill-scene.ts`).
 - **Canvas-drawn**, not art: the planning-poker coaches, the release train, the pizza circle and

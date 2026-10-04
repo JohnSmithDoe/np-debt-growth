@@ -48,10 +48,12 @@ export const CRITERION_BONUS = 2;
 export const CRITERION_OVERTIME = 0.5;
 export const CRITERION_MS = 15_000;
 export const CRITERION_RETEST_MS = 10_000;
-export const CRITERION_SPAWN_PER_SEC = 2.5;
-export const CRITERION_GOAL = 32;
+export const CRITERION_SPAWN_PER_SEC = 4;
+/** Pink cards outlive the tier's tickets: the test is finding them, not racing them. */
+export const CRITERION_LIFE_MS = 6_000;
+export const CRITERION_GOAL = 56;
 export const CRITERION_GOAL_DISCOUNT = 10;
-export const CRITERION_FINISHER_PICK = 2;
+export const CRITERION_FINISHER_PICK = 1.5;
 
 export const CREDIT_FROM_ADR = 4;
 /** The last ADR approvable on credit: from ADR-7 the ×14 income repays it at once. */
@@ -79,7 +81,7 @@ export const LINE_PRICE_BY_TIER: readonly number[] = [
 
 /** A line node's price for the rung it sits on: from ADR-3 every tier is quicker than the last. */
 export const LINE_RUNG_PRICE: readonly number[] = [
-  1, 1, 1, 0.6, 0.3, 0.2, 0.4, 0.55, 0.5,
+  3.36, 2.01, 0.96, 1.47, 0.8, 1.13, 0.64, 0.59, 0.65,
 ];
 
 export const LINE_PLAN: Readonly<

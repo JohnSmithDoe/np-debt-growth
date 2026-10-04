@@ -19,7 +19,7 @@ import {
   skillIconUrl,
 } from '../model/skill-icon.model';
 import { SKILL_ROOT_ID } from '../../game/model/skill.model';
-import { skillBadge, skillCode } from '../util/skill-copy';
+import { skillBadge, skillCode } from '../../game/util/skill-copy';
 import type { SkillBand, SkillSquare, SquareState } from '../util/skill-layout';
 import {
   fitBands,
@@ -32,6 +32,7 @@ import {
 import { PanZoomScene } from './pan-zoom-scene';
 import { TreeBackdrop } from './tree-backdrop';
 
+const FOCUS_PAN_MS = 450;
 const CODE_SCALE = 2;
 const ICON_BOX = SKILL_ICON_SIZE;
 const ICON_ALPHA: Readonly<Record<SquareState, number>> = {
@@ -155,6 +156,7 @@ export class SkillScene extends PanZoomScene {
     this.#take(this.deps.skillView());
     this.reframe();
     this.#openOnBuyable();
+    this.#focused = this.deps.treeFocus()?.seq ?? 0;
     this.redraw();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.#teardown());
   }
@@ -169,6 +171,25 @@ export class SkillScene extends PanZoomScene {
       this.redraw();
     }
     this.#drawPulse(time);
+    const focus = this.deps.treeFocus();
+    if (focus && focus.seq !== this.#focused) {
+      this.#focused = focus.seq;
+      this.#focusOn(focus.id);
+    }
+  }
+
+  #focused = 0;
+
+  #focusOn(id: string): void {
+    const square = skillSquare(id);
+    if (!square) return;
+    this.cameras.main.pan(
+      square.x + square.width / 2,
+      square.y + square.height / 2,
+      FOCUS_PAN_MS,
+      'Sine.easeInOut'
+    );
+    this.time.delayedCall(FOCUS_PAN_MS, () => this.flash(square));
   }
 
   #take(view: SkillView): void {

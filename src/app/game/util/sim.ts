@@ -24,11 +24,32 @@ import {
 } from '../model/balance/flow';
 import { WOMAN_CLOSE_RATE } from '../model/balance/crew';
 import { HOTFIX_MS, HOTFIX_MULTIPLIER } from '../model/balance/weather';
+import { CRITERION_LIFE_MS } from '../model/balance/progression';
 import * as economy from './economy';
 import { heldBack } from './first-act';
 
 export interface SimPolicy {
+  /** Cards the hand aims at per second on the board: gold first, then the dearest. */
   readonly clicksPerSec: number;
+  /** Ring travel per second on the board. */
+  readonly sweepPxPerSec: number;
+  /** Share of the time the pointer is on the board; the acceptance push has all of it. */
+  readonly onBoard: number;
+}
+
+/** An engaged player: hovers at 600 px/s for 60 % of the time, a new aim every 300 ms. */
+export const ACTIVE_HAND: SimPolicy = {
+  clicksPerSec: 5,
+  sweepPxPerSec: 600,
+  onBoard: 0.6,
+};
+
+function focus(state: Consultancy, policy: SimPolicy): number {
+  return economy.inAcceptance(state) ? 1 : policy.onBoard;
+}
+
+function aimedPerSec(state: Consultancy, policy: SimPolicy): number {
+  return policy.clicksPerSec * focus(state, policy);
 }
 
 export interface Flow {
@@ -51,6 +72,9 @@ interface Stream {
   readonly golden: boolean;
   readonly reborn: boolean;
   readonly worth: number;
+  readonly lifeMs: number;
+  /** Its cards on the board, from the last density pass. */
+  live: number;
   left: number;
   hand: number;
   crew: number;
@@ -60,6 +84,7 @@ interface Stream {
 const BOARD_AREA = LOGICAL_BOARD.width * LOGICAL_BOARD.height;
 const DENSITY_PASSES = 8;
 const OVERSEER_FOCUS = 1;
+const HUNT_DETOUR = 2.8;
 /** One heap layer; cards past it stack over the same area. */
 const FIELD_CELLS = HEAP_COLS * HEAP_FIELD_ROWS;
 
@@ -85,7 +110,10 @@ function streams(state: Consultancy): Stream[] {
   const out: Stream[] = [];
   for (const [type, rate] of supply) {
     const value = economy.ticketValue(state, type);
-    const stream = { type, hand: 0, crew: 0, auto: 0 };
+    const lifeMs = economy.underTest(state, type)
+      ? CRITERION_LIFE_MS
+      : ticketLifeMs(state.tier);
+    const stream = { type, lifeMs, live: 0, hand: 0, crew: 0, auto: 0 };
     out.push({
       ...stream,
       golden: false,
@@ -98,6 +126,7 @@ function streams(state: Consultancy): Stream[] {
         ...stream,
         golden: true,
         reborn: false,
+        lifeMs: GOLDEN_LIFE_MS,
         worth: value * goldMult,
         left: rate * gold,
       });
@@ -214,15 +243,23 @@ function cellsTouched(radius: number): number {
   return mean;
 }
 
+interface Capacity {
+  readonly mixed: number;
+  /** Seats that claim the dearest card in their band. */
+  readonly dearest: number;
+}
+
+const NO_CAPACITY: Capacity = { mixed: 0, dearest: 0 };
+
 function crewCapacity(
   state: Consultancy,
   crew: CrewKind,
   density: number,
   share: number
-): number {
+): Capacity {
   const seats = crew === 'juniors' ? state.levels.junior : state.levels.senior;
   const claimable = density * share;
-  if (seats <= 0 || claimable < 1) return 0;
+  if (seats <= 0 || claimable < 1) return NO_CAPACITY;
 
   const batch = economy.crewBatch(state, crew);
   const sweep = economy.crewSweepRadius(state, crew);
@@ -231,7 +268,8 @@ function crewCapacity(
   const speed = economy.crewWalkSpeed(state, crew);
   const every = economy.crewWomanEvery(crew);
 
-  let perSec = 0;
+  let mixed = 0;
+  let dearest = 0;
   for (let seat = 0; seat < seats; seat += 1) {
     const hire = crew === 'seniors' ? economy.hireAt(state, seat) : undefined;
     const pick = economy.crewPick(state, crew, hire);
@@ -239,9 +277,22 @@ function crewCapacity(
     const closeMs =
       economy.crewCloseMs(state, crew, hire) /
       (economy.hireIsWoman(seat, every) ? WOMAN_CLOSE_RATE : 1);
-    perSec += (carried * 1000) / (closeMs + (walk / speed) * 1000);
+    const perSec = (carried * 1000) / (closeMs + (walk / speed) * 1000);
+    if (pick === 'dearest') dearest += perSec;
+    else mixed += perSec;
   }
-  return perSec;
+  return { mixed, dearest };
+}
+
+function takeDearest(pool: readonly Stream[], amount: number): void {
+  let left = amount;
+  for (const s of pool) {
+    if (left <= 0) return;
+    const take = Math.min(left, s.left);
+    s.crew += take;
+    s.left -= take;
+    left -= take;
+  }
 }
 
 function overseenShare(state: Consultancy): number {
@@ -252,6 +303,11 @@ function overseenShare(state: Consultancy): number {
     1,
     (OVERSEER_FOCUS * managers * Math.PI * reach * reach) / BOARD_AREA
   );
+}
+
+/** Path from one hunted card to the next: the nearest of its kind, off the straight line. */
+function huntGap(live: number): number {
+  return HUNT_DETOUR * 0.5 * Math.sqrt(BOARD_AREA / Math.max(1, live));
 }
 
 function takeMixed(
@@ -287,10 +343,15 @@ function collect(
         1e-9,
         all.reduce((sum, s) => sum + s.left, 0)
       );
-    takeMixed(pool, crewCapacity(state, crew, density, share), 'crew');
+    const capacity = crewCapacity(state, crew, density, share);
+    takeDearest(pool, capacity.dearest);
+    takeMixed(pool, capacity.mixed, 'crew');
   }
 
-  let aimed = policy.clicksPerSec;
+  const clicks = aimedPerSec(state, policy);
+  const travel = policy.sweepPxPerSec * focus(state, policy);
+  let aimed = clicks;
+  let time = 1;
   const hunted = meeting
     ? [...all].sort(
         (a, b) =>
@@ -299,16 +360,24 @@ function collect(
       )
     : all;
   for (const s of hunted) {
-    if (aimed <= 0) break;
-    const take = Math.min(aimed, s.left);
+    if (aimed <= 0 || time <= 0) break;
+    const perSec = travel > 0 ? travel / huntGap(s.live) : Infinity;
+    const take = Math.min(aimed, s.left, perSec * time);
     s.hand += take;
     s.left -= take;
     aimed -= take;
+    time -= take / perSec;
   }
   const radius = economy.clickRadius(state);
   const others =
     (Math.max(0, density - 1) * cellsTouched(radius)) / (FIELD_CELLS - 1);
-  takeMixed(all, policy.clicksPerSec * others, 'hand');
+  const swath =
+    (policy.sweepPxPerSec *
+      focus(state, policy) *
+      (2 * radius + CARD_HIT.halfWidth + CARD_HIT.halfHeight) *
+      density) /
+    (FIELD_CELLS * TICKET_SLOT.width * TICKET_SLOT.height);
+  takeMixed(all, clicks * others + swath, 'hand');
 
   const auto = economy.autoClosed(state);
   for (const s of all) {
@@ -326,16 +395,16 @@ interface Occupancy {
 
 function occupancy(
   all: readonly Stream[],
-  arrivals: readonly number[],
-  lifeMs: number
+  arrivals: readonly number[]
 ): Occupancy {
   const fadeSec = WONT_FIX_FADE_MS / 1000;
   let held = 0;
   let fading = 0;
   let unclaimed = 0;
   all.forEach((s, at) => {
-    const life = (s.golden ? GOLDEN_LIFE_MS : lifeMs) / 1000;
-    held += life * (arrivals[at]! - (s.hand + s.crew) / 2);
+    const life = s.lifeMs / 1000;
+    s.live = Math.max(0, life * (arrivals[at]! - (s.hand + s.crew) / 2));
+    held += s.live;
     fading += fadeSec * s.left;
     if (!s.golden) unclaimed += life * (s.left + s.auto);
   });
@@ -386,14 +455,12 @@ function steady(state: Consultancy): Consultancy {
     : { ...state, hotfixUntil: 0, escalated: false, escalationFiresAt: 0 };
 }
 
-const STEADY: SimPolicy = { clicksPerSec: 1 };
-
 /** A late P0 the hand clears: seconds of the build's income, both currencies. */
 export function incidentPayout(state: Consultancy): {
   readonly euros: number;
   readonly sp: number;
 } {
-  const base = baseFlow(state, STEADY);
+  const base = baseFlow(state, ACTIVE_HAND);
   return {
     euros: INCIDENT_PAYOUT_SEC * base.euroPerSec,
     sp: INCIDENT_PAYOUT_SEC * base.spPerSec,
@@ -402,11 +469,12 @@ export function incidentPayout(state: Consultancy): {
 
 export function flow(live: Consultancy, policy: SimPolicy): Flow {
   const base = baseFlow(live, policy);
-  if (policy.clicksPerSec <= 0 || !economy.paysIncidents(live)) return base;
+  const clicks = aimedPerSec(live, policy);
+  if (clicks <= 0 || !economy.paysIncidents(live)) return base;
   const share =
     INCIDENT_PAYOUT_SEC *
     (economy.spawnRate(live, 'incident') + base.prodPerSec);
-  const forgone = base.handEuroPerSec * (base.prodPerSec / policy.clicksPerSec);
+  const forgone = base.handEuroPerSec * (base.prodPerSec / clicks);
   const euros = base.euroPerSec * share - forgone;
   return {
     ...base,
@@ -429,7 +497,7 @@ function prodPerSec(
   const perCycle = Math.min(
     PROD_INCIDENT_LIVE_CAP,
     overflow * awaySec,
-    policy.clicksPerSec * homeSec
+    aimedPerSec(state, policy) * homeSec
   );
   return perCycle / (awaySec + homeSec);
 }
@@ -438,6 +506,7 @@ function baseFlow(live: Consultancy, policy: SimPolicy): Flow {
   const state = steady(live);
   const all = streams(state);
   const arrivals = all.map((s) => s.left);
+  for (const s of all) s.live = (s.left * s.lifeMs) / 1000;
   const lifeMs = ticketLifeMs(state.tier);
   const lifeSec = lifeMs / 1000;
 
@@ -456,7 +525,7 @@ function baseFlow(live: Consultancy, policy: SimPolicy): Flow {
       s.auto = 0;
     });
     collect(state, policy, all, board.density, board.reach);
-    board = occupancy(all, arrivals, lifeMs);
+    board = occupancy(all, arrivals);
     comebacks(all, arrivals);
   }
   const supplyPerSec = all.reduce(

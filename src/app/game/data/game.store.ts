@@ -420,7 +420,7 @@ export class GameStore {
       of: CRITERIA_COUNT,
       line: criterion.line,
       tickets: economy.underTestTypes(state),
-      picked: Math.min(criterion.picked, criterion.goal),
+      picked: Math.floor(Math.min(criterion.picked, criterion.goal)),
       goal: criterion.goal,
       retest: criterion.retest,
       weight: economy.criterionPickWeight(state, criterion.line),

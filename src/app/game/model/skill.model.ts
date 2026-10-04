@@ -299,7 +299,7 @@ function earlyLine(ticket: TicketTypeId, tier: number): SkillNode[] {
       maxed: [spawn, income, estimates].map((chain) => chain.at(-1)!.id),
       levels: [
         {
-          cost: atRung(perTier(2500, tier), tier),
+          cost: atRung(perTier(2500, tier), stepRung(LINE_STEPS - 1)),
           effects: [{ kind: 'ticketValue' as const, target: ticket, mult: 2 }],
         },
       ],
@@ -392,15 +392,15 @@ interface SprintRung {
 }
 
 const SPRINT_RUNGS: readonly SprintRung[] = [
-  { capacity: [120, 300], cans: [], cut: ['retro', 80] },
-  { capacity: [750], cans: [1500, 1800], cut: ['refinement', 300] },
-  { capacity: [1900], cans: [5400], cut: ['review', 900] },
-  { capacity: [4800], cans: [15_000], cut: ['smoke', 2400] },
-  { capacity: [3600], cans: [14_400], cut: ['freeze', 2100] },
-  { capacity: [6000], cans: [28_000] },
-  { capacity: [400_000], cans: [1_200_000] },
-  { capacity: [1_100_000], cans: [3_300_000] },
-  { capacity: [1_500_000], cans: [4_500_000] },
+  { capacity: [400, 1000], cans: [], cut: ['retro', 270] },
+  { capacity: [1500], cans: [3000, 3600], cut: ['refinement', 600] },
+  { capacity: [1800], cans: [5200], cut: ['review', 860] },
+  { capacity: [12_000], cans: [37_000], cut: ['smoke', 5900] },
+  { capacity: [12_000], cans: [49_000], cut: ['freeze', 7200] },
+  { capacity: [34_000], cans: [160_000] },
+  { capacity: [640_000], cans: [1_900_000] },
+  { capacity: [1_200_000], cans: [3_600_000] },
+  { capacity: [1_900_000], cans: [5_800_000] },
 ];
 
 const cutId = (phase: ReleasePhaseId): string => `cut${capitalised(phase)}`;
@@ -499,22 +499,22 @@ const interest: SkillEffect = {
 };
 
 const RUNG_NODES: readonly SkillNode[] = [
-  rung('juniorRoom', 'B', 2, 'junior', 20_000, [seats('junior')]),
-  rung('juniorRoom', 'B', 3, 'juniorRoom2', 36_000, [seats('junior')]),
-  rung('juniorRoom', 'B', 4, 'juniorRoom3', 54_000, [seats('junior')]),
-  rung('seniorRoom', 'E', 3, 'senior', 60_000, [seats('senior')]),
-  rung('seniorRoom', 'E', 4, 'seniorRoom3', 90_000, [seats('senior')]),
-  rung('seniorRoom', 'E', 5, 'seniorRoom4', 180_000, [seats('senior')]),
-  rung('managerRoom', 'H', 5, 'manager', 120_000, [seats('manager')]),
-  rung('goldenValue', 'A', 3, 'goldenValue', 24_000, [goldenRate]),
-  rung('goldenValue', 'A', 5, 'goldenValue3', 200_000, [goldenRate]),
-  rung('goldenValue', 'A', 7, 'goldenValue5', 4_400_000, [goldenRate]),
-  rung('debtInterest', 'D', 6, 'debtInterest', 1_600_000, [interest]),
-  rung('debtInterest', 'D', 7, 'debtInterest6', 4_400_000, [interest]),
-  rung('spawnIncident', 'D', 7, 'spawnIncident', 4_400_000, [
+  rung('juniorRoom', 'B', 2, 'junior', 19_000, [seats('junior')]),
+  rung('juniorRoom', 'B', 3, 'juniorRoom2', 88_000, [seats('junior')]),
+  rung('juniorRoom', 'B', 4, 'juniorRoom3', 180_000, [seats('junior')]),
+  rung('seniorRoom', 'E', 3, 'senior', 150_000, [seats('senior')]),
+  rung('seniorRoom', 'E', 4, 'seniorRoom3', 310_000, [seats('senior')]),
+  rung('seniorRoom', 'E', 5, 'seniorRoom4', 1_000_000, [seats('senior')]),
+  rung('managerRoom', 'H', 5, 'manager', 680_000, [seats('manager')]),
+  rung('goldenValue', 'A', 3, 'goldenValue', 59_000, [goldenRate]),
+  rung('goldenValue', 'A', 5, 'goldenValue3', 1_100_000, [goldenRate]),
+  rung('goldenValue', 'A', 7, 'goldenValue5', 4_800_000, [goldenRate]),
+  rung('debtInterest', 'D', 6, 'debtInterest', 2_600_000, [interest]),
+  rung('debtInterest', 'D', 7, 'debtInterest6', 4_800_000, [interest]),
+  rung('spawnIncident', 'D', 7, 'spawnIncident', 4_800_000, [
     { kind: 'spawnRate', target: 'escalation', mult: 1.5 },
   ]),
-  rung('spawnIncident', 'D', 8, 'spawnIncident7', 3_000_000, [
+  rung('spawnIncident', 'D', 8, 'spawnIncident7', 3_900_000, [
     { kind: 'ticketValue', target: 'incident', mult: 2 },
   ]),
 ];
@@ -611,9 +611,9 @@ const TREE_NODES: readonly SkillNode[] = [
     track: 'A',
     requires: 'hand',
     levels: [
-      { cost: 100, effects: [{ kind: 'clickRadius', mult: 1.25 }] },
-      { cost: 440, effects: [{ kind: 'clickRadius', mult: 1.28 }] },
-      { cost: 1650, effects: [{ kind: 'clickRadius', mult: 1.22 }] },
+      { cost: 340, effects: [{ kind: 'clickRadius', mult: 1.25 }] },
+      { cost: 880, effects: [{ kind: 'clickRadius', mult: 1.28 }] },
+      { cost: 1600, effects: [{ kind: 'clickRadius', mult: 1.22 }] },
     ],
   },
   ...SPRINT_NODES,
@@ -622,7 +622,7 @@ const TREE_NODES: readonly SkillNode[] = [
     id: 'lineOfSight',
     track: 'A',
     requires: 'radius',
-    levels: [{ cost: 600, effects: [{ kind: 'nearestClaim' }] }],
+    levels: [{ cost: 2000, effects: [{ kind: 'nearestClaim' }] }],
   },
 
   {
@@ -637,21 +637,21 @@ const TREE_NODES: readonly SkillNode[] = [
     requires: 'onboarding',
     levels: [
       {
-        cost: 1500,
+        cost: 3000,
         effects: [
           { kind: 'pace', crew: 'juniors', field: 'close', mult: 1.25 },
           { kind: 'pace', crew: 'juniors', field: 'walk', mult: 1.2 },
         ],
       },
       {
-        cost: 4000,
+        cost: 3800,
         effects: [
           { kind: 'pace', crew: 'juniors', field: 'close', mult: 1.22 },
           { kind: 'pace', crew: 'juniors', field: 'walk', mult: 1.18 },
         ],
       },
       {
-        cost: 6000,
+        cost: 15_000,
         effects: [
           { kind: 'pace', crew: 'juniors', field: 'close', mult: 1.2 },
           { kind: 'pace', crew: 'juniors', field: 'walk', mult: 1.15 },
@@ -665,18 +665,18 @@ const TREE_NODES: readonly SkillNode[] = [
     requires: 'onboarding',
     levels: [
       {
-        cost: 120,
+        cost: 240,
         effects: [{ kind: 'pace', crew: 'juniors', field: 'sweep', mult: 1.3 }],
       },
       {
-        cost: 450,
+        cost: 430,
         effects: [
           { kind: 'pace', crew: 'juniors', field: 'sweep', mult: 1.25 },
           { kind: 'juniorBand', add: 1 },
         ],
       },
       {
-        cost: 900,
+        cost: 2200,
         effects: [{ kind: 'pace', crew: 'juniors', field: 'sweep', mult: 1.2 }],
       },
     ],
@@ -687,7 +687,7 @@ const TREE_NODES: readonly SkillNode[] = [
     requires: 'onboarding',
     levels: [
       {
-        cost: 200,
+        cost: 400,
         effects: [{ kind: 'standupAura', perJunior: 0.02, cap: 1.5 }],
       },
       {
@@ -702,7 +702,7 @@ const TREE_NODES: readonly SkillNode[] = [
     requires: 'juniorPresence',
     levels: [
       {
-        cost: 700,
+        cost: 1400,
         effects: [{ kind: 'batch', crew: 'juniors', add: 1, closeMult: 2 }],
       },
     ],
@@ -712,7 +712,7 @@ const TREE_NODES: readonly SkillNode[] = [
     id: 'senior',
     track: 'E',
     requires: 'seniors',
-    levels: [{ cost: 36_000, effects: [{ kind: 'line', line: 'senior' }] }],
+    levels: [{ cost: 88_000, effects: [{ kind: 'line', line: 'senior' }] }],
   },
   {
     id: 'seniorSpeed',
@@ -720,21 +720,21 @@ const TREE_NODES: readonly SkillNode[] = [
     requires: 'handcuffs',
     levels: [
       {
-        cost: 9600,
+        cost: 24_000,
         effects: [
           { kind: 'pace', crew: 'seniors', field: 'close', mult: 1.22 },
           { kind: 'pace', crew: 'seniors', field: 'walk', mult: 1.2 },
         ],
       },
       {
-        cost: 15_600,
+        cost: 53_000,
         effects: [
           { kind: 'pace', crew: 'seniors', field: 'close', mult: 1.2 },
           { kind: 'pace', crew: 'seniors', field: 'walk', mult: 1.18 },
         ],
       },
       {
-        cost: 32_000,
+        cost: 180_000,
         effects: [
           { kind: 'pace', crew: 'seniors', field: 'close', mult: 1.18 },
           { kind: 'pace', crew: 'seniors', field: 'walk', mult: 1.15 },
@@ -748,17 +748,17 @@ const TREE_NODES: readonly SkillNode[] = [
     requires: 'handcuffs',
     levels: [
       {
-        cost: 13_200,
+        cost: 32_000,
         effects: [
           { kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.25 },
         ],
       },
       {
-        cost: 20_400,
+        cost: 70_000,
         effects: [{ kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.2 }],
       },
       {
-        cost: 40_000,
+        cost: 230_000,
         effects: [
           { kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.18 },
         ],
@@ -770,9 +770,9 @@ const TREE_NODES: readonly SkillNode[] = [
     track: 'E',
     requires: 'handcuffs',
     levels: [
-      { cost: 21_600, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
-      { cost: 31_200, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
-      { cost: 60_000, effects: [{ kind: 'topOfBand' }] },
+      { cost: 53_000, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
+      { cost: 110_000, effects: [{ kind: 'batch', crew: 'seniors', add: 1 }] },
+      { cost: 340_000, effects: [{ kind: 'topOfBand' }] },
     ],
   },
 
@@ -780,7 +780,7 @@ const TREE_NODES: readonly SkillNode[] = [
     id: 'manager',
     track: 'H',
     requires: 'managers',
-    levels: [{ cost: 108_000, effects: [{ kind: 'line', line: 'manager' }] }],
+    levels: [{ cost: 370_000, effects: [{ kind: 'line', line: 'manager' }] }],
   },
   {
     id: 'managerSpeed',
@@ -788,21 +788,21 @@ const TREE_NODES: readonly SkillNode[] = [
     requires: 'manager',
     levels: [
       {
-        cost: 8400,
+        cost: 29_000,
         effects: [
           { kind: 'pace', crew: 'managers', field: 'sweep', mult: 1.25 },
           { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.2 },
         ],
       },
       {
-        cost: 16_000,
+        cost: 91_000,
         effects: [
           { kind: 'pace', crew: 'managers', field: 'sweep', mult: 1.22 },
           { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.18 },
         ],
       },
       {
-        cost: 96_000,
+        cost: 150_000,
         effects: [
           { kind: 'pace', crew: 'managers', field: 'sweep', mult: 1.2 },
           { kind: 'pace', crew: 'managers', field: 'walk', mult: 1.15 },
@@ -815,9 +815,9 @@ const TREE_NODES: readonly SkillNode[] = [
     track: 'H',
     requires: 'manager',
     levels: [
-      { cost: 13_200, effects: [{ kind: 'managerAura', add: 0.25 }] },
-      { cost: 26_400, effects: [{ kind: 'managerAura', add: 0.25 }] },
-      { cost: 144_000, effects: [{ kind: 'managerAura', add: 0.5 }] },
+      { cost: 45_000, effects: [{ kind: 'managerAura', add: 0.25 }] },
+      { cost: 150_000, effects: [{ kind: 'managerAura', add: 0.25 }] },
+      { cost: 230_000, effects: [{ kind: 'managerAura', add: 0.5 }] },
     ],
   },
 
@@ -825,7 +825,7 @@ const TREE_NODES: readonly SkillNode[] = [
     id: 'debtInterest',
     track: 'D',
     requires: 'debt',
-    levels: [{ cost: 7200, effects: [interest] }],
+    levels: [{ cost: 25_000, effects: [interest] }],
   },
   {
     id: 'triagePolicy',
@@ -833,11 +833,11 @@ const TREE_NODES: readonly SkillNode[] = [
     requires: 'junior',
     levels: [
       {
-        cost: 500,
+        cost: 1000,
         effects: [{ kind: 'autoClose', target: 'lint' }],
       },
       {
-        cost: 1600,
+        cost: 1500,
         effects: [{ kind: 'autoClose', target: 'bug' }],
       },
     ],
@@ -848,7 +848,7 @@ const TREE_NODES: readonly SkillNode[] = [
     requires: 'incidents',
     levels: [
       {
-        cost: 102_000,
+        cost: 160_000,
         effects: [{ kind: 'spawnRate', target: 'incident', mult: 1.4 }],
       },
     ],
@@ -859,16 +859,16 @@ const TREE_NODES: readonly SkillNode[] = [
     track: 'C',
     requires: 'valueBug',
     levels: [
-      { cost: 1300, effects: [{ kind: 'escalation', mult: 1.4 }] },
-      { cost: 4000, effects: [{ kind: 'escalation', mult: 1.3 }] },
+      { cost: 4400, effects: [{ kind: 'escalation', mult: 1.4 }] },
+      { cost: 8000, effects: [{ kind: 'escalation', mult: 1.3 }] },
       { cost: 12_000, effects: [{ kind: 'escalation', mult: 1.25 }] },
     ],
   },
-  ...poker('coaches', 'poker', [600_000, 3_000_000], {
+  ...poker('coaches', 'poker', [3_400_000, 4_800_000], {
     kind: 'coach',
     add: POKER_RANK_SHARE,
   }),
-  ...poker('deck', 'coaches', [1_000_000, 4_500_000], {
+  ...poker('deck', 'coaches', [5_700_000, 7_200_000], {
     kind: 'deck',
     add: POKER_RANK_SHARE * VOTE_BONUS_PER_RANK,
   }),
@@ -876,20 +876,23 @@ const TREE_NODES: readonly SkillNode[] = [
     id: 'pizza',
     track: 'B',
     requires: 'morale',
-    levels: [{ cost: 120_000, effects: [{ kind: 'pizza' }] }],
+    levels: [{ cost: 680_000, effects: [{ kind: 'pizza' }] }],
   },
   {
     id: 'timesheets',
     track: 'B',
     requires: 'morale',
-    levels: [{ cost: 90_000, effects: [{ kind: 'crewSp' }] }],
+    levels: [{ cost: 510_000, effects: [{ kind: 'crewSp' }] }],
   },
   {
     id: 'valueBug',
     track: 'C',
     requires: 'valueLint',
     levels: [
-      { cost: 500, effects: [{ kind: 'ticketValue', target: 'bug', mult: 2 }] },
+      {
+        cost: 1700,
+        effects: [{ kind: 'ticketValue', target: 'bug', mult: 2 }],
+      },
     ],
   },
 
@@ -898,35 +901,35 @@ const TREE_NODES: readonly SkillNode[] = [
     track: 'G',
     requires: 'adr8',
     levels: [
-      { cost: 52_500, effects: [{ kind: 'global', mult: 1.15 }] },
-      { cost: 135_000, effects: [{ kind: 'global', mult: 1.15 }] },
-      { cost: 337_500, effects: [{ kind: 'global', mult: 1.15 }] },
+      { cost: 68_000, effects: [{ kind: 'global', mult: 1.15 }] },
+      { cost: 170_000, effects: [{ kind: 'global', mult: 1.15 }] },
+      { cost: 440_000, effects: [{ kind: 'global', mult: 1.15 }] },
     ],
   },
   {
     id: 'stretch',
     track: 'B',
     requires: 'juniorReach',
-    levels: [{ cost: 300_000, effects: [{ kind: 'juniorBand', add: 1 }] }],
+    levels: [{ cost: 600_000, effects: [{ kind: 'juniorBand', add: 1 }] }],
   },
 
   {
     id: 'o4',
     track: 'O',
     requires: 'office',
-    levels: [{ cost: 3750, effects: [{ kind: 'none', inert: true }] }],
+    levels: [{ cost: 13_000, effects: [{ kind: 'none', inert: true }] }],
   },
   {
     id: 'kit',
     track: 'O',
     requires: 'facilities',
-    levels: [{ cost: 400, effects: [{ kind: 'line', line: 'kit' }] }],
+    levels: [{ cost: 800, effects: [{ kind: 'line', line: 'kit' }] }],
   },
   {
     id: 'o2',
     track: 'O',
     requires: 'facilities',
-    levels: [{ cost: 380, effects: [{ kind: 'slots', add: 14 }] }],
+    levels: [{ cost: 760, effects: [{ kind: 'slots', add: 14 }] }],
   },
   {
     id: 'o3',
@@ -935,7 +938,7 @@ const TREE_NODES: readonly SkillNode[] = [
     maxed: ['adr2'],
     levels: [
       {
-        cost: 1000,
+        cost: 960,
         effects: [{ kind: 'pace', crew: 'juniors', field: 'walk', mult: 1.2 }],
       },
     ],
@@ -947,7 +950,7 @@ const TREE_NODES: readonly SkillNode[] = [
     maxed: ['adr5'],
     levels: [
       {
-        cost: 15_000,
+        cost: 85_000,
         effects: [{ kind: 'pace', crew: 'seniors', field: 'sweep', mult: 1.2 }],
       },
     ],
@@ -957,40 +960,40 @@ const TREE_NODES: readonly SkillNode[] = [
     track: 'O',
     requires: 'o5',
     maxed: ['adr6'],
-    levels: [{ cost: 50_000, effects: [{ kind: 'global', mult: 1.05 }] }],
+    levels: [{ cost: 80_000, effects: [{ kind: 'global', mult: 1.05 }] }],
   },
   {
     id: 'o7',
     track: 'O',
     requires: 'o6',
     maxed: ['adr6'],
-    levels: [{ cost: 175_000, effects: [{ kind: 'escalation', mult: 1.25 }] }],
+    levels: [{ cost: 280_000, effects: [{ kind: 'escalation', mult: 1.25 }] }],
   },
 
   {
     id: 'golden',
     track: 'A',
     requires: 'partner',
-    levels: [{ cost: 50_000, effects: [{ kind: 'goldenChance', add: 0.02 }] }],
+    levels: [{ cost: 48_000, effects: [{ kind: 'goldenChance', add: 0.02 }] }],
   },
   {
     id: 'goldenValue',
     track: 'A',
     requires: 'golden',
-    levels: [{ cost: 6000, effects: [goldenRate] }],
+    levels: [{ cost: 5800, effects: [goldenRate] }],
   },
   {
     id: 'goldenCrew',
     track: 'A',
     requires: 'adr6',
-    levels: [{ cost: 440_000, effects: [{ kind: 'goldenCrew' }] }],
+    levels: [{ cost: 700_000, effects: [{ kind: 'goldenCrew' }] }],
   },
 
   {
     id: 'signoff',
     track: 'G',
     requires: 'adr8',
-    levels: [{ cost: 8_500_000, effects: [{ kind: 'none' }] }],
+    levels: [{ cost: 19_000_000, effects: [{ kind: 'none' }] }],
   },
 
   {

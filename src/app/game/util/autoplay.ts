@@ -7,7 +7,7 @@ import { advise, apply } from './advisor';
 import * as economy from './economy';
 import * as purchase from './purchase';
 import type { SimPolicy } from './sim';
-import { flow } from './sim';
+import { ACTIVE_HAND, flow } from './sim';
 
 export interface AutoplayPolicy extends SimPolicy {
   readonly spendFraction: number;
@@ -17,7 +17,7 @@ export interface AutoplayPolicy extends SimPolicy {
 }
 
 export const DEFAULT_POLICY: AutoplayPolicy = {
-  clicksPerSec: 1,
+  ...ACTIVE_HAND,
   spendFraction: 0.25,
   spendEveryMs: 5_000,
   openingPath: ['radius', 'capacity', 'cutRetro'],
