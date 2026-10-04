@@ -37,8 +37,21 @@ export function buyName(state: Consultancy, buy: Buy): Phrase {
   }
 }
 
+const PUSH_QUIPS = 10;
+const RETEST_QUIPS = 3;
+const QUIP_MS = 8_000;
+
+/** A remark per stretch of game time; re-tests draw from their own pool. */
+export function pushQuipKey(runMs: number, retest: boolean): string {
+  const at = Math.floor(runMs / QUIP_MS);
+  return retest
+    ? `agent.push.retest.${at % RETEST_QUIPS}`
+    : `agent.push.quip.${at % PUSH_QUIPS}`;
+}
+
 export function goalKey(advice: Advice): string {
   const picks = [advice.sp, advice.eur];
+  if (picks.some((p) => p?.finishing)) return 'agent.goal.finish';
   if (picks.some((p) => p?.buy.kind === 'skill' && p.buy.id === FINAL_SKILL_ID))
     return 'agent.goal.signoff';
   if (

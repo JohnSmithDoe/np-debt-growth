@@ -86,11 +86,7 @@
   </dl>
   <div class="controls">
     @if (onTree()) {
-      <button
-        type="button"
-        class="btn primary small tree back"
-        (click)="toReview()"
-      >
+      <button type="button" class="btn ghost small back" (click)="toReview()">
         {{ 'hud.tree.back' | translate }}
       </button>
     }

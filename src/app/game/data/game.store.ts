@@ -45,7 +45,12 @@ import type {
   RoundOutcome,
 } from '../model/round.model';
 import type { SkillLock } from '../model/skill.model';
-import { FINAL_SKILL_ID, SECRET_SKILL_ID } from '../model/skill.model';
+import {
+  FINAL_SKILL_ID,
+  lineFinisherId,
+  SECRET_SKILL_ID,
+  skillLabelKey,
+} from '../model/skill.model';
 import { tierAt } from '../model/tier.model';
 import type { TicketTypeId } from '../model/ticket.model';
 import { TICKET_TYPES } from '../model/ticket.model';
@@ -297,6 +302,13 @@ const PROBING = ((): boolean => {
   }
 })();
 
+function missingFinisher(state: Consultancy, line: number): string | null {
+  const id = lineFinisherId(line);
+  return id === null || economy.skillRank(state, id) > 0
+    ? null
+    : skillLabelKey(id);
+}
+
 @Injectable({ providedIn: 'root' })
 export class GameStore {
   #state = signal<Consultancy>(freshConsultancy(Date.now(), SAVE_VERSION));
@@ -425,6 +437,7 @@ export class GameStore {
       retest: criterion.retest,
       weight: economy.criterionPickWeight(state, criterion.line),
       discount: CRITERION_GOAL - criterion.goal,
+      finisher: missingFinisher(state, criterion.line),
       msLeft: economy.criterionMsLeft(state),
       windowMs: economy.criterionWindowMs(state),
       overtime: economy.overtime(state),

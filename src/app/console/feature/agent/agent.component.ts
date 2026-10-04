@@ -19,7 +19,8 @@ import { buyKey } from '../../../game/util/advisor';
 import { affordable, AgentService } from '../../data/agent.service';
 import { DoorService } from '../../data/door.service';
 import type { Phrase } from '../../util/agent-copy';
-import { buyName, goalKey } from '../../util/agent-copy';
+import { buyName, goalKey, pushQuipKey } from '../../util/agent-copy';
+import { onRise } from '../../util/on-rise';
 
 interface TipRow {
   readonly id: string;
@@ -48,6 +49,14 @@ export class AgentComponent {
   readonly open = this.#open.asReadonly();
 
   readonly warned = this.#settings.agentWarned;
+  readonly pushing = this.#store.inAcceptance;
+
+  readonly quip = computed(() => {
+    const state = this.#store.state();
+    return this.#translate.instant(
+      pushQuipKey(state.runMs, this.#store.acceptance()?.retest ?? false)
+    );
+  });
   readonly auto = this.#agent.auto;
 
   readonly shown = computed(
@@ -82,11 +91,13 @@ export class AgentComponent {
           ),
           detail: ok
             ? this.#translate.instant(
-                pick.spare
-                  ? 'agent.buy.spare'
-                  : then
-                    ? 'agent.buy.opens'
-                    : 'agent.buy.detail',
+                pick.finishing
+                  ? 'agent.buy.finish'
+                  : pick.spare
+                    ? 'agent.buy.spare'
+                    : then
+                      ? 'agent.buy.opens'
+                      : 'agent.buy.detail',
                 { cost, then }
               )
             : this.#translate.instant(
@@ -99,6 +110,13 @@ export class AgentComponent {
         };
       });
   });
+
+  constructor() {
+    onRise(
+      () => Number(this.pushing()),
+      () => this.#open.set(true)
+    );
+  }
 
   toggle(): void {
     this.#open.update((open) => !open);

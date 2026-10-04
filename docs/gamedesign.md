@@ -479,7 +479,11 @@ is gone until the run ends.
   with its contract but not its retainer needs 51 at ×1, which a fast hand makes and an engaged
   one usually misses once. On a real board the engaged player re-tests twice and the push takes
   2.6–2.8 min; a line with its finisher needs at most 38 of the 60 (`late-game.spec`).
-  The card shows the node discount and the ×1.5 as chips; the line nodes' tooltips say so.
+  The card shows the node discount and the ×1.5 as chips, or a dashed chip naming the finisher
+  still missing; the line nodes' tooltips say so. Once `signoff` is on offer the analyser
+  recommends the cheapest node of any line without its finisher before signing (`Pick.finishing`).
+  During the push it advises nothing: the paperclip opens by itself and makes a remark every
+  8 s of game time (`pushQuipKey`, its own pool on a re-test) until it is closed.
 - **The acceptance card** (`console/feature/acceptance-card/`, `GameStore.acceptance`) sits
   centred over the board: the test's number and name, the seconds left large (amber in the last
   five), the tickets to sweep up, picked against the goal (Re-test in the kicker on a second window), a draining time bar, and a dot per

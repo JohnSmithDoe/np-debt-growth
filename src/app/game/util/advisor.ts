@@ -6,6 +6,9 @@
 import type { Consultancy } from '../model/consultancy.model';
 import {
   FINAL_SKILL_ID,
+  LINE_COUNT,
+  lineFinisherId,
+  lineNodeIds,
   SECRET_SKILL_ID,
   SKILL_NODES,
 } from '../model/skill.model';
@@ -37,6 +40,8 @@ export interface Pick {
   readonly score: number;
   readonly then: Buy | null;
   readonly spare?: true;
+  /** A line node bought before sign-off so the push does not re-test the line. */
+  readonly finishing?: true;
 }
 
 export interface Advice {
@@ -309,8 +314,34 @@ function pocketChange(
   return cheapest ? toPick(state, policy, cheapest) : null;
 }
 
+/** Before sign-off, a line without its finisher is a likely re-test in the push. */
+function unfinishedLine(state: Consultancy, policy: SimPolicy): Pick | null {
+  let cheapest: Candidate | null = null;
+  for (let line = 0; line < LINE_COUNT; line += 1) {
+    const finisher = lineFinisherId(line);
+    if (finisher === null || economy.skillRank(state, finisher) > 0) continue;
+    for (const id of lineNodeIds(line)) {
+      if (economy.skillRank(state, id) > 0) continue;
+      if (!purchase.skillAvailable(state, id)) continue;
+      const cost = economy.skillRankCost(state, id);
+      if (!cheapest || cost < cheapest.cost)
+        cheapest = {
+          buy: { kind: 'skill', id },
+          then: null,
+          currency: 'sp',
+          cost,
+          score: 0,
+        };
+    }
+  }
+  return cheapest
+    ? { ...toPick(state, policy, cheapest), finishing: true }
+    : null;
+}
+
 export function advise(state: Consultancy, policy: SimPolicy): Advice {
-  if (state.endedAt > 0) return { eur: null, sp: null };
+  if (state.endedAt > 0 || economy.inAcceptance(state))
+    return { eur: null, sp: null };
   const ranked = rank(state, policy);
   const top = (currency: Currency): Pick | null => {
     const found = ranked.find((c) => c.currency === currency);
@@ -328,8 +359,13 @@ export function advise(state: Consultancy, policy: SimPolicy): Advice {
     return { eur: top('eur'), sp: toPick(state, policy, credit) };
   }
   const target = goalOf(state, goal);
+  const finishing =
+    goal === FINAL_SKILL_ID && purchase.skillAvailable(state, goal)
+      ? unfinishedLine(state, policy)
+      : null;
   const sp = purchase.skillAvailable(state, goal)
-    ? (pocketChange(state, policy, target) ??
+    ? (finishing ??
+      pocketChange(state, policy, target) ??
       towards(state, policy, ranked, target, ADR_SLACK))
     : (top('sp') ?? spare(state, policy));
   return { eur: top('eur'), sp };

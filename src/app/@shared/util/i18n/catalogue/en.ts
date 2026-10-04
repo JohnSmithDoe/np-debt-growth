@@ -11,6 +11,7 @@ export const EN: Readonly<Record<string, string>> = {
   'skill.effect.nearestClaim': 'Claims the nearest ticket, not just any one',
   'skill.effect.juniorBand': 'Juniors reach {{count}} rung higher',
   'skill.effect.none': 'Opens the programme',
+  'skill.effect.signoff': 'Starts the acceptance push',
   'skill.effect.inert': 'No effect. None at all.',
   'skill.effect.topOfBand': 'Seniors take the biggest ticket first',
   'strip.shipping': 'EVERY CLOSE SHIPS',
@@ -143,6 +144,8 @@ export const EN: Readonly<Record<string, string>> = {
     "It looks like you're trying to approve an ADR. Would you like help?",
   'agent.goal.signoff':
     "It looks like you're trying to get signed off. Would you like help?",
+  'agent.goal.finish':
+    "It looks like you're about to sign off with lines the client will test twice. Would you like help?",
   'agent.name': 'Synergy Analyser (AI Powered)',
   'agent.buy.title': 'Buy {{name}}',
   'agent.buy.detail': '{{cost}}. The most growth for what it costs, right now.',
@@ -150,6 +153,8 @@ export const EN: Readonly<Record<string, string>> = {
     '{{cost}}. Nothing else pays back, and Story Points buy nothing else.',
   'agent.buy.opens':
     '{{cost}}. It opens {{then}}, which is where the growth is.',
+  'agent.buy.finish':
+    '{{cost}}. Finish this line before you sign: the client tests every line, and an unfinished one comes back.',
   'agent.save.idle': '{{short}} to go, and nothing earns it yet.',
   'agent.save.title': 'Save for {{name}}',
   'agent.save.detail':
@@ -161,6 +166,31 @@ export const EN: Readonly<Record<string, string>> = {
   'agent.warn.body':
     "It looks like you're trying to stop thinking. I tell you what to buy next, and my auto-buy buys it the moment you can afford it. That is cheating, and it takes all the fun out of the game.",
   'agent.warn.ok': 'Understood',
+  'agent.push.quip.0':
+    "It looks like you're being tested. Would you like me to schedule a meeting about it?",
+  'agent.push.quip.1':
+    "Tip: pink is the client's favourite colour. Do not ask why.",
+  'agent.push.quip.2':
+    'I have generated a 40-page acceptance strategy. It says: pick up the pink ones.',
+  'agent.push.quip.3':
+    'Fun fact: every ticket you pick up here has already been billed twice.',
+  'agent.push.quip.4':
+    'The client says the build is fine. The client has not opened the build.',
+  'agent.push.quip.5': 'I would help, but my licence expired at sign-off.',
+  'agent.push.quip.6':
+    'Remember: it is not technical debt if the client signs for it.',
+  'agent.push.quip.7':
+    'Synergy check: your mouse is the only one still working. Great culture fit.',
+  'agent.push.quip.8':
+    'I told procurement you are “nearly done”. Please be nearly done.',
+  'agent.push.quip.9':
+    "Accessibility note: the pink cards are pink. You're welcome.",
+  'agent.push.retest.0':
+    'It looks like that criterion came back. I have reframed it as a learning.',
+  'agent.push.retest.1':
+    'Re-tests are billable. I have already sent the invoice.',
+  'agent.push.retest.2':
+    'This line again? Think of it as a sequel nobody asked for.',
   'settings.close': 'Back to work',
   'settings.fullscreen.blurb':
     'Fills the screen. The board takes the extra room.',
@@ -1025,6 +1055,7 @@ export const EN: Readonly<Record<string, string>> = {
   'acceptance.card.count': '{{picked}} of {{goal}} picked up',
   'acceptance.card.discount': '−{{n}} from your nodes',
   'acceptance.card.weight': 'each counts ×{{n}}',
+  'acceptance.card.finisher': '×{{n}} needs {{name}}',
   'acceptance.card.rule': 'miss it: re-test, pickups kept · overtime ×{{mult}}',
   'acceptance.card.steps': 'Acceptance criteria',
   'acceptance.card.crew':

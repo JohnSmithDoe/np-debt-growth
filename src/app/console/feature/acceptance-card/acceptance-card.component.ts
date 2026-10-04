@@ -9,6 +9,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { formatQuantity } from '../../../@shared/util/format-quantity';
 import { GameStore } from '../../../game/data/game.store';
 import { ticketLabelKey } from '../../../game/model/ticket.model';
+import { CRITERION_FINISHER_PICK } from '../../../game/model/balance/progression';
 
 type Step = 'clean' | 'flagged' | 'now' | 'todo';
 
@@ -25,6 +26,9 @@ export class AcceptanceCardComponent {
   readonly view = inject(GameStore).acceptance;
 
   readonly ticketKey = ticketLabelKey;
+  readonly finisherPick = formatQuantity(CRITERION_FINISHER_PICK);
+
+  readonly weight = computed(() => formatQuantity(this.view()?.weight ?? 1));
 
   readonly seconds = computed(() =>
     Math.ceil((this.view()?.msLeft ?? 0) / 1000)

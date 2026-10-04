@@ -3,7 +3,9 @@
     @if (open()) {
       <div class="bubble" role="status">
         <p class="name">{{ 'agent.name' | translate }}</p>
-        @if (warned()) {
+        @if (pushing()) {
+          <p class="headline">{{ quip() }}</p>
+        } @else if (warned()) {
           <p class="headline">{{ headline() }}</p>
           <ul class="tips">
             @for (row of rows(); track row.id) {

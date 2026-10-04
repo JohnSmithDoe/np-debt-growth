@@ -35,6 +35,8 @@ export interface AcceptanceView {
   /** What one pickup counts for, and how much the line's own nodes took off the goal. */
   readonly weight: number;
   readonly discount: number;
+  /** Label key of the line's finisher while it is unbought. */
+  readonly finisher: string | null;
   readonly msLeft: number;
   readonly windowMs: number;
   readonly overtime: number;

@@ -126,6 +126,11 @@ h3 {
   font-weight: 400;
   font-size: 0.72rem;
   color: var(--np-cb-good);
+
+  &.missing {
+    border-style: dashed;
+    color: var(--np-cb-ink-3);
+  }
 }
 
 .timebar {

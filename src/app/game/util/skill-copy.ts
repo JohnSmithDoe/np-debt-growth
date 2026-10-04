@@ -1,6 +1,11 @@
 import { LINE_EFFECT_PARAMS } from '../model/purchase-copy.model';
 import type { SkillEffect, SkillNode } from '../model/skill.model';
-import { LINE_COUNT, lineFinisherId, lineNodeIds } from '../model/skill.model';
+import {
+  FINAL_SKILL_ID,
+  LINE_COUNT,
+  lineFinisherId,
+  lineNodeIds,
+} from '../model/skill.model';
 import { releasePhaseKey } from '../model/round.model';
 import { ticketLabelKey } from '../model/ticket.model';
 import {
@@ -209,12 +214,15 @@ export function skillEffectText(
   const known = BY_LEVEL.get(memo);
   if (known !== undefined) return known;
   const note = ACCEPTANCE_NOTE.get(node.id);
-  const resolved = [
-    ...(node.levels[level - 1]?.effects ?? []).map((effect) =>
-      oneEffect(effect, text)
-    ),
-    ...(note ? [text(note)] : []),
-  ].join(' · ');
+  const resolved =
+    node.id === FINAL_SKILL_ID
+      ? text('skill.effect.signoff')
+      : [
+          ...(node.levels[level - 1]?.effects ?? []).map((effect) =>
+            oneEffect(effect, text)
+          ),
+          ...(note ? [text(note)] : []),
+        ].join(' · ');
   BY_LEVEL.set(memo, resolved);
   return resolved;
 }

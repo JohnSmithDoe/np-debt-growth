@@ -33,6 +33,7 @@ import { PanZoomScene } from './pan-zoom-scene';
 import { TreeBackdrop } from './tree-backdrop';
 
 const FOCUS_PAN_MS = 450;
+const MARK = { gap: 7, width: 4, swell: 6, periodMs: 700 } as const;
 const CODE_SCALE = 2;
 const ICON_BOX = SKILL_ICON_SIZE;
 const ICON_ALPHA: Readonly<Record<SquareState, number>> = {
@@ -189,7 +190,28 @@ export class SkillScene extends PanZoomScene {
       FOCUS_PAN_MS,
       'Sine.easeInOut'
     );
-    this.time.delayedCall(FOCUS_PAN_MS, () => this.flash(square));
+    this.#marked = square;
+  }
+
+  #marked: HitRect | null = null;
+
+  /** The node "show in tree" asked for, ringed until the pointer finds it. */
+  #drawMark(pulse: Phaser.GameObjects.Graphics, time: number): void {
+    const marked = this.#marked;
+    if (!marked) return;
+    if (this.hovered === marked.id) {
+      this.#marked = null;
+      return;
+    }
+    const wave = (1 + Math.sin((time / MARK.periodMs) * Math.PI * 2)) / 2;
+    const out = MARK.gap + MARK.width / 2 + wave * MARK.swell;
+    pulse.lineStyle(MARK.width, SCREEN_INK.pipFull, 0.5 + wave * 0.5);
+    pulse.strokeRect(
+      marked.x - out,
+      marked.y - out,
+      marked.width + out * 2,
+      marked.height + out * 2
+    );
   }
 
   #take(view: SkillView): void {
@@ -212,6 +234,7 @@ export class SkillScene extends PanZoomScene {
     const pulse = this.#pulse;
     if (!pulse) return;
     pulse.clear();
+    this.#drawMark(pulse, time);
     if (this.#buyable.length === 0) return;
     const wave = (1 + Math.sin((time / PULSE.periodMs) * Math.PI * 2)) / 2;
     const alpha = PULSE.low + (PULSE.high - PULSE.low) * wave;

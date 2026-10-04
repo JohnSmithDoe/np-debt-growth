@@ -12,6 +12,7 @@ export const DE: Readonly<Record<string, string>> = {
     'Nimmt das nächstgelegene Ticket, nicht irgendeins',
   'skill.effect.juniorBand': 'Juniors reichen {{count}} Stufe höher',
   'skill.effect.none': 'Eröffnet das Programm',
+  'skill.effect.signoff': 'Startet den Abnahme-Endspurt',
   'skill.effect.inert': 'Keine Wirkung. Gar keine.',
   'skill.effect.topOfBand': 'Seniors nehmen zuerst das größte Ticket',
   'strip.shipping': 'DIREKT LIVE',
@@ -144,8 +145,12 @@ export const DE: Readonly<Record<string, string>> = {
     'Sieht so aus, als wolltest du ein ADR genehmigen. Brauchst du Hilfe?',
   'agent.goal.signoff':
     'Sieht so aus, als wolltest du die Abnahme holen. Brauchst du Hilfe?',
+  'agent.goal.finish':
+    'Sieht so aus, als wolltest du unterschreiben, während der Kunde manche Linien zweimal prüfen wird. Brauchst du Hilfe?',
   'agent.name': 'Synergie-Analyser (KI-gestützt)',
   'agent.buy.title': '{{name}} kaufen',
+  'agent.buy.finish':
+    '{{cost}}. Bring diese Linie vor der Unterschrift zu Ende: Der Kunde prüft jede Linie, und eine unfertige kommt zurück.',
   'agent.buy.detail': '{{cost}}. Gerade das meiste Wachstum für den Preis.',
   'agent.buy.opens': '{{cost}}. Öffnet {{then}}, und dort liegt das Wachstum.',
   'agent.buy.spare':
@@ -161,6 +166,32 @@ export const DE: Readonly<Record<string, string>> = {
   'agent.warn.body':
     'Sieht so aus, als wolltest du aufhören nachzudenken. Ich sage dir, was du als Nächstes kaufst, und mein Autokauf kauft es, sobald du es dir leisten kannst. Das ist Schummeln, und es nimmt dem Spiel jeden Spaß.',
   'agent.warn.ok': 'Verstanden',
+  'agent.push.quip.0':
+    'Sieht so aus, als würdest du getestet. Soll ich dazu ein Meeting ansetzen?',
+  'agent.push.quip.1':
+    'Tipp: Pink ist die Lieblingsfarbe des Kunden. Frag nicht, warum.',
+  'agent.push.quip.2':
+    'Ich habe eine 40-seitige Abnahmestrategie erstellt. Sie sagt: Sammle die pinken ein.',
+  'agent.push.quip.3':
+    'Fun Fact: Jedes Ticket, das du hier einsammelst, wurde schon zweimal abgerechnet.',
+  'agent.push.quip.4':
+    'Der Kunde sagt, der Build sei in Ordnung. Der Kunde hat den Build nicht geöffnet.',
+  'agent.push.quip.5':
+    'Ich würde ja helfen, aber meine Lizenz ist mit der Unterschrift abgelaufen.',
+  'agent.push.quip.6':
+    'Merke: Es sind keine technischen Schulden, wenn der Kunde dafür unterschreibt.',
+  'agent.push.quip.7':
+    'Synergie-Check: Deine Maus ist die Einzige, die noch arbeitet. Toller Culture Fit.',
+  'agent.push.quip.8':
+    'Ich habe dem Einkauf gesagt, du seist „fast fertig“. Bitte sei fast fertig.',
+  'agent.push.quip.9':
+    'Hinweis zur Barrierefreiheit: Die pinken Karten sind pink. Gern geschehen.',
+  'agent.push.retest.0':
+    'Sieht so aus, als käme das Kriterium zurück. Ich habe es als Learning umgedeutet.',
+  'agent.push.retest.1':
+    'Nachtests sind abrechenbar. Die Rechnung ist schon raus.',
+  'agent.push.retest.2':
+    'Schon wieder diese Linie? Sieh es als Fortsetzung, die niemand bestellt hat.',
   'settings.close': 'Zurück an die Arbeit',
   'settings.fullscreen.blurb':
     'Füllt den Bildschirm. Den Platz bekommt das Board.',
@@ -1044,6 +1075,7 @@ export const DE: Readonly<Record<string, string>> = {
   'acceptance.card.count': '{{picked}} von {{goal}} aufgesammelt',
   'acceptance.card.discount': '−{{n}} durch deine Knoten',
   'acceptance.card.weight': 'jeder zählt ×{{n}}',
+  'acceptance.card.finisher': '×{{n}} mit {{name}}',
   'acceptance.card.rule':
     'verfehlt: Nachtest, Treffer bleiben · Überstunden ×{{mult}}',
   'acceptance.card.steps': 'Abnahmekriterien',
@@ -1092,7 +1124,7 @@ export const DE: Readonly<Record<string, string>> = {
     '100 Milliarden € abrechnen. Der Kunde hat einen zweiten Kunden gegründet, um den ersten zu bezahlen.',
   'award.a-trillion.label': 'Bilanzposten',
   'award.a-trillion.blurb':
-    'Das Projekt ist jetzt ein Posten im Geschäftsbericht des Kunden. Ein eigenes Kapitel, genau genommen.',
+    'Das Mandat ist jetzt ein Posten im Geschäftsbericht des Kunden. Ein eigenes Kapitel, genau genommen.',
   'award.a-ten-trillion.label': 'Konjunkturindikator',
   'award.a-ten-trillion.blurb':
     '10 Billionen € abrechnen. Ökonomen zitieren inzwischen das Burndown-Chart.',
@@ -1114,12 +1146,12 @@ export const DE: Readonly<Record<string, string>> = {
   'award.a-on-credit.label': 'Auf Kredit genehmigt',
   'award.a-on-credit.blurb':
     'Ein ADR unterschrieben, bevor es bezahlt war. Technische Schulden, aber wörtlich.',
-  'moment.closeout.heading': 'Abschlussprotokoll — Projektabnahme',
+  'moment.closeout.heading': 'Abschlussprotokoll — Mandatsabnahme',
   'moment.closeout.subheading': 'Letzte protokollierte Entscheidung',
   'moment.closeout.chip': 'Unterschrieben',
   'moment.closeout.action': 'Zum Board: Abnahme starten',
   'moment.closeout.context':
-    'Acht Architecture Decision Records wurden genehmigt, keiner zurückgenommen. Der Backlog steht auf Rekordhöhe. Der Kunde möchte das Projekt vor dem nächsten Budgetzyklus abschließen.',
+    'Acht Architecture Decision Records wurden genehmigt, keiner zurückgenommen. Der Backlog steht auf Rekordhöhe. Der Kunde möchte das Mandat vor dem nächsten Budgetzyklus abschließen.',
   'moment.closeout.decision':
     'Formale Abnahme beginnen. Der Kunde prüft die Lieferung Kriterium für Kriterium, eine Arbeitslinie je Kriterium. Das Team sitzt im Abnahme-Meeting; die Tickets sammelst du selbst ein.',
   'moment.closeout.consequences':

@@ -38,7 +38,13 @@
           }
           @if (view.weight > 1) {
             <span class="perk">{{
-              'acceptance.card.weight' | translate: { n: view.weight }
+              'acceptance.card.weight' | translate: { n: weight() }
+            }}</span>
+          } @else if (view.finisher) {
+            <span class="perk missing">{{
+              'acceptance.card.finisher'
+                | translate
+                  : { n: finisherPick, name: view.finisher | translate }
             }}</span>
           }
         </p>
