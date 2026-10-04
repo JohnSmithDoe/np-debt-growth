@@ -3,6 +3,14 @@
 An idle game about a software consultancy that is paid by the hour to close
 tickets, and therefore buys bad code on purpose.
 
+**Play it in the browser: <https://johnsmithdoe.github.io/np-debt-growth/>**
+
+[![Paid by the hour. So we buy bad code.](docs/promo/1-paid-by-the-hour.webp)](https://johnsmithdoe.github.io/np-debt-growth/)
+
+|                                                                                                                      |                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| [![Every bug is billable.](docs/promo/2-every-bug-is-billable.webp)](https://johnsmithdoe.github.io/np-debt-growth/) | [![Eight ADRs. Nine criteria. One hand.](docs/promo/3-one-hand.webp)](https://johnsmithdoe.github.io/np-debt-growth/) |
+
 ## Stack
 
 | Layer     | Choice                                                     |
