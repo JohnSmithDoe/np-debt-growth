@@ -1,6 +1,6 @@
 [package]
 name = "np-debt-growth"
-version = "0.1.0"
+version = "1.0.0"
 description = "Debt Growth — an idle game about a consultancy that bills to fix the mess it is paid to make."
 authors = ["leto the c0dem0nkey"]
 edition = "2021"
