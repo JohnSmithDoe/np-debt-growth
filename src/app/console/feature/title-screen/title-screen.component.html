@@ -48,29 +48,6 @@
             }
           </svg>
         </button>
-        @if (canFullscreen) {
-          <button
-            type="button"
-            class="toggle"
-            [class.active]="fullscreen()"
-            [attr.aria-pressed]="fullscreen()"
-            [title]="
-              (fullscreen() ? 'title.windowed' : 'title.fullscreen') | translate
-            "
-            [attr.aria-label]="
-              (fullscreen() ? 'title.windowed' : 'title.fullscreen') | translate
-            "
-            (click)="toggleFullscreen()"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              @if (fullscreen()) {
-                <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
-              } @else {
-                <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
-              }
-            </svg>
-          </button>
-        }
         <button
           type="button"
           class="toggle"
@@ -80,6 +57,54 @@
         >
           ?
         </button>
+        @if (canFullscreen) {
+          <span class="pitched">
+            @if (!fullscreen()) {
+              <button
+                type="button"
+                class="pitch"
+                [attr.aria-label]="'title.fullscreen' | translate"
+                (click)="toggleFullscreen()"
+              >
+                <span class="burst">{{
+                  'title.pitch.fullscreen' | translate
+                }}</span>
+                <svg
+                  class="arrow"
+                  viewBox="0 0 32 32"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M28 6C22 18 14 22 4 22M4 22l7-5M4 22l7 5" />
+                </svg>
+              </button>
+            }
+            <button
+              type="button"
+              class="toggle"
+              [class.pitched-on]="!fullscreen()"
+              [class.active]="fullscreen()"
+              [attr.aria-pressed]="fullscreen()"
+              [title]="
+                (fullscreen() ? 'title.windowed' : 'title.fullscreen')
+                  | translate
+              "
+              [attr.aria-label]="
+                (fullscreen() ? 'title.windowed' : 'title.fullscreen')
+                  | translate
+              "
+              (click)="toggleFullscreen()"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                @if (fullscreen()) {
+                  <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+                } @else {
+                  <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+                }
+              </svg>
+            </button>
+          </span>
+        }
       </div>
     </div>
 

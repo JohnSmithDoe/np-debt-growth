@@ -173,12 +173,21 @@ export const DE: Readonly<Record<string, string>> = {
   'agent.tutorial.ticket.next': 'Ticket werfen',
   'agent.tutorial.collect':
     'Da ist es. Fahr mit dem Zeiger über das Ticket, um es aufzunehmen. Darüberfahren reicht, Klicken geht auch.',
-  'agent.tutorial.paid':
-    'Abgerechnet! Jedes Ticket, das du oder das Team aufnehmt, zahlt sofort und füllt den Sprint. Ein voller Sprint fährt mit dem Release-Zug los, und das Board wartet, bis der Zug zurück ist.',
-  'agent.tutorial.paid.next': 'Und dann?',
   'agent.tutorial.goal':
     'Gib Euro rechts im Shop aus: mehr Entwickler, mehr Linien voller Schulden. Die Story-Point-Schätzung bringt Story Points, und mit Story Points kaufst du den Skill-Baum, wo ADRs teurere Schulden öffnen. Ich bin hier unten und berate dich. Klick mich jederzeit an.',
   'agent.tutorial.goal.next': 'Abrechnen',
+  'agent.tutorial.paid':
+    'Abgerechnet! Jedes Ticket, das du oder das Team aufnehmt, zahlt sofort. Ich werfe dir noch eins zu.',
+  'agent.tutorial.paid.next': 'Noch eins werfen',
+  'agent.tutorial.again': 'Nimm das auch noch auf.',
+  'agent.tutorial.hire':
+    'Das macht 2 €, genug für einen zweiten Entwickler. Kauf rechts im Shop den Junior-Zulauf: Jeder Entwickler wirft Tickets aufs Board, die du abrechnest.',
+  'agent.tutorial.sprint':
+    'Jedes aufgenommene Ticket füllt den Sprint, den Balken unten am Board. Ein voller Sprint fährt mit dem Release-Zug los, und bis der Zug zurück ist, lässt sich nichts aufnehmen. Ich schicke diesen schon mal früher los.',
+  'agent.tutorial.sprint.next': 'Zug losschicken',
+  'agent.tutorial.back':
+    'Wieder da. Der Zug fährt los, sobald der Sprint voll ist, und lässt das Board warten, solange er weg ist. Ein größerer Sprint verschwendet also weniger Fahrten.',
+  'agent.tutorial.back.next': 'Und dann?',
   'agent.tutorial.skip': 'Tour überspringen',
   'agent.warn.ok': 'Verstanden',
   'agent.push.quip.0':
@@ -233,6 +242,7 @@ export const DE: Readonly<Record<string, string>> = {
   'settings.subheading':
     'Wie sich das Spiel verhält. Nichts davon ist Fortschritt.',
   'title.fullscreen': 'Vollbild',
+  'title.pitch.fullscreen': 'Ab ins Vollbild!',
   'title.name': 'Schuld & Wachstum',
   'title.photosensitivity':
     'Warnung vor Lichtempfindlichkeit: Dieses Spiel enthält schnelle Lichtblitze, flackernde Farben und sich rasch bewegende Lichter.',

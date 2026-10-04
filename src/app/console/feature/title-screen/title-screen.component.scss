@@ -160,3 +160,119 @@ h1 {
     fill: currentcolor;
   }
 }
+
+.pitched {
+  position: relative;
+  display: inline-grid;
+}
+
+.toggle.pitched-on {
+  opacity: 1;
+  border-color: var(--np-cb-money);
+  color: var(--np-cb-money);
+}
+
+.pitch {
+  position: absolute;
+  bottom: 10%;
+  left: 100%;
+  width: 8.5rem;
+  height: 6rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.7));
+  touch-action: manipulation;
+
+  &:hover .burst,
+  &:focus-visible .burst {
+    scale: 1.08;
+  }
+}
+
+.burst {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 6rem;
+  height: 6rem;
+  padding: 0.9rem;
+  clip-path: polygon(
+    50% 0%,
+    60.4% 11.4%,
+    75% 6.7%,
+    78.3% 21.7%,
+    93.3% 25%,
+    88.6% 39.6%,
+    100% 50%,
+    88.6% 60.4%,
+    93.3% 75%,
+    78.3% 78.3%,
+    75% 93.3%,
+    60.4% 88.6%,
+    50% 100%,
+    39.6% 88.6%,
+    25% 93.3%,
+    21.7% 78.3%,
+    6.7% 75%,
+    11.4% 60.4%,
+    0% 50%,
+    11.4% 39.6%,
+    6.7% 25%,
+    21.7% 21.7%,
+    25% 6.7%,
+    39.6% 11.4%
+  );
+  background: var(--np-cb-money);
+  color: var(--np-cb-accent-ink);
+  font-family: var(--np-cb-font-pixel);
+  font-size: 0.6rem;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+  rotate: 12deg;
+  transition: scale 0.15s;
+}
+
+.arrow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  fill: none;
+  stroke: var(--np-cb-money);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .burst {
+    animation: pitch-pop 1.6s ease-in-out infinite;
+  }
+
+  .arrow {
+    animation: pitch-bob 0.8s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes pitch-pop {
+  0%,
+  100% {
+    rotate: 12deg;
+  }
+
+  50% {
+    rotate: 4deg;
+  }
+}
+
+@keyframes pitch-bob {
+  to {
+    translate: -5px 0;
+  }
+}

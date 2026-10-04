@@ -18,6 +18,7 @@ import type { Pick } from '../../../game/util/advisor';
 import { buyKey } from '../../../game/util/advisor';
 import { affordable, AgentService } from '../../data/agent.service';
 import { DoorService } from '../../data/door.service';
+import type { TutorialStep } from '../../data/tutorial.service';
 import { TutorialService } from '../../data/tutorial.service';
 import type { Phrase } from '../../util/agent-copy';
 import { buyName, goalKey, pushQuipKey } from '../../util/agent-copy';
@@ -48,6 +49,11 @@ export class AgentComponent {
   #tutorial = inject(TutorialService);
 
   readonly lesson = this.#tutorial.step;
+  /** The lesson's line; silent while the train it sent is away. */
+  readonly speech = computed(() => {
+    const step = this.lesson();
+    return step === 'train' ? null : step;
+  });
 
   readonly #open = signal(false);
   readonly open = this.#open.asReadonly();
@@ -128,6 +134,10 @@ export class AgentComponent {
   toggle(): void {
     if (this.lesson() !== null) return;
     this.#open.update((open) => !open);
+  }
+
+  lessonAction(step: TutorialStep): boolean {
+    return this.#tutorial.action(step) !== null;
   }
 
   lessonNext(): void {

@@ -123,7 +123,7 @@ that resolution and zooms a fixed scene's camera back up. Use `viewWidth` / `vie
 `app.providers.ts` → restore the save, install the `globalThis.debtGrowth` test harness, then start
 the autosave and the clock **only once `DoorService.opened()`** — the title screen gates the clock,
 so a restored save does not tick behind the splash. On a fresh run's first opening the paperclip tour holds the clock
-(`TutorialService`, pause reason `'tutorial'`) until it is finished or skipped; Playwright scripts
+(`TutorialService`, pause reason `'tutorial'`) whenever it talks, until it is finished or skipped; Playwright scripts
 click `cb-agent .skip` after the door. Save is `localStorage`, version-gated
 (`SAVE_VERSION`); a version bump silently discards old saves rather than migrating.
 

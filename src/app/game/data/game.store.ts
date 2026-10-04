@@ -644,8 +644,8 @@ export class GameStore {
     }
     next = economy.stepCriterion(next);
     this.#markTest(next);
-    next = this.#grantAwards(next);
     next = this.#stepTrain(next, dtMs);
+    next = this.#grantAwards(next);
     return economy.accepted(next) ? { ...next, endedAt: now } : next;
   }
 

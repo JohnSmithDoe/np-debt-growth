@@ -621,10 +621,12 @@ behind a once-only warning that it is cheating. Its auto-buy switch (`AgentServi
 kept in settings) buys each pick the moment it is affordable.
 
 On a fresh run's first opening the paperclip gives a tour (`console/data/tutorial.service.ts`): it
-talks, throws one lint ticket, waits for the hand to pick it up, and talks again. The clock is held
-(`'tutorial'`) from the first line to the last, so the crew cannot take the ticket and nothing
-expires; the hand still collects while it is held. The tour is skippable, shown once
-(`tutorialDone`, kept in settings) and never offered over a restored save.
+throws a lint ticket for the hand to pick up, then a second; the two pay the €2 for the first
+Junior Intake, which the player buys; then it sends the two-ticket sprint off on the release train
+early and talks again once the train is back. The clock is held (`'tutorial'`) whenever it talks,
+so the crew cannot take the lesson tickets and nothing expires; the hand still collects and the
+shop still sells while it is held. Only the train runs on the clock, with the paperclip silent.
+The tour is skippable, shown once (`tutorialDone`, kept in settings) and never offered over a restored save.
 
 ---
 

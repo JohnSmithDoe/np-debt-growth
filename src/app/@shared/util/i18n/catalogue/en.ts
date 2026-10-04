@@ -173,12 +173,21 @@ export const EN: Readonly<Record<string, string>> = {
   'agent.tutorial.ticket.next': 'Throw a ticket',
   'agent.tutorial.collect':
     'There it is. Sweep your pointer over the ticket to pick it up. Hovering is enough, but clicking works too.',
-  'agent.tutorial.paid':
-    'Billed! Every ticket you or the crew picks up pays at once and fills the sprint. A full sprint ships on the release train, and the board waits until the train is back.',
-  'agent.tutorial.paid.next': 'And then?',
   'agent.tutorial.goal':
     'Spend euros in the shop on the right: more developers, more lines of debt. Story Point Estimation earns Story Points, and Story Points buy the skill tree, where ADRs open dearer debt. I will be down here with advice. Click me any time.',
   'agent.tutorial.goal.next': 'Start billing',
+  'agent.tutorial.paid':
+    'Billed! Every ticket you or the crew picks up pays at once. Let me throw you another.',
+  'agent.tutorial.paid.next': 'Throw another',
+  'agent.tutorial.again': 'Pick that one up too.',
+  'agent.tutorial.hire':
+    'That makes €2, enough for a second developer. Buy Junior Intake in the shop on the right: every developer throws tickets onto the board for you to bill.',
+  'agent.tutorial.sprint':
+    'Every ticket picked up fills the sprint, the bar at the bottom of the board. A full sprint leaves on the release train, and nothing can be picked up until the train is back. Let me send this one early.',
+  'agent.tutorial.sprint.next': 'Send the train',
+  'agent.tutorial.back':
+    'Back again. The train leaves the moment the sprint is full and keeps the board waiting while it is away, so a bigger sprint wastes fewer trips.',
+  'agent.tutorial.back.next': 'And then?',
   'agent.tutorial.skip': 'Skip the tour',
   'agent.warn.ok': 'Understood',
   'agent.push.quip.0':
@@ -227,6 +236,7 @@ export const EN: Readonly<Record<string, string>> = {
   'settings.sfx.volume': 'Sound effects volume',
   'settings.subheading': 'How the game behaves. None of it is progress.',
   'title.fullscreen': 'Fullscreen',
+  'title.pitch.fullscreen': 'Go fullscreen!',
   'title.name': 'Debt Growth',
   'title.photosensitivity':
     'Photosensitivity warning: this game has rapid flashes, flickering colours and fast-moving lights.',
